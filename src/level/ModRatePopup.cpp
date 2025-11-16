@@ -306,58 +306,46 @@ void ModRatePopup::updateDifficultySprite(int rating)
     {
     case 1:
         difficultyLevel = -1;
-        difficulty = (GJDifficultyName)-1; // Auto
         break;
     case 2:
         difficultyLevel = 1;
-        difficulty = (GJDifficultyName)1; // Easy
         break;
     case 3:
         difficultyLevel = 2;
-        difficulty = (GJDifficultyName)2; // Normal
         break;
     case 4:
     case 5:
         difficultyLevel = 3;
-        difficulty = (GJDifficultyName)3; // Hard
         break;
     case 6:
     case 7:
         difficultyLevel = 4;
-        difficulty = (GJDifficultyName)4; // Harder
         break;
     case 8:
     case 9:
         difficultyLevel = 5;
-        difficulty = (GJDifficultyName)5; // Insane
         break;
     case 10:
         difficultyLevel = 7;
-        difficulty = (GJDifficultyName)7; // Easy Demon
         break;
     case 11:
         difficultyLevel = 8;
-        difficulty = (GJDifficultyName)8; // Medium Demon
         break;
     case 12:
         difficultyLevel = 6;
-        difficulty = (GJDifficultyName)6; // Hard Demon
         break;
     case 13:
         difficultyLevel = 9;
-        difficulty = (GJDifficultyName)9; // Insane Demon
         break;
     case 14:
         difficultyLevel = 10;
-        difficulty = (GJDifficultyName)10; // Extreme Demon
         break;
     default:
         difficultyLevel = 0;
-        difficulty = (GJDifficultyName)0; // Default to NA
         break;
     }
 
-    m_difficultySprite = GJDifficultySprite::create(difficultyLevel, difficulty);
+    m_difficultySprite = GJDifficultySprite::create(difficultyLevel, GJDifficultyName::Short);
     m_difficultySprite->setPosition({0, 0});
     m_difficultySprite->setScale(1.2f);
     m_difficultyContainer->addChild(m_difficultySprite);
