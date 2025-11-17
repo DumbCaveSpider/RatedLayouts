@@ -174,7 +174,6 @@ class $modify(LevelCell)
                 if (coinIcon3) {
                     coinIcon3->setPositionY(coinIcon3->getPositionY() - 5);
                 }
-                // 
             } });
     }
 

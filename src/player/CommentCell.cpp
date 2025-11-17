@@ -66,9 +66,19 @@ class $modify(RLCommentCell, CommentCell)
                            .param("accountId", accountId)
                            .get("https://gdrate.arcticwoof.xyz/commentProfile");
 
-        getTask.listen([this](web::WebResponse *response)
+        Ref<RLCommentCell> cellRef = this; // commentcell ref
+
+        getTask.listen([cellRef](web::WebResponse *response)
                        {
             log::debug("Received role response from server for comment");
+
+            // did this so it doesnt crash if the cell is deleted before response
+            // yea took me a while
+            if (!cellRef)
+            {
+                log::warn("CommentCell has been destroyed, skipping role update");
+                return;
+            }
 
             if (!response->ok()) {
                 log::warn("Server returned non-ok status: {}", response->code());
@@ -83,11 +93,11 @@ class $modify(RLCommentCell, CommentCell)
 
             auto json = jsonRes.unwrap();
             int role = json["role"].asInt().unwrapOrDefault();
-            m_fields->role = role;
+            cellRef->m_fields->role = role;
 
             log::debug("User comment role: {}", role);
 
-            this->loadBadgeForComment(); });
+            cellRef->loadBadgeForComment(); });
     }
 
     void loadBadgeForComment()
