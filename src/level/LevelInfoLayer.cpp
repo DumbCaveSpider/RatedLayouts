@@ -33,7 +33,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer)
             auto iconSprite = CCSprite::create("rlStarIconBig.png"_spr);
             CCSprite *buttonSprite = nullptr;
 
-            if ((isPlatformer && starRatings != 0) || starRatings != 0)
+            if (isPlatformer || starRatings != 0)
             {
                 buttonSprite = CCSpriteGrayscale::create("rlStarIconBig.png"_spr);
             }
