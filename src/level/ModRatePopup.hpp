@@ -29,5 +29,6 @@ private:
     void onToggleFeatured(CCObject* sender);
     void onToggleDemon(CCObject* sender);
     void onRatingButton(CCObject* sender);
+    void onInfoButton(CCObject* sender);
     void updateDifficultySprite(int rating);
 };
