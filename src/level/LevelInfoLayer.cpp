@@ -226,16 +226,27 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer)
                     starLabelValue->setColor({ 0, 150, 255 }); // cyan
                 }
 
-                if (!m_fields->m_difficultyOffsetApplied)
+                auto coinIcon1 = this->getChildByID("coin-icon-1");
+                auto coinIcon2 = this->getChildByID("coin-icon-2");
+                auto coinIcon3 = this->getChildByID("coin-icon-3");
+
+                if (!m_fields->m_difficultyOffsetApplied && coinIcon1)
                 {
                     if (isDemon)
                     {
-                        sprite->setPositionY(sprite->getPositionY() + 20);
+                        sprite->setPositionY(sprite->getPositionY() + 15);
                     } else
                     {
-                        sprite->setPositionY(sprite->getPositionY() + 10);
+                        sprite->setPositionY(sprite->getPositionY() + 15);
                     }
                     m_fields->m_difficultyOffsetApplied = true;
+
+                    // time to adjust the coins as well
+                    coinIcon1->setPositionY(coinIcon1->getPositionY() - (isDemon ? 6 : 4)); // very precise yesh
+                    if (coinIcon2)
+                        coinIcon2->setPositionY(coinIcon2->getPositionY() - (isDemon ? 6 : 4));
+                    if (coinIcon3)
+                        coinIcon3->setPositionY(coinIcon3->getPositionY() - (isDemon ? 6 : 4));
                 }
             }
             
@@ -307,12 +318,23 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer)
                         break;
                     }
                     
-                    float offsetY = isDemon ? 20.0f : 10.0f;
+                    float offsetY = isDemon ? 10.0f : 5.0f;
                     sprite->setPositionY(sprite->getPositionY() + offsetY);
                     
+                    // why does this sometimes works and sometimes not
+                    // like legit when you refresh the level, it sometimes actually apply correctly
+                    // but 90% of the time it resets to being at the center of the difficulty sprite
                     auto starIcon = sprite->getChildByID("rl-star-icon");
                     auto starLabel = sprite->getChildByID("rl-star-label");
+                    auto featureCoin = sprite->getChildByID("featured-coin");
                     
+                    // oka the feature coin does work correctly so this is fine
+                    if (featureCoin)
+                    {
+                        featureCoin->setPosition({difficultySprite->getContentSize().width / 2, difficultySprite->getContentSize().height / 2});
+                    }
+
+                    // but the star icon and label dont want to cooperate ;-;
                     if (starIcon)
                     {
                         starIcon->setPosition({difficultySprite->getContentSize().width / 2 + 7, -7});
