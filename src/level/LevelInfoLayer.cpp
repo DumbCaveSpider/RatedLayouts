@@ -332,8 +332,9 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer)
     void onModButton(CCObject *sender)
     {
         int starRatings = this->m_level->m_stars;
+        bool isPlatformer = this->m_level->isPlatformer();
 
-        if ((this->m_level->isPlatformer() && starRatings != 0) || starRatings != 0)
+        if (isPlatformer || starRatings != 0)
         {
             FLAlertLayer::create(
                 "Action Unavailable",
@@ -363,8 +364,9 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer)
     void onAdminButton(CCObject *sender)
     {
         int starRatings = this->m_level->m_stars;
+        bool isPlatformer = this->m_level->isPlatformer();
 
-        if ((this->m_level->isPlatformer() && starRatings != 0) || starRatings != 0)
+        if (isPlatformer || starRatings != 0)
         {
             FLAlertLayer::create(
                 "Action Unavailable",
@@ -391,7 +393,8 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer)
         }
     }
 
-    void requestStatus(int accountId)
+    void
+    requestStatus(int accountId)
     {
         // argon my beloved <3
         std::string token;
