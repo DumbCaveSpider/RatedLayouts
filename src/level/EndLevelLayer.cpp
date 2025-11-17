@@ -18,8 +18,6 @@ class $modify(EndLevelLayer)
             return;
         }
 
-
-
         // i couldve done a better way to do this but this works for now
         std::string completedKey = fmt::format("{}", level->m_levelID);
         if (Mod::get()->getSavedValue<bool>(completedKey, false))
@@ -30,9 +28,12 @@ class $modify(EndLevelLayer)
 
         // this is so only when you actually completed the level and detects that you did
         // then give those yum yum stars, otherwise u use safe mod to do crap lmaoooo
-        if (level->m_normalPercent >= 100) {
+        if (level->m_normalPercent >= 100)
+        {
             log::info("Level ID: {} completed for the first time!", level->m_levelID);
-        } else {
+        }
+        else
+        {
             log::info("Level ID: {} not completed, skipping reward", level->m_levelID);
             return;
         }
@@ -132,8 +133,7 @@ class $modify(EndLevelLayer)
 
                     // never used this before but its fancy
                     if (auto rewardLayer = CurrencyRewardLayer::create(
-                        0, 0, 0,
-                        starReward,
+                        0, starReward, 0, 0,
                         CurrencySpriteType::Star, 0, CurrencySpriteType::Star,
                         0,
                         endLayerRef->getPosition(), CurrencyRewardType::Default, 0.0, 1.0
