@@ -3,19 +3,15 @@
 
 using namespace geode::prelude;
 
-class $modify(RLCommentCell, CommentCell)
-{
-    struct Fields
-    {
+class $modify(RLCommentCell, CommentCell) {
+    struct Fields {
         int role = 0;
     };
 
-    void loadFromComment(GJComment *comment)
-    {
+    void loadFromComment(GJComment* comment) {
         CommentCell::loadFromComment(comment);
 
-        if (!comment)
-        {
+        if (!comment) {
             log::warn("Comment is null");
             return;
         }
@@ -23,65 +19,56 @@ class $modify(RLCommentCell, CommentCell)
         fetchUserRole(comment->m_accountID);
     }
 
-    void applyCommentTextColor()
-    {
-        if (m_fields->role == 0)
-        {
+    void applyCommentTextColor() {
+        if (m_fields->role == 0) {
             return;
         }
 
-        if (!m_mainLayer)
-        {
+        if (!m_mainLayer) {
             log::warn("main layer is null, cannot apply color");
             return;
         }
 
         ccColor3B color;
-        if (m_fields->role == 1)
-        {
-            color = ccc3(0, 150, 255); // mod comment color
-        }
-        else if (m_fields->role == 2)
-        {
-            color = ccc3(150, 0, 0); // admin comment color
-        }
-        else
-        {
+        if (m_fields->role == 1) {
+            color = ccc3(0, 150, 255);  // mod comment color
+        } else if (m_fields->role == 2) {
+            color = ccc3(150, 0, 0);  // admin comment color
+        } else {
             return;
         }
 
         log::debug("Applying comment text color for role: {}", m_fields->role);
 
-        if (auto commentTextLabel = typeinfo_cast<CCLabelBMFont *>(m_mainLayer->getChildByID("comment-text-label")))
-        {
+        if (auto commentTextLabel = typeinfo_cast<CCLabelBMFont*>(
+                m_mainLayer->getChildByID("comment-text-label"))) {
             log::debug("Found comment-text-label, applying color");
             commentTextLabel->setColor(color);
         }
     }
 
-    void fetchUserRole(int accountId)
-    {
+    void fetchUserRole(int accountId) {
         log::debug("Fetching role for comment user ID: {}", accountId);
         auto getTask = web::WebRequest()
                            .param("accountId", accountId)
                            .get("https://gdrate.arcticwoof.xyz/commentProfile");
 
-        Ref<RLCommentCell> cellRef = this; // commentcell ref
+        Ref<RLCommentCell> cellRef = this;  // commentcell ref
 
-        getTask.listen([cellRef](web::WebResponse *response)
-                       {
+        getTask.listen([cellRef](web::WebResponse* response) {
             log::debug("Received role response from server for comment");
 
-            // did this so it doesnt crash if the cell is deleted before response
-            // yea took me a while
-            if (!cellRef)
-            {
-                log::warn("CommentCell has been destroyed, skipping role update");
+            // did this so it doesnt crash if the cell is deleted before
+            // response yea took me a while
+            if (!cellRef) {
+                log::warn(
+                    "CommentCell has been destroyed, skipping role update");
                 return;
             }
 
             if (!response->ok()) {
-                log::warn("Server returned non-ok status: {}", response->code());
+                log::warn("Server returned non-ok status: {}",
+                          response->code());
                 return;
             }
 
@@ -97,42 +84,36 @@ class $modify(RLCommentCell, CommentCell)
 
             log::debug("User comment role: {}", role);
 
-            cellRef->loadBadgeForComment(); });
+            cellRef->loadBadgeForComment();
+        });
     }
 
-    void loadBadgeForComment()
-    {
-        auto userNameMenu = typeinfo_cast<CCMenu *>(m_mainLayer->getChildByIDRecursive("username-menu"));
-        if (!userNameMenu)
-        {
+    void loadBadgeForComment() {
+        auto userNameMenu = typeinfo_cast<CCMenu*>(
+            m_mainLayer->getChildByIDRecursive("username-menu"));
+        if (!userNameMenu) {
             log::warn("username-menu not found in comment cell");
             return;
         }
 
-        if (m_fields->role == 1)
-        {
+        if (m_fields->role == 1) {
             applyCommentTextColor();
 
             auto modBadgeSprite = CCSprite::create("rlBadgeMod.png"_spr);
             modBadgeSprite->setScale(0.7f);
             auto modBadgeButton = CCMenuItemSpriteExtra::create(
-                modBadgeSprite,
-                this,
-                menu_selector(RLCommentCell::onModBadge));
+                modBadgeSprite, this, menu_selector(RLCommentCell::onModBadge));
 
             modBadgeButton->setID("rl-comment-mod-badge");
             userNameMenu->addChild(modBadgeButton);
             userNameMenu->updateLayout();
-        }
-        else if (m_fields->role == 2)
-        {
+        } else if (m_fields->role == 2) {
             applyCommentTextColor();
 
             auto adminBadgeSprite = CCSprite::create("rlBadgeAdmin.png"_spr);
             adminBadgeSprite->setScale(0.7f);
             auto adminBadgeButton = CCMenuItemSpriteExtra::create(
-                adminBadgeSprite,
-                this,
+                adminBadgeSprite, this,
                 menu_selector(RLCommentCell::onAdminBadge));
 
             adminBadgeButton->setID("rl-comment-admin-badge");
@@ -141,20 +122,21 @@ class $modify(RLCommentCell, CommentCell)
         }
     }
 
-    void onModBadge(CCObject *sender)
-    {
+    void onModBadge(CCObject* sender) {
         FLAlertLayer::create(
             "Layout Moderator",
-            "This user can <cj>suggest layout levels</c> for <cl>Rated Layouts</c> to the <cr>Layout Admins</c>.",
+            "This user can <cj>suggest layout levels</c> for <cl>Rated "
+            "Layouts</c> to the <cr>Layout Admins</c>.",
             "OK")
             ->show();
     }
 
-    void onAdminBadge(CCObject *sender)
-    {
+    void onAdminBadge(CCObject* sender) {
         FLAlertLayer::create(
             "Layout Administrator",
-            "This user can <cj>rate layout levels</c> for <cl>Rated Layouts</c>. They can change the <cy>featured ranking on the featured layout levels.</c>",
+            "This user can <cj>rate layout levels</c> for <cl>Rated "
+            "Layouts</c>. They can change the <cy>featured ranking on the "
+            "featured layout levels.</c>",
             "OK")
             ->show();
     }

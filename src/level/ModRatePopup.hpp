@@ -5,12 +5,12 @@
 
 using namespace geode::prelude;
 
-class ModRatePopup : public geode::Popup<std::string, GJGameLevel*>
-{
-public:
-    static ModRatePopup *create(std::string title = "Rate Layout", GJGameLevel* level = nullptr);
+class ModRatePopup : public geode::Popup<std::string, GJGameLevel*> {
+   public:
+    static ModRatePopup* create(std::string title = "Rate Layout",
+                                GJGameLevel* level = nullptr);
 
-private:
+   private:
     std::string m_title;
     GJGameLevel* m_level;
     GJDifficultySprite* m_difficultySprite;
