@@ -371,9 +371,6 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer)
         {
             auto sprite = static_cast<GJDifficultySprite *>(difficultySprite);
 
-            int starRatings = this->m_level->m_stars;
-            bool isPlatformer = this->m_level->isPlatformer();
-
             int levelId = this->m_level->m_levelID;
             auto getReq = web::WebRequest();
             auto getTask = getReq.get(fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId));
@@ -413,31 +410,118 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer)
                         break;
                     }
                     
-                    float offsetY = isDemon ? 10.0f : 5.0f;
-                    sprite->setPositionY(sprite->getPositionY() + offsetY);
+                    int difficultyLevel = 0;
+                    switch (difficulty)
+                    {
+                    case 1:
+                        difficultyLevel = -1;
+                        break;
+                    case 2:
+                        difficultyLevel = 1;
+                        break;
+                    case 3:
+                        difficultyLevel = 2;
+                        break;
+                    case 4:
+                    case 5:
+                        difficultyLevel = 3;
+                        break;
+                    case 6:
+                    case 7:
+                        difficultyLevel = 4;
+                        break;
+                    case 8:
+                    case 9:
+                        difficultyLevel = 5;
+                        break;
+                    case 10:
+                        difficultyLevel = 7;
+                        break;
+                    case 15:
+                        difficultyLevel = 8;
+                        break;
+                    case 20:
+                        difficultyLevel = 6;
+                        break;
+                    case 25:
+                        difficultyLevel = 9;
+                        break;
+                    case 30:
+                        difficultyLevel = 10;
+                        break;
+                    default:
+                        difficultyLevel = 0;
+                        break;
+                    }
+
+                    //BEFORE updating frame
+                    auto existingStarIcon = sprite->getChildByID("rl-star-icon");
+                    auto existingStarLabel = sprite->getChildByID("rl-star-label");
                     
-                    // why does this sometimes works and sometimes not
-                    // like legit when you refresh the level, it sometimes actually apply correctly
-                    // but 90% of the time it resets to being at the center of the difficulty sprite
-                    auto starIcon = sprite->getChildByID("rl-star-icon");
-                    auto starLabel = sprite->getChildByID("rl-star-label");
+                    if (existingStarIcon)
+                    {
+                        existingStarIcon->removeFromParent();
+                    }
+                    
+                    if (existingStarLabel)
+                    {
+                        existingStarLabel->removeFromParent();
+                    }
+                    
+                    // update difficulty frame
+                    sprite->updateDifficultyFrame(difficultyLevel, GJDifficultyName::Long);
+                    
+                    //AFTER frame update
+                    if (isDemon)
+                    {
+                        // if coin exists, reposition it
+                        auto coinIcon1 = sprite->getChildByID("coin-icon-1");
+                        if (coinIcon1)
+                        {
+                            sprite->setPositionY(sprite->getPositionY() + 25);
+                        } else 
+                        {
+                            sprite->setPositionY(sprite->getPositionY() + 15);
+                        }
+
+                    } else
+                    {
+                        sprite->setPositionY(sprite->getPositionY() + 10);
+                    }
+                    
+                    auto starIcon = CCSprite::create("rlStarIcon.png"_spr);
+                    starIcon->setPosition({difficultySprite->getContentSize().width / 2 + 7, -7});
+                    starIcon->setScale(0.53f);
+                    starIcon->setID("rl-star-icon");
+                    sprite->addChild(starIcon);
+                    
+                    auto starLabel = CCLabelBMFont::create(numToString(difficulty).c_str(), "bigFont.fnt");
+                    starLabel->setID("rl-star-label");
+                    starLabel->setPosition({starIcon->getPositionX() - 7, starIcon->getPositionY()});
+                    starLabel->setScale(0.4f);
+                    starLabel->setAnchorPoint({1.0f, 0.5f});
+                    starLabel->setAlignment(kCCTextAlignmentRight);
+                    sprite->addChild(starLabel);
+                    
+                    // another hacky fix
+                    starIcon->setPosition({difficultySprite->getContentSize().width / 2 + 7, -7});
+                    starLabel->setPosition({starIcon->getPositionX() - 7, starIcon->getPositionY()});
+                    
+                    // absolute hack to reposition stars after a short delay
+                    Ref<CCSprite> starIconRef = starIcon;
+                    Ref<CCLabelBMFont> starLabelRef = starLabel;
+                    Ref<CCNode> diffSpriteRef = difficultySprite;
+                    
+                    auto delayAction = CCDelayTime::create(0.1f);
+                    auto callFunc = CCCallFunc::create(layerRef, callfunc_selector(RLLevelInfoLayer::repositionStars));
+                    auto sequence = CCSequence::create(delayAction, callFunc, nullptr);
+                    layerRef->runAction(sequence);
+                    
+                    // Update featured coin position
                     auto featureCoin = sprite->getChildByID("featured-coin");
-                    
-                    // oka the feature coin does work correctly so this is fine
                     if (featureCoin)
                     {
                         featureCoin->setPosition({difficultySprite->getContentSize().width / 2, difficultySprite->getContentSize().height / 2});
-                    }
-
-                    // but the star icon and label dont want to cooperate ;-;
-                    if (starIcon)
-                    {
-                        starIcon->setPosition({difficultySprite->getContentSize().width / 2 + 7, -7});
-                    }
-                    
-                    if (starLabel)
-                    {
-                        starLabel->setPosition({starIcon->getPositionX() - 7, starIcon->getPositionY()});
                     }
                 } });
         }
@@ -504,6 +588,27 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer)
         else
         {
             Notification::create("You do not have the required role to perform this action", NotificationIcon::Error)->show();
+        }
+    }
+
+    // bruh
+    void repositionStars()
+    {
+        auto difficultySprite = this->getChildByID("difficulty-sprite");
+        if (difficultySprite)
+        {
+            auto starIcon = difficultySprite->getChildByID("rl-star-icon");
+            auto starLabel = difficultySprite->getChildByID("rl-star-label");
+
+            if (starIcon)
+            {
+                starIcon->setPosition({difficultySprite->getContentSize().width / 2 + 7, -7});
+            }
+
+            if (starLabel)
+            {
+                starLabel->setPosition({starIcon->getPositionX() - 7, starIcon->getPositionY()});
+            }
         }
     }
 

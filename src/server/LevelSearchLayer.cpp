@@ -258,12 +258,14 @@ class $modify(RLLevelSearchLayer, LevelSearchLayer)
                             CCDirector::sharedDirector()->pushScene(transitionFade);
                         } else {
                             log::warn("No levels found in response");
+                            Notification::create("No levels found", NotificationIcon::Warning)->show();
                         }
                     } else {
                         log::error("Failed to parse response JSON");
                     }
                 } else {
                     log::error("Failed to fetch levels from server");
+                    Notification::create("Failed to fetch levels from server", NotificationIcon::Error)->show();
                 } });
     }
 };
