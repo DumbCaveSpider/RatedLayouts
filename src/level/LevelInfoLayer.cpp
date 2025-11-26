@@ -383,7 +383,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                         starIcon = CCSprite::create("rlStarIcon.png"_spr);
                         starIcon->setPosition(
                             {difficultySprite2->getContentSize().width / 2 + 7, -7});
-                        starIcon->setScale(0.53f);
+                        starIcon->setScale(0.75f);
                         starIcon->setID("rl-star-icon");
                         difficultySprite2->addChild(starIcon);
                   } else {
@@ -625,9 +625,8 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                         sprite->setPositionY(sprite->getPositionY() + 10);
                   }
 
-                  // RECREATE: Create fresh star icon and label
                   auto starIcon = CCSprite::create("rlStarIcon.png"_spr);
-                  starIcon->setScale(0.53f);
+                  starIcon->setScale(0.75f);
                   starIcon->setID("rl-star-icon");
                   sprite->addChild(starIcon);
 

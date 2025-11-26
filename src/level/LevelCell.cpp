@@ -206,7 +206,7 @@ class $modify(LevelCell) {
     if (newStarIcon) {
       newStarIcon->setPosition(
           {difficultySprite->getContentSize().width / 2 + 8, -8});
-      newStarIcon->setScale(0.53f);
+      newStarIcon->setScale(0.75f);
       newStarIcon->setID("rl-star-icon");
       difficultySprite->addChild(newStarIcon);
 

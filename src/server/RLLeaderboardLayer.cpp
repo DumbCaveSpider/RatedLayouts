@@ -94,8 +94,7 @@ void RLLeaderboardLayer::onInfoButton(CCObject* sender) {
       MDPopup::create(
           "Rated Layouts Leaderboard",
           "The leaderboard shows the top players in <cb>Rated Layouts</cb> based "
-          "on <cl>Stars</cl> or <cl>Creator Points</cl>.\n<cr>Usernames are only "
-          "shown when you viewed their name already</cr>",
+          "on <cl>Stars</cl> or <cl>Creator Points</cl>.",
           "OK")
           ->show();
 }
@@ -277,10 +276,11 @@ void RLLeaderboardLayer::populateLeaderboard(
             scoreLabelText->setAnchorPoint({1.f, 0.5f});
             cell->addChild(scoreLabelText);
 
-            const char* iconName = (m_starsTab->isToggled()) ? "rlStarIcon.png"_spr
-                                                             : "rlhammerIcon.png"_spr;
+            const bool isStar = m_starsTab->isToggled();
+            const char* iconName = isStar ? "rlStarIcon.png"_spr : "rlhammerIcon.png"_spr;
             auto iconSprite = CCSprite::create(iconName);
-            iconSprite->setScale(0.65f);
+            float iconScale = isStar ? 1.0f : 0.65f;
+            iconSprite->setScale(iconScale);
             iconSprite->setPosition({325.f, 20.f});
             iconSprite->setAnchorPoint({0.f, 0.5f});
             cell->addChild(iconSprite);
