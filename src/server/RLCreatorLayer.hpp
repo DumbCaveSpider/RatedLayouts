@@ -19,6 +19,11 @@ class RLCreatorLayer : public CCLayer {
       std::vector<CCSprite*> m_bgTiles;
       CCNode* m_groundContainer = nullptr;
       std::vector<CCSprite*> m_groundTiles;
+      std::vector<CCSprite*> m_bgDecorations;
+      float m_decoGridX = 30.f;
+      float m_decoGridY = 30.f;
+      int m_decoCols = 0;
+      int m_decoRows = 0;
       CCNode* m_floorContainer = nullptr;
       std::vector<CCSprite*> m_floorTiles;
       float m_bgSpeed = 40.f;     // pixels per second
