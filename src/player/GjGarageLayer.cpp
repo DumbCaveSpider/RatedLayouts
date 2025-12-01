@@ -9,6 +9,7 @@ using namespace geode::prelude;
 class $modify(GJGarageLayer) {
       struct Fields {
             CCNode* myStatItem = nullptr;
+            int storedStars = 0;
       };
 
       bool init() {
@@ -22,7 +23,7 @@ class $modify(GJGarageLayer) {
             auto starSprite = CCSprite::create("rlStarIconMed.png"_spr);
             auto myStatItem = StatsDisplayAPI::getNewItem(
                 "blueprint-stars"_spr, starSprite,
-                Mod::get()->getSavedValue<int>("stars"), 0.54f);
+                m_fields->storedStars, 0.54f);
 
             m_fields->myStatItem = myStatItem;
 
@@ -91,6 +92,7 @@ class $modify(GJGarageLayer) {
                   // store the values into the saved value
                   Mod::get()->setSavedValue("stars", stars);
                   Mod::get()->setSavedValue("points", points);
+                  m_fields->storedStars = stars;
             });
       }
 };

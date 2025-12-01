@@ -40,33 +40,18 @@ class $modify(RLProfilePage, ProfilePage) {
                 statsMenu->getChildByID("blueprint-stars-container");
             auto layoutPointsContainer =
                 statsMenu->getChildByID("layout-points-container");
+            auto blueprintStars = statsMenu->getChildByID("blueprint-stars-icon");
+            auto layoutPoints =
+                statsMenu->getChildByID("layout-points-icon");
 
-            // If blueprint container exists
-            if (blueprintStarsContainer) {
-                  auto existingLabel =
-                      typeinfo_cast<CCLabelBMFont*>(
-                          blueprintStarsContainer->getChildByID("label"));
-                  if (existingLabel) {
-                        m_fields->blueprintStarsCount = existingLabel;
-                  }
-            }
-
-            // If layout points container exists
-            if (layoutPointsContainer) {
-                  auto existingLPLabel =
-                      typeinfo_cast<CCLabelBMFont*>(
-                          layoutPointsContainer->getChildByID("label"));
-                  if (existingLPLabel) {
-                        m_fields->layoutPointsCount = existingLPLabel;
-                  }
-            }
-
-            if (blueprintStarsContainer && layoutPointsContainer) {
-                  log::info("stars and points exist");
-                  if (score) {
-                        fetchProfileData(score->m_accountID);
-                  }
-                  return;
+            if (blueprintStarsContainer || layoutPointsContainer) {
+                  if (blueprintStarsContainer)
+                        blueprintStarsContainer->removeFromParent();
+                  if (blueprintStars) blueprintStars->removeFromParent();
+                  if (layoutPointsContainer)
+                        layoutPointsContainer->removeFromParent();
+                  if (layoutPoints) layoutPoints->removeFromParent();
+                  log::info("recreating blueprint stars and layout points containers");
             }
 
             log::info("adding the blueprint stars stats");
@@ -81,7 +66,7 @@ class $modify(RLProfilePage, ProfilePage) {
                           .1f);  // geode limit node size thingy blep
 
             auto container = CCNode::create();
-            float bsWidth = blueprintStarsCount->getContentSize().width * blueprintStarsCount->getScaleX() + 5.f;
+            float bsWidth = blueprintStarsCount->getContentSize().width * blueprintStarsCount->getScaleX();
             if (bsWidth > 50.f) bsWidth = 50.f;
             container->setContentSize({bsWidth, 19.5f});
             container->setID("blueprint-stars-container");
@@ -90,14 +75,16 @@ class $modify(RLProfilePage, ProfilePage) {
             container->setAnchorPoint({1.f, .5f});
             statsMenu->addChild(container);
 
-            auto blueprintStars = CCSprite::create("rlStarIconMed.png"_spr);
-            if (blueprintStars) {
-                  blueprintStars->setID("blueprint-stars-icon");
-                  blueprintStars->setScale(1.0f);
-                  statsMenu->addChild(blueprintStars);
+            if (!blueprintStars) {
+                  blueprintStars = CCSprite::create("rlStarIconMed.png"_spr);
+                  if (blueprintStars) {
+                        blueprintStars->setID("blueprint-stars-icon");
+                        blueprintStars->setScale(1.0f);
+                        statsMenu->addChild(blueprintStars);
+                  }
             }
 
-            m_fields->blueprintStarsCount = blueprintStarsCount;
+            m_fields->blueprintStarsCount = nullptr;
             m_fields->layoutPointsCount = nullptr;
 
             if (score) {
@@ -220,7 +207,6 @@ class $modify(RLProfilePage, ProfilePage) {
                         statsMenu->addChild(blueprintStars);
                   }
 
-                  pageRef->m_fields->blueprintStarsCount = blueprintStarsCount;
                   if (points > 0) {
                         auto layoutPointsCount =
                             CCLabelBMFont::create(numToString(points).c_str(), "bigFont.fnt");

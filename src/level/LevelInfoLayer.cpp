@@ -299,12 +299,12 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                                     rewardLayer->m_starsLabel->setString(
                                         numToString(displayStars).c_str());
                                     rewardLayer->m_stars = displayStars;
-                                    rewardLayer->m_starsSprite = CCSprite::create("rlStarIcon.png"_spr);
+                                    rewardLayer->m_starsSprite = CCSprite::create("rlStarIconMed.png"_spr);
 
                                     if (auto node =
                                             rewardLayer->m_mainNode->getChildByType<CCSprite*>(0)) {
                                           node->setDisplayFrame(
-                                              CCSprite::create("rlStarIcon.png"_spr)->displayFrame());
+                                              CCSprite::create("rlStarIconMed.png"_spr)->displayFrame());
                                           node->setScale(1.f);
                                     }
 

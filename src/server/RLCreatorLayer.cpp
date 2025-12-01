@@ -1,5 +1,6 @@
 #include "RLCreatorLayer.hpp"
 
+#include <Geode/ui/GeodeUI.hpp>
 #include <algorithm>
 #include <deque>
 #include <random>
@@ -8,11 +9,19 @@
 #include "RLCreditsPopup.hpp"
 #include "RLLeaderboardLayer.hpp"
 
+using namespace geode::prelude;
+
 bool RLCreatorLayer::init() {
       if (!CCLayer::init())
             return false;
 
       auto winSize = CCDirector::sharedDirector()->getWinSize();
+
+      // create if moving bg disabled
+      if (Mod::get()->getSettingValue<bool>("disableBackground") == true) {
+            auto bg = createLayerBG();
+            addChild(bg, -1);
+      }
 
       addSideArt(this, SideArt::All, SideArtStyle::LayerGray, false);
 
@@ -25,6 +34,18 @@ bool RLCreatorLayer::init() {
           backButtonSpr, this, menu_selector(RLCreatorLayer::onBackButton));
       backButton->setPosition({25, winSize.height - 25});
       backMenu->addChild(backButton);
+
+      auto modSettingsBtnSprite = CircleButtonSprite::createWithSpriteFrameName(
+          // @geode-ignore(unknown-resource)
+          "geode.loader/settings.png",
+          1.f,
+          CircleBaseColor::Green,
+          CircleBaseSize::Medium);
+          modSettingsBtnSprite->setScale(0.75f);
+      auto settingsButton = CCMenuItemSpriteExtra::create(
+          modSettingsBtnSprite, this, menu_selector(RLCreatorLayer::onSettingsButton));
+      settingsButton->setPosition({winSize.width - 25, winSize.height - 25});
+      backMenu->addChild(settingsButton);
       this->addChild(backMenu);
 
       auto mainMenu = CCMenu::create();
@@ -80,11 +101,13 @@ bool RLCreatorLayer::init() {
 
       mainMenu->updateLayout();
 
-      auto mainMenuBg = CCScale9Sprite::create("square02_001.png");
-      mainMenuBg->setContentSize(mainMenu->getContentSize());
-      mainMenuBg->setAnchorPoint({0, 0});
-      mainMenuBg->setOpacity(150);
-      mainMenu->addChild(mainMenuBg, -1);
+      if (Mod::get()->getSettingValue<bool>("disableBackground") == false) {
+            auto mainMenuBg = CCScale9Sprite::create("square02_001.png");
+            mainMenuBg->setContentSize(mainMenu->getContentSize());
+            mainMenuBg->setAnchorPoint({0, 0});
+            mainMenuBg->setOpacity(150);
+            mainMenu->addChild(mainMenuBg, -1);
+      }
 
       // info button at the bottom left
       auto infoMenu = CCMenu::create();
@@ -109,57 +132,63 @@ bool RLCreatorLayer::init() {
       // idk how gd actually does it correctly but this is close enough i guess
       m_bgContainer = CCNode::create();
       m_bgContainer->setContentSize(winSize);
-      this->addChild(m_bgContainer, -4);
+      this->addChild(m_bgContainer, -7);
 
-      std::string bgName = "game_bg_01_001.png";
-      auto testBg = CCSprite::create(bgName.c_str());
-      if (!testBg) {
-            testBg = CCSprite::create("game_bg_01_001.png");
-      }
-      if (testBg) {
-            float tileW = testBg->getContentSize().width;
-            int tiles = static_cast<int>(ceil(winSize.width / tileW)) + 2;
-            for (int i = 0; i < tiles; ++i) {
-                  auto bgSpr = CCSprite::create(bgName.c_str());
-                  if (!bgSpr) bgSpr = CCSprite::create("game_bg_01_001.png");
-                  if (!bgSpr) continue;
-                  bgSpr->setAnchorPoint({0.f, 0.f});
-                  bgSpr->setPosition({i * tileW, 0.f});
-                  bgSpr->setColor({40, 125, 255});
-                  m_bgContainer->addChild(bgSpr);
-                  m_bgTiles.push_back(bgSpr);
+      if (Mod::get()->getSettingValue<bool>("disableBackground") == false) {
+            std::string bgName = "game_bg_01_001.png";
+            auto testBg = CCSprite::create(bgName.c_str());
+            if (!testBg) {
+                  testBg = CCSprite::create("game_bg_01_001.png");
             }
-      }
-
-      m_groundContainer = CCNode::create();
-      m_groundContainer->setContentSize(winSize);
-      this->addChild(m_groundContainer, -3);
-
-      std::string groundName = "groundSquare_01_001.png";
-      auto testGround = CCSprite::create(groundName.c_str());
-      if (!testGround) testGround = CCSprite::create("groundSquare_01_001.png");
-      if (testGround) {
-            float tileW = testGround->getContentSize().width;
-            int tiles = static_cast<int>(ceil(winSize.width / tileW)) + 2;
-            for (int i = 0; i < tiles; ++i) {
-                  auto gSpr = CCSprite::create(groundName.c_str());
-                  if (!gSpr) gSpr = CCSprite::create("groundSquare_01_001.png");
-                  if (!gSpr) continue;
-                  gSpr->setAnchorPoint({0.f, 0.f});
-                  gSpr->setPosition({i * tileW, -70.f});
-                  gSpr->setColor({0, 102, 255});
-                  m_groundContainer->addChild(gSpr);
-                  m_groundTiles.push_back(gSpr);
+            if (testBg) {
+                  float tileW = testBg->getContentSize().width;
+                  int tiles = static_cast<int>(ceil(winSize.width / tileW)) + 2;
+                  for (int i = 0; i < tiles; ++i) {
+                        auto bgSpr = CCSprite::create(bgName.c_str());
+                        if (!bgSpr) bgSpr = CCSprite::create("game_bg_01_001.png");
+                        if (!bgSpr) continue;
+                        bgSpr->setAnchorPoint({0.f, 0.f});
+                        bgSpr->setPosition({i * tileW, 0.f});
+                        bgSpr->setColor({40, 125, 255});
+                        m_bgContainer->addChild(bgSpr);
+                        m_bgTiles.push_back(bgSpr);
+                  }
             }
-      }
 
-      auto floorLineSpr = CCSprite::createWithSpriteFrameName("floorLine_01_001.png");
-      floorLineSpr->setPosition({winSize.width / 2, 58});
-      m_groundContainer->addChild(floorLineSpr, 0);
+            m_groundContainer = CCNode::create();
+            m_groundContainer->setContentSize(winSize);
+            this->addChild(m_groundContainer, -5);
+
+            std::string groundName = "groundSquare_01_001.png";
+            auto testGround = CCSprite::create(groundName.c_str());
+            if (!testGround) testGround = CCSprite::create("groundSquare_01_001.png");
+            if (testGround) {
+                  float tileW = testGround->getContentSize().width;
+                  int tiles = static_cast<int>(ceil(winSize.width / tileW)) + 2;
+                  for (int i = 0; i < tiles; ++i) {
+                        auto gSpr = CCSprite::create(groundName.c_str());
+                        if (!gSpr) gSpr = CCSprite::create("groundSquare_01_001.png");
+                        if (!gSpr) continue;
+                        gSpr->setAnchorPoint({0.f, 0.f});
+                        gSpr->setPosition({i * tileW, -70.f});
+                        gSpr->setColor({0, 102, 255});
+                        m_groundContainer->addChild(gSpr);
+                        m_groundTiles.push_back(gSpr);
+                  }
+            }
+
+            auto floorLineSpr = CCSprite::createWithSpriteFrameName("floorLine_01_001.png");
+            floorLineSpr->setPosition({winSize.width / 2, 58});
+            m_groundContainer->addChild(floorLineSpr, -4);
+      }
 
       this->scheduleUpdate();
       this->setKeypadEnabled(true);
       return true;
+}
+
+void RLCreatorLayer::onSettingsButton(CCObject* sender) {
+      openSettingsPopup(getMod());
 }
 
 void RLCreatorLayer::onUnknownButton(CCObject* sender) {

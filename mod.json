@@ -39,5 +39,13 @@
 		"interface",
 		"enhancement",
 		"gameplay"
-	]
+	], 
+	"settings": {
+		"disableBackground": {
+			"name": "Disable Moving Background",
+			"type": "bool",
+			"default": false,
+			"description": "Disable the background in the Rated Layouts Creator Layer"
+		}
+	}
 }

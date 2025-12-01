@@ -2,6 +2,9 @@
 
 - Added User logs and control panel (for moderators and admins)
 - Added credits or layout moderators and admins list
+- Added an settings to disable the background decoration in the Rated Layouts Creator Layer
+- Removed the background decoration
+- Minor fixes
 
 # v0.1.7-beta.1
 

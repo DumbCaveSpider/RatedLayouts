@@ -17,6 +17,7 @@ class RLCreatorLayer : public CCLayer {
       void onInfoButton(CCObject* sender);
       void onUnknownButton(CCObject* sender);
       void onCreditsButton(CCObject* sender);
+      void onSettingsButton(CCObject* sender);
 
       CCNode* m_bgContainer = nullptr;
       std::vector<CCSprite*> m_bgTiles;

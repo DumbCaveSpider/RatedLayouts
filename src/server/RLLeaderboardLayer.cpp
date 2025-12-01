@@ -6,57 +6,64 @@ bool RLLeaderboardLayer::init() {
 
       auto winSize = CCDirector::sharedDirector()->getWinSize();
 
+      // create if moving bg disabled
+      if (Mod::get()->getSettingValue<bool>("disableBackground") == true) {
+            auto bg = createLayerBG();
+            addChild(bg, -1);
+      }
+
       // test the ground moving thingy :o
       // idk how gd actually does it correctly but this is close enough i guess
-      m_bgContainer = CCNode::create();
-      m_bgContainer->setContentSize(winSize);
-      this->addChild(m_bgContainer, -4);
-
-      std::string bgName = "game_bg_01_001.png";
-      auto testBg = CCSprite::create(bgName.c_str());
-      if (!testBg) {
-            testBg = CCSprite::create("game_bg_01_001.png");
-      }
-      if (testBg) {
-            float tileW = testBg->getContentSize().width;
-            int tiles = static_cast<int>(ceil(winSize.width / tileW)) + 2;
-            for (int i = 0; i < tiles; ++i) {
-                  auto bgSpr = CCSprite::create(bgName.c_str());
-                  if (!bgSpr) bgSpr = CCSprite::create("game_bg_01_001.png");
-                  if (!bgSpr) continue;
-                  bgSpr->setAnchorPoint({0.f, 0.f});
-                  bgSpr->setPosition({i * tileW, 0.f});
-                  bgSpr->setColor({40, 125, 255});
-                  m_bgContainer->addChild(bgSpr);
-                  m_bgTiles.push_back(bgSpr);
+      if (Mod::get()->getSettingValue<bool>("disableBackground") == false) {
+            m_bgContainer = CCNode::create();
+            m_bgContainer->setContentSize(winSize);
+            this->addChild(m_bgContainer, -7);
+            std::string bgName = "game_bg_01_001.png";
+            auto testBg = CCSprite::create(bgName.c_str());
+            if (!testBg) {
+                  testBg = CCSprite::create("game_bg_01_001.png");
             }
-      }
-
-      m_groundContainer = CCNode::create();
-      m_groundContainer->setContentSize(winSize);
-      this->addChild(m_groundContainer, -3);
-
-      std::string groundName = "groundSquare_01_001.png";
-      auto testGround = CCSprite::create(groundName.c_str());
-      if (!testGround) testGround = CCSprite::create("groundSquare_01_001.png");
-      if (testGround) {
-            float tileW = testGround->getContentSize().width;
-            int tiles = static_cast<int>(ceil(winSize.width / tileW)) + 2;
-            for (int i = 0; i < tiles; ++i) {
-                  auto gSpr = CCSprite::create(groundName.c_str());
-                  if (!gSpr) gSpr = CCSprite::create("groundSquare_01_001.png");
-                  if (!gSpr) continue;
-                  gSpr->setAnchorPoint({0.f, 0.f});
-                  gSpr->setPosition({i * tileW, -70.f});
-                  gSpr->setColor({0, 102, 255});
-                  m_groundContainer->addChild(gSpr);
-                  m_groundTiles.push_back(gSpr);
+            if (testBg) {
+                  float tileW = testBg->getContentSize().width;
+                  int tiles = static_cast<int>(ceil(winSize.width / tileW)) + 2;
+                  for (int i = 0; i < tiles; ++i) {
+                        auto bgSpr = CCSprite::create(bgName.c_str());
+                        if (!bgSpr) bgSpr = CCSprite::create("game_bg_01_001.png");
+                        if (!bgSpr) continue;
+                        bgSpr->setAnchorPoint({0.f, 0.f});
+                        bgSpr->setPosition({i * tileW, 0.f});
+                        bgSpr->setColor({40, 125, 255});
+                        m_bgContainer->addChild(bgSpr);
+                        m_bgTiles.push_back(bgSpr);
+                  }
             }
-      }
 
-      auto floorLineSpr = CCSprite::createWithSpriteFrameName("floorLine_01_001.png");
-      floorLineSpr->setPosition({winSize.width / 2, 58});
-      m_groundContainer->addChild(floorLineSpr, 0);
+            m_groundContainer = CCNode::create();
+            m_groundContainer->setContentSize(winSize);
+            this->addChild(m_groundContainer, -5);
+
+            std::string groundName = "groundSquare_01_001.png";
+            auto testGround = CCSprite::create(groundName.c_str());
+            if (!testGround) testGround = CCSprite::create("groundSquare_01_001.png");
+            if (testGround) {
+                  float tileW = testGround->getContentSize().width;
+                  int tiles = static_cast<int>(ceil(winSize.width / tileW)) + 2;
+                  for (int i = 0; i < tiles; ++i) {
+                        auto gSpr = CCSprite::create(groundName.c_str());
+                        if (!gSpr) gSpr = CCSprite::create("groundSquare_01_001.png");
+                        if (!gSpr) continue;
+                        gSpr->setAnchorPoint({0.f, 0.f});
+                        gSpr->setPosition({i * tileW, -70.f});
+                        gSpr->setColor({0, 102, 255});
+                        m_groundContainer->addChild(gSpr);
+                        m_groundTiles.push_back(gSpr);
+                  }
+            }
+
+            auto floorLineSpr = CCSprite::createWithSpriteFrameName("floorLine_01_001.png");
+            floorLineSpr->setPosition({winSize.width / 2, 58});
+            m_groundContainer->addChild(floorLineSpr, -4);
+      }
 
       addSideArt(this, SideArt::All, SideArtStyle::Layer, false);
 

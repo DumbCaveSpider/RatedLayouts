@@ -167,7 +167,7 @@ class $modify(EndLevelLayer) {
                                         numToString(displayStars).c_str());
                                     rewardLayer->m_stars = displayStars;
                                     rewardLayer->m_starsSprite =
-                                        CCSprite::create("rlStarIcon.png"_spr);
+                                        CCSprite::create("rlStarIconMed.png"_spr);
 
                                     // Replace the main display sprite
                                     if (auto node = rewardLayer->m_mainNode
