@@ -443,6 +443,14 @@ void RLSearchLayer::onFeaturedToggle(CCObject* sender) {
       if (!item) return;
       // toggle the featured filter state
       m_featuredActive = !m_featuredActive;
+      // featured and awarded are mutually exclusive yes
+      if (m_featuredActive && m_awardedActive) {
+            m_awardedActive = false;
+            if (m_awardedItem) {
+                  auto awardedNormal = static_cast<ButtonSprite*>(m_awardedItem->getNormalImage());
+                  if (awardedNormal) awardedNormal->updateBGImage("GJ_button_01.png");
+            }
+      }
       // update visual state by changing the button's background image
       auto normalNode = item->getNormalImage();
       auto btn = static_cast<ButtonSprite*>(normalNode);
@@ -455,6 +463,14 @@ void RLSearchLayer::onAwardedToggle(CCObject* sender) {
       auto item = static_cast<CCMenuItemSpriteExtra*>(sender);
       if (!item) return;
       m_awardedActive = !m_awardedActive;
+      // featured and awarded are mutually exclusive yes
+      if (m_awardedActive && m_featuredActive) {
+            m_featuredActive = false;
+            if (m_featuredItem) {
+                  auto featuredNormal = static_cast<ButtonSprite*>(m_featuredItem->getNormalImage());
+                  if (featuredNormal) featuredNormal->updateBGImage("GJ_button_01.png");
+            }
+      }
       auto normalNode = item->getNormalImage();
       auto btn = static_cast<ButtonSprite*>(normalNode);
       if (btn) {
