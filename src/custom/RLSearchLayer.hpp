@@ -29,6 +29,9 @@ class RLSearchLayer : public CCLayer {
       // search input menu and text input
       CCMenu* m_searchInputMenu = nullptr;
       TextInput* m_searchInput = nullptr;
+      RowLayout* m_optionsLayout = nullptr;
+      CCMenuItemSpriteExtra* m_featuredItem = nullptr;
+      CCMenuItemSpriteExtra* m_awardedItem = nullptr;
 
       // difficulty filter buttons
       CCMenu* m_difficultyFilterMenu = nullptr;
@@ -42,6 +45,10 @@ class RLSearchLayer : public CCLayer {
       std::vector<CCMenuItemSpriteExtra*> m_demonMenuItems;
       std::vector<bool> m_demonSelected;
       bool m_demonModeActive = false;
+      bool m_featuredActive = false;
+      bool m_awardedActive = false;
+      void onAwardedToggle(CCObject* sender);
+      void onFeaturedToggle(CCObject* sender);
       void onDemonToggle(CCObject* sender);
       void onDemonDifficultyButton(CCObject* sender);
       void onDifficultyButton(CCObject* sender);

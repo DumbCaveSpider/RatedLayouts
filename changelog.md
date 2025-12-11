@@ -1,6 +1,6 @@
 # v0.2.2-beta.1
 
-- **Added Custom Search!** You can now search for Rated Layout Levels using various filters such as <cr>difficulty</c>, <co>length</co> and more!
+- **Added Custom Search!** You can now search for Rated Layout Levels using various filters such as <cr>difficulty</c>, <co>level type</co> and more!
 - Removed the Level Search Quick Menu from the Search Tab in favor of the custom search layer in the Rated Layouts Creator Layer.
 - Fixed the sprite not showing the correct star icon in the end level layer when claiming stars. 
 

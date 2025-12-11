@@ -114,6 +114,7 @@ bool RLSearchLayer::init() {
 
       // search input stuff would go here
       m_searchInputMenu = CCMenu::create();
+      m_searchInputMenu->setID("search-input-menu");
       m_searchInputMenu->setPosition({winSize.width / 2, winSize.height - 30});
       m_searchInputMenu->setContentSize({365.f, 40.f});
 
@@ -143,15 +144,20 @@ bool RLSearchLayer::init() {
 
       // difficulty selection
       m_difficultyFilterMenu = CCMenu::create();
+      m_difficultyFilterMenu->setID("difficulty-filter-menu");
       m_difficultyFilterMenu->setPosition({winSize.width / 2, winSize.height - 110});
       m_difficultyFilterMenu->setContentSize({400.f, 80.f});
-      // difficulty groups: singletons and grouped ratings
+      auto difficultyLabel = CCLabelBMFont::create("Difficulty Filter", "bigFont.fnt");
+      difficultyLabel->setScale(0.5f);
+      difficultyLabel->setPosition({winSize.width / 2, winSize.height - 60});
+      difficultyLabel->setAnchorPoint({0.5f, 0.5f});
+      this->addChild(difficultyLabel);
+      // difficulty groups
       std::vector<std::vector<int>> groups = {{1}, {2}, {3}, {4, 5}, {6, 7}, {8, 9}};
       m_difficultyGroups = groups;
-      // initialize selection vector with number of groups
       m_difficultySelected.assign(static_cast<int>(groups.size()), false);
 
-      // helper to map rating values to engine difficultyLevel
+      // helper to map rating values
       auto mapRatingToLevel = [](int rating) -> int {
             switch (rating) {
                   case 1:
@@ -183,11 +189,9 @@ bool RLSearchLayer::init() {
             int rep = group[0];
             int difficultyLevel = mapRatingToLevel(rep);
 
-            // Use Long variant for normal difficulties by default (per user request)
             auto difficultySprite = GJDifficultySprite::create(difficultyLevel, GJDifficultyName::Long);
             if (!difficultySprite) continue;
             difficultySprite->updateDifficultyFrame(difficultyLevel, GJDifficultyName::Long);
-            // unselected default color
             difficultySprite->setColor({125, 125, 125});
 
             std::string id;
@@ -220,6 +224,7 @@ bool RLSearchLayer::init() {
 
       // Create demon difficulties menu (10, 15, 20, 25, 30)
       m_demonFilterMenu = CCMenu::create();
+      m_demonFilterMenu->setID("demon-filter-menu");
       m_demonFilterMenu->setPosition(m_difficultyFilterMenu->getPosition());
       m_demonFilterMenu->setContentSize(m_difficultyFilterMenu->getContentSize());
 
@@ -284,27 +289,54 @@ bool RLSearchLayer::init() {
       demonToggle->setScale(1.0f);
       demonToggle->setID("demon-toggle");
 
-      auto toggleMenu = CCMenu::create();
-      toggleMenu->setPosition(m_difficultyFilterMenu->getPosition());
-      // position at the right edge
-      float toggleX = m_difficultyFilterMenu->getContentSize().width / 2 + 30.0f;
-      demonToggle->setPosition({toggleX, 0});
-      toggleMenu->addChild(demonToggle);
-      this->addChild(toggleMenu);
+      auto toggleMenuDemon = CCMenu::create();
+      toggleMenuDemon->setID("demon-toggle-menu");
+      toggleMenuDemon->setPosition(m_difficultyFilterMenu->getPosition());
+      demonToggle->setPosition({200, -40});
+      toggleMenuDemon->addChild(demonToggle);
+      this->addChild(toggleMenuDemon);
 
       this->addChild(m_difficultyFilterMenu);
 
       // options filter menu
       auto optionsMenu = CCMenu::create();
-      optionsMenu->setPosition({winSize.width / 2, 20});
-      optionsMenu->setAnchorPoint({0.f, 0.5f});
+      optionsMenu->setID("options-menu");
+      optionsMenu->setPosition({winSize.width / 2, 80});
       optionsMenu->setContentSize({400.f, 140.f});
+      optionsMenu->setLayout(RowLayout::create()
+                                 ->setGap(8.f)
+                                 ->setGrowCrossAxis(true)
+                                 ->setCrossAxisOverflow(false));
+      m_optionsLayout = static_cast<RowLayout*>(optionsMenu->getLayout());
       this->addChild(optionsMenu);
+      auto optionsLabel = CCLabelBMFont::create("Search Options", "bigFont.fnt");
+      optionsLabel->setPosition({winSize.width / 2, winSize.height - 160});
+      optionsLabel->setScale(0.5f);
+      this->addChild(optionsLabel);
       auto optionsMenuBg = CCScale9Sprite::create("square02_001.png");
       optionsMenuBg->setContentSize(optionsMenu->getContentSize());
-      optionsMenuBg->setPosition({0, optionsMenu->getContentSize().height / 2});
+      optionsMenuBg->setPosition(optionsMenu->getPosition());
       optionsMenuBg->setOpacity(100);
-      optionsMenu->addChild(optionsMenuBg);
+      this->addChild(optionsMenuBg, -1);
+
+      // featured button toggle
+      auto featuredSpr = ButtonSprite::create("Featured", "goldFont.fnt", "GJ_button_01.png");  // Use a single sprite button as a menu item instead of a toggler
+      auto featuredItem = CCMenuItemSpriteExtra::create(featuredSpr, this, menu_selector(RLSearchLayer::onFeaturedToggle));
+      featuredItem->setScale(1.0f);
+      featuredItem->setID("featured-toggle");
+      m_featuredItem = featuredItem;
+      optionsMenu->addChild(featuredItem);
+
+      // awarded button toggle
+      auto awardedSpr = ButtonSprite::create("Awarded", "goldFont.fnt", "GJ_button_01.png");
+      auto awardedItem = CCMenuItemSpriteExtra::create(awardedSpr, this, menu_selector(RLSearchLayer::onAwardedToggle));
+      awardedItem->setScale(1.0f);
+      awardedItem->setID("awarded-toggle");
+      m_awardedItem = awardedItem;
+      optionsMenu->addChild(awardedItem);
+      optionsMenu->updateLayout();
+
+      this->addChild(m_difficultyFilterMenu);
 
       this->setKeypadEnabled(true);
       this->scheduleUpdate();
@@ -313,7 +345,101 @@ bool RLSearchLayer::init() {
 }
 
 void RLSearchLayer::onSearchButton(CCObject* sender) {
-      // implement search functionality here
+      std::vector<int> selectedRatings;
+      if (m_demonModeActive) {
+            std::vector<int> demonRatings = {10, 15, 20, 25, 30};
+            for (int i = 0; i < static_cast<int>(m_demonSelected.size()); ++i) {
+                  if (m_demonSelected[i] && i < static_cast<int>(demonRatings.size())) {
+                        selectedRatings.push_back(demonRatings[i]);
+                  }
+            }
+      } else {
+            for (int gi = 0; gi < static_cast<int>(m_difficultySelected.size()); ++gi) {
+                  if (!m_difficultySelected[gi]) continue;
+                  if (gi >= static_cast<int>(m_difficultyGroups.size())) continue;
+                  for (auto r : m_difficultyGroups[gi]) selectedRatings.push_back(r);
+            }
+      }
+
+      // make list unique & sort
+      std::sort(selectedRatings.begin(), selectedRatings.end());
+      selectedRatings.erase(std::unique(selectedRatings.begin(), selectedRatings.end()), selectedRatings.end());
+
+      std::string difficultyParam;
+      for (size_t i = 0; i < selectedRatings.size(); ++i) {
+            if (i) difficultyParam += ",";
+            difficultyParam += numToString(selectedRatings[i]);
+      }
+
+      int featuredParam = m_featuredActive ? 1 : 0;
+      int awardedParam = m_awardedActive ? 1 : 0;
+      std::string queryParam = "";
+      if (m_searchInput) queryParam = m_searchInput->getString();
+
+      auto req = web::WebRequest();
+      if (!difficultyParam.empty()) req.param("difficulty", difficultyParam);
+      req.param("featured", numToString(featuredParam));
+      if (!queryParam.empty()) req.param("query", queryParam);
+      // include awarded flag (0 or 1)
+      req.param("awarded", numToString(awardedParam));
+      req.get("https://gdrate.arcticwoof.xyz/search").listen([this](web::WebResponse* res) {
+            if (!res || !res->ok()) {
+                  Notification::create("Search request failed", NotificationIcon::Error)->show();
+                  return;
+            }
+            auto jsonResult = res->json();
+            if (!jsonResult) {
+                  Notification::create("Failed to parse search response", NotificationIcon::Error)->show();
+                  return;
+            }
+            auto json = jsonResult.unwrap();
+            std::string levelIDs;
+            bool first = true;
+            if (json.contains("levelIds")) {
+                  auto arr = json["levelIds"];
+                  for (auto v : arr) {
+                        auto id = v.as<int>();
+                        if (!id) continue;
+                        if (!first) levelIDs += ",";
+                        levelIDs += numToString(id.unwrap());
+                        first = false;
+                  }
+            }
+            if (!levelIDs.empty()) {
+                  auto searchObject = GJSearchObject::create(SearchType::Type19, levelIDs);
+                  auto browserLayer = LevelBrowserLayer::create(searchObject);
+                  auto scene = CCScene::create();
+                  scene->addChild(browserLayer);
+                  auto transitionFade = CCTransitionFade::create(0.5f, scene);
+                  CCDirector::sharedDirector()->pushScene(transitionFade);
+            } else {
+                  Notification::create("No results returned", NotificationIcon::Warning)->show();
+            }
+      });
+}
+
+void RLSearchLayer::onFeaturedToggle(CCObject* sender) {
+      auto item = static_cast<CCMenuItemSpriteExtra*>(sender);
+      if (!item) return;
+      // toggle the featured filter state
+      m_featuredActive = !m_featuredActive;
+      // update visual state by changing the button's background image
+      auto normalNode = item->getNormalImage();
+      auto btn = static_cast<ButtonSprite*>(normalNode);
+      if (btn) {
+            btn->updateBGImage(m_featuredActive ? "GJ_button_02.png" : "GJ_button_01.png");
+      }
+}
+
+void RLSearchLayer::onAwardedToggle(CCObject* sender) {
+      auto item = static_cast<CCMenuItemSpriteExtra*>(sender);
+      if (!item) return;
+      m_awardedActive = !m_awardedActive;
+      auto normalNode = item->getNormalImage();
+      auto btn = static_cast<ButtonSprite*>(normalNode);
+      if (btn) {
+            btn->updateBGImage(m_awardedActive ? "GJ_button_02.png" : "GJ_button_01.png");
+      }
 }
 
 void RLSearchLayer::onDemonToggle(CCObject* sender) {

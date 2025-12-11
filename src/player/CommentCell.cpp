@@ -90,7 +90,7 @@ class $modify(RLCommentCell, CommentCell) {
 
             ccColor3B color;
             if (accountId == 7689052) {
-                  color = ccc3(94, 94, 215);  // ArcticWoof
+                  color = ccc3(150, 255, 255);  // ArcticWoof
             } else if (m_fields->role == 1) {
                   color = ccc3(0, 150, 255);  // mod comment color
             } else if (m_fields->role == 2) {
