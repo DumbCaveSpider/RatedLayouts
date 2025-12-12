@@ -16,6 +16,9 @@ private:
   GJDifficultySprite *m_difficultySprite;
   bool m_isDemonMode;
   bool m_isFeatured;
+  bool m_isEpicFeatured;
+  CCMenuItemToggler* m_featuredToggleItem;
+  CCMenuItemToggler* m_epicFeaturedToggleItem;
   CCMenu *m_normalButtonsContainer;
   CCMenu *m_demonButtonsContainer;
   CCNode *m_difficultyContainer;
@@ -30,5 +33,7 @@ private:
   void onToggleDemon(CCObject *sender);
   void onRatingButton(CCObject *sender);
   void onInfoButton(CCObject *sender);
+  void onSetEventButton(CCObject *sender);
+  void onToggleEpicFeatured(CCObject *sender);
   void updateDifficultySprite(int rating);
 };

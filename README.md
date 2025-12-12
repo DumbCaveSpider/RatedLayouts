@@ -19,11 +19,12 @@ This mod intergretes with the current rating system and improved <cr>Demon Ratin
 - **Moderator Badges**: Special badges for moderators to identify the layout moderators and admins!
 - **Lower Rating Standards**: Rating standards are more lenient compared to the official rating system, making it easier for levels to get rated.
 - **Leaderboard Integration**: Compete with other players on leaderboards for the most Blueprint Stars and Blueprint Creator Points!
+- **Event Rated Layout Levels**: New daily, weekly and monthly rated layout levels to showcase!
+- **Custom Search Filters**: Easily search for rated layout levels using various filters such as difficulty, level type, and more!
 
 ## Up-coming Features
 
 - **Custom Achievements**: Custom Achievements for completing rated layout levels and achieving milestones.
-- **Daily and Weekly Rated Layout Levels**: New daily and weekly demon rated layout levels to showcase!'
 - **Layout Gauntlets**: Special gauntlets (Level List) featuring themed rated layout levels for players to complete.
 
 <co>**Note:** This is currently in beta and expected to have some bugs and unfinished features. Please report any issues you encounter!</c>

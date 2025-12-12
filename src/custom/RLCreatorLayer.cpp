@@ -5,6 +5,7 @@
 #include <deque>
 #include <random>
 
+#include "../level/RLEventLayouts.hpp"
 #include "RLCreditsPopup.hpp"
 #include "RLLeaderboardLayer.hpp"
 #include "RLSearchLayer.hpp"
@@ -97,6 +98,13 @@ bool RLCreatorLayer::init() {
           searchSpr, this, menu_selector(RLCreatorLayer::onSearchLayouts));
       searchItem->setID("search-layouts-button");
       mainMenu->addChild(searchItem);
+
+      auto eventSpr = CCSprite::create("RL_eventLayoutsBtn.png"_spr);
+      if (!eventSpr) eventSpr = CCSprite::create("RL_eventLayoutsBtn.png"_spr);
+      auto eventItem = CCMenuItemSpriteExtra::create(
+          eventSpr, this, menu_selector(RLCreatorLayer::onEventLayouts));
+      eventItem->setID("event-layouts-button");
+      mainMenu->addChild(eventItem);
 
       // Try to use a grayscale sprite where available, but fallback to a regular sprite
       cocos2d::CCSprite* unknownSpr = CCSpriteGrayscale::create("RL_unknownBtn.png"_spr);
@@ -335,6 +343,11 @@ void RLCreatorLayer::onInfoButton(CCObject* sender) {
 void RLCreatorLayer::onCreditsButton(CCObject* sender) {
       auto creditsPopup = RLCreditsPopup::create();
       creditsPopup->show();
+}
+
+void RLCreatorLayer::onEventLayouts(CCObject* sender) {
+      auto eventPopup = RLEventLayouts::create();
+      eventPopup->show();
 }
 
 void RLCreatorLayer::onBackButton(CCObject* sender) {
@@ -577,7 +590,6 @@ void RLCreatorLayer::onSearchLayouts(CCObject* sender) {
       auto transitionFade = CCTransitionFade::create(0.5f, scene);
       CCDirector::sharedDirector()->pushScene(transitionFade);
 }
-
 
 RLCreatorLayer* RLCreatorLayer::create() {
       auto ret = new RLCreatorLayer();

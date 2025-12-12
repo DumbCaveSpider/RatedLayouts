@@ -148,7 +148,7 @@ RLStarsTotalPopup* RLStarsTotalPopup::create(int accountId) {
 };
 
 bool RLStarsTotalPopup::setup() {
-      setTitle("Rated Layouts Difficulty Stats");
+      setTitle("Rated Layouts Classic: -");
       auto contentSize = m_mainLayer->getContentSize();
       // spinner
       auto spinner = LoadingSpinner::create(36.f);
@@ -211,6 +211,11 @@ bool RLStarsTotalPopup::setup() {
                       counts[k] = json[numToString(k)].asInt().unwrapOrDefault();
                 }
                 thisRef->m_counts = counts;
+                int totalCount = 0;
+                for (auto const& kv : counts) {
+                      totalCount += kv.second;
+                }
+                thisRef->setTitle((std::string("Rated Layouts Classic: ") + numToString(totalCount)).c_str());
                 // remove loading label
                 if (thisRef->m_resultsLabel) {
                       thisRef->m_resultsLabel->removeFromParent();

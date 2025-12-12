@@ -236,18 +236,34 @@ class $modify(LevelCell) {
             }
 
             // Update featured coin visibility
-            if (featured == 1) {
+            {
                   auto featuredCoin = difficultySprite->getChildByID("featured-coin");
-                  if (!featuredCoin) {
-                        auto newFeaturedCoin = CCSprite::create("rlfeaturedCoin.png"_spr);
-                        newFeaturedCoin->setScale(0.95f);
-                        if (newFeaturedCoin) {
-                              newFeaturedCoin->setPosition(
-                                  {difficultySprite->getContentSize().width / 2,
-                                   difficultySprite->getContentSize().height / 2});
-                              newFeaturedCoin->setID("featured-coin");
-                              difficultySprite->addChild(newFeaturedCoin, -1);
+                  auto epicFeaturedCoin = difficultySprite->getChildByID("epic-featured-coin");
+                  if (featured == 1) {
+                        if (epicFeaturedCoin) epicFeaturedCoin->removeFromParent();
+                        if (!featuredCoin) {
+                              auto newFeaturedCoin = CCSprite::create("rlfeaturedCoin.png"_spr);
+                              if (newFeaturedCoin) {
+                                    newFeaturedCoin->setPosition({difficultySprite->getContentSize().width / 2,
+                                                                  difficultySprite->getContentSize().height / 2});
+                                    newFeaturedCoin->setID("featured-coin");
+                                    difficultySprite->addChild(newFeaturedCoin, -1);
+                              }
                         }
+                  } else if (featured == 2) {
+                        if (featuredCoin) featuredCoin->removeFromParent();
+                        if (!epicFeaturedCoin) {
+                              auto newEpicCoin = CCSprite::create("rlepicFeaturedCoin.png"_spr);
+                              if (newEpicCoin) {
+                                    newEpicCoin->setPosition({difficultySprite->getContentSize().width / 2,
+                                                              difficultySprite->getContentSize().height / 2});
+                                    newEpicCoin->setID("epic-featured-coin");
+                                    difficultySprite->addChild(newEpicCoin, -1);
+                              }
+                        }
+                  } else {
+                        if (featuredCoin) featuredCoin->removeFromParent();
+                        if (epicFeaturedCoin) epicFeaturedCoin->removeFromParent();
                   }
             }
 

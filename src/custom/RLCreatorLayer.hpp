@@ -15,6 +15,7 @@ class RLCreatorLayer : public CCLayer {
       void onNewRated(CCObject* sender);
       void onSendLayouts(CCObject* sender);
       void onInfoButton(CCObject* sender);
+      void onEventLayouts(CCObject* sender);
       void onUnknownButton(CCObject* sender);
       void onSearchLayouts(CCObject* sender);
       void onCreditsButton(CCObject* sender);

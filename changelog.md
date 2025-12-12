@@ -1,8 +1,9 @@
 # v0.2.3-beta.1
 
 - **Added Difficulty Stats!** You can view your difficulty stats in your profile page, including the number of levels you've beaten for each difficulty.
-- Added User Glow so you can easily identify comments from users using Rated Layouts mod.
-- Tweaked the Search Layer.
+- **Added User Comment Glow!** You can easily identify comments from users using Rated Layouts mod.
+- **Added Event Layouts!** Play daily, weekly, and monthly rated layouts curated by the Rated Layouts team and Admins.
+- Tweaks for Search Layer.
 
 # v0.2.2-beta.1
 

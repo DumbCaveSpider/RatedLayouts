@@ -464,20 +464,30 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             // Update featured coin visibility
             if (difficultySprite2) {
                   auto featuredCoin = difficultySprite2->getChildByID("featured-coin");
+                  auto epicFeaturedCoin = difficultySprite2->getChildByID("epic-featured-coin");
                   if (featured == 1) {
+                        // ensure epic is removed
+                        if (epicFeaturedCoin) epicFeaturedCoin->removeFromParent();
                         if (!featuredCoin) {
                               auto newFeaturedCoin = CCSprite::create("rlfeaturedCoin.png"_spr);
-                              newFeaturedCoin->setScale(0.95f);
-                              newFeaturedCoin->setPosition(
-                                  {difficultySprite2->getContentSize().width / 2,
-                                   difficultySprite2->getContentSize().height / 2});
+                              newFeaturedCoin->setPosition({difficultySprite2->getContentSize().width / 2,
+                                                            difficultySprite2->getContentSize().height / 2});
                               newFeaturedCoin->setID("featured-coin");
                               difficultySprite2->addChild(newFeaturedCoin, -1);
                         }
-                  } else {
-                        if (featuredCoin) {
-                              featuredCoin->removeFromParent();
+                  } else if (featured == 2) {
+                        // ensure standard is removed
+                        if (featuredCoin) featuredCoin->removeFromParent();
+                        if (!epicFeaturedCoin) {
+                              auto newEpicCoin = CCSprite::create("rlepicFeaturedCoin.png"_spr);
+                              newEpicCoin->setPosition({difficultySprite2->getContentSize().width / 2,
+                                                        difficultySprite2->getContentSize().height / 2});
+                              newEpicCoin->setID("epic-featured-coin");
+                              difficultySprite2->addChild(newEpicCoin, -1);
                         }
+                  } else {
+                        if (featuredCoin) featuredCoin->removeFromParent();
+                        if (epicFeaturedCoin) epicFeaturedCoin->removeFromParent();
                   }
             }
       }
@@ -660,10 +670,14 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
 
                   // Update featured coin position
                   auto featureCoin = sprite->getChildByID("featured-coin");
+                  auto epicFeatureCoin = sprite->getChildByID("epic-featured-coin");
                   if (featureCoin) {
-                        featureCoin->setPosition(
-                            {difficultySprite->getContentSize().width / 2,
-                             difficultySprite->getContentSize().height / 2});
+                        featureCoin->setPosition({difficultySprite->getContentSize().width / 2,
+                                                  difficultySprite->getContentSize().height / 2});
+                  }
+                  if (epicFeatureCoin) {
+                        epicFeatureCoin->setPosition({difficultySprite->getContentSize().width / 2,
+                                                      difficultySprite->getContentSize().height / 2});
                   }
 
                   // delayed reposition for stars after frame update to ensure
