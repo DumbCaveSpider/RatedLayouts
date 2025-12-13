@@ -291,11 +291,8 @@ bool RLEventLayouts::setup() {
                                           sec->spinner->setVisible(false);
                                           if (sec->playButton) sec->playButton->setVisible(true);
                                     }
-                                    // clear any pending flags
+                                    // clear background download flag
                                     selfRef->m_backgroundDownloads.erase(levelId);
-                                    selfRef->m_pendingDownloadsPlay.erase(levelId);
-                                    selfRef->m_loadedLevels.erase(levelId);
-                                    selfRef->m_pendingStartTimes.erase(levelId);
                               } else {
                                     // if a background download is pending, show spinner and disable play
                                     if (selfRef->m_backgroundDownloads.find(levelId) != selfRef->m_backgroundDownloads.end()) {
@@ -346,12 +343,12 @@ bool RLEventLayouts::setup() {
                                           if (!glm->hasDownloadedLevel(id)) {
                                                 selfRef->m_backgroundDownloads.insert(id);
                                                 // start background download and set spinner visible on UI if present
+                                                log::info("RLEventLayouts: Starting background download for level id {}", id);
                                                 glm->downloadLevel(id, false);
                                                 for (int j = 0; j < 3; ++j) {
                                                       if (selfRef->m_sections[j].levelId == id && selfRef->m_sections[j].spinner) {
                                                             selfRef->m_sections[j].spinner->setVisible(true);
                                                             if (selfRef->m_sections[j].playButton) selfRef->m_sections[j].playButton->setVisible(false);
-                                                            selfRef->m_pendingStartTimes[id] = std::chrono::steady_clock::now();
                                                             break;
                                                       }
                                                 }
@@ -395,51 +392,7 @@ void RLEventLayouts::update(float dt) {
             if (sec.timerLabel) sec.timerLabel->setString((timerPrefixes[i] + formatTime((long)sec.secondsLeft)).c_str());
       }
 
-      // Check user-initiated pending downloads and show LevelInfoLayer when complete
-      if (!m_pendingDownloadsPlay.empty()) {
-            std::vector<int> completed;
-            auto glm = GameLevelManager::sharedState();
-            for (auto id : m_pendingDownloadsPlay) {
-                  if (glm->hasDownloadedLevel(id)) {
-                        GJGameLevel* level = nullptr;
-                        auto it = m_loadedLevels.find(id);
-                        if (it != m_loadedLevels.end()) {
-                              level = it->second;
-                        } else {
-                              level = glm->getMainLevel(id, false);
-                        }
-                        if (level && level->m_levelID == id) {
-                              if (level->m_levelString.empty()) {
-                                    log::warn("Level {} reported downloaded but levelString empty; waiting...", id);
-                                    continue;
-                              }
-                              for (int i = 0; i < 3; ++i) {
-                                    if (m_sections[i].levelId == id && m_sections[i].playButton) {
-                                          m_sections[i].playButton->setEnabled(true);
-                                          if (m_sections[i].spinner) {
-                                                restoreUIForLevel(id);
-                                          }
-                                          break;
-                                    }
-                              }
-                              // prevent repeated pushes
-                              auto scene = LevelInfoLayer::scene(level, false);
-                              auto transitionFade = CCTransitionFade::create(0.5f, scene);
-                              CCDirector::sharedDirector()->pushScene(transitionFade);
-
-                              completed.push_back(id);
-                              break;
-                        }
-                  }
-            }
-            for (auto id : completed) {
-                  m_pendingDownloadsPlay.erase(id);
-                  m_loadedLevels.erase(id);
-                  m_pendingStartTimes.erase(id);
-            }
-      }
-
-      // Check background downloads and clear completed ones (no UI push)
+      // Check background downloads and clear completed ones
       if (!m_backgroundDownloads.empty()) {
             std::vector<int> bgCompleted;
             auto glm = GameLevelManager::sharedState();
@@ -452,77 +405,16 @@ void RLEventLayouts::update(float dt) {
                   m_backgroundDownloads.erase(id);
             }
       }
-
-      // Download timeout handling: any pending download older than 30s is considered failed
-      if (!m_pendingStartTimes.empty()) {
-            std::vector<int> timedOutIds;
-            auto now = std::chrono::steady_clock::now();
-            for (auto& [id, start] : m_pendingStartTimes) {
-                  auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - start).count();
-                  if (elapsed >= 30) {
-                        // if not downloaded yet, consider a failure
-                        auto glm = GameLevelManager::sharedState();
-                        if (!glm->hasDownloadedLevel(id)) {
-                              timedOutIds.push_back(id);
-                        } else {
-                              // download completed but not handled; let update() handle completion
-                              timedOutIds.push_back(id);
-                        }
-                  }
-            }
-            for (auto id : timedOutIds) {
-                  log::warn("Download timed out for level id {}", id);
-                  m_pendingStartTimes.erase(id);
-                  m_backgroundDownloads.erase(id);
-                  if (m_pendingDownloadsPlay.find(id) != m_pendingDownloadsPlay.end()) {
-                        m_pendingDownloadsPlay.erase(id);
-                        m_loadedLevels.erase(id);
-                        // re-enable UI and hide spinner
-                        for (int i = 0; i < 3; ++i) {
-                              if (m_sections[i].levelId == id) {
-                                    if (m_sections[i].playButton) m_sections[i].playButton->setEnabled(true);
-                                    if (m_sections[i].spinner) {
-                                          m_sections[i].spinner->setVisible(false);
-                                          if (m_sections[i].playButton) m_sections[i].playButton->setVisible(true);
-                                    }
-                                    break;
-                              }
-                        }
-                        Notification::create("Download timed out", NotificationIcon::Warning)->show();
-                  } else {
-                        // background download timed out
-                        for (int i = 0; i < 3; ++i) {
-                              if (m_sections[i].levelId == id) {
-                                    if (m_sections[i].spinner) {
-                                          m_sections[i].spinner->setVisible(false);
-                                          if (m_sections[i].playButton) m_sections[i].playButton->setVisible(true);
-                                    }
-                                    break;
-                              }
-                        }
-                  }
-            }
-      }
 }
 
 void RLEventLayouts::onDownloadCompleted(int id) {
       m_backgroundDownloads.erase(id);
-      m_pendingStartTimes.erase(id);
       restoreUIForLevel(id);
 }
 
 void RLEventLayouts::onDownloadFailed(int id) {
       m_backgroundDownloads.erase(id);
-      if (m_pendingDownloadsPlay.find(id) != m_pendingDownloadsPlay.end()) {
-            m_pendingDownloadsPlay.erase(id);
-            m_loadedLevels.erase(id);
-            m_pendingStartTimes.erase(id);
-            restoreUIForLevel(id);
-            Notification::create("Download failed", NotificationIcon::Error)->show();
-      } else {
-            // background download failed - just hide spinner and restore play button
-            restoreUIForLevel(id);
-      }
+      restoreUIForLevel(id);
 }
 
 void RLEventLayouts::restoreUIForLevel(int id) {
@@ -612,145 +504,43 @@ void RLEventLayouts::onPlayEvent(CCObject* sender) {
       int levelId = menuItem->getTag();
       if (levelId <= 0) return;
 
-      // Use GJSearchObject to check if already have an online level stored
+      // fetch level metadata and push to LevelInfoLayer scene
       auto searchObj = GJSearchObject::create(SearchType::Search, numToString(levelId));
       auto key = std::string(searchObj->getKey());
       auto glm = GameLevelManager::sharedState();
-      auto stored = glm->getStoredOnlineLevels(key.c_str());
 
+      // Check if we already have the level stored
+      auto stored = glm->getStoredOnlineLevels(key.c_str());
       if (stored && stored->count() > 0) {
             auto level = static_cast<GJGameLevel*>(stored->objectAtIndex(0));
             if (level && level->m_levelID == levelId) {
-                  // If already downloaded, go directly to LevelInfoLayer
-                  if (glm->hasDownloadedLevel(levelId)) {
-                        restoreUIForLevel(levelId);
-                        auto scene = LevelInfoLayer::scene(level, false);
-                        auto transitionFade = CCTransitionFade::create(0.5f, scene);
-                        CCDirector::sharedDirector()->pushScene(transitionFade);
-                        return;
-                  } else {
-                        // store metadata and initiate download; wait for completion to push
-                        m_loadedLevels[levelId] = level;
-                        m_pendingDownloadsPlay.insert(levelId);
-                        m_pendingStartTimes[levelId] = std::chrono::steady_clock::now();
-                        for (int i = 0; i < 3; ++i) {
-                              if (m_sections[i].levelId == levelId && m_sections[i].spinner) {
-                                    m_sections[i].spinner->setVisible(true);
-                                    if (m_sections[i].playButton) m_sections[i].playButton->setVisible(false);
-                                    break;
-                              }
-                        }
-                        if (!glm->hasDownloadedLevel(levelId)) {
-                              glm->downloadLevel(levelId, false);
-                        }
-                        // disable play button while loading
-                        for (int i = 0; i < 3; ++i) {
-                              if (m_sections[i].levelId == levelId && m_sections[i].playButton) {
-                                    m_sections[i].playButton->setEnabled(false);
-                                    break;
-                              }
-                        }
-                        return;
-                  }
+                  log::debug("RLEventLayouts: Opening LevelInfoLayer for level id {} (from cache)", levelId);
+                  auto scene = LevelInfoLayer::scene(level, false);
+                  auto transitionFade = CCTransitionFade::create(0.5f, scene);
+                  CCDirector::sharedDirector()->pushScene(transitionFade);
+                  return;
             }
       }
 
-      // start fetching online levels
-      if (m_pendingDownloadsPlay.find(levelId) == m_pendingDownloadsPlay.end()) {
-            m_pendingDownloadsPlay.insert(levelId);
-            m_pendingStartTimes[levelId] = std::chrono::steady_clock::now();
-            // disable play button while loading
-            for (int i = 0; i < 3; ++i) {
-                  if (m_sections[i].levelId == levelId && m_sections[i].playButton) {
-                        m_sections[i].playButton->setEnabled(false);
-                        if (m_sections[i].spinner) {
-                              m_sections[i].spinner->setVisible(true);
-                              if (m_sections[i].playButton) m_sections[i].playButton->setVisible(false);
-                        }
-                        break;
-                  }
+      // If not stored, fetch from server and push when ready
+      Ref<RLEventLayouts> selfRef = this;
+      g_onlineLevelsCallbacks[key].push_back([selfRef, levelId](cocos2d::CCArray* levels) {
+            if (!levels || levels->count() == 0) {
+                  Notification::create("Level not found", NotificationIcon::Error)->show();
+                  return;
             }
-            // get online levels for this level id (search by level id string)
-            auto searchObj = GJSearchObject::create(SearchType::Search, numToString(levelId));
-            auto key = std::string(searchObj->getKey());
-            // if the levels are already stored, use them directly
-            auto stored = GameLevelManager::sharedState()->getStoredOnlineLevels(key.c_str());
-            if (stored && stored->count() > 0) {
-                  // use first level in list
-                  auto lvl = static_cast<GJGameLevel*>(stored->objectAtIndex(0));
-                  if (lvl) {
-                        // if downloaded, re-enable button and open the LevelInfoLayer
-                        if (glm->hasDownloadedLevel(levelId)) {
-                              for (int i = 0; i < 3; ++i) {
-                                    if (m_sections[i].levelId == levelId && m_sections[i].playButton) {
-                                          restoreUIForLevel(levelId);
-                                          break;
-                                    }
-                              }
-                              m_pendingDownloadsPlay.erase(levelId);
-                              auto scene = LevelInfoLayer::scene(lvl, false);
-                              auto transitionFade = CCTransitionFade::create(0.5f, scene);
-                              CCDirector::sharedDirector()->pushScene(transitionFade);
-                        } else {
-                              // not downloaded: store metadata and start download
-                              m_loadedLevels[levelId] = lvl;
-                              m_pendingStartTimes[levelId] = std::chrono::steady_clock::now();
-                              for (int j = 0; j < 3; ++j) {
-                                    if (m_sections[j].levelId == levelId && m_sections[j].spinner) {
-                                          m_sections[j].spinner->setVisible(true);
-                                          if (m_sections[j].playButton) m_sections[j].playButton->setVisible(false);
-                                          break;
-                                    }
-                              }
-                              if (!glm->hasDownloadedLevel(levelId)) glm->downloadLevel(levelId, false);
-                        }
-                  }
-            } else {
-                  // register a callback to be invoked when getOnlineLevels completes
-                  Ref<RLEventLayouts> selfRef = this;
-                  g_onlineLevelsCallbacks[key].push_back([selfRef, levelId](cocos2d::CCArray* levels) {
-                        if (!levels || levels->count() == 0) return;
-                        auto lvl = static_cast<GJGameLevel*>(levels->objectAtIndex(0));
-                        if (!lvl) return;
-                        auto glm = GameLevelManager::sharedState();
-                        // store metadata for this level
-                        selfRef->m_loadedLevels[levelId] = lvl;
-                        // re-enable play button
-                        for (int i = 0; i < 3; ++i) {
-                              if (selfRef->m_sections[i].levelId == levelId && selfRef->m_sections[i].playButton) {
-                                    // enable only if level already downloaded else keep disabled
-                                    if (glm->hasDownloadedLevel(levelId)) {
-                                          selfRef->m_sections[i].playButton->setEnabled(true);
-                                          if (selfRef->m_sections[i].spinner) {
-                                                selfRef->m_sections[i].spinner->setVisible(false);
-                                                if (selfRef->m_sections[i].playButton) selfRef->m_sections[i].playButton->setVisible(true);
-                                          }
-                                    }
-                                    break;
-                              }
-                        }
-                        // if the level has been downloaded already, ensure levelString present before open
-                        if (glm->hasDownloadedLevel(levelId)) {
-                              auto mainLevel = glm->getMainLevel(levelId, false);
-                              if (mainLevel && !mainLevel->m_levelString.empty()) {
-                                    // restore UI before opening
-                                    selfRef->restoreUIForLevel(levelId);
-                                    selfRef->m_pendingDownloadsPlay.erase(levelId);
-                                    auto scene = LevelInfoLayer::scene(lvl, false);
-                                    auto transitionFade = CCTransitionFade::create(0.5f, scene);
-                                    CCDirector::sharedDirector()->pushScene(transitionFade);
-                                    selfRef->m_loadedLevels.erase(levelId);
-                              } else {
-                                    log::warn("Level {} downloaded but levelString not ready; will wait", levelId);
-                              }
-                        } else {
-                              // ensure download is started for this level
-                              if (!glm->hasDownloadedLevel(levelId)) glm->downloadLevel(levelId, false);
-                        }
-                  });
-                  GameLevelManager::sharedState()->getOnlineLevels(searchObj);
+            auto level = static_cast<GJGameLevel*>(levels->objectAtIndex(0));
+            if (!level || level->m_levelID != levelId) {
+                  Notification::create("Level ID mismatch", NotificationIcon::Warning)->show();
+                  return;
             }
-      }
+            log::debug("RLEventLayouts: Opening LevelInfoLayer for level id {} (from server)", levelId);
+            auto scene = LevelInfoLayer::scene(level, false);
+            auto transitionFade = CCTransitionFade::create(0.5f, scene);
+            CCDirector::sharedDirector()->pushScene(transitionFade);
+      });
+
+      glm->getOnlineLevels(searchObj);
 }
 
 // Hook LevelBrowserLayer::loadLevelsFinished to dispatch callbacks when online levels load

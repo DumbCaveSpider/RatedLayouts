@@ -1,3 +1,8 @@
+# v0.2.4-beta.1
+
+- Fixed issue with the event layouts loading the level incorrectly.
+- Fixed issue with the Search Background Menu not displaying correctly.
+
 # v0.2.3-beta.1
 
 - **Added Difficulty Stats!** You can view your difficulty stats in your profile page, including the number of levels you've beaten for each difficulty. (You can view them by clicking the Blueprint Stars icon in the profile page.)

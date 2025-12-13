@@ -97,6 +97,8 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             if (!LevelInfoLayer::init(level, challenge))
                   return false;
 
+            log::debug("LevelInfoLayer: entering for level id {}", level->m_levelID);
+
             int starRatings = level->m_stars;
             bool legitCompleted = level->m_isCompletionLegitimate;
             auto leftMenu = this->getChildByID("left-side-menu");

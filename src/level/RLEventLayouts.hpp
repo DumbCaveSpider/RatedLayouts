@@ -40,8 +40,5 @@ class RLEventLayouts : public geode::Popup<> {
       EventSection m_sections[3];
       CCLayer* m_eventMenu = nullptr;
       bool m_setupFinished = false;
-      std::unordered_set<int> m_pendingDownloadsPlay;  // user-initiated downloads waiting to open LevelInfoLayer
       std::unordered_set<int> m_backgroundDownloads;   // prefetch/background downloads
-      std::unordered_map<int, GJGameLevel*> m_loadedLevels;
-      std::unordered_map<int, std::chrono::steady_clock::time_point> m_pendingStartTimes;
 };
