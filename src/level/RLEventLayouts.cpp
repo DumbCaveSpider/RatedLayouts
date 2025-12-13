@@ -88,7 +88,7 @@ bool RLEventLayouts::setup() {
             if (starIcon) {
                   starIcon->setAnchorPoint({0.f, 0.5f});
                   starIcon->setScale(0.8f);
-                  starIcon->setPosition({difficultyValueLabel->getPositionX() + difficultyValueLabel->getContentSize().width * difficultyValueLabel->getScaleX() - 2.f, difficultyValueLabel->getPositionY()});
+                  starIcon->setPosition({difficultyValueLabel->getPositionX() + difficultyValueLabel->getContentSize().width * difficultyValueLabel->getScaleX() + 2.f, difficultyValueLabel->getPositionY()});
                   container->addChild(starIcon);
             }
             m_sections[i].starIcon = starIcon;
@@ -130,6 +130,19 @@ bool RLEventLayouts::setup() {
             diffSprite->setScale(0.8f);
             container->addChild(diffSprite);
             m_sections[i].diff = diffSprite;
+
+            // play button on the right side
+            auto playMenu = CCMenu::create();
+            playMenu->setPosition({0, 0});
+            auto playSprite = CCSprite::createWithSpriteFrameName("GJ_playBtn2_001.png");
+            if (!playSprite) playSprite = CCSprite::createWithSpriteFrameName("GJ_playBtn2_001.png");\
+            playSprite->setScale(0.5f);
+            auto playButton = CCMenuItemSpriteExtra::create(playSprite, this, menu_selector(RLEventLayouts::onPlayEvent));
+            playButton->setPosition({cellW - 32.f, cellH / 2 + 1.f});
+            playButton->setAnchorPoint({0.5f, 0.5f});
+            playMenu->addChild(playButton);
+            container->addChild(playMenu, 2);
+            m_sections[i].playButton = playButton;
       }
 
       this->scheduleUpdate();
@@ -190,7 +203,7 @@ bool RLEventLayouts::setup() {
 
                               // position star icon to the right
                               if (sec->starIcon) {
-                                    sec->starIcon->setPosition({diffX + diffWidth, nameLabel->getPositionY()});
+                                    sec->starIcon->setPosition({diffX + diffWidth + 3.f, nameLabel->getPositionY()});
                               }
                         }
                         if (sec->diff) {
@@ -227,6 +240,10 @@ bool RLEventLayouts::setup() {
                               sec->creatorButton->setTag(accountId);
                               sec->creatorButton->setPosition({55.f, 22.f});
                               sec->creatorButton->setContentSize({creatorLabel->getContentSize().width * creatorLabel->getScaleX(), 12.f});
+                        }
+                        // set level id on play button so we can download when clicked
+                        if (sec->playButton) {
+                              sec->playButton->setTag(levelId);
                         }
                         std::vector<std::string> timerPrefixes = {"Next Daily in ", "Next Weekly in ", "Next Monthly in "};
                         if (sec->timerLabel) sec->timerLabel->setString((timerPrefixes[idx] + formatTime((long)sec->secondsLeft)).c_str());
@@ -313,4 +330,8 @@ void RLEventLayouts::onCreatorClicked(CCObject* sender) {
       int accountId = menuItem->getTag();
       if (accountId <= 0) return;
       ProfilePage::create(accountId, false)->show();
+}
+
+void RLEventLayouts::onPlayEvent(CCObject* sender) {
+
 }

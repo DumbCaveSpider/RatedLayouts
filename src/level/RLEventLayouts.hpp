@@ -2,6 +2,8 @@
 
 using namespace geode::prelude;
 
+class RLLoadingPopup; // forward declaration
+
 class RLEventLayouts : public geode::Popup<> {
      public:
       static RLEventLayouts* create();
@@ -19,6 +21,7 @@ class RLEventLayouts : public geode::Popup<> {
             CCLabelBMFont* levelNameLabel = nullptr;
             CCLabelBMFont* creatorLabel = nullptr;
             CCMenuItem* creatorButton = nullptr;
+            CCMenuItem* playButton = nullptr;
             CCLabelBMFont* difficultyValueLabel = nullptr;
             CCSprite* starIcon = nullptr;
             CCSprite* featuredIcon = nullptr;
