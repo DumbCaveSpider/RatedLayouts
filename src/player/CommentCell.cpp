@@ -111,14 +111,36 @@ class $modify(RLCommentCell, CommentCell) {
                   color = ccc3(253, 106, 106);  // admin comment color
             }
 
-            log::debug("Applying comment text color for role: {}", m_fields->role);
+            log::debug("Applying comment text color for role: {} in {} mode", m_fields->role, m_compactMode ? "compact" : "non-compact");
 
+            // apply the color to the comment text label
             if (auto commentTextLabel = typeinfo_cast<CCLabelBMFont*>(
-                    m_mainLayer->getChildByID("comment-text-label"))) {
+                    m_mainLayer->getChildByIDRecursive("comment-text-label"))) {  // compact mode (easy face mode)
                   log::debug("Found comment-text-label, applying color");
                   commentTextLabel->setColor(color);
+            } else if (auto textArea = m_mainLayer->getChildByIDRecursive("comment-text-area")) {  // non-compact mode is ass (extreme demon face)
+                  log::debug("TextArea found, searching for MultilineBitmapFont child");
+                  auto children = textArea->getChildren();
+                  if (children && children->count() > 0) {
+                        auto child = static_cast<CCNode*>(children->objectAtIndex(0));
+                        if (auto multilineFont = typeinfo_cast<MultilineBitmapFont*>(child)) {
+                              log::debug("Found MultilineBitmapFont, applying color to nested CCLabelBMFont children");
+                              auto multilineChildren = multilineFont->getChildren();
+                              if (multilineChildren) {
+                                    for (std::size_t i = 0; i < multilineChildren->count(); ++i) {
+                                          auto labelChild = static_cast<CCNode*>(multilineChildren->objectAtIndex(i));
+                                          if (auto label = typeinfo_cast<CCLabelBMFont*>(labelChild)) {
+                                                label->setColor(color);
+                                          }
+                                    }
+                              }
+                        } else if (auto label = typeinfo_cast<CCLabelBMFont*>(child)) {
+                              log::debug("Found CCLabelBMFont child, applying color");
+                              label->setColor(color);
+                        }
+                  }
             }
-      }
+      };
 
       void fetchUserRole(int accountId) {
             log::debug("Fetching role for comment user ID: {}", accountId);

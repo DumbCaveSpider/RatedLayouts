@@ -302,8 +302,8 @@ void ModRatePopup::onSubmitButton(CCObject* sender) {
       }
       jsonBody["featured"] = featured;
 
-      // add featured score if featured mode is enabled
-      if (m_isFeatured && m_featuredScoreInput) {
+      // add featured score if featured or epic featured mode is enabled
+      if ((m_isFeatured || m_isEpicFeatured) && m_featuredScoreInput) {
             auto scoreStr = m_featuredScoreInput->getString();
             if (!scoreStr.empty()) {
                   int score = numFromString<int>(scoreStr).unwrapOr(0);

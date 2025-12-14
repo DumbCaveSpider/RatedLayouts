@@ -1,3 +1,8 @@
+# v0.2.6-beta.1
+
+- Fixed bug where Layout Admins can't submit featured score for Epic Layouts.
+- Fixed bug where comments text color on non-compact mode was not applied correctly.
+
 # v0.2.5-beta.1
 
 - Minor fixes and code cleanup on Event Layouts.
