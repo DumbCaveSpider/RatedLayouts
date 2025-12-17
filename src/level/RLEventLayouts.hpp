@@ -20,6 +20,7 @@ class RLEventLayouts : public geode::Popup<> {
       void onPlayEvent(CCObject* sender);
       void onCreatorClicked(CCObject* sender);
       void onInfo(CCObject* sender);
+      void onSafeButton(CCObject* sender);
 
       struct EventSection {
             CCLayer* container = nullptr;

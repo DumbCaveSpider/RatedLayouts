@@ -91,7 +91,7 @@ class $modify(GJGarageLayer) {
                               m_fields->myStatItem = nullptr;
                         }
 
-                        auto starSprite = CCSprite::create("rlStarIconMed.png"_spr);
+                        auto starSprite = CCSprite::create("RL_starMed.png"_spr);
                         auto myStatItem = StatsDisplayAPI::getNewItem(
                             "blueprint-stars"_spr, starSprite,
                             m_fields->storedStars, 0.54f);

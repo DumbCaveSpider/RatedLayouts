@@ -109,13 +109,13 @@ bool RLEventLayouts::setup() {
       levelNameLabel->setPosition({0.f, nameContainerHeight / 2.f});
       levelNameLabel->setScale(0.8f);
       nameContainer->addChild(levelNameLabel);
-      m_sections[idx].levelNameLabel = levelNameLabel; 
+      m_sections[idx].levelNameLabel = levelNameLabel;
 
       // rewards label
       auto rewardsLabel = CCLabelBMFont::create("Rewards: -", "bigFont.fnt");
       rewardsLabel->setAnchorPoint({0.5f, 0.5f});
       float rewardsY = m_mainLayer->getContentSize().height - 60.f;
-      rewardsLabel->setPosition({m_mainLayer->getContentSize().width / 2.f, rewardsY});
+      rewardsLabel->setPosition({m_mainLayer->getContentSize().width / 2.f - 10.f, rewardsY});
       rewardsLabel->setScale(0.65f);
       m_mainLayer->addChild(rewardsLabel, 3);
       m_sections[idx].difficultyValueLabel = rewardsLabel;
@@ -189,6 +189,18 @@ bool RLEventLayouts::setup() {
       playMenu->addChild(playButton);
       container->addChild(playMenu, 2);
       m_sections[idx].playButton = playButton;
+
+      // safe button
+      auto safeMenu = CCMenu::create();
+      safeMenu->setPosition({0, 0});
+      auto safeSprite = CCSprite::createWithSpriteFrameName("GJ_safeBtn_001.png");
+      if (safeSprite) {
+            safeSprite->setScale(0.9f);
+            auto safeButton = CCMenuItemSpriteExtra::create(safeSprite, this, menu_selector(RLEventLayouts::onSafeButton));
+            safeButton->setPosition({25.f, 25.f});
+            safeMenu->addChild(safeButton);
+            m_mainLayer->addChild(safeMenu, 3);
+      }
 
       this->scheduleUpdate();
 
@@ -318,6 +330,7 @@ void RLEventLayouts::onInfo(CCObject* sender) {
           "Event Layouts",
           "Play <cg>daily</c>, <cy>weekly</c>, and <cp>monthly</c> rated layouts curated by the <cr>Layout Admins.</c>\n\n"
           "Each layout features a <cb>unique selection</c> of levels handpicked for their <co>gameplay and layout design!</c>\n\n"
+          "If you want to play <cg>Past Event Layouts</c>, click the <co>Safe</c> button at the bottom-left of the popup to view previously event layouts.\n\n"
           "### <co>Daily Layouts</c> refresh every 24 hours, <cy>Weekly Layouts</c> every 7 days, and <cp>Monthly Layouts</c> every 30 days.\n\n"
           "\r\n\r\n---\r\n\r\n"
           "- <cg>**Daily Layout**</c> showcase <cl>easy layouts</c> *(Easy to Insane Difficulty)* for you to grind and play various layouts\n"
@@ -449,4 +462,47 @@ void RLEventLayouts::onPlayEvent(CCObject* sender) {
       });
 
       glm->getOnlineLevels(searchObj);
+}
+
+void RLEventLayouts::onSafeButton(CCObject* sender) {
+      // safe list depending on event type
+      int idx = static_cast<int>(this->m_eventType);
+      const char* types[] = {"daily", "weekly", "monthly"};
+      const char* typeStr = (idx >= 0 && idx < 3) ? types[idx] : "daily";
+      std::string url = std::string("https://gdrate.arcticwoof.xyz/getEvent?safe=") + typeStr;
+
+      Ref<RLEventLayouts> selfRef = this;
+      web::WebRequest().get(url).listen([selfRef](web::WebResponse* res) {
+            if (!selfRef) return;  // popup destroyed kaboom
+            if (!res || !res->ok()) {
+                  Notification::create("Failed to fetch safe list", NotificationIcon::Error)->show();
+                  return;
+            }
+            auto jsonRes = res->json();
+            if (!jsonRes) {
+                  Notification::create("Invalid safe list response", NotificationIcon::Warning)->show();
+                  return;
+            }
+            auto json = jsonRes.unwrap();
+            // Expecting an array of level IDs
+            std::string levelIDs;
+            bool first = true;
+            for (auto v : json) {
+                  auto idVal = v.as<int>();
+                  if (!idVal) continue;
+                  if (!first) levelIDs += ",";
+                  levelIDs += numToString(idVal.unwrap());
+                  first = false;
+            }
+            if (levelIDs.empty()) {
+                  Notification::create("No levels returned", NotificationIcon::Warning)->show();
+                  return;
+            }
+            auto searchObj = GJSearchObject::create(SearchType::Type19, levelIDs);
+            auto browserLayer = LevelBrowserLayer::create(searchObj);
+            auto scene = CCScene::create();
+            scene->addChild(browserLayer);
+            auto transitionFade = CCTransitionFade::create(0.5f, scene);
+            CCDirector::sharedDirector()->pushScene(transitionFade);
+      });
 }

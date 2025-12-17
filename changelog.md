@@ -4,6 +4,7 @@
 - Removed "Newly Rated" button. _You can still find newly rated layouts in the Custom Search layer by simply clicking the search button without any filters applied._
 - Seperated the Event Layouts into Daily, Weekly, and Monthly Layouts.
 - **Added Layout Gauntlets!** A special themed layout gauntlets curated by Rated Layouts Admins and Moderators. Used to host special layout creator contests.
+- **Added Safe Event Layouts!** You can view past event layouts by clicking the Safe button in the Event Layouts layer.
 - Added the following mod incompatibilities to prevent conflicts with the difficulty sprite:
   - [More Difficulties](mod:uproxide.more_difficulties)
   - [Demons In Between](mod:hiimjustin000.demons_in_between)

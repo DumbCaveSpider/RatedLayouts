@@ -53,7 +53,7 @@ bool RLCreatorLayer::init() {
       mainMenu->setPosition({winSize.width / 2, winSize.height / 2 - 10});
       mainMenu->setContentSize({400.f, 240.f});
       mainMenu->setLayout(RowLayout::create()
-                              ->setGap(6.f)
+                              ->setGap(10.f)
                               ->setGrowCrossAxis(true)
                               ->setCrossAxisOverflow(false));
 
@@ -415,10 +415,10 @@ void RLCreatorLayer::onInfoButton(CCObject* sender) {
           "### Each of the buttons on this screen lets you browse different categories of rated layouts:\n\n"
           "<cg>**Featured Layouts**</c>: Featured layouts that showcase fun gameplay and visuals. Each featured levels are ranked based of their featured score.\n\n"
           "<cg>**Leaderboard**</c>: The top-rated players ranked by blueprint stars and creator points.\n\n"
-          "<cg>**Newly Rated**</c>: The latest layouts that have been rated by the Layout Admins.\n\n"
+          "<cg>**Layout Gauntlets**</c>: Special themed layouts hosted by the Rated Layouts Team. This holds the <cl>Layout Creator Contests</c>!\n\n"
           "<cg>**Sent Layouts**</c>: Suggested or sent layouts by the Layout Moderators.\n\n"
           "<cg>**Search Layouts**</c>: Search for rated layouts by their level ID.\n\n"
-          "<cg>**Event Layouts**</c>: Limited-time event layouts that you can play special rated layout levels\n\n"
+          "<cg>**Event Layouts**</c>: Showcases time-limited Daily, Weekly and Monthly layouts picked by the <cr>Layout Admins</c>.\n\n"
           "### Join the <cb>[Rated Layout Discord](https://discord.gg/jBf2wfBgVT)</c> server for more information and to submit your layouts for rating.\n\n",
           "OK")
           ->show();
