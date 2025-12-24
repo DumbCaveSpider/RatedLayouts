@@ -120,7 +120,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   }
 
                   auto modButtonSpr = CircleButtonSprite::create(
-                      buttonSprite, CircleBaseColor::Cyan, CircleBaseSize::Small);
+                      buttonSprite, CircleBaseColor::Cyan, CircleBaseSize::Medium);
 
                   auto modButtonItem = CCMenuItemSpriteExtra::create(
                       modButtonSpr, this, menu_selector(RLLevelInfoLayer::onModButton));
@@ -138,7 +138,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   }
 
                   auto modButtonSpr = CircleButtonSprite::create(
-                      buttonSprite, CircleBaseColor::Cyan, CircleBaseSize::Small);
+                      buttonSprite, CircleBaseColor::Cyan, CircleBaseSize::Medium);
 
                   auto modButtonItem = CCMenuItemSpriteExtra::create(
                       modButtonSpr, this, menu_selector(RLLevelInfoLayer::onAdminButton));
