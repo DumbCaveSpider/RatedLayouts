@@ -401,6 +401,10 @@ class $modify(RLProfilePage, ProfilePage) {
       }
 
       void onLayoutPointsClicked(CCObject* sender) {
+            // disable button when clicked
+            auto menuItem = typeinfo_cast<CCMenuItemSpriteExtra*>(sender);
+            if (menuItem) menuItem->setEnabled(false);
+
             int accountId = m_fields->accountId;
             log::info("Fetching account levels for account ID: {}", accountId);
 
@@ -408,16 +412,18 @@ class $modify(RLProfilePage, ProfilePage) {
 
             Ref<RLProfilePage> pageRef = this;
 
-            task.listen([pageRef](web::WebResponse* res) {
+            task.listen([pageRef, menuItem](web::WebResponse* res) {
                   if (!pageRef) return;
                   if (!res || !res->ok()) {
                         Notification::create("Failed to fetch account levels", NotificationIcon::Error)->show();
+                        menuItem->setEnabled(true);
                         return;
                   }
 
                   auto jsonRes = res->json();
                   if (!jsonRes) {
                         Notification::create("Invalid server response", NotificationIcon::Error)->show();
+                        menuItem->setEnabled(true);
                         return;
                   }
 
@@ -447,6 +453,7 @@ class $modify(RLProfilePage, ProfilePage) {
                   }
 
                   if (!levelIDs.empty()) {
+                        menuItem->setEnabled(true);
                         auto searchObject = GJSearchObject::create(SearchType::Type19, levelIDs);
                         auto browserLayer = LevelBrowserLayer::create(searchObject);
                         auto scene = CCScene::create();
@@ -455,6 +462,7 @@ class $modify(RLProfilePage, ProfilePage) {
                         CCDirector::sharedDirector()->pushScene(transitionFade);
                   } else {
                         Notification::create("No levels found for this account", NotificationIcon::Warning)->show();
+                        menuItem->setEnabled(true);
                   }
             });
       }

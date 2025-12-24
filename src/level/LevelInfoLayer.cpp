@@ -1123,11 +1123,56 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                               return;
                         }
 
-                        if (!response->ok() || !response->json()) {
+                        // If server returned non-ok, its okay, just remove existing data... sob
+                        if (!response->ok()) {
+                              if (response->code() == 404) {
+                                    auto difficultySprite = layerRef->getChildByID("difficulty-sprite");
+                                    if (difficultySprite) {
+                                          auto starIcon = difficultySprite->getChildByID("rl-star-icon");
+                                          if (starIcon) starIcon->removeFromParent();
+                                          auto starLabel = difficultySprite->getChildByID("rl-star-label");
+                                          if (starLabel) starLabel->removeFromParent();
+                                    }
+                              }
+                              return;
+                        }
+
+                        if (!response->json()) {
                               return;
                         }
 
                         auto json = response->json().unwrap();
+
+                        int difficulty = json["difficulty"].asInt().unwrapOrDefault();
+                        if (difficulty == 0) {
+                              // remove label and icon if present
+                              auto difficultySprite = layerRef->getChildByID("difficulty-sprite");
+                              if (difficultySprite) {
+                                    auto starIcon = difficultySprite->getChildByID("rl-star-icon");
+                                    if (starIcon) starIcon->removeFromParent();
+                                    auto starLabel = difficultySprite->getChildByID("rl-star-label");
+                                    if (starLabel) starLabel->removeFromParent();
+                              }
+
+                              // also remove from cache to match behavior elsewhere
+                              auto cachePath = getCachePath();
+                              auto existingData = utils::file::readString(cachePath);
+                              if (existingData) {
+                                    auto parsed = matjson::parse(existingData.unwrap());
+                                    if (parsed) {
+                                          auto root = parsed.unwrap();
+                                          if (root.isObject()) {
+                                                std::string key = fmt::format("{}", levelId);
+                                                auto result = root.erase(key);
+                                          }
+                                          auto jsonString = root.dump();
+                                          auto writeResult = utils::file::writeString(cachePath, jsonString);
+                                          log::debug("Removed level ID {} from cache (no difficulty) on refresh", levelId);
+                                    }
+                              }
+
+                              return;
+                        }
 
                         // Cache the updated response
                         cacheLevelData(levelId, json);
