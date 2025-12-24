@@ -668,6 +668,7 @@ void ModRatePopup::onSetEventButton(CCObject* sender) {
                 jsonBody["argonToken"] = token;
                 jsonBody["levelId"] = m_levelId;
                 jsonBody["type"] = type;
+                jsonBody["isPlat"] = (m_level && m_level->isPlatformer());
 
                 log::info("Sending setEvent request: {}", jsonBody.dump());
                 auto postReq = web::WebRequest();
