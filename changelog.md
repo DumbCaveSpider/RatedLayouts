@@ -1,3 +1,10 @@
+# v0.3.2-beta.1
+
+- Removed [More Difficulties](mod:uproxide.more_difficulties) from the incompatible mods, but the sprite won't be shown for layouts that is rated.
+- Fixed issue where the sprites on the reward animation is showing the incorrect texture.
+- Fixed issue where the stars/planets reward animation crashes upon completing a level.
+*Thanks [hiimjasmine00](https://github.com/hiimjasmine00) for the fixes!*
+
 # v0.3.1-beta.1
 
 - **Added "Classic" Filter** in the Custom Search to filter Classic Rated Layout Levels.
