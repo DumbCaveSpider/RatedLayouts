@@ -1,3 +1,10 @@
+# v0.3.1-beta.1
+
+- **Added "Classic" Filter** in the Custom Search to filter Classic Rated Layout Levels.
+- **Added Annoucement Button** in the Rated Layouts Creator Layer to view the latest news and updates about Rated Layouts.
+- Added Planets Collectable count in the Garage Layer.
+- Epic, Featured and Awarded filters are no longer mutually exclusive, you can now select multiple of them at once.
+
 # v0.3.0-beta.1
 
 ### The Planets Platformer Update!

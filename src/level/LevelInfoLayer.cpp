@@ -426,7 +426,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                                     }
                               } else {
                                     log::info("Reward animation disabled");
-                                    Notification::create("Received " + numToString(displayReward) + " " + reward + "!",
+                                    Notification::create("Received " + numToString(difficulty) + " " + reward + "!",
                                                          CCSprite::create(medSprite.c_str()), 2.f)
                                         ->show();
                                     FMODAudioEngine::sharedEngine()->playEffect(

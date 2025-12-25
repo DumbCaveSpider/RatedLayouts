@@ -10,7 +10,10 @@ class $modify(GJGarageLayer) {
       struct Fields {
             CCNode* myStatItem = nullptr;
             CCNode* statMenu = nullptr;
+            CCNode* starsValue = nullptr;
+            CCNode* planetsValue = nullptr;
             int storedStars = 0;
+            int storedPlanets = 0;
       };
 
       bool init() {
@@ -77,6 +80,7 @@ class $modify(GJGarageLayer) {
                   auto json = jsonRes.unwrap();
 
                   int points = json["points"].asInt().unwrapOrDefault();
+                  int planets = json["planets"].asInt().unwrapOrDefault();
                   int stars = json["stars"].asInt().unwrapOrDefault();
 
                   log::info("Profile data - points: {}, stars: {}", points, stars);
@@ -86,18 +90,29 @@ class $modify(GJGarageLayer) {
                   log::debug("Updating stat item with {} stars", stars);
                   if (m_fields->statMenu) {
                         // if an existing stat item exists, remove it first
-                        if (m_fields->myStatItem) {
-                              m_fields->myStatItem->removeFromParent();
-                              m_fields->myStatItem = nullptr;
+                        if (m_fields->starsValue) {
+                              m_fields->starsValue->removeFromParent();
+                              m_fields->starsValue = nullptr;
+                        }
+                        if (m_fields->planetsValue) {
+                              m_fields->planetsValue->removeFromParent();
+                              m_fields->planetsValue = nullptr;
                         }
 
                         auto starSprite = CCSprite::create("RL_starMed.png"_spr);
-                        auto myStatItem = StatsDisplayAPI::getNewItem(
+                        auto starsValue = StatsDisplayAPI::getNewItem(
                             "blueprint-stars"_spr, starSprite,
                             m_fields->storedStars, 0.54f);
 
-                        m_fields->myStatItem = myStatItem;
-                        m_fields->statMenu->addChild(myStatItem);
+                        m_fields->starsValue = starsValue;
+                        m_fields->statMenu->addChild(starsValue);
+
+                        auto planetSprite = CCSprite::create("RL_planetMed.png"_spr);
+                        auto planetsValue = StatsDisplayAPI::getNewItem(
+                            "planets-collected"_spr, planetSprite,
+                            planets, 0.54f);
+                        m_fields->planetsValue = planetsValue;
+                        m_fields->statMenu->addChild(planetsValue);
                         // call updateLayout if available
                         if (auto menu = typeinfo_cast<CCMenu*>(m_fields->statMenu)) {
                               menu->updateLayout();

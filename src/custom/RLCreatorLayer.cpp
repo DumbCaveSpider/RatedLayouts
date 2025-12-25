@@ -155,9 +155,48 @@ bool RLCreatorLayer::init() {
       auto discordIconBtn = CCMenuItemSpriteExtra::create(discordIconSpr, this, menu_selector(RLCreatorLayer::onDiscordButton));
       discordIconBtn->setPosition({infoButton->getPositionX(), infoButton->getPositionY() + 40});
       infoMenu->addChild(discordIconBtn);
-      this->addChild(infoMenu);
 
-      this->addChild(discordIconBtn);
+      // news button above discord
+      // @geode-ignore(unknown-resource)
+      auto newsIconSpr = CCSprite::createWithSpriteFrameName("geode.loader/news.png");
+      auto newsIconBtn = CCMenuItemSpriteExtra::create(newsIconSpr, this, menu_selector(RLCreatorLayer::onAnnoucementButton));
+      newsIconBtn->setPosition({infoButton->getPositionX(), infoButton->getPositionY() + 80});
+      infoMenu->addChild(newsIconBtn);
+      m_newsIconBtn = newsIconBtn;
+
+      // @geode-ignore(unknown-resource)
+      auto badgeSpr = CCSprite::createWithSpriteFrameName("geode.loader/updates-available.png");
+      if (badgeSpr) {
+            // position top-right of the icon
+            auto size = newsIconSpr ? newsIconSpr->getContentSize() : CCSize{32, 32};
+            badgeSpr->setScale(0.4f);
+            badgeSpr->setPosition({size.width, size.height});
+            badgeSpr->setVisible(false);
+            newsIconBtn->addChild(badgeSpr, 10);
+            m_newsBadge = badgeSpr;
+      }
+
+      // check server announcement id and set badge visibility
+      web::WebRequest()
+          .get("https://gdrate.arcticwoof.xyz/getAnnoucement")
+          .listen([this](web::WebResponse* res) {
+                if (!res || !res->ok()) return;
+                auto jsonRes = res->json();
+                if (!jsonRes) return;
+                auto json = jsonRes.unwrap();
+                int id = 0;
+                if (json.contains("id")) {
+                      if (auto i = json["id"].as<int>(); i) id = i.unwrap();
+                }
+                int saved = Mod::get()->getSavedValue<int>("annoucementId");
+                if (id && id != saved) {
+                      if (m_newsBadge) m_newsBadge->setVisible(true);
+                } else {
+                      if (m_newsBadge) m_newsBadge->setVisible(false);
+                }
+          });
+
+      this->addChild(infoMenu);
       // credits button at the bottom right
       auto creditButtonSpr =
           CCSprite::create("RL_badgeMod01.png"_spr);
@@ -255,6 +294,56 @@ void RLCreatorLayer::onSecretDialogueButton(CCObject* sender) {
       }
       auto dialogue = RLAddDialogue::create();
       dialogue->show();
+}
+
+void RLCreatorLayer::onAnnoucementButton(CCObject* sender) {
+      // disable the button if provided to avoid spamming
+      auto menuItem = static_cast<CCMenuItemSpriteExtra*>(sender);
+      if (menuItem) menuItem->setEnabled(false);
+
+      web::WebRequest()
+          .get("https://gdrate.arcticwoof.xyz/getAnnoucement")
+          .listen([this, menuItem](web::WebResponse* res) {
+                if (!res || !res->ok()) {
+                      Notification::create("Failed to fetch announcement", NotificationIcon::Error)->show();
+                      if (menuItem) menuItem->setEnabled(true);
+                      return;
+                }
+
+                auto jsonRes = res->json();
+                if (!jsonRes) {
+                      Notification::create("Invalid announcement response", NotificationIcon::Error)->show();
+                      if (menuItem) menuItem->setEnabled(true);
+                      return;
+                }
+
+                auto json = jsonRes.unwrap();
+                std::string body = "";
+                int id = 0;
+                if (json.contains("body")) {
+                      if (auto s = json["body"].asString(); s) body = s.unwrap();
+                }
+                if (json.contains("id")) {
+                      if (auto i = json["id"].as<int>(); i) id = i.unwrap();
+                }
+
+                if (!body.empty()) {
+                      MDPopup::create("Rated Layouts Annoucement", body.c_str(), "OK")->show();
+                      if (id) {
+                            Mod::get()->setSavedValue<int>("annoucementId", id);
+                            // hide badge since the user just viewed the announcement
+                            if (m_newsBadge) m_newsBadge->setVisible(false);
+                      }
+                } else {
+                      Notification::create("No announcement available", NotificationIcon::Warning)->show();
+                }
+
+                if (m_newsBadge) {
+                      m_newsBadge->setVisible(false);
+                }
+
+                if (menuItem) menuItem->setEnabled(true);
+          });
 }
 
 void RLCreatorLayer::onUnknownButton(CCObject* sender) {

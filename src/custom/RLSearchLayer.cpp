@@ -352,6 +352,14 @@ bool RLSearchLayer::init() {
       m_platformerItem = platformerItem;
       optionsMenu->addChild(platformerItem);
 
+      // classic toggle
+      auto classicSpr = ButtonSprite::create("Classic", "goldFont.fnt", "GJ_button_01.png");
+      auto classicItem = CCMenuItemSpriteExtra::create(classicSpr, this, menu_selector(RLSearchLayer::onClassicToggle));
+      classicItem->setScale(1.0f);
+      classicItem->setID("classic-toggle");
+      m_classicItem = classicItem;
+      optionsMenu->addChild(classicItem);
+
       // username toggle
       auto usernameSpr = ButtonSprite::create("Username", "goldFont.fnt", "GJ_button_01.png");
       auto usernameItem = CCMenuItemSpriteExtra::create(usernameSpr, this, menu_selector(RLSearchLayer::onUsernameToggle));
@@ -442,6 +450,7 @@ void RLSearchLayer::onSearchButton(CCObject* sender) {
       if (!queryParam.empty()) req.param("query", queryParam);
       if (!difficultyParam.empty()) req.param("difficulty", difficultyParam);
       if (m_platformerActive) req.param("platformer", "1");
+      if (m_classicActive) req.param("classic", "1");
       req.param("featured", numToString(featuredParam));
       req.param("epic", numToString(epicParam));
       req.param("awarded", numToString(awardedParam));
@@ -491,25 +500,7 @@ void RLSearchLayer::onSearchButton(CCObject* sender) {
 void RLSearchLayer::onFeaturedToggle(CCObject* sender) {
       auto item = static_cast<CCMenuItemSpriteExtra*>(sender);
       if (!item) return;
-      // toggle the featured filter state
       m_featuredActive = !m_featuredActive;
-      // featured and awarded are mutually exclusive yes
-      if (m_featuredActive && m_awardedActive) {
-            m_awardedActive = false;
-            if (m_awardedItem) {
-                  auto awardedNormal = static_cast<ButtonSprite*>(m_awardedItem->getNormalImage());
-                  if (awardedNormal) awardedNormal->updateBGImage("GJ_button_01.png");
-            }
-      }
-      // featured is also mutually exclusive with epic
-      if (m_featuredActive && m_epicActive) {
-            m_epicActive = false;
-            if (m_epicItem) {
-                  auto epicNormal = static_cast<ButtonSprite*>(m_epicItem->getNormalImage());
-                  if (epicNormal) epicNormal->updateBGImage("GJ_button_01.png");
-            }
-      }
-      // update visual state by changing the button's background image
       auto normalNode = item->getNormalImage();
       auto btn = static_cast<ButtonSprite*>(normalNode);
       if (btn) {
@@ -521,22 +512,6 @@ void RLSearchLayer::onAwardedToggle(CCObject* sender) {
       auto item = static_cast<CCMenuItemSpriteExtra*>(sender);
       if (!item) return;
       m_awardedActive = !m_awardedActive;
-      // featured and awarded are mutually exclusive yes
-      if (m_awardedActive && m_featuredActive) {
-            m_featuredActive = false;
-            if (m_featuredItem) {
-                  auto featuredNormal = static_cast<ButtonSprite*>(m_featuredItem->getNormalImage());
-                  if (featuredNormal) featuredNormal->updateBGImage("GJ_button_01.png");
-            }
-      }
-      // awarded is also mutually exclusive with epic
-      if (m_awardedActive && m_epicActive) {
-            m_epicActive = false;
-            if (m_epicItem) {
-                  auto epicNormal = static_cast<ButtonSprite*>(m_epicItem->getNormalImage());
-                  if (epicNormal) epicNormal->updateBGImage("GJ_button_01.png");
-            }
-      }
       auto normalNode = item->getNormalImage();
       auto btn = static_cast<ButtonSprite*>(normalNode);
       if (btn) {
@@ -548,24 +523,6 @@ void RLSearchLayer::onEpicToggle(CCObject* sender) {
       auto item = static_cast<CCMenuItemSpriteExtra*>(sender);
       if (!item) return;
       m_epicActive = !m_epicActive;
-      // epic is mutually exclusive with featured and awarded
-      if (m_epicActive) {
-            if (m_featuredActive) {
-                  m_featuredActive = false;
-                  if (m_featuredItem) {
-                        auto featuredNormal = static_cast<ButtonSprite*>(m_featuredItem->getNormalImage());
-                        if (featuredNormal) featuredNormal->updateBGImage("GJ_button_01.png");
-                  }
-            }
-            if (m_awardedActive) {
-                  m_awardedActive = false;
-                  if (m_awardedItem) {
-                        auto awardedNormal = static_cast<ButtonSprite*>(m_awardedItem->getNormalImage());
-                        if (awardedNormal) awardedNormal->updateBGImage("GJ_button_01.png");
-                  }
-            }
-      }
-      // update visual state by changing the button's background image
       auto normalNode = item->getNormalImage();
       auto btn = static_cast<ButtonSprite*>(normalNode);
       if (btn) {
@@ -578,10 +535,38 @@ void RLSearchLayer::onPlatformerToggle(CCObject* sender) {
       if (!item) return;
       // toggle the platformer filter
       m_platformerActive = !m_platformerActive;
+      // ensure mutual exclusivity with Classic
+      if (m_platformerActive && m_classicActive) {
+            m_classicActive = false;
+            if (m_classicItem) {
+                  auto classicNormal = static_cast<ButtonSprite*>(m_classicItem->getNormalImage());
+                  if (classicNormal) classicNormal->updateBGImage("GJ_button_01.png");
+            }
+      }
       auto normalNode = item->getNormalImage();
       auto btn = static_cast<ButtonSprite*>(normalNode);
       if (btn) {
             btn->updateBGImage(m_platformerActive ? "GJ_button_02.png" : "GJ_button_01.png");
+      }
+}
+
+void RLSearchLayer::onClassicToggle(CCObject* sender) {
+      auto item = static_cast<CCMenuItemSpriteExtra*>(sender);
+      if (!item) return;
+      // toggle the classic filter
+      m_classicActive = !m_classicActive;
+      // ensure mutual exclusivity with Platformer
+      if (m_classicActive && m_platformerActive) {
+            m_platformerActive = false;
+            if (m_platformerItem) {
+                  auto platNormal = static_cast<ButtonSprite*>(m_platformerItem->getNormalImage());
+                  if (platNormal) platNormal->updateBGImage("GJ_button_01.png");
+            }
+      }
+      auto normalNode = item->getNormalImage();
+      auto btn = static_cast<ButtonSprite*>(normalNode);
+      if (btn) {
+            btn->updateBGImage(m_classicActive ? "GJ_button_02.png" : "GJ_button_01.png");
       }
 }
 

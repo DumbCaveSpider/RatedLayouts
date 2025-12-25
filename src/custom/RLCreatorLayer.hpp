@@ -20,6 +20,7 @@ class RLCreatorLayer : public CCLayer {
       void onMonthlyLayouts(CCObject* sender);
       void onUnknownButton(CCObject* sender);
       void onLayoutGauntlets(CCObject* sender);
+      void onAnnoucementButton(CCObject* sender);
       void onSearchLayouts(CCObject* sender);
       void onCreditsButton(CCObject* sender);
       void onSettingsButton(CCObject* sender);
@@ -39,6 +40,10 @@ class RLCreatorLayer : public CCLayer {
       std::vector<CCSprite*> m_floorTiles;
       float m_bgSpeed = 40.f;     // pixels per second
       float m_groundSpeed = 150.f; // pixels per second
+
+      // news / announcement UI
+      CCMenuItemSpriteExtra* m_newsIconBtn = nullptr;
+      CCSprite* m_newsBadge = nullptr;
       void update(float dt) override;
 
      public:

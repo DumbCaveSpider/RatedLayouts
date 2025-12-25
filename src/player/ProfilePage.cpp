@@ -527,7 +527,7 @@ class $modify(RLProfilePage, ProfilePage) {
             FLAlertLayer::create(
                 "Layout Moderator",
                 "This user can <cj>suggest layout levels</c> for <cl>Rated "
-                "Layouts</c> to the <cr>Layout Admins</c>. They have the ability to <co>moderate the leaderboards</c>.",
+                "Layouts</c> to the <cr>Layout Admins</c>. They have the ability to <co>moderate the leaderboard</c>.",
                 "OK")
                 ->show();
       }
@@ -537,7 +537,7 @@ class $modify(RLProfilePage, ProfilePage) {
                 "Layout Administrator",
                 "This user can <cj>rate layout levels</c> for <cl>Rated "
                 "Layouts</c>. They have the same power as <cg>Moderators</c> but including the ability to change the <cy>featured ranking on the "
-                "featured layout levels.</c>",
+                "featured layout levels.</c> and <cg>set event layouts</c>.",
                 "OK")
                 ->show();
       }
