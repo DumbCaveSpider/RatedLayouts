@@ -9,6 +9,7 @@
 #include "RLAddDialogue.hpp"
 #include "RLAnnoucementPopup.hpp"
 #include "RLCreditsPopup.hpp"
+#include "RLDonationPopup.hpp"
 #include "RLLeaderboardLayer.hpp"
 #include "RLSearchLayer.hpp"
 
@@ -207,6 +208,14 @@ bool RLCreatorLayer::init() {
       creditButton->setPosition({winSize.width - 25, 25});
       infoMenu->addChild(creditButton);
 
+      // supporter button left side of the credits
+      auto supportButtonSpr = CCSprite::create("RL_badgeSupporter.png"_spr);
+      supportButtonSpr->setScale(1.5f);
+      auto supportButton = CCMenuItemSpriteExtra::create(
+          supportButtonSpr, this, menu_selector(RLCreatorLayer::onSupporterButton));
+      supportButton->setPosition({creditButton->getPositionX() - 40, creditButton->getPositionY()});
+      infoMenu->addChild(supportButton);
+
       // button
       if (Mod::get()->getSavedValue<int>("role") >= 1) {
             auto addDiagloueBtnSpr = CCSprite::createWithSpriteFrameName("GJ_secretLock4_small_001.png");
@@ -287,6 +296,11 @@ void RLCreatorLayer::onDiscordButton(CCObject* sender) {
 void RLCreatorLayer::onLayoutGauntlets(CCObject* sender) {
       auto annoucement = RLAnnoucementPopup::create();
       annoucement->show();
+}
+
+void RLCreatorLayer::onSupporterButton(CCObject* sender) {
+      auto donationPopup = RLDonationPopup::create();
+      donationPopup->show();
 }
 
 void RLCreatorLayer::onSecretDialogueButton(CCObject* sender) {

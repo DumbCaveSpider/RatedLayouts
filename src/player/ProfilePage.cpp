@@ -50,6 +50,7 @@ class $modify(RLProfilePage, ProfilePage) {
             CCLabelBMFont* planetsCount = nullptr;
             int role = 0;
             int accountId = 0;
+            bool isSupporter = false;
       };
 
       bool init(int accountID, bool ownProfile) {
@@ -211,11 +212,13 @@ class $modify(RLProfilePage, ProfilePage) {
                   int stars = json["stars"].asInt().unwrapOrDefault();
                   int role = json["role"].asInt().unwrapOrDefault();
                   int planets = json["planets"].asInt().unwrapOrDefault();
+                  bool isSupporter = json["isSupporter"].asBool().unwrapOrDefault();
 
-                  log::info("Profile data - points: {}, stars: {}", points, stars);
+                  log::info("Profile data - points: {}, stars: {} supporter: {}", points, stars, isSupporter);
 
                   // store the values into the saved value
                   pageRef->m_fields->role = role;
+                  pageRef->m_fields->isSupporter = isSupporter;
 
                   cacheUserProfile_ProfilePage(pageRef->m_fields->accountId, role, stars, planets);
 
@@ -480,6 +483,16 @@ class $modify(RLProfilePage, ProfilePage) {
                   return;
             }
 
+            // supporter badge (show for any profile that is a supporter)
+            if (m_fields->isSupporter) {
+                  if (!userNameMenu->getChildByID("rl-supporter-badge")) {
+                        auto supporterSprite = CCSprite::create("RL_badgeSupporter.png"_spr);
+                        auto supporterButton = CCMenuItemSpriteExtra::create(supporterSprite, this, menu_selector(RLProfilePage::onSupporterBadge));
+                        supporterButton->setID("rl-supporter-badge");
+                        userNameMenu->addChild(supporterButton);
+                  }
+            }
+
             if (m_accountID == 7689052) {  // ArcticWoof exception
                   if (userNameMenu->getChildByID("rl-owner-badge")) {
                         return;
@@ -547,6 +560,16 @@ class $modify(RLProfilePage, ProfilePage) {
                 "<cf>ArcticWoof</c> is the <ca>Creator and Developer</c> of <cl>Rated Layouts</c> Geode Mod.\nHe controls and manages everything within <cl>Rated Layouts</c>, including updates and adding new features as well as the ability to <cg>promote users to Layout Moderators or Administrators</c>.",
                 "OK")
                 ->show();
+      }
+      void onSupporterBadge(CCObject* sender) {
+            geode::createQuickPopup(
+                "Supporter Badge",
+                "This user is a <cp>Layout Supporter</c>! They have supported the development of <cl>Rated Layouts</c> through membership donations.\n\nYou can become a <cp>Layout Supporter</c> by donating via <cp>Ko-Fi</c>",
+                "OK",
+                "Ko-Fi", [this](auto, bool yes) {
+                      if (!yes) return;
+                      utils::web::openLinkInBrowser("https://ko-fi.com/arcticwoof");
+                });
       }
       void onBlueprintStars(CCObject* sender) {
             int accountId = m_fields->accountId;

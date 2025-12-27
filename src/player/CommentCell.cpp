@@ -13,6 +13,7 @@ struct CachedUserProfile {
       int role = 0;
       int stars = 0;
       int planets = 0;
+      bool supporter = false;
 };
 
 static std::optional<CachedUserProfile> getCachedUserProfile(int accountId) {
@@ -31,8 +32,9 @@ static std::optional<CachedUserProfile> getCachedUserProfile(int accountId) {
       p.role = entry["role"].asInt().unwrapOrDefault();
       p.stars = entry["stars"].asInt().unwrapOrDefault();
       p.planets = entry["planets"].asInt().unwrapOrDefault();
+      p.supporter = entry["isSupporter"].asBool().unwrapOrDefault();
       // missing oh no
-      if (p.role == 0 && p.stars == 0 && p.planets == 0) return std::nullopt;
+      if (p.role == 0 && p.stars == 0 && p.planets == 0 && !p.supporter) return std::nullopt;
       return p;
 }
 
@@ -55,8 +57,8 @@ static void removeCachedUserProfile(int accountId) {
       }
 }
 
-static void cacheUserProfile(int accountId, int role, int stars, int planets) {
-      if (role == 0 && stars == 0 && planets == 0) {
+static void cacheUserProfile(int accountId, int role, int stars, int planets, bool isSupporter) {
+      if (role == 0 && stars == 0 && planets == 0 && !isSupporter) {
             removeCachedUserProfile(accountId);
             return;
       }
@@ -81,12 +83,13 @@ static void cacheUserProfile(int accountId, int role, int stars, int planets) {
       obj["role"] = role;
       obj["stars"] = stars;
       obj["planets"] = planets;
+      obj["isSupporter"] = isSupporter;
       root[fmt::format("{}", accountId)] = obj;
 
       auto jsonString = root.dump();
       auto writeResult = utils::file::writeString(geode::utils::string::pathToString(cachePath), jsonString);
       if (writeResult) {
-            log::debug("Cached user profile for account ID: {} (role={} stars={} planets={})", accountId, role, stars, planets);
+            log::debug("Cached user profile for account ID: {} (role={} stars={} planets={} supporter={})", accountId, role, stars, planets, isSupporter ? 1 : 0);
       }
 }
 
@@ -94,6 +97,7 @@ class $modify(RLCommentCell, CommentCell) {
       struct Fields {
             int role = 0;
             int stars = 0;
+            bool supporter = false;
       };
 
       void loadFromComment(GJComment* comment) {
@@ -109,8 +113,10 @@ class $modify(RLCommentCell, CommentCell) {
             if (cachedProfile) {
                   m_fields->role = cachedProfile->role;
                   m_fields->stars = cachedProfile->stars;
+                  m_fields->supporter = cachedProfile->supporter;
                   log::debug("Loaded cached role {} and stars {} for user {}", m_fields->role, m_fields->stars, comment->m_accountID);
                   loadBadgeForComment(comment->m_accountID);
+                  applyCommentTextColor(comment->m_accountID);
                   applyStarGlow(comment->m_accountID, m_fields->stars);
 
                   // If compatibility mode is disabled, always attempt to refresh the cache from the server
@@ -129,7 +135,7 @@ class $modify(RLCommentCell, CommentCell) {
       }
 
       void applyCommentTextColor(int accountId) {
-            if (m_fields->role == 0) {
+            if (m_fields->role == 0 && !m_fields->supporter) {
                   return;
             }
 
@@ -139,7 +145,9 @@ class $modify(RLCommentCell, CommentCell) {
             }
 
             ccColor3B color;
-            if (accountId == 7689052) {
+            if (m_fields->supporter) {
+                  color = {255, 187, 255};  // supporter color
+            } else if (accountId == 7689052) {
                   color = {150, 255, 255};  // ArcticWoof
             } else if (m_fields->role == 1) {
                   color = {156, 187, 255};  // mod comment color
@@ -276,12 +284,14 @@ class $modify(RLCommentCell, CommentCell) {
 
                   cellRef->m_fields->role = role;
                   cellRef->m_fields->stars = stars;
+                  cellRef->m_fields->supporter = json["isSupporter"].asBool().unwrapOrDefault();
 
-                  cacheUserProfile(accountId, role, stars, planets);
+                  cacheUserProfile(accountId, role, stars, planets, cellRef->m_fields->supporter);
 
-                  log::debug("User comment role: {}", role);
+                  log::debug("User comment role: {} supporter={}", role, cellRef->m_fields->supporter);
 
                   cellRef->loadBadgeForComment(accountId);
+                  cellRef->applyCommentTextColor(accountId);
                   cellRef->applyStarGlow(accountId, stars);
             });
       }
@@ -323,6 +333,18 @@ class $modify(RLCommentCell, CommentCell) {
                         userNameMenu->addChild(adminBadgeButton);
                   }
             }
+
+            // supporter badge
+            if (m_fields->supporter) {
+                  if (!userNameMenu->getChildByID("rl-comment-supporter-badge")) {
+                        auto supporterSprite = CCSprite::create("RL_badgeSupporter.png"_spr);
+                        supporterSprite->setScale(0.7f);
+                        auto supporterButton = CCMenuItemSpriteExtra::create(supporterSprite, this, menu_selector(RLCommentCell::onSupporterBadge));
+                        supporterButton->setID("rl-comment-supporter-badge");
+                        userNameMenu->addChild(supporterButton);
+                  }
+            }
+
             userNameMenu->updateLayout();
             applyCommentTextColor(accountId);
       }
@@ -352,7 +374,16 @@ class $modify(RLCommentCell, CommentCell) {
                 "OK")
                 ->show();
       }
-
+      void onSupporterBadge(CCObject* sender) {
+            geode::createQuickPopup(
+                "Supporter Badge",
+                "This user is a <cp>Layout Supporter</c>! They have supported the development of <cl>Rated Layouts</c> through membership donations.\n\nYou can become a <cp>Layout Supporter</c> by donating via <cp>Ko-Fi</c>",
+                "OK",
+                "Ko-Fi", [this](auto, bool yes) {
+                      if (!yes) return;
+                      utils::web::openLinkInBrowser("https://ko-fi.com/summary/7134ad95-57b6-4c2c-8ca8-b48b76aeeaae");
+                });
+      }
       void applyStarGlow(int accountId, int stars) {
             if (stars <= 0) return;
             if (!m_mainLayer) return;
