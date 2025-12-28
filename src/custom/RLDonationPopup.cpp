@@ -137,7 +137,7 @@ bool RLDonationPopup::setup() {
             auto moveToEnd = CCMoveTo::create(dur, {startX, endY});
             auto fadeToEnd = CCFadeTo::create(dur, 10.f);  // end opacity = 10
             auto spawn = CCSpawn::create(moveToEnd, fadeToEnd, nullptr);
-            auto placeBack = CCPlace::create({startX, startY});
+            auto placeBack = CCMoveTo::create(0.f, {startX, startY});
             auto resetFade = CCFadeTo::create(0.f, static_cast<GLubyte>(spr->getOpacity()));
             auto seq = CCSequence::create(spawn, placeBack, resetFade, nullptr);
 
