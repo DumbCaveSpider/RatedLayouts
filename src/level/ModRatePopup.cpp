@@ -273,6 +273,8 @@ void ModRatePopup::onInfoButton(CCObject* sender) {
 }
 
 void ModRatePopup::onSubmitButton(CCObject* sender) {
+      auto popup = UploadActionPopup::create(nullptr, "Submitting layout...");
+      popup->show();
       log::info("Submitting - Difficulty: {}, Featured: {}, Demon: {}",
                 m_selectedRating, m_isFeatured ? 1 : 0, m_isDemonMode ? 1 : 0);
 
@@ -280,9 +282,7 @@ void ModRatePopup::onSubmitButton(CCObject* sender) {
       auto token = Mod::get()->getSavedValue<std::string>("argon_token");
       if (token.empty()) {
             log::error("Failed to get user token");
-            Notification::create("Authentication token not found",
-                                 NotificationIcon::Error)
-                ->show();
+            popup->showFailMessage("Token not found!");
             return;
       }
 
@@ -317,21 +317,19 @@ void ModRatePopup::onSubmitButton(CCObject* sender) {
       postReq.bodyJSON(jsonBody);
       auto postTask = postReq.post("https://gdrate.arcticwoof.xyz/rate");
 
-      postTask.listen([this](web::WebResponse* response) {
+      postTask.listen([this, popup](web::WebResponse* response) {
             log::info("Received response from server");
 
             if (!response->ok()) {
                   log::warn("Server returned non-ok status: {}", response->code());
-                  Notification::create("Failed to submit layout", NotificationIcon::Error)
-                      ->show();
+                  popup->showFailMessage("Failed! Try again later.");
                   return;
             }
 
             auto jsonRes = response->json();
             if (!jsonRes) {
                   log::warn("Failed to parse JSON response");
-                  Notification::create("Invalid server response", NotificationIcon::Error)
-                      ->show();
+                  popup->showFailMessage("Invalid server response.");
                   return;
             }
 
@@ -360,28 +358,24 @@ void ModRatePopup::onSubmitButton(CCObject* sender) {
                         }
                   }
 
-                  Notification::create("Level submitted successfully!",
-                                       NotificationIcon::Success)
-                      ->show();
-                  this->onClose(nullptr);
+                  popup->showSuccessMessage("Submitted successfully!");
             } else {
                   log::warn("Rate submission failed: success is false");
-                  Notification::create("Failed to submit level", NotificationIcon::Error)
-                      ->show();
+                  popup->showFailMessage("Failed! Try again later.");
             }
       });
 }
 
 void ModRatePopup::onUnrateButton(CCObject* sender) {
+      auto popup = UploadActionPopup::create(nullptr, "Unrating layout...");
+      popup->show();
       log::info("Unrate button clicked");
 
       // Get argon token
       auto token = Mod::get()->getSavedValue<std::string>("argon_token");
       if (token.empty()) {
             log::error("Failed to get user token");
-            Notification::create("Authentication token not found",
-                                 NotificationIcon::Error)
-                ->show();
+            popup->showFailMessage("Token not found");
             return;
       }
       // account ID
@@ -399,21 +393,19 @@ void ModRatePopup::onUnrateButton(CCObject* sender) {
       postReq.bodyJSON(jsonBody);
       auto postTask = postReq.post("https://gdrate.arcticwoof.xyz/unrate");
 
-      postTask.listen([this](web::WebResponse* response) {
+      postTask.listen([this, popup](web::WebResponse* response) {
             log::info("Received response from server");
 
             if (!response->ok()) {
                   log::warn("Server returned non-ok status: {}", response->code());
-                  Notification::create("Failed to unrate layout", NotificationIcon::Error)
-                      ->show();
+                  popup->showFailMessage("Failed! Try again later.");
                   return;
             }
 
             auto jsonRes = response->json();
             if (!jsonRes) {
                   log::warn("Failed to parse JSON response");
-                  Notification::create("Invalid server response", NotificationIcon::Error)
-                      ->show();
+                  popup->showFailMessage("Invalid server response.");
                   return;
             }
 
@@ -442,14 +434,10 @@ void ModRatePopup::onUnrateButton(CCObject* sender) {
                         }
                   }
 
-                  Notification::create("Layout unrated successfully!",
-                                       NotificationIcon::Success)
-                      ->show();
-                  this->onClose(nullptr);
+                  popup->showSuccessMessage("Layout unrated successfully!");
             } else {
                   log::warn("Unrate submission failed: success is false");
-                  Notification::create("Failed to unrate layout", NotificationIcon::Error)
-                      ->show();
+                  popup->showFailMessage("Failed! Try again later.");
             }
       });
 }
@@ -648,7 +636,7 @@ void ModRatePopup::onSetEventButton(CCObject* sender) {
       auto token = Mod::get()->getSavedValue<std::string>("argon_token");
       if (token.empty()) {
             log::error("Failed to get user token");
-            Notification::create("Authentication token not found", NotificationIcon::Error)->show();
+            Notification::create("Token not found", NotificationIcon::Error)->show();
             return;
       }
 
@@ -661,6 +649,8 @@ void ModRatePopup::onSetEventButton(CCObject* sender) {
           "No",
           "Yes",
           [this, type, token](auto, bool yes) {
+                auto popup = UploadActionPopup::create(nullptr, "Setting event...");
+                popup->show();
                 log::info("Popup callback triggered, yes={}", yes);
                 if (!yes) return;
                 matjson::Value jsonBody = matjson::Value::object();
@@ -675,26 +665,26 @@ void ModRatePopup::onSetEventButton(CCObject* sender) {
                 postReq.bodyJSON(jsonBody);
                 auto postTask = postReq.post("https://gdrate.arcticwoof.xyz/setEvent");
 
-                postTask.listen([this, type](web::WebResponse* response) {
+                postTask.listen([this, type, popup](web::WebResponse* response) {
                       log::info("Received setEvent response for type: {}", type);
                       if (!response->ok()) {
                             log::warn("Server returned non-ok status: {}", response->code());
-                            Notification::create("Failed to set event", NotificationIcon::Error)->show();
+                            popup->showFailMessage("Failed! Try again later.");
                             return;
                       }
                       auto jsonRes = response->json();
                       if (!jsonRes) {
                             log::warn("Failed to parse setEvent JSON response");
-                            Notification::create("Invalid server response", NotificationIcon::Error)->show();
+                            popup->showFailMessage("Invalid server response.");
                             return;
                       }
                       auto json = jsonRes.unwrap();
                       bool success = json["success"].asBool().unwrapOrDefault();
                       std::string message = json["message"].asString().unwrapOrDefault();
                       if (success || message == "Event set successfully") {
-                            Notification::create("Event set: " + type, NotificationIcon::Success)->show();
+                            popup->showSuccessMessage("Event set: " + type);
                       } else {
-                            Notification::create("Failed to set event", NotificationIcon::Error)->show();
+                            popup->showFailMessage("Failed to set event.");
                       }
                 });
           });

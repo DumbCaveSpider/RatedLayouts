@@ -81,8 +81,12 @@ bool RLLeaderboardLayer::init() {
       typeMenu->setPosition({0, 0});
 
       auto starsTab = TabButton::create(
-          "Top Sparks", this,
-          menu_selector(RLLeaderboardLayer::onLeaderboardTypeButton));
+            TabBaseColor::Unselected,
+            TabBaseColor::UnselectedDark,
+            "Top Sparks",
+            this,
+            menu_selector(RLLeaderboardLayer::onLeaderboardTypeButton)
+      );
       starsTab->setTag(1);
       starsTab->toggle(true);
       starsTab->setPosition({winSize.width / 2 - 120, winSize.height - 27});
@@ -90,6 +94,8 @@ bool RLLeaderboardLayer::init() {
       m_starsTab = starsTab;
 
       auto planetsTab = TabButton::create(
+            TabBaseColor::Unselected,
+            TabBaseColor::UnselectedDark,
           "Top Planets", this,
           menu_selector(RLLeaderboardLayer::onLeaderboardTypeButton));
       planetsTab->setTag(3);
@@ -99,6 +105,8 @@ bool RLLeaderboardLayer::init() {
       m_planetsTab = planetsTab;
 
       auto creatorTab = TabButton::create(
+            TabBaseColor::Unselected,
+            TabBaseColor::UnselectedDark,
           "Top Creator", this,
           menu_selector(RLLeaderboardLayer::onLeaderboardTypeButton));
       creatorTab->setTag(2);
