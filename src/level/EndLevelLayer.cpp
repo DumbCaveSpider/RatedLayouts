@@ -231,7 +231,7 @@ class $modify(EndLevelLayer) {
                                     }
                               } else {
                                     log::info("Reward animation disabled");
-                                    std::string reward = isPlat ? "planets" : "stars";
+                                    std::string reward = isPlat ? "planets" : "sparks";
                                     Notification::create("Received " +
                                                              numToString(starReward) + " " + reward + "!",
                                                          CCSprite::create(medSprite.c_str()), 2.f)
@@ -246,10 +246,10 @@ class $modify(EndLevelLayer) {
                                     endLayerRef->addChild(fakeCircleWave, 1);
                               }
                         } else if (!success && responseStars == 0) {
-                              std::string rewards = isPlat ? "Planets" : "Stars";
+                              std::string rewards = isPlat ? "Planets" : "Sparks";
                               std::string medSprite = isPlat ? "RL_planetMed.png"_spr : "RL_starMed.png"_spr;
                               Notification::create(rewards + " has already been claimed for this level!", CCSprite::create(medSprite.c_str()))->show();
-                              log::info("Stars already claimed for level ID: {}",
+                              log::info("already claimed for level ID: {}",
                                         levelId);
                         }
                   });

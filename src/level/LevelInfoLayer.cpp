@@ -406,7 +406,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                               }
 
                               std::string medSprite = isPlat ? "RL_planetMed.png"_spr : "RL_starMed.png"_spr;
-                              std::string reward = isPlat ? "planets" : "stars";
+                              std::string reward = isPlat ? "planets" : "sparks";
 
                               if (!Mod::get()->getSettingValue<bool>("disableRewardAnimation")) {
                                     if (auto rewardLayer = CurrencyRewardLayer::create(
