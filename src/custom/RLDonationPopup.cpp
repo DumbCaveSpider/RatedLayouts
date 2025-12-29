@@ -73,12 +73,12 @@ bool RLDonationPopup::setup() {
       m_mainLayer->addChild(desc1);
 
       // title2
-      auto heading2 = CCLabelBMFont::create("Sneak Peek on future features", "goldFont.fnt");
+      auto heading2 = CCLabelBMFont::create("Sneak Peak on future features", "goldFont.fnt");
       heading2->setScale(0.75f);
       heading2->setPosition({m_mainLayer->getScaledContentSize().width / 2.f, m_mainLayer->getScaledContentSize().height - 125.f});
       m_mainLayer->addChild(heading2);
       // desc2
-      auto desc2 = CCLabelBMFont::create("Get exclusive sneak peeks at upcoming features\nboth in-game and on our Discord server!", "bigFont.fnt");
+      auto desc2 = CCLabelBMFont::create("Get exclusive sneak peaks at upcoming features\nboth in-game and on our Discord server!", "bigFont.fnt");
       desc2->setScale(0.5f);
       desc2->setPosition({m_mainLayer->getScaledContentSize().width / 2.f, m_mainLayer->getScaledContentSize().height - 155.f});
       desc2->setAlignment(kCCTextAlignmentCenter);
@@ -173,7 +173,7 @@ bool RLDonationPopup::setup() {
 }
 
 void RLDonationPopup::onClick(CCObject* sender) {
-      utils::web::openLinkInBrowser("https://ko-fi.com/summary/7134ad95-57b6-4c2c-8ca8-b48b76aeeaae");
+      utils::web::openLinkInBrowser("https://ko-fi.com/arcticwoof");
 }
 
 void RLDonationPopup::onGetBadge(CCObject* sender) {

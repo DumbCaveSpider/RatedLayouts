@@ -381,7 +381,7 @@ class $modify(RLCommentCell, CommentCell) {
                 "OK",
                 "Ko-Fi", [this](auto, bool yes) {
                       if (!yes) return;
-                      utils::web::openLinkInBrowser("https://ko-fi.com/summary/7134ad95-57b6-4c2c-8ca8-b48b76aeeaae");
+                      utils::web::openLinkInBrowser("https://ko-fi.com/arcticwoof");
                 });
       }
       void applyStarGlow(int accountId, int stars) {

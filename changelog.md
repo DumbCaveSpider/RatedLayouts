@@ -1,3 +1,7 @@
+# v0.3.4-beta.2
+
+- Very minor fixes relating to ko-fi links being invaild.
+
 # v0.3.4-beta.1
 
 - Added Disable Creator Points in mod settings. This is for specific users who see it as a negative aspect of the mod.
