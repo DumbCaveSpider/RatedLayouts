@@ -1,65 +1,9 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/CommentCell.hpp>
 #include <BadgesAPI.hpp>
+#include "BadgesRegistry.hpp"
 
 using namespace geode::prelude;
-
-static std::unordered_map<int, std::vector<Badge>> g_pendingBadges;
-
-$execute
-{
-      BadgesAPI::registerBadge(
-          "rl-mod-badge",
-          "Rated Layouts Moderator",
-          "This user can <cj>suggest layout levels</c> for <cl>Rated "
-          "Layouts</c> to the <cr>Layout Admins</c>. They have the ability to <co>moderate the leaderboard</c>.",
-          []
-          {
-                return CCSprite::create("RL_badgeMod01.png"_spr);
-          },
-          [](const Badge &badge, const UserInfo &user)
-          {
-                g_pendingBadges[user.accountID].push_back(badge);
-          });
-      BadgesAPI::registerBadge(
-          "rl-admin-badge",
-          "Rated Layouts Admin",
-          "This user can <cj>rate layout levels</c> for <cl>Rated "
-          "Layouts</c>. They have the same power as <cg>Moderators</c> but including the ability to change the <cy>featured ranking on the "
-          "featured layout levels</c> and <cg>set event layouts</c>.",
-          []
-          {
-                return CCSprite::create("RL_badgeAdmin01.png"_spr);
-          },
-          [](const Badge &badge, const UserInfo &user)
-          {
-                g_pendingBadges[user.accountID].push_back(badge);
-          });
-      BadgesAPI::registerBadge(
-          "rl-owner-badge",
-          "Rated Layouts Owner",
-          "<cf>ArcticWoof</c> is the <ca>Owner and Developer</c> of <cl>Rated Layouts</c> Geode Mod.\nHe controls and manages everything within <cl>Rated Layouts</c>, including updates and adding new features as well as the ability to <cg>promote users to Layout Moderators or Administrators</c>.",
-          []
-          {
-                return CCSprite::create("RL_badgeOwner.png"_spr);
-          },
-          [](const Badge &badge, const UserInfo &user)
-          {
-                g_pendingBadges[user.accountID].push_back(badge);
-          });
-      BadgesAPI::registerBadge(
-          "rl-supporter-badge",
-          "Rated Layouts Supporter",
-          "This user is a <cp>Layout Supporter</c>! They have supported the development of <cl>Rated Layouts</c> through membership donations.\n\nYou can become a <cp>Layout Supporter</c> by donating via <cp>Ko-Fi</c>",
-          []
-          {
-                return CCSprite::create("RL_badgeSupporter.png"_spr);
-          },
-          [](const Badge &badge, const UserInfo &user)
-          {
-                g_pendingBadges[user.accountID].push_back(badge);
-          });
-}
 
 // helper functions for caching user roles cuz caching is good.
 static std::string getUserRoleCachePath()
@@ -204,7 +148,6 @@ class $modify(RLCommentCell, CommentCell)
                   log::debug("Loaded cached role {} and stars {} for user {}", m_fields->role, m_fields->stars, comment->m_accountID);
                   applyCommentTextColor(comment->m_accountID);
                   applyStarGlow(comment->m_accountID, m_fields->stars);
-                  auto it = g_pendingBadges.find(comment->m_accountID);
 
                   // If compatibility mode is disabled, always attempt to refresh the cache from the server
                   if (!Mod::get()->getSettingValue<bool>("compatibilityMode"))
@@ -426,8 +369,8 @@ class $modify(RLCommentCell, CommentCell)
                                   cellRef->applyCommentTextColor(accountId);
                                   cellRef->applyStarGlow(accountId, stars);
 
-                                  auto it = g_pendingBadges.find(accountId);
-                                  if (it != g_pendingBadges.end())
+                                  auto it = BadgesRegistry::pending().find(accountId);
+                                  if (it != BadgesRegistry::pending().end())
                                   {
                                         for (auto const &b : it->second)
                                         {
@@ -455,9 +398,8 @@ class $modify(RLCommentCell, CommentCell)
                                                           BadgesAPI::showBadge(b);
                                               }
                                         }
-                                        g_pendingBadges.erase(it);
-                                  }
-                            });
+                                        BadgesRegistry::pending().erase(it);
+                                  } });
       }
 
       void applyStarGlow(int accountId, int stars)

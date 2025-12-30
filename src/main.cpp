@@ -1,17 +1,22 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/SupportLayer.hpp>
 #include <argon/argon.hpp>
+#include <BadgesAPI.hpp>
 
 using namespace geode::prelude;
 
-class $modify(SupportLayer) {
+class $modify(SupportLayer)
+{
   void onRequestAccess(
-      CCObject *sender) { // i assume that no one will ever get gd mod xddd
+      CCObject *sender)
+  { // i assume that no one will ever get gd mod xddd
     // argon my beloved <3
     std::string token;
     auto res = argon::startAuth(
-        [](Result<std::string> res) {
-          if (!res) {
+        [](Result<std::string> res)
+        {
+          if (!res)
+          {
             log::warn("Auth failed: {}", res.unwrapErr());
             Notification::create(res.unwrapErr(), NotificationIcon::Error)
                 ->show();
@@ -20,11 +25,13 @@ class $modify(SupportLayer) {
           log::debug("token obtained: {}", token);
           Mod::get()->setSavedValue("argon_token", token);
         },
-        [](argon::AuthProgress progress) {
+        [](argon::AuthProgress progress)
+        {
           log::debug("auth progress: {}",
                      argon::authProgressToString(progress));
         });
-    if (!res) {
+    if (!res)
+    {
       log::warn("Failed to start auth attempt: {}", res.unwrapErr());
       Notification::create(res.unwrapErr(), NotificationIcon::Error)->show();
     }
@@ -41,7 +48,8 @@ class $modify(SupportLayer) {
     auto postTask = postReq.post("https://gdrate.arcticwoof.xyz/access");
 
     // handle the response
-    postTask.listen([this](web::WebResponse *response) {
+    postTask.listen([this](web::WebResponse *response)
+                    {
       log::info("Received response from server");
 
       if (!response->ok()) {
@@ -70,7 +78,6 @@ class $modify(SupportLayer) {
       } else {
         Notification::create("Nothing happened.", NotificationIcon::Error)
             ->show();
-      }
-    });
+      } });
   }
 };
