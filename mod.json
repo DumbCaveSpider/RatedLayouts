@@ -26,6 +26,10 @@
 		"alphalaneous.pages_api": {
 			"importance": "recommended",
 			"version": ">=1.4.1"
+		},
+		"alphalaneous.badges_api_reimagined": {
+			"importance": "required",
+			"version": ">=1.0.0"
 		}
 	},
 	"links": {

@@ -2,21 +2,82 @@
 #include <Geode/modify/ProfilePage.hpp>
 #include <argon/argon.hpp>
 #include <Geode/utils/coro.hpp>
+#include "BadgesAPI.hpp"
 
 #include "RLDifficultyTotalPopup.hpp"
 #include "RLUserControl.hpp"
 
 using namespace geode::prelude;
 
-static std::string getUserRoleCachePath_ProfilePage() {
+static std::unordered_map<int, std::vector<Badge>> g_pendingBadges;
+
+$execute
+{
+    BadgesAPI::registerBadge(
+        "rl-mod-badge",
+        "Rated Layouts Moderator",
+        "This user can <cj>suggest layout levels</c> for <cl>Rated "
+        "Layouts</c> to the <cr>Layout Admins</c>. They have the ability to <co>moderate the leaderboard</c>.",
+        []
+        {
+            return CCSprite::create("RL_badgeMod01.png"_spr);
+        },
+        [](const Badge &badge, const UserInfo &user)
+        {
+            g_pendingBadges[user.accountID].push_back(badge);
+        });
+    BadgesAPI::registerBadge(
+        "rl-admin-badge",
+        "Rated Layouts Admin",
+        "This user can <cj>rate layout levels</c> for <cl>Rated "
+        "Layouts</c>. They have the same power as <cg>Moderators</c> but including the ability to change the <cy>featured ranking on the "
+        "featured layout levels</c> and <cg>set event layouts</c>.",
+        []
+        {
+            return CCSprite::create("RL_badgeAdmin01.png"_spr);
+        },
+        [](const Badge &badge, const UserInfo &user)
+        {
+            g_pendingBadges[user.accountID].push_back(badge);
+        });
+    BadgesAPI::registerBadge(
+        "rl-owner-badge",
+        "Rated Layouts Owner",
+        "<cf>ArcticWoof</c> is the <ca>Owner and Developer</c> of <cl>Rated Layouts</c> Geode Mod.\nHe controls and manages everything within <cl>Rated Layouts</c>, including updates and adding new features as well as the ability to <cg>promote users to Layout Moderators or Administrators</c>.",
+        []
+        {
+            return CCSprite::create("RL_badgeOwner.png"_spr);
+        },
+        [](const Badge &badge, const UserInfo &user)
+        {
+            g_pendingBadges[user.accountID].push_back(badge);
+        });
+    BadgesAPI::registerBadge(
+        "rl-supporter-badge",
+        "Rated Layouts Supporter",
+        "This user is a <cp>Layout Supporter</c>! They have supported the development of <cl>Rated Layouts</c> through membership donations.\n\nYou can become a <cp>Layout Supporter</c> by donating via <cp>Ko-Fi</c>",
+        []
+        {
+            return CCSprite::create("RL_badgeSupporter.png"_spr);
+        },
+        [](const Badge &badge, const UserInfo &user)
+        {
+            g_pendingBadges[user.accountID].push_back(badge);
+        });
+}
+
+static std::string getUserRoleCachePath_ProfilePage()
+{
     auto saveDir = dirs::getModsSaveDir();
     return geode::utils::string::pathToString(saveDir / "user_role_cache.json");
 }
 
-static void cacheUserProfile_ProfilePage(int accountId, int role, int stars, int planets) {
+static void cacheUserProfile_ProfilePage(int accountId, int role, int stars, int planets)
+{
     auto saveDir = dirs::getModsSaveDir();
     auto createDirResult = utils::file::createDirectory(saveDir);
-    if (!createDirResult) {
+    if (!createDirResult)
+    {
         log::warn("Failed to create save directory for user role cache");
         return;
     }
@@ -25,9 +86,11 @@ static void cacheUserProfile_ProfilePage(int accountId, int role, int stars, int
 
     matjson::Value root = matjson::Value::object();
     auto existingData = utils::file::readString(cachePath);
-    if (existingData) {
+    if (existingData)
+    {
         auto parsed = matjson::parse(existingData.unwrap());
-        if (parsed) root = parsed.unwrap();
+        if (parsed)
+            root = parsed.unwrap();
     }
 
     matjson::Value obj = matjson::Value::object();
@@ -38,13 +101,16 @@ static void cacheUserProfile_ProfilePage(int accountId, int role, int stars, int
 
     auto jsonString = root.dump();
     auto writeResult = utils::file::writeString(geode::utils::string::pathToString(cachePath), jsonString);
-    if (writeResult) {
+    if (writeResult)
+    {
         log::debug("Cached user role {} for account ID: {} (from ProfilePage)", role, accountId);
     }
 }
 
-class $modify(RLProfilePage, ProfilePage) {
-    struct Fields {
+class $modify(RLProfilePage, ProfilePage)
+{
+    struct Fields
+    {
         int role = 0;
         int accountId = 0;
         bool isSupporter = false;
@@ -54,32 +120,34 @@ class $modify(RLProfilePage, ProfilePage) {
         int m_stars = 0;
     };
 
-    CCMenu* createStatEntry(
-        char const* entryID,
-        char const* labelID,
-        std::string const& text,
-        char const* iconFrameOrPath,
-        SEL_MenuHandler iconCallback
-    ) {
+    CCMenu *createStatEntry(
+        char const *entryID,
+        char const *labelID,
+        std::string const &text,
+        char const *iconFrameOrPath,
+        SEL_MenuHandler iconCallback)
+    {
         auto label = CCLabelBMFont::create(text.c_str(), "bigFont.fnt");
         label->setID(labelID);
 
         constexpr float kLabelScale = 0.60f;
-        constexpr float kMaxLabelW  = 58.f;
-        constexpr float kMinScale   = 0.20f;
+        constexpr float kMaxLabelW = 58.f;
+        constexpr float kMinScale = 0.20f;
 
         label->setScale(kLabelScale);
         label->limitLabelWidth(kMaxLabelW, kLabelScale, kMinScale);
 
-        CCSprite* iconSprite = nullptr;
+        CCSprite *iconSprite = nullptr;
         iconSprite = CCSprite::createWithSpriteFrameName(iconFrameOrPath);
-        if (!iconSprite) iconSprite = CCSprite::create(iconFrameOrPath);
+        if (!iconSprite)
+            iconSprite = CCSprite::create(iconFrameOrPath);
+
+        iconSprite->setScale(0.8f);
 
         auto iconBtn = CCMenuItemSpriteExtra::create(
             iconSprite,
             this,
-            iconCallback
-        );
+            iconCallback);
 
         auto ls = label->getScaledContentSize();
         auto is = iconBtn->getScaledContentSize();
@@ -92,14 +160,14 @@ class $modify(RLProfilePage, ProfilePage) {
 
         auto entry = CCMenu::create();
         entry->setID(entryID);
-        entry->setContentSize({ w, h });
-        entry->setAnchorPoint({ 0.f, 0.5f });
+        entry->setContentSize({w, h});
+        entry->setAnchorPoint({0.f, 0.5f});
 
-        label->setAnchorPoint({ 0.f, 0.5f });
-        label->setPosition({ pad, h / 2.f });
+        label->setAnchorPoint({0.f, 0.5f});
+        label->setPosition({pad, h / 2.f});
 
-        iconBtn->setAnchorPoint({ 0.f, 0.5f });
-        iconBtn->setPosition({ pad + ls.width + gap, h / 2.f });
+        iconBtn->setAnchorPoint({0.f, 0.5f});
+        iconBtn->setPosition({pad + ls.width + gap, h / 2.f});
 
         entry->addChild(label);
         entry->addChild(iconBtn);
@@ -107,56 +175,66 @@ class $modify(RLProfilePage, ProfilePage) {
         return entry;
     }
 
-    void updateStatLabel(char const* labelID, std::string const& text) {
+    void updateStatLabel(char const *labelID, std::string const &text)
+    {
         auto rlStatsMenu = getChildByIDRecursive("rl-stats-menu");
-        if (!rlStatsMenu) return;
+        if (!rlStatsMenu)
+            return;
 
-        auto label = typeinfo_cast<CCLabelBMFont*>(rlStatsMenu->getChildByIDRecursive(labelID));
-        if (!label) return;
+        auto label = typeinfo_cast<CCLabelBMFont *>(rlStatsMenu->getChildByIDRecursive(labelID));
+        if (!label)
+            return;
 
         label->setString(text.c_str());
 
         constexpr float kLabelScale = 0.60f;
-        constexpr float kMaxLabelW  = 58.f;
-        constexpr float kMinScale   = 0.20f;
+        constexpr float kMaxLabelW = 58.f;
+        constexpr float kMinScale = 0.20f;
         label->limitLabelWidth(kMaxLabelW, kLabelScale, kMinScale);
     }
 
-    bool init(int accountID, bool ownProfile) {
+    bool init(int accountID, bool ownProfile)
+    {
         if (!ProfilePage::init(accountID, ownProfile))
             return false;
 
-        if (auto statsMenu = m_mainLayer->getChildByID("stats-menu")) {
+        if (auto statsMenu = m_mainLayer->getChildByID("stats-menu"))
+        {
             statsMenu->updateLayout();
         }
         return true;
     }
 
-    void loadPageFromUserInfo(GJUserScore* score) {
+    void loadPageFromUserInfo(GJUserScore *score)
+    {
         ProfilePage::loadPageFromUserInfo(score);
 
         auto statsMenu = m_mainLayer->getChildByID("stats-menu");
-        if (!statsMenu) {
+        if (!statsMenu)
+        {
             log::warn("stats-menu not found");
             return;
         }
 
-        if (auto rlStatsBtnFound = getChildByIDRecursive("rl-stats-btn")) rlStatsBtnFound->removeFromParent();
-        if (auto rlStatsMenuFound = getChildByIDRecursive("rl-stats-menu")) rlStatsMenuFound->removeFromParent();
+        if (auto rlStatsBtnFound = getChildByIDRecursive("rl-stats-btn"))
+            rlStatsBtnFound->removeFromParent();
+        if (auto rlStatsMenuFound = getChildByIDRecursive("rl-stats-menu"))
+            rlStatsMenuFound->removeFromParent();
 
         auto leftMenu = getChildByIDRecursive("left-menu");
-        if (!leftMenu) {
+        if (!leftMenu)
+        {
             log::warn("left-menu not found");
             return;
         }
 
-        auto rlStatsSpr   = CCSprite::create("GJ_button_04.png");
+        auto rlStatsSpr = CCSprite::create("GJ_button_04.png");
         auto rlStatsSprOn = CCSprite::create("GJ_button_02.png");
 
         auto rlSprA = CCSprite::create("RL_planetMed.png"_spr);
         auto rlSprB = CCSprite::create("RL_planetMed.png"_spr);
-        rlSprA->setPosition({ 20.f, 20.f });
-        rlSprB->setPosition({ 20.f, 20.f });
+        rlSprA->setPosition({20.f, 20.f});
+        rlSprB->setPosition({20.f, 20.f});
 
         rlStatsSpr->addChild(rlSprA);
         rlStatsSprOn->addChild(rlSprB);
@@ -168,8 +246,7 @@ class $modify(RLProfilePage, ProfilePage) {
             rlStatsSpr,
             rlStatsSprOn,
             this,
-            menu_selector(RLProfilePage::onStatsSwitcher)
-        );
+            menu_selector(RLProfilePage::onStatsSwitcher));
         rlStatsBtn->setID("rl-stats-btn");
         leftMenu->addChild(rlStatsBtn);
 
@@ -183,11 +260,11 @@ class $modify(RLProfilePage, ProfilePage) {
         row->setGap(4.f);
         rlStatsMenu->setLayout(row);
 
-        rlStatsMenu->setAnchorPoint({ 0.5f, 0.5f });
+        rlStatsMenu->setAnchorPoint({0.5f, 0.5f});
 
         rlStatsMenu->setPositionY(245.f);
 
-        auto starsText   = GameToolbox::pointsToString(m_fields->m_stars);
+        auto starsText = GameToolbox::pointsToString(m_fields->m_stars);
         auto planetsText = GameToolbox::pointsToString(m_fields->m_planets);
 
         auto starsEntry = createStatEntry(
@@ -195,16 +272,14 @@ class $modify(RLProfilePage, ProfilePage) {
             "rl-stars-label",
             starsText,
             "RL_starMed.png"_spr,
-            menu_selector(RLProfilePage::onBlueprintStars)
-        );
+            menu_selector(RLProfilePage::onBlueprintStars));
 
         auto planetsEntry = createStatEntry(
             "rl-planets-entry",
             "rl-planets-label",
             planetsText,
             "RL_planetMed.png"_spr,
-            menu_selector(RLProfilePage::onPlanetsClicked)
-        );
+            menu_selector(RLProfilePage::onPlanetsClicked));
 
         rlStatsMenu->addChild(starsEntry);
         rlStatsMenu->addChild(planetsEntry);
@@ -214,7 +289,8 @@ class $modify(RLProfilePage, ProfilePage) {
 
         m_mainLayer->addChild(rlStatsMenu);
 
-        if (score) {
+        if (score)
+        {
             coro::spawn << fetchProfileDataTask(score->m_accountID);
         }
 
@@ -224,36 +300,48 @@ class $modify(RLProfilePage, ProfilePage) {
         leftMenu->updateLayout();
     }
 
-    void onStatsSwitcher(CCObject* sender) {
+    void onStatsSwitcher(CCObject *sender)
+    {
         auto statsMenu = getChildByIDRecursive("stats-menu");
         auto rlStatsMenu = getChildByIDRecursive("rl-stats-menu");
-        auto switcher = typeinfo_cast<CCMenuItemToggler*>(sender);
+        auto switcher = typeinfo_cast<CCMenuItemToggler *>(sender);
 
-        if (!statsMenu || !rlStatsMenu || !switcher) return;
+        if (!statsMenu || !rlStatsMenu || !switcher)
+            return;
 
-        if (!switcher->isToggled()) {
+        if (!switcher->isToggled())
+        {
             statsMenu->setVisible(false);
-            if (auto m = typeinfo_cast<CCMenu*>(statsMenu)) m->setEnabled(false);
+            if (auto m = typeinfo_cast<CCMenu *>(statsMenu))
+                m->setEnabled(false);
 
             rlStatsMenu->setVisible(true);
-            if (auto m = typeinfo_cast<CCMenu*>(rlStatsMenu)) m->setEnabled(true);
-        } else {
+            if (auto m = typeinfo_cast<CCMenu *>(rlStatsMenu))
+                m->setEnabled(true);
+        }
+        else
+        {
             statsMenu->setVisible(true);
-            if (auto m = typeinfo_cast<CCMenu*>(statsMenu)) m->setEnabled(true);
+            if (auto m = typeinfo_cast<CCMenu *>(statsMenu))
+                m->setEnabled(true);
 
             rlStatsMenu->setVisible(false);
-            if (auto m = typeinfo_cast<CCMenu*>(rlStatsMenu)) m->setEnabled(false);
+            if (auto m = typeinfo_cast<CCMenu *>(rlStatsMenu))
+                m->setEnabled(false);
         }
     }
 
-    geode::Task<void> fetchProfileDataTask(int accountId) {
+    geode::Task<void> fetchProfileDataTask(int accountId)
+    {
         log::info("Fetching profile data for account ID: {}", accountId);
         m_fields->accountId = accountId;
 
         std::string token;
         auto res = argon::startAuth(
-            [](Result<std::string> res) {
-                if (!res) {
+            [](Result<std::string> res)
+            {
+                if (!res)
+                {
                     log::warn("Auth failed: {}", res.unwrapErr());
                     return;
                 }
@@ -261,11 +349,12 @@ class $modify(RLProfilePage, ProfilePage) {
                 log::debug("token obtained: {}", token);
                 Mod::get()->setSavedValue("argon_token", token);
             },
-            [](argon::AuthProgress progress) {
+            [](argon::AuthProgress progress)
+            {
                 log::debug("auth progress: {}", argon::authProgressToString(progress));
-            }
-        );
-        if (!res) {
+            });
+        if (!res)
+        {
             log::warn("Failed to start auth attempt: {}", res.unwrapErr());
             co_return;
         }
@@ -278,13 +367,15 @@ class $modify(RLProfilePage, ProfilePage) {
         req.bodyJSON(jsonBody);
 
         auto response = co_await req.post("https://gdrate.arcticwoof.xyz/profile");
-        if (!response.ok()) {
+        if (!response.ok())
+        {
             log::warn("Server returned non-ok status");
             co_return;
         }
 
         auto jsonRes = response.json();
-        if (!jsonRes) {
+        if (!jsonRes)
+        {
             log::warn("Failed to parse JSON response");
             co_return;
         }
@@ -303,46 +394,81 @@ class $modify(RLProfilePage, ProfilePage) {
         m_fields->role = role;
         m_fields->isSupporter = isSupporter;
 
+        auto it = g_pendingBadges.find(accountId);
+        if (it != g_pendingBadges.end())
+        {
+            for (auto const &b : it->second)
+            {
+                if (!b.targetNode || !b.targetNode->getParent())
+                    continue;
+
+                if (b.badgeID == "rl-owner-badge")
+                {
+                    if (accountId == 7689052)
+                        BadgesAPI::showBadge(b);
+                }
+                else if (b.badgeID == "rl-mod-badge")
+                {
+                    if (accountId != 7689052 && role == 1)
+                        BadgesAPI::showBadge(b);
+                }
+                else if (b.badgeID == "rl-admin-badge")
+                {
+                    if (accountId != 7689052 && role == 2)
+                        BadgesAPI::showBadge(b);
+                }
+                else if (b.badgeID == "rl-supporter-badge")
+                {
+                    if (isSupporter)
+                        BadgesAPI::showBadge(b);
+                }
+            }
+            g_pendingBadges.erase(it);
+        }
+
         log::info("Profile data - points: {}, stars: {}, planets: {}, supporter: {}", points, stars, planets, isSupporter);
 
         cacheUserProfile_ProfilePage(m_fields->accountId, role, stars, planets);
 
-        if (m_ownProfile) {
+        if (m_ownProfile)
+        {
             Mod::get()->setSavedValue("role", m_fields->role);
         }
 
         updateStatLabel("rl-stars-label", GameToolbox::pointsToString(m_fields->m_stars));
         updateStatLabel("rl-planets-label", GameToolbox::pointsToString(m_fields->m_planets));
-        
-        auto pointsText  = GameToolbox::pointsToString(m_fields->m_points);
 
-            auto pointsEntry = createStatEntry(
-                "rl-points-entry",
-                "rl-points-label",
-                pointsText,
-                "RL_blueprintPoint01.png"_spr,
-                menu_selector(RLProfilePage::onLayoutPointsClicked)
-            );
+        auto pointsText = GameToolbox::pointsToString(m_fields->m_points);
 
-            auto rlStatsMenu = getChildByIDRecursive("rl-stats-menu");
+        auto pointsEntry = createStatEntry(
+            "rl-points-entry",
+            "rl-points-label",
+            pointsText,
+            "RL_blueprintPoint01.png"_spr,
+            menu_selector(RLProfilePage::onLayoutPointsClicked));
 
-            if (points > 0) {
-                  rlStatsMenu->addChild(pointsEntry);
-            }
+        auto rlStatsMenu = getChildByIDRecursive("rl-stats-menu");
 
-        if (rlStatsMenu) {
-            for (auto entryID : { "rl-stars-entry", "rl-planets-entry", "rl-points-entry" }) {
-                auto entry = typeinfo_cast<CCMenu*>(rlStatsMenu->getChildByIDRecursive(entryID));
-                if (!entry) continue;
+        if (points > 0)
+        {
+            rlStatsMenu->addChild(pointsEntry);
+        }
 
-                auto label = typeinfo_cast<CCLabelBMFont*>(entry->getChildByIDRecursive(
-                    std::string(entryID) == "rl-stars-entry" ? "rl-stars-label" :
-                    std::string(entryID) == "rl-planets-entry" ? "rl-planets-label" :
-                                                               "rl-points-label"
-                ));
-                auto iconBtn = typeinfo_cast<CCMenuItemSpriteExtra*>(entry->getChildren()->objectAtIndex(1));
+        if (rlStatsMenu)
+        {
+            for (auto entryID : {"rl-stars-entry", "rl-planets-entry", "rl-points-entry"})
+            {
+                auto entry = typeinfo_cast<CCMenu *>(rlStatsMenu->getChildByIDRecursive(entryID));
+                if (!entry)
+                    continue;
 
-                if (!label || !iconBtn) continue;
+                auto label = typeinfo_cast<CCLabelBMFont *>(entry->getChildByIDRecursive(
+                    std::string(entryID) == "rl-stars-entry" ? "rl-stars-label" : std::string(entryID) == "rl-planets-entry" ? "rl-planets-label"
+                                                                                                                             : "rl-points-label"));
+                auto iconBtn = typeinfo_cast<CCMenuItemSpriteExtra *>(entry->getChildren()->objectAtIndex(1));
+
+                if (!label || !iconBtn)
+                    continue;
 
                 auto ls = label->getScaledContentSize();
                 auto is = iconBtn->getScaledContentSize();
@@ -353,14 +479,15 @@ class $modify(RLProfilePage, ProfilePage) {
                 float h = std::max(ls.height, is.height);
                 float w = pad + ls.width + gap + is.width + pad;
 
-                entry->setContentSize({ w, h });
+                entry->setContentSize({w, h});
 
-                label->setPosition({ pad, h / 2.f });
-                iconBtn->setPosition({ pad + ls.width + gap, h / 2.f });
+                label->setPosition({pad, h / 2.f});
+                iconBtn->setPosition({pad + ls.width + gap, h / 2.f});
             }
 
             auto betterProgSign = getChildByIDRecursive("itzkiba.better_progression/tier-bar");
-            if (betterProgSign) {
+            if (betterProgSign)
+            {
                 rlStatsMenu->setScale(0.845f);
                 rlStatsMenu->setPosition({309.f, 248.f});
             }
@@ -369,41 +496,45 @@ class $modify(RLProfilePage, ProfilePage) {
         }
 
         // add a user manage button if the user accessing it is a mod or an admin
-                  if (Mod::get()->getSavedValue<int>("role", 0) >= 1) {
-                        auto leftMenu = static_cast<CCMenu*>(
-                            m_mainLayer->getChildByIDRecursive("left-menu"));
-                        if (leftMenu && !leftMenu->getChildByID("rl-user-manage")) {
-                              auto hammerSprite = CCSprite::create("RL_blueprintPoint01.png"_spr);
-                              auto circleButtonSprite = CircleButtonSprite::create(
-                                  hammerSprite, CircleBaseColor::DarkAqua, CircleBaseSize::Small);
-                              circleButtonSprite->setScale(0.875f);
-                              auto userButton = CCMenuItemSpriteExtra::create(
-                                  circleButtonSprite, this, menu_selector(RLProfilePage::onUserManage));
-                              userButton->setID("rl-user-manage");
-                              leftMenu->addChild(userButton);
-                              leftMenu->updateLayout();
-                        }
-                  }
+        if (Mod::get()->getSavedValue<int>("role", 0) >= 1)
+        {
+            auto leftMenu = static_cast<CCMenu *>(
+                m_mainLayer->getChildByIDRecursive("left-menu"));
+            if (leftMenu && !leftMenu->getChildByID("rl-user-manage"))
+            {
+                auto hammerSprite = CCSprite::create("RL_blueprintPoint01.png"_spr);
+                auto circleButtonSprite = CircleButtonSprite::create(
+                    hammerSprite, CircleBaseColor::DarkAqua, CircleBaseSize::Small);
+                circleButtonSprite->setScale(0.875f);
+                auto userButton = CCMenuItemSpriteExtra::create(
+                    circleButtonSprite, this, menu_selector(RLProfilePage::onUserManage));
+                userButton->setID("rl-user-manage");
+                leftMenu->addChild(userButton);
+                leftMenu->updateLayout();
+            }
+        }
 
-                  // only set saved data if you own the profile
-                  if (m_ownProfile) {
-                        Mod::get()->setSavedValue("role", m_fields->role);
-                  }
-
-        loadBadgeFromUserInfo();
+        // only set saved data if you own the profile
+        if (m_ownProfile)
+        {
+            Mod::get()->setSavedValue("role", m_fields->role);
+        }
 
         co_return;
     }
 
-    void fetchProfileData(int accountId) {
+    void fetchProfileData(int accountId)
+    {
         log::info("Fetching profile data for account ID: {}", accountId);
         m_fields->accountId = accountId;
 
         // argon my beloved <3
         std::string token;
         auto res = argon::startAuth(
-            [](Result<std::string> res) {
-                if (!res) {
+            [](Result<std::string> res)
+            {
+                if (!res)
+                {
                     log::warn("Auth failed: {}", res.unwrapErr());
                     return;
                 }
@@ -411,11 +542,12 @@ class $modify(RLProfilePage, ProfilePage) {
                 log::debug("token obtained: {}", token);
                 Mod::get()->setSavedValue("argon_token", token);
             },
-            [](argon::AuthProgress progress) {
+            [](argon::AuthProgress progress)
+            {
                 log::debug("auth progress: {}", argon::authProgressToString(progress));
-            }
-        );
-        if (!res) {
+            });
+        if (!res)
+        {
             log::warn("Failed to start auth attempt: {}", res.unwrapErr());
             return;
         }
@@ -430,7 +562,8 @@ class $modify(RLProfilePage, ProfilePage) {
         auto postTask = postReq.post("https://gdrate.arcticwoof.xyz/profile");
         Ref<RLProfilePage> pageRef = this;
 
-        postTask.listen([pageRef, this](web::WebResponse* response) {
+        postTask.listen([pageRef, this](web::WebResponse *response)
+                        {
             log::info("Received response from server");
 
             if (!pageRef || !pageRef->m_mainLayer) {
@@ -474,39 +607,42 @@ class $modify(RLProfilePage, ProfilePage) {
 
             if (auto rlStatsMenu = getChildByIDRecursive("rl-stats-menu")) {
                 rlStatsMenu->updateLayout();
-            }
-
-            pageRef->loadBadgeFromUserInfo();
-        });
+            } });
     }
 
-    void onUserManage(CCObject* sender) {
+    void onUserManage(CCObject *sender)
+    {
         int accountId = m_fields->accountId;
         auto userControl = RLUserControl::create(accountId);
         userControl->show();
     }
 
-    void onPlanetsClicked(CCObject* sender) {
+    void onPlanetsClicked(CCObject *sender)
+    {
         int accountId = m_fields->accountId;
         auto popup = RLDifficultyTotalPopup::create(accountId, RLDifficultyTotalPopup::Mode::Planets);
-        if (popup) popup->show();
+        if (popup)
+            popup->show();
     }
 
-    void onLayoutPointsClicked(CCObject* sender) {
+    void onLayoutPointsClicked(CCObject *sender)
+    {
         // disable button when clicked
-        auto menuItem = typeinfo_cast<CCMenuItemSpriteExtra*>(sender);
-        if (menuItem) menuItem->setEnabled(false);
+        auto menuItem = typeinfo_cast<CCMenuItemSpriteExtra *>(sender);
+        if (menuItem)
+            menuItem->setEnabled(false);
 
         int accountId = m_fields->accountId;
         log::info("Fetching account levels for account ID: {}", accountId);
 
         auto task = web::WebRequest()
-            .param("accountId", accountId)
-            .get("https://gdrate.arcticwoof.xyz/getAccountLevels");
+                        .param("accountId", accountId)
+                        .get("https://gdrate.arcticwoof.xyz/getAccountLevels");
 
         Ref<RLProfilePage> pageRef = this;
 
-        task.listen([pageRef, menuItem](web::WebResponse* res) {
+        task.listen([pageRef, menuItem](web::WebResponse *res)
+                    {
             if (!pageRef) return;
             if (!res || !res->ok()) {
                 Notification::create("Failed to fetch account levels", NotificationIcon::Error)->show();
@@ -558,128 +694,14 @@ class $modify(RLProfilePage, ProfilePage) {
             } else {
                 Notification::create("No levels found for this account", NotificationIcon::Warning)->show();
                 if (menuItem) menuItem->setEnabled(true);
-            }
-        });
+            } });
     }
 
-    void onBlueprintStars(CCObject* sender) {
+    void onBlueprintStars(CCObject *sender)
+    {
         int accountId = m_fields->accountId;
         auto popup = RLDifficultyTotalPopup::create(accountId, RLDifficultyTotalPopup::Mode::Stars);
-        if (popup) popup->show();
-    }
-
-    void onModBadge(CCObject* sender) {
-            FLAlertLayer::create(
-                "Layout Moderator",
-                "This user can <cj>suggest layout levels</c> for <cl>Rated "
-                "Layouts</c> to the <cr>Layout Admins</c>. They have the ability to <co>moderate the leaderboard</c>.",
-                "OK")
-                ->show();
-      }
-
-      void onAdminBadge(CCObject* sender) {
-            FLAlertLayer::create(
-                "Layout Administrator",
-                "This user can <cj>rate layout levels</c> for <cl>Rated "
-                "Layouts</c>. They have the same power as <cg>Moderators</c> but including the ability to change the <cy>featured ranking on the "
-                "featured layout levels</c> and <cg>set event layouts</c>.",
-                "OK")
-                ->show();
-      }
-      void onOwnerBadge(CCObject* sender) {
-            FLAlertLayer::create(
-                "Rated Layouts Owner",
-                "<cf>ArcticWoof</c> is the <ca>Owner and Developer</c> of <cl>Rated Layouts</c> Geode Mod.\nHe controls and manages everything within <cl>Rated Layouts</c>, including updates and adding new features as well as the ability to <cg>promote users to Layout Moderators or Administrators</c>.",
-                "OK")
-                ->show();
-      }
-      void onSupporterBadge(CCObject* sender) {
-            geode::createQuickPopup(
-                "Supporter Badge",
-                "This user is a <cp>Layout Supporter</c>! They have supported the development of <cl>Rated Layouts</c> through membership donations.\n\nYou can become a <cp>Layout Supporter</c> by donating via <cp>Ko-Fi</c>",
-                "OK",
-                "Ko-Fi", [this](auto, bool yes) {
-                      if (!yes) return;
-                      utils::web::openLinkInBrowser("https://ko-fi.com/arcticwoof");
-                });
-      }
-
-    void loadBadgeFromUserInfo() {
-        auto userNameMenu = typeinfo_cast<CCMenu*>(m_mainLayer->getChildByIDRecursive("username-menu"));
-        if (!userNameMenu) {
-            log::warn("username-menu not found");
-            return;
-        }
-
-        // supporter badge (show for any profile that is a supporter)
-        if (m_fields->isSupporter) {
-            if (!userNameMenu->getChildByID("rl-supporter-badge")) {
-                auto supporterSprite = CCSprite::create("RL_badgeSupporter.png"_spr);
-                auto supporterButton = CCMenuItemSpriteExtra::create(
-                    supporterSprite,
-                    this,
-                    menu_selector(RLProfilePage::onSupporterBadge)
-                );
-                supporterButton->setID("rl-supporter-badge");
-                userNameMenu->addChild(supporterButton);
-            }
-        }
-
-        if (m_accountID == 7689052) { // ArcticWoof exception
-            if (userNameMenu->getChildByID("rl-owner-badge")) {
-                return;
-            }
-            if (auto mod = userNameMenu->getChildByID("rl-mod-badge")) mod->removeFromParent();
-            if (auto admin = userNameMenu->getChildByID("rl-admin-badge")) admin->removeFromParent();
-
-            auto ownerBadgeSprite = CCSprite::create("RL_badgeOwner.png"_spr);
-            auto ownerBadgeButton = CCMenuItemSpriteExtra::create(
-                ownerBadgeSprite,
-                this,
-                menu_selector(RLProfilePage::onOwnerBadge)
-            );
-            ownerBadgeButton->setID("rl-owner-badge");
-            userNameMenu->addChild(ownerBadgeButton);
-        } else if (m_fields->role == 1) {
-            if (userNameMenu->getChildByID("rl-mod-badge")) {
-                return;
-            }
-            if (auto owner = userNameMenu->getChildByID("rl-owner-badge")) owner->removeFromParent();
-            if (auto admin = userNameMenu->getChildByID("rl-admin-badge")) admin->removeFromParent();
-
-            auto modBadgeSprite = CCSprite::create("RL_badgeMod01.png"_spr);
-            auto modBadgeButton = CCMenuItemSpriteExtra::create(
-                modBadgeSprite,
-                this,
-                menu_selector(RLProfilePage::onModBadge)
-            );
-            modBadgeButton->setID("rl-mod-badge");
-            userNameMenu->addChild(modBadgeButton);
-            userNameMenu->updateLayout();
-        } else if (m_fields->role == 2) {
-            if (userNameMenu->getChildByID("rl-admin-badge")) {
-                log::info("Admin badge already exists, skipping creation");
-                return;
-            }
-            if (auto owner = userNameMenu->getChildByID("rl-owner-badge")) owner->removeFromParent();
-            if (auto mod = userNameMenu->getChildByID("rl-mod-badge")) mod->removeFromParent();
-
-            auto adminBadgeSprite = CCSprite::create("RL_badgeAdmin01.png"_spr);
-            auto adminBadgeButton = CCMenuItemSpriteExtra::create(
-                adminBadgeSprite,
-                this,
-                menu_selector(RLProfilePage::onAdminBadge)
-            );
-            adminBadgeButton->setID("rl-admin-badge");
-            userNameMenu->addChild(adminBadgeButton);
-            userNameMenu->updateLayout();
-        } else {
-            // remove role badges if any
-            if (auto owner = userNameMenu->getChildByID("rl-owner-badge")) owner->removeFromParent();
-            if (auto mod = userNameMenu->getChildByID("rl-mod-badge")) mod->removeFromParent();
-            if (auto admin = userNameMenu->getChildByID("rl-admin-badge")) admin->removeFromParent();
-        }
-
-        userNameMenu->updateLayout();
+        if (popup)
+            popup->show();
     }
 };
