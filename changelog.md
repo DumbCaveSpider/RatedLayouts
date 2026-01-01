@@ -1,3 +1,14 @@
+# v0.3.5-beta.1
+
+- **Profile Stats Changed!** The Rated layouts stats are now on a seperate section in the profile page. Click the new Planet Button in the profile page to view your Rated Layouts stats!
+- Improved the Layout Moderators and Admins UI.
+- Changed "Design" to "Originality" in the Community Vote popup.
+- Fixed issue where submitting a vote with no score defaulted to 1. It should not be included in the vote if empty.
+- Fixed issue where the Leaderboard tabs is transparent when selected.
+- Comment Glow will now apply when a user has planets in their stats.
+
+Thanks to [delivel-tech](https://github.com/delivel-tech) for this update!
+
 # v0.3.4-beta.2
 
 - Very minor fixes relating to ko-fi links being invaild.

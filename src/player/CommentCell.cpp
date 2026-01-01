@@ -97,6 +97,7 @@ class $modify(RLCommentCell, CommentCell) {
       struct Fields {
             int role = 0;
             int stars = 0;
+            int planets = 0;
             bool supporter = false;
       };
 
@@ -113,11 +114,12 @@ class $modify(RLCommentCell, CommentCell) {
             if (cachedProfile) {
                   m_fields->role = cachedProfile->role;
                   m_fields->stars = cachedProfile->stars;
+                  m_fields->planets = cachedProfile->planets;
                   m_fields->supporter = cachedProfile->supporter;
-                  log::debug("Loaded cached role {} and stars {} for user {}", m_fields->role, m_fields->stars, comment->m_accountID);
+                  log::debug("Loaded cached role {} stars {} planets {} for user {}", m_fields->role, m_fields->stars, m_fields->planets, comment->m_accountID);
                   loadBadgeForComment(comment->m_accountID);
                   applyCommentTextColor(comment->m_accountID);
-                  applyStarGlow(comment->m_accountID, m_fields->stars);
+                  applyStarGlow(comment->m_accountID, m_fields->stars, m_fields->planets);
 
                   // If compatibility mode is disabled, always attempt to refresh the cache from the server
                   if (!Mod::get()->getSettingValue<bool>("compatibilityMode")) {
@@ -284,15 +286,16 @@ class $modify(RLCommentCell, CommentCell) {
 
                   cellRef->m_fields->role = role;
                   cellRef->m_fields->stars = stars;
+                  cellRef->m_fields->planets = planets;
                   cellRef->m_fields->supporter = json["isSupporter"].asBool().unwrapOrDefault();
 
                   cacheUserProfile(accountId, role, stars, planets, cellRef->m_fields->supporter);
 
-                  log::debug("User comment role: {} supporter={}", role, cellRef->m_fields->supporter);
+                  log::debug("User comment role: {} supporter={} stars={} planets={}", role, cellRef->m_fields->supporter, stars, planets);
 
                   cellRef->loadBadgeForComment(accountId);
                   cellRef->applyCommentTextColor(accountId);
-                  cellRef->applyStarGlow(accountId, stars);
+                  cellRef->applyStarGlow(accountId, stars, planets);
             });
       }
 
@@ -384,8 +387,8 @@ class $modify(RLCommentCell, CommentCell) {
                       utils::web::openLinkInBrowser("https://ko-fi.com/arcticwoof");
                 });
       }
-      void applyStarGlow(int accountId, int stars) {
-            if (stars <= 0) return;
+      void applyStarGlow(int accountId, int stars, int planets) {
+            if (stars <= 0 && planets <= 0) return;
             if (!m_mainLayer) return;
             auto glowId = fmt::format("rl-comment-glow-{}", accountId);
             // don't create duplicate glow

@@ -15,16 +15,16 @@ class RLCommunityVotePopup : public geode::Popup<> {
       void onInfo(CCObject*);
 
       int m_levelId = 0;
-      int m_designVote = 0;
+      int m_originalityVote = 0;
       int m_difficultyVote = 0;
       int m_gameplayVote = 0;
 
-      CCLabelBMFont* m_designScoreLabel = nullptr;
+      CCLabelBMFont* m_originalityScoreLabel = nullptr;
       CCLabelBMFont* m_difficultyScoreLabel = nullptr;
       CCLabelBMFont* m_gameplayScoreLabel = nullptr;
       CCLabelBMFont* m_modDifficultyLabel = nullptr;
 
-      geode::TextInput* m_designInput = nullptr;
+      geode::TextInput* m_originalityInput = nullptr;
       geode::TextInput* m_difficultyInput = nullptr;
       geode::TextInput* m_gameplayInput = nullptr;
 
