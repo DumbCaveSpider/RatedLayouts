@@ -16,6 +16,7 @@ class RLGauntletLevelsLayer : public CCLayer {
       void onLevelDetailsFetched(matjson::Value const& json);
       void createLevelButtons(matjson::Value const& levelsData, int gauntletId);
       void onGauntletClick(CCObject* sender);
+      void onGauntletInfo(CCObject* sender);
 
       void onEnter() override;
       void registerWithTouchDispatcher() override;
@@ -28,6 +29,7 @@ class RLGauntletLevelsLayer : public CCLayer {
 
      private:
       std::string m_gauntletName;
+      std::string m_gauntletDescription;
       CCMenu* m_levelsMenu = nullptr;
       LoadingSpinner* m_loadingCircle = nullptr;
       CCLabelBMFont* m_dragText = nullptr;

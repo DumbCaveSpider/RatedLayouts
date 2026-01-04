@@ -181,20 +181,36 @@ void RLGauntletSelectLayer::createGauntletButtons(matjson::Value const& gauntlet
                   std::string diffText = fmt::format("{}-{}", minDiff, maxDiff);
 
                   auto diffLabel = CCLabelBMFont::create(diffText.c_str(), "bigFont.fnt");
+                  auto diffLabelShadow = CCLabelBMFont::create(diffText.c_str(), "bigFont.fnt");
+                  diffLabelShadow->setColor({0, 0, 0});
+                  diffLabelShadow->setOpacity(60);
                   if (diffLabel) {
                         diffLabel->setAlignment(kCCTextAlignmentCenter);
-                        diffLabel->setAnchorPoint({0.5f, 0.5f});
                         diffLabel->setScale(0.45f);
                         diffLabel->setPosition({gauntletBg->getContentSize().width / 2 + 10, 50});
                         diffLabel->setAnchorPoint({1.f, 0.5f});
+                        // shadow
+                        diffLabelShadow->setAlignment(kCCTextAlignmentCenter);
+                        diffLabelShadow->setAnchorPoint({1.f, 0.5f});
+                        diffLabelShadow->setScale(0.45f);
+                        diffLabelShadow->setPosition({diffLabel->getPositionX() + 2, diffLabel->getPositionY() - 2});
+
                         gauntletBg->addChild(diffLabel, 3);
+                        gauntletBg->addChild(diffLabelShadow, 2);
 
                         // star icon to the right of the difficulty label
                         auto diffStar = CCSprite::create("RL_starSmall.png"_spr);
-                        if (diffStar) {
+                        auto diffStarShadow = CCSprite::create("RL_starSmall.png"_spr);
+                        if (diffStar && diffStarShadow) {
                               diffStar->setAnchorPoint({0.f, 0.5f});
                               diffStar->setPosition({gauntletBg->getContentSize().width / 2 + 15, diffLabel->getPositionY()});
-                              gauntletBg->addChild(diffStar, 2);
+
+                              diffStarShadow->setAnchorPoint({0.f, 0.5f});
+                              diffStarShadow->setPosition({diffStar->getPositionX() + 2, diffStar->getPositionY() - 2});
+                              diffStarShadow->setColor({0, 0, 0});
+                              diffStarShadow->setOpacity(60);
+                              gauntletBg->addChild(diffStarShadow, 2);
+                              gauntletBg->addChild(diffStar, 3);
                         }
                   }
             }

@@ -5,6 +5,8 @@
 - Improved the Layout Moderators and Admins UI.
 - New Mod Title! Thanks to [KrazyGFX](https://x.com/Krazy_GFX/status/2006175258361905195?s=20) for the design
 - Changed "Design" to "Originality" in the Community Vote popup.
+- Added Confirmation popup when submitting a vote in the Community Vote popup.
+- Added Layout Gauntlet Button on the Vanilla Gauntlet Select Layer to easily access the Rated Layout Gauntlets.
 - Fixed issue where submitting a vote with no score defaulted to 1. It should not be included in the vote if empty.
 - Fixed issue where the Leaderboard tabs is transparent when selected.
 - Event Layouts are now more responsive when pressing the play button

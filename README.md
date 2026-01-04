@@ -23,8 +23,8 @@ This gives the <cy>Layout/Gameplay creators</c> a platform to get their levels r
 - **<cy>Leaderboard Integration</c>**: Compete with other players on leaderboards for the most Sparks, Planets and Creator Points!
 - **<ca>Event Rated Layout Levels</c>**: New daily, weekly and monthly rated layout levels to showcase!
 - **<co>Custom Search Filters</c>**: Easily search for rated layout levels using various filters such as difficulty, level type, and more!
-- **<cc>Community Voting System</c>**: Players can vote on suggested layouts based on design, difficulty, and gameplay.
-- **<cj>Layout Gauntlets</c>**: Special gauntlets featuring themed classic rated layout levels for players to complete.
+- **<cc>Community Voting System</c>**: Players can vote on suggested layouts based on originality, difficulty, and gameplay.
+- **<cj>Layout Gauntlets</c>**: Special gauntlets featuring themed classic rated layout levels created by Layout/Gameplay creators through Creator Contest.
 - **<cs>QOL Features!</c>**: Various quality of life improvements for both players and creators.
 
 ## Up-coming Features

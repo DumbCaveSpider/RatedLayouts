@@ -51,6 +51,7 @@ bool RLGauntletLevelsLayer::init(matjson::Value const& gauntletData) {
 
       m_gauntletName = gauntletData["name"].asString().unwrapOr("Unknown");
       m_gauntletId = gauntletData["id"].asInt().unwrapOr(0);
+      m_gauntletDescription = gauntletData["description"].asString().unwrapOr("No description available.");
 
       auto titleLabel = CCLabelBMFont::create(m_gauntletName.c_str(), "goldFont.fnt");
       titleLabel->setPosition({winSize.width / 2, winSize.height - 20});
@@ -77,6 +78,13 @@ bool RLGauntletLevelsLayer::init(matjson::Value const& gauntletData) {
       dragText->setAnchorPoint({0.f, 0.5f});
       dragText->setScale(0.675f);
       this->addChild(dragText, 10);
+
+      // info
+      auto infoButtonSpr = CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png");
+      CCMenuItemSpriteExtra* infoButton = CCMenuItemSpriteExtra::create(
+          infoButtonSpr, this, menu_selector(RLGauntletLevelsLayer::onGauntletInfo));
+      infoButton->setPosition({winSize.width - 25, winSize.height - 25});
+      backMenu->addChild(infoButton);
 
       // Fetch level details
       fetchLevelDetails(m_gauntletId);
@@ -175,8 +183,8 @@ void RLGauntletLevelsLayer::createLevelButtons(matjson::Value const& levelsData,
 
             // subtle floating animation
             {
-                  const float floatDistance = 8.0f; // pixels
-                  const float floatDuration = 1.8f; // seconds
+                  const float floatDistance = 8.0f;  // pixels
+                  const float floatDuration = 1.8f;  // seconds
                   auto moveUp = CCMoveBy::create(floatDuration, ccp(0, floatDistance));
                   auto moveDown = CCMoveBy::create(floatDuration, ccp(0, -floatDistance));
                   auto easeUp = CCEaseSineInOut::create(moveUp);
@@ -391,6 +399,10 @@ void RLGauntletLevelsLayer::onGauntletClick(CCObject* sender) {
 
 void RLGauntletLevelsLayer::registerWithTouchDispatcher() {
       CCDirector::sharedDirector()->getTouchDispatcher()->addStandardDelegate(this, 0);
+}
+
+void RLGauntletLevelsLayer::onGauntletInfo(CCObject* sender) {
+      MDPopup::create(m_gauntletName, m_gauntletDescription, "OK")->show();
 }
 
 void RLGauntletLevelsLayer::ccTouchesBegan(CCSet* touches, CCEvent* event) {

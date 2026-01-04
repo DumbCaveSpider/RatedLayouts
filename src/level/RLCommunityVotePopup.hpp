@@ -34,6 +34,5 @@ class RLCommunityVotePopup : public geode::Popup<> {
       CCLabelBMFont* m_totalVotesLabel = nullptr;
 
       void onToggleAll(CCObject* sender);
-      void onToggleScore(CCObject* sender);
       void refreshFromServer();
 };

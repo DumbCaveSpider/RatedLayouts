@@ -20,95 +20,103 @@ RLCommunityVotePopup* RLCommunityVotePopup::create(int levelId) {
 
 void RLCommunityVotePopup::onSubmit(CCObject*) {
       // prepare payload (plays payload by dex)
-      int accountId = GJAccountManager::get()->m_accountID;
-      auto argonToken = Mod::get()->getSavedValue<std::string>("argon_token");
-      if (argonToken.empty()) {
-            Notification::create("Auth required to submit vote", NotificationIcon::Error)->show();
-            return;
-      }
-      int gameplayVote = 0;
-      int originalityVote = 0;
-      int difficultyVote = 0;
+      createQuickPopup(
+          "Submit Vote",
+          "Are you sure you want to submit your vote?\n<cy>You won't be able to change it later.</c>",
+          "Cancel", "Submit",
+          [this](auto, bool yes) {
+                if (yes) {
+                      int accountId = GJAccountManager::get()->m_accountID;
+                      auto argonToken = Mod::get()->getSavedValue<std::string>("argon_token");
+                      if (argonToken.empty()) {
+                            Notification::create("Auth required to submit vote", NotificationIcon::Error)->show();
+                            return;
+                      }
+                      int gameplayVote = 0;
+                      int originalityVote = 0;
+                      int difficultyVote = 0;
 
-      bool includeGameplay = false;
-      bool includeOriginality = false;
-      bool includeDifficulty = false;
+                      bool includeGameplay = false;
+                      bool includeOriginality = false;
+                      bool includeDifficulty = false;
 
-      if (m_gameplayInput) {
-            auto s = m_gameplayInput->getString();
-            if (!s.empty()) {
-                  gameplayVote = numFromString<int>(s).unwrapOr(0);
-                  gameplayVote = std::clamp(gameplayVote, 1, 30);
-                  includeGameplay = true;
-            }
-      }
-      if (m_originalityInput) {
-            auto s = m_originalityInput->getString();
-            if (!s.empty()) {
-                  originalityVote = numFromString<int>(s).unwrapOr(0);
-                  originalityVote = std::clamp(originalityVote, 1, 10);
-                  includeOriginality = true;
-            }
-      }
-      if (m_difficultyInput) {
-            auto string = m_difficultyInput->getString();
-            if (!string.empty()) {
-                  difficultyVote = numFromString<int>(string).unwrapOr(0);
-                  difficultyVote = std::clamp(difficultyVote, 1, 10);
-                  includeDifficulty = true;
-            }
-      }
+                      if (m_gameplayInput) {
+                            auto s = m_gameplayInput->getString();
+                            if (!s.empty()) {
+                                  gameplayVote = numFromString<int>(s).unwrapOr(0);
+                                  gameplayVote = std::clamp(gameplayVote, 1, 30);
+                                  includeGameplay = true;
+                            }
+                      }
+                      if (m_originalityInput) {
+                            auto s = m_originalityInput->getString();
+                            if (!s.empty()) {
+                                  originalityVote = numFromString<int>(s).unwrapOr(0);
+                                  originalityVote = std::clamp(originalityVote, 1, 10);
+                                  includeOriginality = true;
+                            }
+                      }
+                      if (m_difficultyInput) {
+                            auto string = m_difficultyInput->getString();
+                            if (!string.empty()) {
+                                  difficultyVote = numFromString<int>(string).unwrapOr(0);
+                                  difficultyVote = std::clamp(difficultyVote, 1, 10);
+                                  includeDifficulty = true;
+                            }
+                      }
 
-      if (!includeGameplay && !includeOriginality && !includeDifficulty) {
-            Notification::create("No votes provided", NotificationIcon::Warning)->show();
-            return;
-      }
+                      if (!includeGameplay && !includeOriginality && !includeDifficulty) {
+                            Notification::create("No votes provided", NotificationIcon::Warning)->show();
+                            return;
+                      }
 
-      matjson::Value body = matjson::Value::object();
-      body["accountId"] = accountId;
-      body["argonToken"] = argonToken;
-      body["levelId"] = m_levelId;
-      if (includeGameplay) body["gameplayScore"] = gameplayVote;
-      if (includeOriginality) body["originalityScore"] = originalityVote;
-      if (includeDifficulty) body["difficultyScore"] = difficultyVote;
+                      matjson::Value body = matjson::Value::object();
+                      body["accountId"] = accountId;
+                      body["argonToken"] = argonToken;
+                      body["levelId"] = m_levelId;
+                      if (includeGameplay) body["gameplayScore"] = gameplayVote;
+                      if (includeOriginality) body["originalityScore"] = originalityVote;
+                      if (includeDifficulty) body["difficultyScore"] = difficultyVote;
 
-      auto req = web::WebRequest();
-      req.bodyJSON(body);
-      req.post("https://gdrate.arcticwoof.xyz/setSuggestScore").listen([this, gameplayVote, originalityVote, difficultyVote](web::WebResponse* res) {
-            if (!res || !res->ok()) {
-                  Notification::create("Failed to submit vote", NotificationIcon::Error)->show();
-                  return;
-            }
-            auto j = res->json();
-            if (!j) {
-                  Notification::create("Invalid submit response", NotificationIcon::Warning)->show();
-                  return;
-            }
-            auto json = j.unwrap();
-            bool success = json["success"].asBool().unwrapOrDefault();
-            if (success) {
-                  Notification::create("Vote submitted!", NotificationIcon::Success)->show();
+                      auto req = web::WebRequest();
+                      req.bodyJSON(body);
+                      req.post("https://gdrate.arcticwoof.xyz/setSuggestScore").listen([this, gameplayVote, originalityVote, difficultyVote](web::WebResponse* res) {
+                            if (!res || !res->ok()) {
+                                  Notification::create("Failed to submit vote", NotificationIcon::Error)->show();
+                                  return;
+                            }
+                            auto j = res->json();
+                            if (!j) {
+                                  Notification::create("Invalid submit response", NotificationIcon::Warning)->show();
+                                  return;
+                            }
+                            auto json = j.unwrap();
+                            bool success = json["success"].asBool().unwrapOrDefault();
+                            if (success) {
+                                  Notification::create("Vote submitted!", NotificationIcon::Success)->show();
 
-                  // Optimistically mark inputs as VOTED and disable
-                  if (this->m_gameplayInput && gameplayVote > 0) {
-                        this->m_gameplayInput->setString("VOTED");
-                        this->m_gameplayInput->setEnabled(false);
-                  }
-                  if (this->m_originalityInput && originalityVote > 0) {
-                        this->m_originalityInput->setString("VOTED");
-                        this->m_originalityInput->setEnabled(false);
-                  }
-                  if (this->m_difficultyInput && difficultyVote > 0) {
-                        this->m_difficultyInput->setString("VOTED");
-                        this->m_difficultyInput->setEnabled(false);
-                  }
+                                  // Optimistically mark inputs as VOTED and disable
+                                  if (this->m_gameplayInput && gameplayVote > 0) {
+                                        this->m_gameplayInput->setString("VOTED");
+                                        this->m_gameplayInput->setEnabled(false);
+                                  }
+                                  if (this->m_originalityInput && originalityVote > 0) {
+                                        this->m_originalityInput->setString("VOTED");
+                                        this->m_originalityInput->setEnabled(false);
+                                  }
+                                  if (this->m_difficultyInput && difficultyVote > 0) {
+                                        this->m_difficultyInput->setString("VOTED");
+                                        this->m_difficultyInput->setEnabled(false);
+                                  }
 
-                  // Refresh UI by re-fetching data
-                  this->refreshFromServer();
-            } else {
-                  Notification::create("Vote submission failed", NotificationIcon::Error)->show();
-            }
-      });
+                                  // Refresh UI by re-fetching data
+                                  this->refreshFromServer();
+                            } else {
+                                  Notification::create("Vote submission failed", NotificationIcon::Error)->show();
+                            }
+                      });
+                }
+          });
 }
 
 bool RLCommunityVotePopup::setup() {
@@ -329,7 +337,7 @@ void RLCommunityVotePopup::refreshFromServer() {
             auto vjson = vj.unwrap();
 
             bool hasGameplay = vjson["hasGameplayVoted"].asBool().unwrapOrDefault();
-            bool hasoriginality = vjson["hasoriginalityVoted"].asBool().unwrapOrDefault();
+            bool hasOriginality = vjson["hasOriginalityVoted"].asBool().unwrapOrDefault();
             bool hasDifficulty = vjson["hasDifficultyVoted"].asBool().unwrapOrDefault();
             int totalVotes = vjson["totalVotes"].asInt().unwrapOrDefault();
             if (this->m_totalVotesLabel) {
@@ -347,7 +355,7 @@ void RLCommunityVotePopup::refreshFromServer() {
                         }
                   }
                   if (this->m_originalityInput) {
-                        if (hasoriginality) {
+                        if (hasOriginality) {
                               this->m_originalityInput->setString("VOTED");
                               this->m_originalityInput->setEnabled(false);
                         }
@@ -373,7 +381,7 @@ void RLCommunityVotePopup::refreshFromServer() {
                         if (this->m_gameplayScoreLabel) this->m_gameplayScoreLabel->setVisible(false);
                   }
 
-                  if (hasoriginality) {
+                  if (hasOriginality) {
                         if (this->m_originalityInput) {
                               this->m_originalityInput->setString("VOTED");
                               this->m_originalityInput->setEnabled(false);
@@ -403,7 +411,7 @@ void RLCommunityVotePopup::refreshFromServer() {
             }
 
             // If all three categories have already been voted on, disable submit
-            if (hasGameplay && hasoriginality && hasDifficulty) {
+            if (hasGameplay && hasOriginality && hasDifficulty) {
                   if (this->m_submitBtn) {
                         this->m_submitBtn->setEnabled(false);
                         this->m_submitBtn->setNormalImage(ButtonSprite::create("Submit", "goldFont.fnt", "GJ_button_04.png"));
@@ -424,20 +432,12 @@ void RLCommunityVotePopup::onInfo(CCObject*) {
       MDPopup::create(
           "Community Voting Info",
           "You can vote on <cl>suggested/sent layouts</c> based on three categories:\n\n"
-          "<cg>Originality</c>: How original and distinct the layout is.\n\n"
-          "<cg>Difficulty</c>: The difficulty the level is according to your experience.\n\n"
-          "<cg>Gameplay</c>: How fun and enjoyable the layout is overall.\n\n"
-          "Each category has its own score range:\n"
-          "- Originality: 1 to 10\n"
-          "- Difficulty: 1 to 30\n"
-          "- Gameplay: 1 to 10\n\n"
-          "Please rate suggested layouts <cg>honestly and fairly</c> based on your experience playing them!",
+          "<co>Originality (1 to 10)</c>: How original and distinct the layout is.\n\n"
+          "<cr>Difficulty (1 to 30)</c>: The difficulty the level is according to your experience.\n\n"
+          "<cg>Gameplay (1 to 10)</c>: How fun and enjoyable the layout is overall.\n\n"
+          "### Please rate suggested layouts <cg>honestly and fairly</c> based on your experience playing them as <cr>Layout Admins</c> uses this votes to help accurately rate layouts.!",
           "OK")
           ->show();
-}
-
-void RLCommunityVotePopup::onToggleScore(CCObject* sender) {
-      // kept for backward-compat; individual toggles no longer exist
 }
 
 void RLCommunityVotePopup::onToggleAll(CCObject* sender) {
