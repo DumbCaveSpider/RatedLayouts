@@ -53,7 +53,16 @@ class RLEventLayouts : public geode::Popup<> {
             int platLevelId = -1;
             int platFeatured = 0;
             double platSecondsLeft = 0.0;
+
+            // Pending request state
+            std::string pendingKey;
+            int pendingLevelId = -1;
+            LoadingSpinner* pendingSpinner = nullptr;
+            LoadingSpinner* playSpinner = nullptr;
+            LoadingSpinner* platPlaySpinner = nullptr;
+            double pendingTimeout = 0.0;  // seconds
       };
+
       EventSection m_sections[3];
       EventType m_eventType = EventType::Daily;
       CCLayer* m_eventMenu = nullptr;

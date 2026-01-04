@@ -409,13 +409,13 @@ void RLCreatorLayer::onUnknownButton(CCObject* sender) {
 void RLCreatorLayer::onInfoButton(CCObject* sender) {
       MDPopup::create(
           "About Rated Layouts",
-          "## <cl>Rated Layouts</cl> is a community-run rating system focusing on fun gameplay in classic layout levels.\n\n"
+          "## <cl>Rated Layouts</cl> is a community-run rating system focusing on gameplay in layout levels.\n\n"
           "### Each of the buttons on this screen lets you browse different categories of rated layouts:\n\n"
           "<cg>**Featured Layouts**</c>: Featured layouts that showcase fun gameplay and visuals. Each featured levels are ranked based of their featured score.\n\n"
           "<cg>**Leaderboard**</c>: The top-rated players ranked by blueprint stars and creator points.\n\n"
           "<cg>**Layout Gauntlets**</c>: Special themed layouts hosted by the Rated Layouts Team. This holds the <cl>Layout Creator Contests</c>!\n\n"
-          "<cg>**Sent Layouts**</c>: Suggested or sent layouts by the Layout Moderators. The community can vote on these layouts based of their Design, Difficulty and Gameplay. <cg>(Only enabled if you have at least 20% in Normal Mode or 80% in Practice Mode)</c>\n\n"
-          "<cg>**Search Layouts**</c>: Search for rated layouts by their level ID.\n\n"
+          "<cg>**Sent Layouts**</c>: Suggested or sent layouts by the Layout Moderators. The community can vote on these layouts based of their Design, Difficulty and Gameplay. <co>(Only enabled if you have at least 20% in Normal Mode or 80% in Practice Mode)</c>\n\n"
+          "<cg>**Search Layouts**</c>: Search for rated layouts by their level name/ID.\n\n"
           "<cg>**Event Layouts**</c>: Showcases time-limited Daily, Weekly and Monthly layouts picked by the <cr>Layout Admins</c>.\n\n"
           "### Join the <cb>[Rated Layout Discord](https://discord.gg/jBf2wfBgVT)</c> server for more information and to submit your layouts for rating.\n\n",
           "OK")

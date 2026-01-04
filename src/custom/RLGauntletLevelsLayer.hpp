@@ -15,6 +15,7 @@ class RLGauntletLevelsLayer : public CCLayer {
       void fetchLevelDetails(int gauntletId);
       void onLevelDetailsFetched(matjson::Value const& json);
       void createLevelButtons(matjson::Value const& levelsData, int gauntletId);
+      void onGauntletClick(CCObject* sender);
 
       void onEnter() override;
       void registerWithTouchDispatcher() override;
@@ -72,6 +73,12 @@ class RLGauntletLevelsLayer : public CCLayer {
             int id;
       };
       std::vector<PendingButton> m_pendingButtons;
+
+      // pending level fetch state when clicking a button
+      std::string m_pendingKey;
+      int m_pendingLevelId = -1;
+      LoadingSpinner* m_pendingSpinner = nullptr;
+      double m_pendingTimeout = 0.0; // seconds
 
       // Center points of placed buttons
       std::vector<CCPoint> m_buttonCenters;

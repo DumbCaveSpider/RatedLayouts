@@ -1,6 +1,7 @@
 #include "RLGauntletLevelsLayer.hpp"
 
 #include <Geode/Geode.hpp>
+#include <Geode/modify/LevelInfoLayer.hpp>
 #include <algorithm>
 #include <chrono>
 #include <cmath>
@@ -165,6 +166,12 @@ void RLGauntletLevelsLayer::createLevelButtons(matjson::Value const& levelsData,
 
             std::string gauntletName = fmt::format("RL_gauntlet-{}.png"_spr, gauntletId);
             auto gauntletSprite = CCSprite::create(gauntletName.c_str());
+            auto gauntletSpriteShadow = CCSprite::create(gauntletName.c_str());
+            gauntletSpriteShadow->setScaleY(1.2f);
+            gauntletSpriteShadow->setColor({0, 0, 0});
+            gauntletSpriteShadow->setOpacity(50);
+            gauntletSpriteShadow->setAnchorPoint({0.f, .15f});
+            gauntletSprite->addChild(gauntletSpriteShadow);
 
             auto nameLabel = CCLabelBMFont::create(levelName.c_str(), "bigFont.fnt");
             nameLabel->setAlignment(kCCTextAlignmentCenter);
@@ -190,8 +197,9 @@ void RLGauntletLevelsLayer::createLevelButtons(matjson::Value const& levelsData,
             auto button = CCMenuItemSpriteExtra::create(
                 gauntletSprite,
                 this,
-                nullptr  // TODO: Add callback to play level
-            );
+                menu_selector(RLGauntletLevelsLayer::onGauntletClick));
+            // tag with the level id for easy lookup in the click handler
+            button->setTag(levelId);
 
             float spriteW = gauntletSprite->getContentSize().width;
             float spriteH = gauntletSprite->getContentSize().height;
@@ -203,11 +211,6 @@ void RLGauntletLevelsLayer::createLevelButtons(matjson::Value const& levelsData,
 
       const float gap = 100.0f;
       if (!m_pendingButtons.empty()) {
-            // sort by level id to put smallest id at bottom
-            std::sort(m_pendingButtons.begin(), m_pendingButtons.end(), [](const auto& a, const auto& b) {
-                  return a.id < b.id;
-            });
-
             float y = m_padding + m_pendingButtons[0].h / 2.0f;
             for (size_t i = 0; i < m_pendingButtons.size(); ++i) {
                   auto& pb = m_pendingButtons[i];
@@ -331,6 +334,49 @@ void RLGauntletLevelsLayer::onEnter() {
       this->scheduleUpdate();
 }
 
+void RLGauntletLevelsLayer::onGauntletClick(CCObject* sender) {
+      auto menuItem = static_cast<CCMenuItemSpriteExtra*>(sender);
+      if (!menuItem) return;
+      int levelId = menuItem->getTag();
+      if (levelId <= 0) return;
+
+      auto searchObj = GJSearchObject::create(SearchType::Search, numToString(levelId));
+      auto key = std::string(searchObj->getKey());
+      auto glm = GameLevelManager::sharedState();
+
+      // check stored cache first
+      auto stored = glm->getStoredOnlineLevels(key.c_str());
+      if (stored && stored->count() > 0) {
+            auto level = static_cast<GJGameLevel*>(stored->objectAtIndex(0));
+            if (level && level->m_levelID == levelId) {
+                  auto scene = LevelInfoLayer::scene(level, true);
+                  auto transitionFade = CCTransitionFade::create(0.5f, scene);
+                  CCDirector::sharedDirector()->pushScene(transitionFade);
+                  return;
+            }
+      }
+
+      // prepare pending state and show spinner on the clicked button
+      if (m_pendingSpinner) {
+            m_pendingSpinner->removeFromParent();
+            m_pendingSpinner = nullptr;
+      }
+      m_pendingKey = key;
+      m_pendingLevelId = levelId;
+      m_pendingTimeout = 10.0;  // seconds
+
+      auto spinner = LoadingSpinner::create(36.f);
+      if (spinner) {
+            spinner->setPosition(menuItem->getPosition());
+            spinner->setVisible(true);
+            m_levelsMenu->addChild(spinner);
+            m_pendingSpinner = spinner;
+      }
+      menuItem->setEnabled(false);
+
+      glm->getOnlineLevels(searchObj);
+}
+
 void RLGauntletLevelsLayer::registerWithTouchDispatcher() {
       CCDirector::sharedDirector()->getTouchDispatcher()->addStandardDelegate(this, 0);
 }
@@ -451,6 +497,67 @@ void RLGauntletLevelsLayer::ccTouchesEnded(CCSet* touches, CCEvent* event) {
 }
 
 void RLGauntletLevelsLayer::update(float dt) {
+      // handle pending level fetches first
+      if (!m_pendingKey.empty()) {
+            auto glm = GameLevelManager::sharedState();
+            auto stored = glm->getStoredOnlineLevels(m_pendingKey.c_str());
+            if (stored && stored->count() > 0) {
+                  auto level = static_cast<GJGameLevel*>(stored->objectAtIndex(0));
+                  if (level && level->m_levelID == m_pendingLevelId) {
+                        // open level info
+                        auto scene = LevelInfoLayer::scene(level, true);
+                        auto transitionFade = CCTransitionFade::create(0.5f, scene);
+                        CCDirector::sharedDirector()->pushScene(transitionFade);
+                        // cleanup pending state
+                        if (m_pendingSpinner) {
+                              m_pendingSpinner->removeFromParent();
+                              m_pendingSpinner = nullptr;
+                        }
+                        // restore visibility of clicked
+                        if (m_levelsMenu) {
+                              auto children = m_levelsMenu->getChildren();
+                              for (unsigned int i = 0; i < children->count(); ++i) {
+                                    auto child = static_cast<CCNode*>(children->objectAtIndex(i));
+                                    auto btn = typeinfo_cast<CCMenuItemSpriteExtra*>(child);
+                                    if (btn && btn->getTag() == m_pendingLevelId) {
+                                          btn->setEnabled(true);
+                                          break;
+                                    }
+                              }
+                        }
+                        m_pendingKey.clear();
+                        m_pendingLevelId = -1;
+                        m_pendingTimeout = 0.0;
+                        return;
+                  }
+            }
+
+            m_pendingTimeout -= dt;
+            if (m_pendingTimeout <= 0.0) {
+                  if (m_pendingSpinner) {
+                        m_pendingSpinner->removeFromParent();
+                        m_pendingSpinner = nullptr;
+                  }
+                  // restore clicked button
+                  if (m_levelsMenu) {
+                        auto children = m_levelsMenu->getChildren();
+                        for (unsigned int i = 0; i < children->count(); ++i) {
+                              auto child = static_cast<CCNode*>(children->objectAtIndex(i));
+                              auto btn = typeinfo_cast<CCMenuItemSpriteExtra*>(child);
+                              if (btn && btn->getTag() == m_pendingLevelId) {
+                                    btn->setEnabled(true);
+                                    break;
+                              }
+                        }
+                  }
+                  Notification::create("Level not found", NotificationIcon::Warning)->show();
+                  m_pendingKey.clear();
+                  m_pendingLevelId = -1;
+                  m_pendingTimeout = 0.0;
+            }
+      }
+
+      //  fling/inertia update
       if (!m_flinging || !m_levelsMenu) return;
 
       updateBackgroundParallax(m_levelsMenu->getPosition());

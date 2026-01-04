@@ -2,10 +2,12 @@
 
 - **Profile Stats Changed!** The Rated layouts stats are now on a seperate section in the profile page. Click the new Planet Button in the profile page to view your Rated Layouts stats!
 - Improved the Layout Moderators and Admins UI.
+- New Mod Title! Thanks to [KrazyGFX](https://x.com/Krazy_GFX/status/2006175258361905195?s=20) for the design
 - Changed "Design" to "Originality" in the Community Vote popup.
 - Fixed issue where submitting a vote with no score defaulted to 1. It should not be included in the vote if empty.
 - Fixed issue where the Leaderboard tabs is transparent when selected.
-- Comment Glow will now apply when a user has planets in their stats.
+- Event Layouts are now more responsive when pressing the play button
+- Comment Glow will now apply when an user has planets in their stats.
 
 Thanks to [delivel-tech](https://github.com/delivel-tech) for this update!
 

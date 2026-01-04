@@ -1,13 +1,9 @@
 #include "RLEventLayouts.hpp"
 
-// global registry of open RLEventLayouts popups
-static std::unordered_set<RLEventLayouts*> g_eventLayoutsInstances;
 #include <Geode/modify/GameLevelManager.hpp>
 #include <Geode/modify/LevelBrowserLayer.hpp>
 #include <Geode/modify/LevelInfoLayer.hpp>
 #include <Geode/modify/ProfilePage.hpp>
-#include <Geode/ui/LoadingSpinner.hpp>
-#include <Geode/ui/Notification.hpp>
 #include <chrono>
 #include <cstdio>
 #include <iomanip>
@@ -15,10 +11,8 @@ static std::unordered_set<RLEventLayouts*> g_eventLayoutsInstances;
 
 using namespace geode::prelude;
 
-// callbacks for getOnlineLevels responses keyed by search key
-static std::unordered_map<std::string, std::vector<std::function<void(cocos2d::CCArray*)>>> g_onlineLevelsCallbacks;
-
 // helper prototypes
+static std::unordered_set<RLEventLayouts*> g_eventLayoutsInstances;
 static std::string formatTime(long seconds);
 static int getDifficulty(int numerator);
 
@@ -261,6 +255,14 @@ bool RLEventLayouts::setup() {
       playButton->setPosition({330.f, container->getContentSize().height / 2});
       playButton->setAnchorPoint({0.5f, 0.5f});
       playMenu->addChild(playButton);
+      auto playSpinner = LoadingSpinner::create(40.f);
+      if (playSpinner) {
+            playSpinner->setPosition(playButton->getPosition());
+            playSpinner->setVisible(true);
+            playMenu->addChild(playSpinner);
+            m_sections[idx].playSpinner = playSpinner;
+      }
+      playButton->setVisible(false);
       container->addChild(playMenu, 2);
       m_sections[idx].playButton = playButton;
 
@@ -274,6 +276,14 @@ bool RLEventLayouts::setup() {
       platPlayButton->setPosition({330.f, platContainer->getContentSize().height / 2});
       platPlayButton->setAnchorPoint({0.5f, 0.5f});
       platPlayMenu->addChild(platPlayButton);
+      auto platPlaySpinner = LoadingSpinner::create(40.f);
+      if (platPlaySpinner) {
+            platPlaySpinner->setPosition(platPlayButton->getPosition());
+            platPlaySpinner->setVisible(true);
+            platPlayMenu->addChild(platPlaySpinner);
+            m_sections[idx].platPlaySpinner = platPlaySpinner;
+      }
+      platPlayButton->setVisible(false);
       platContainer->addChild(platPlayMenu, 2);
       m_sections[idx].platPlayButton = platPlayButton;
 
@@ -311,14 +321,32 @@ bool RLEventLayouts::setup() {
                   int idx = static_cast<int>(selfRef->m_eventType);
                   if (idx < 0 || idx >= 3) return;
                   const auto& key = keys[idx];
-                  if (!json.contains(key)) return;
+                  auto sec = &selfRef->m_sections[idx];
+                  // if the key is missing or contains no levelId, keep showing the loading spinner and hide play buttons
+                  if (!json.contains(key)) {
+                        if (sec->playSpinner) sec->playSpinner->setVisible(true);
+                        if (sec->playButton) sec->playButton->setVisible(false);
+                        if (sec->platPlaySpinner) sec->platPlaySpinner->setVisible(true);
+                        if (sec->platPlayButton) sec->platPlayButton->setVisible(false);
+                        return;
+                  }
                   auto obj = json[key];
+                  int levelId = -1;
                   auto levelIdValue = obj["levelId"].as<int>();
-                  if (!levelIdValue) return;
-                  auto levelId = levelIdValue.unwrap();
+                  if (levelIdValue) {
+                        levelId = levelIdValue.unwrap();
+                        if (sec->playSpinner) sec->playSpinner->setVisible(false);
+                        if (sec->playButton) {
+                              sec->playButton->setVisible(true);
+                              sec->playButton->setEnabled(true);
+                        }
 
-                  selfRef->m_sections[idx].levelId = levelId;
-                  selfRef->m_sections[idx].secondsLeft = obj["secondsLeft"].as<int>().unwrapOrDefault();
+                        selfRef->m_sections[idx].levelId = levelId;
+                        selfRef->m_sections[idx].secondsLeft = obj["secondsLeft"].as<int>().unwrapOrDefault();
+                  } else {
+                        if (sec->playSpinner) sec->playSpinner->setVisible(true);
+                        if (sec->playButton) sec->playButton->setVisible(false);
+                  }
 
                   auto levelName = obj["levelName"].as<std::string>().unwrapOrDefault();
                   auto creator = obj["creator"].as<std::string>().unwrapOrDefault();
@@ -326,7 +354,6 @@ bool RLEventLayouts::setup() {
                   auto accountId = obj["accountId"].as<int>().unwrapOrDefault();
                   auto featured = obj["featured"].as<int>().unwrapOrDefault();
 
-                  auto sec = &selfRef->m_sections[idx];
                   if (!sec || !sec->container) return;
                   auto nameLabel = sec->levelNameLabel;
                   auto creatorLabel = sec->creatorLabel;
@@ -404,6 +431,14 @@ bool RLEventLayouts::setup() {
                               int platLevelId = platLevelVal.unwrap();
                               sec->platLevelId = platLevelId;
                               sec->platSecondsLeft = pobj["secondsLeft"].as<int>().unwrapOrDefault();
+
+                              // we have a platformer level: hide spinner and show play button
+                              if (sec->platPlaySpinner) sec->platPlaySpinner->setVisible(false);
+                              if (sec->platPlayButton) {
+                                    sec->platPlayButton->setVisible(true);
+                                    sec->platPlayButton->setEnabled(true);
+                                    sec->platPlayButton->setTag(platLevelId);
+                              }
 
                               auto platLevelName = pobj["levelName"].as<std::string>().unwrapOrDefault();
                               auto platCreator = pobj["creator"].as<std::string>().unwrapOrDefault();
@@ -486,9 +521,10 @@ bool RLEventLayouts::setup() {
                                     sec->platCreatorButton->setPosition({70.f, 35.f});
                                     sec->platCreatorButton->setContentSize({sec->platCreatorLabel->getContentSize().width * sec->platCreatorLabel->getScaleX(), 12.f});
                               }
-                              if (sec->platPlayButton) {
-                                    sec->platPlayButton->setTag(platLevelId);
-                              }
+                        } else {
+                              // no platformer level yet
+                              if (sec->platPlaySpinner) sec->platPlaySpinner->setVisible(true);
+                              if (sec->platPlayButton) sec->platPlayButton->setVisible(false);
                         }
                   }
 
@@ -532,6 +568,60 @@ void RLEventLayouts::update(float dt) {
       sec.secondsLeft -= dt;
       if (sec.secondsLeft < 0) sec.secondsLeft = 0;
       if (sec.timerLabel) sec.timerLabel->setString((timerPrefixes[idx] + formatTime((long)sec.secondsLeft)).c_str());
+
+      // check whether the level was stored yet and open LevelInfo when available.
+      auto glm = GameLevelManager::sharedState();
+      for (int i = 0; i < 3; ++i) {
+            auto& psec = m_sections[i];
+            if (psec.pendingKey.empty()) continue;
+
+            // check stored levels
+            auto stored = glm->getStoredOnlineLevels(psec.pendingKey.c_str());
+            if (stored && stored->count() > 0) {
+                  auto level = static_cast<GJGameLevel*>(stored->objectAtIndex(0));
+                  if (!level || level->m_levelID != psec.pendingLevelId) {
+                        Notification::create("Level ID mismatch", NotificationIcon::Warning)->show();
+                  } else {
+                        log::debug("RLEventLayouts: Opening LevelInfoLayer for level id {} (from stored cache)", psec.pendingLevelId);
+                        auto scene = LevelInfoLayer::scene(level, false);
+                        auto transitionFade = CCTransitionFade::create(0.5f, scene);
+                        CCDirector::sharedDirector()->pushScene(transitionFade);
+                  }
+
+                  // hide any initialized spinners and restore play buttons
+                  if (psec.playSpinner) psec.playSpinner->setVisible(false);
+                  if (psec.platPlaySpinner) psec.platPlaySpinner->setVisible(false);
+                  if (psec.playButton) {
+                        psec.playButton->setEnabled(true);
+                        psec.playButton->setVisible(true);
+                  }
+                  if (psec.platPlayButton) {
+                        psec.platPlayButton->setEnabled(true);
+                        psec.platPlayButton->setVisible(true);
+                  }
+                  psec.pendingKey.clear();
+                  psec.pendingLevelId = -1;
+                  psec.pendingTimeout = 0.0;
+            } else {
+                  psec.pendingTimeout -= dt;
+                  if (psec.pendingTimeout <= 0.0) {
+                        if (psec.playSpinner) psec.playSpinner->setVisible(false);
+                        if (psec.platPlaySpinner) psec.platPlaySpinner->setVisible(false);
+                        if (psec.playButton) {
+                              psec.playButton->setEnabled(true);
+                              psec.playButton->setVisible(true);
+                        }
+                        if (psec.platPlayButton) {
+                              psec.platPlayButton->setEnabled(true);
+                              psec.platPlayButton->setVisible(true);
+                        }
+                        Notification::create("Level not found", NotificationIcon::Warning)->show();
+                        psec.pendingKey.clear();
+                        psec.pendingLevelId = -1;
+                        psec.pendingTimeout = 0.0;
+                  }
+            }
+      }
 }
 
 static std::string formatTime(long seconds) {
@@ -602,11 +692,20 @@ void RLEventLayouts::onCreatorClicked(CCObject* sender) {
 }
 
 void RLEventLayouts::onPlayEvent(CCObject* sender) {
-      if (!m_mainLayer) return;
+      if (!m_mainLayer) {
+            log::warn("mainLayer doesn't exist");
+            return;
+      }
       auto menuItem = static_cast<CCMenuItem*>(sender);
-      if (!menuItem) return;
+      if (!menuItem) {
+            log::warn("menuItem doesn't exist");
+            return;
+      }
       int levelId = menuItem->getTag();
-      if (levelId <= 0) return;
+      if (levelId <= 0) {
+            log::warn("levelid doesn't exist");
+            return;
+      }
 
       // fetch level metadata and push to LevelInfoLayer scene
       auto searchObj = GJSearchObject::create(SearchType::Search, numToString(levelId));
@@ -616,6 +715,7 @@ void RLEventLayouts::onPlayEvent(CCObject* sender) {
       // Check if we already have the level stored
       auto stored = glm->getStoredOnlineLevels(key.c_str());
       if (stored && stored->count() > 0) {
+            log::debug("stored online level count: {}", stored->count());
             auto level = static_cast<GJGameLevel*>(stored->objectAtIndex(0));
             if (level && level->m_levelID == levelId) {
                   log::debug("RLEventLayouts: Opening LevelInfoLayer for level id {} (from cache)", levelId);
@@ -626,23 +726,36 @@ void RLEventLayouts::onPlayEvent(CCObject* sender) {
             }
       }
 
-      // If not stored, fetch from server and push when ready
-      Ref<RLEventLayouts> selfRef = this;
-      g_onlineLevelsCallbacks[key].push_back([selfRef, levelId](cocos2d::CCArray* levels) {
-            if (!levels || levels->count() == 0) {
-                  Notification::create("Level not found", NotificationIcon::Error)->show();
-                  return;
+      int secIdx = -1;
+      for (int i = 0; i < 3; ++i) {
+            if (m_sections[i].playButton == menuItem || m_sections[i].platPlayButton == menuItem) {
+                  secIdx = i;
+                  break;
             }
-            auto level = static_cast<GJGameLevel*>(levels->objectAtIndex(0));
-            if (!level || level->m_levelID != levelId) {
-                  Notification::create("Level ID mismatch", NotificationIcon::Warning)->show();
-                  return;
-            }
-            log::debug("RLEventLayouts: Opening LevelInfoLayer for level id {} (from server)", levelId);
-            auto scene = LevelInfoLayer::scene(level, false);
-            auto transitionFade = CCTransitionFade::create(0.5f, scene);
-            CCDirector::sharedDirector()->pushScene(transitionFade);
-      });
+      }
+      if (secIdx < 0) secIdx = 0;
+      auto& sec = m_sections[secIdx];
+
+      // clear any previous pending spinner for this section
+      if (sec.pendingSpinner) {
+            sec.pendingSpinner->removeFromParent();
+            sec.pendingSpinner = nullptr;
+      }
+
+      sec.pendingKey = key;
+      sec.pendingLevelId = levelId;
+      sec.pendingTimeout = 10.0;  // 10s timeout
+
+      // show the initialized spinner and hide the clicked menu item
+      if (menuItem == sec.playButton) {
+            if (sec.playSpinner) sec.playSpinner->setVisible(true);
+            menuItem->setVisible(false);
+            menuItem->setEnabled(false);
+      } else if (menuItem == sec.platPlayButton) {
+            if (sec.platPlaySpinner) sec.platPlaySpinner->setVisible(true);
+            menuItem->setVisible(false);
+            menuItem->setEnabled(false);
+      }
 
       glm->getOnlineLevels(searchObj);
 }
