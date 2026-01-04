@@ -173,6 +173,18 @@ void RLGauntletLevelsLayer::createLevelButtons(matjson::Value const& levelsData,
             gauntletSpriteShadow->setAnchorPoint({0.f, .15f});
             gauntletSprite->addChild(gauntletSpriteShadow, -1);
 
+            // subtle floating animation
+            {
+                  const float floatDistance = 8.0f; // pixels
+                  const float floatDuration = 1.8f; // seconds
+                  auto moveUp = CCMoveBy::create(floatDuration, ccp(0, floatDistance));
+                  auto moveDown = CCMoveBy::create(floatDuration, ccp(0, -floatDistance));
+                  auto easeUp = CCEaseSineInOut::create(moveUp);
+                  auto easeDown = CCEaseSineInOut::create(moveDown);
+                  auto seq = CCSequence::create(easeUp, easeDown, nullptr);
+                  gauntletSprite->runAction(CCRepeatForever::create(seq));
+            }
+
             auto nameLabel = CCLabelBMFont::create(levelName.c_str(), "bigFont.fnt");
             nameLabel->setAlignment(kCCTextAlignmentCenter);
             nameLabel->setAnchorPoint({0.5f, 1.0f});

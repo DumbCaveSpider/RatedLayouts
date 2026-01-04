@@ -53,12 +53,12 @@ bool RLGauntletSelectLayer::init() {
       m_loadingCircle->setPosition(winSize / 2);
       this->addChild(m_loadingCircle);
 
-      // popup annouce
-      auto infoSpr = CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png");
-      auto infoBtn = CCMenuItemSpriteExtra::create(
-          infoSpr, this, menu_selector(RLGauntletSelectLayer::onInfoButton));
-      infoBtn->setPosition({25, 25});
-      backMenu->addChild(infoBtn);
+      // @geode-ignore(unknown-resource)
+      auto annouceSpr = AccountButtonSprite::createWithSpriteFrameName("geode.loader/news.png", 1.f, AccountBaseColor::Purple, AccountBaseSize::Normal);
+      annouceSpr->setScale(0.7f);
+      auto annouceBtn = CCMenuItemSpriteExtra::create(annouceSpr, this, menu_selector(RLGauntletSelectLayer::onInfoButton));
+      annouceBtn->setPosition({25, 25});
+      backMenu->addChild(annouceBtn);
 
       fetchGauntlets();
       return true;
@@ -76,11 +76,11 @@ void RLGauntletSelectLayer::onBackButton(CCObject* sender) {
 void RLGauntletSelectLayer::keyBackClicked() { this->onBackButton(nullptr); }
 
 void RLGauntletSelectLayer::onGauntletButtonClick(CCObject* sender) {
-      auto button = static_cast<CCNode*>(sender);
-      auto parent = button->getParent();
-      int index = parent->getChildren()->indexOfObject(button);
+      auto item = static_cast<CCMenuItemSpriteExtra*>(sender);
+      if (!item) return;
+      int index = item->getTag();
 
-      if (index >= 0 && index < (int)m_gauntletsArray.size()) {
+      if (index >= 0 && index < static_cast<int>(m_gauntletsArray.size())) {
             auto gauntlet = m_gauntletsArray[index];
             auto layer = RLGauntletLevelsLayer::create(gauntlet);
             auto scene = CCScene::create();
@@ -130,19 +130,16 @@ void RLGauntletSelectLayer::createGauntletButtons(matjson::Value const& gauntlet
 
       // Store gauntlets for later reference
       m_gauntletsArray.clear();
+      m_gauntletButtons.clear();
       for (auto& g : gauntletsArray) {
             m_gauntletsArray.push_back(g);
       }
 
-      const int maxButtonsPerRow = 3;
+      const int maxButtonsPerRow = 3;  // kept for consistency
       const float buttonWidth = 110.0f;
       const float buttonHeight = 240.0f;
       const float spacingX = 30.0f;
       const float spacingY = 80.0f;
-
-      // Calculate total width needed for buttons in a row
-      float totalButtonsWidth = (std::min((size_t)maxButtonsPerRow, gauntletsArray.size())) * (buttonWidth + spacingX);
-      float startX = (winSize.width - totalButtonsWidth) / 2 + buttonWidth / 2 + spacingX / 2;
 
       float centerY = winSize.height / 2 - 20;
 
@@ -219,12 +216,127 @@ void RLGauntletSelectLayer::createGauntletButtons(matjson::Value const& gauntlet
                 this,
                 menu_selector(RLGauntletSelectLayer::onGauntletButtonClick));
 
-            int row = i / maxButtonsPerRow;
-            int col = i % maxButtonsPerRow;
-            float buttonX = startX + col * (buttonWidth + spacingX);
-            float buttonY = centerY + row * spacingY;
+            // tag button with the gauntlet index for reliable lookup
+            button->setTag(static_cast<int>(i));
 
-            button->setPosition({buttonX, buttonY});
+            // add to menu but default hide
+            m_gauntletButtons.push_back(button);
             m_gauntletsMenu->addChild(button);
+            button->setVisible(false);
+      }
+
+      // setup pagination if needed
+      int total = static_cast<int>(m_gauntletButtons.size());
+      int totalPages = (total + m_pageSize - 1) / m_pageSize;
+      // cleanup any existing page controls
+      if (m_prevPageBtn) {
+            m_prevPageBtn->removeFromParent();
+            m_prevPageBtn = nullptr;
+      }
+      if (m_nextPageBtn) {
+            m_nextPageBtn->removeFromParent();
+            m_nextPageBtn = nullptr;
+      }
+      if (m_pageLabel) {
+            m_pageLabel->removeFromParent();
+            m_pageLabel = nullptr;
+      }
+
+      if (totalPages > 1) {
+            // create prev/next buttons and page label
+            auto prevSpr = CCSprite::createWithSpriteFrameName("navArrowBtn_001.png");
+            auto nextSpr = CCSprite::createWithSpriteFrameName("navArrowBtn_001.png");
+            if (prevSpr) prevSpr->setFlipX(true);
+
+            m_prevPageBtn = CCMenuItemSpriteExtra::create(prevSpr, this, menu_selector(RLGauntletSelectLayer::onPrevPage));
+            m_nextPageBtn = CCMenuItemSpriteExtra::create(nextSpr, this, menu_selector(RLGauntletSelectLayer::onNextPage));
+
+            // position below buttons
+            m_prevPageBtn->setPosition({25, winSize.height / 2});
+            m_nextPageBtn->setPosition({winSize.width - 25, winSize.height / 2});
+
+            auto navMenu = CCMenu::create();
+            navMenu->setPosition({0, 0});
+            navMenu->addChild(m_prevPageBtn);
+            navMenu->addChild(m_nextPageBtn);
+            this->addChild(navMenu);
+
+            m_pageLabel = CCLabelBMFont::create(fmt::format("{}/{}", m_currentPage + 1, totalPages).c_str(), "bigFont.fnt");
+            m_pageLabel->setPosition({winSize.width / 2, 12});
+            m_pageLabel->setScale(0.5f);
+            this->addChild(m_pageLabel, 5);
+      }
+
+      // show first page
+      m_currentPage = 0;
+      updatePage();
+}
+
+void RLGauntletSelectLayer::onPrevPage(CCObject* sender) {
+      int total = static_cast<int>(m_gauntletButtons.size());
+      int totalPages = (total + m_pageSize - 1) / m_pageSize;
+      if (totalPages <= 1) return;
+      if (m_currentPage > 0) {
+            m_currentPage--;
+            updatePage();
+      }
+}
+
+void RLGauntletSelectLayer::onNextPage(CCObject* sender) {
+      int total = static_cast<int>(m_gauntletButtons.size());
+      int totalPages = (total + m_pageSize - 1) / m_pageSize;
+      if (totalPages <= 1) return;
+      if (m_currentPage < totalPages - 1) {
+            m_currentPage++;
+            updatePage();
+      }
+}
+
+void RLGauntletSelectLayer::updatePage() {
+      auto winSize = CCDirector::sharedDirector()->getWinSize();
+      const float buttonWidth = 110.0f;
+      const float spacingX = 30.0f;
+      float centerY = winSize.height / 2 - 20;
+
+      int total = static_cast<int>(m_gauntletButtons.size());
+      int totalPages = (total + m_pageSize - 1) / m_pageSize;
+
+      // hide all by default
+      for (size_t i = 0; i < m_gauntletButtons.size(); ++i) {
+            if (m_gauntletButtons[i]) m_gauntletButtons[i]->setVisible(false);
+      }
+
+      if (total == 0) return;
+
+      int start = m_currentPage * m_pageSize;
+      int count = std::min(m_pageSize, total - start);
+
+      float totalButtonsWidth = count * (buttonWidth + spacingX);
+      float startX = (winSize.width - totalButtonsWidth) / 2 + buttonWidth / 2 + spacingX / 2;
+
+      for (int p = 0; p < count; ++p) {
+            int idx = start + p;
+            if (idx < 0 || idx >= total) continue;
+            auto btn = m_gauntletButtons[idx];
+            if (!btn) continue;
+
+            int col = p % m_pageSize;
+            float buttonX = startX + col * (buttonWidth + spacingX);
+            float buttonY = centerY;
+            btn->setPosition({buttonX, buttonY});
+            btn->setVisible(true);
+      }
+
+      // update nav controls
+      if (m_pageLabel) {
+            m_pageLabel->setString(fmt::format("{}/{}", m_currentPage + 1, std::max(1, totalPages)).c_str());
+      }
+      if (m_prevPageBtn) {
+            m_prevPageBtn->setEnabled(m_currentPage > 0);
+            m_prevPageBtn->setOpacity(m_currentPage > 0 ? 255 : 120);
+      }
+      if (m_nextPageBtn) {
+            m_nextPageBtn->setEnabled(m_currentPage < totalPages - 1);
+            m_nextPageBtn->setOpacity(m_currentPage < totalPages - 1 ? 255 : 120);
       }
 }

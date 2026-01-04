@@ -294,7 +294,7 @@ void RLCommunityVotePopup::refreshFromServer() {
             if (this->m_modDifficultyLabel) {
                   if (avg >= 0.0) {
                         if (std::floor(avg) == avg) {
-                              this->m_modDifficultyLabel->setString(numToString((int)avg).c_str());
+                              this->m_modDifficultyLabel->setString(numToString(static_cast<int>(avg)).c_str());
                         } else {
                               this->m_modDifficultyLabel->setString(fmt::format("{:.1f}", avg).c_str());
                         }

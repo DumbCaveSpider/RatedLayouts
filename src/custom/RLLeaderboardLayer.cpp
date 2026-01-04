@@ -81,12 +81,11 @@ bool RLLeaderboardLayer::init() {
       typeMenu->setPosition({0, 0});
 
       auto starsTab = TabButton::create(
-            TabBaseColor::Unselected,
-            TabBaseColor::UnselectedDark,
-            "Top Sparks",
-            this,
-            menu_selector(RLLeaderboardLayer::onLeaderboardTypeButton)
-      );
+          TabBaseColor::Unselected,
+          TabBaseColor::UnselectedDark,
+          "Top Sparks",
+          this,
+          menu_selector(RLLeaderboardLayer::onLeaderboardTypeButton));
       starsTab->setTag(1);
       starsTab->toggle(true);
       starsTab->setPosition({winSize.width / 2 - 120, winSize.height - 27});
@@ -94,8 +93,8 @@ bool RLLeaderboardLayer::init() {
       m_starsTab = starsTab;
 
       auto planetsTab = TabButton::create(
-            TabBaseColor::Unselected,
-            TabBaseColor::UnselectedDark,
+          TabBaseColor::Unselected,
+          TabBaseColor::UnselectedDark,
           "Top Planets", this,
           menu_selector(RLLeaderboardLayer::onLeaderboardTypeButton));
       planetsTab->setTag(3);
@@ -105,8 +104,8 @@ bool RLLeaderboardLayer::init() {
       m_planetsTab = planetsTab;
 
       auto creatorTab = TabButton::create(
-            TabBaseColor::Unselected,
-            TabBaseColor::UnselectedDark,
+          TabBaseColor::Unselected,
+          TabBaseColor::UnselectedDark,
           "Top Creator", this,
           menu_selector(RLLeaderboardLayer::onLeaderboardTypeButton));
       creatorTab->setTag(2);
@@ -174,9 +173,11 @@ void RLLeaderboardLayer::onInfoButton(CCObject* sender) {
       MDPopup::create(
           "Rated Layouts Leaderboard",
           "The leaderboard shows the top players in <cb>Rated Layouts</c> based "
-          "on <cl>Stars</c> or <cl>Creator Points</c>. You can view each category by selecting the tabs.\n\n"
-          "<cl>Blueprint Stars</c> are earned by completing a <cb>Rated Layouts</c> level and are only counted when beaten legitimately. Any <cr>unfair</c> means of obtaining these stars will result in an exclusion from the leaderboard.\n\n"
-          "<cl>Blueprint Creator Points</c> are earned based on the how many rated layouts levels you have in your account. Getting a rated layout level earns you 1 point, <cy>Featured Rated Layouts</c> level earns you 2 points and <cp>Epic Rated Layout</c> levels earn you 3 points.\n\n",
+          "on <cl>Sparks</c>, <co>Planets</c> or <cf>Creator Points</c>. You can view each category by selecting the tabs.\n\n"
+          "- <cl>Sparks</c> are earned by completing a <cb>Classic Rated Layouts</c> level and are only counted when beaten legitimately.\n\n"
+          "- <co>Planets</c> are earned by completing a <cb>Platformer Rated Layouts</c> level only counted when beaten legitimately.\n\n"
+          "- <cf>Blueprint Creator Points</c> are earned based on the how many rated layouts levels you have in your account. Getting a rated layout level earns you 1 point, <cy>Featured Rated Layouts</c> level earns you 2 points and <cp>Epic Rated Layout</c> levels earn you 3 points. *This is unaffected from those who are exclusion.*\n\n"
+          "### Any <cr>unfair</c> means of obtaining these stars <cy>(eg. instant complete, noclipping, secret way)</c> will result in an <cr>exclusion from the leaderboard and there will be NO APPEALS!</c> Each completion are <co>publicly logged</c> for this purpose.\n\n",
           "OK")
           ->show();
 }

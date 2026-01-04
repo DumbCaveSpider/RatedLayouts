@@ -1,6 +1,7 @@
 # v0.3.5-beta.1
 
 - **Profile Stats Changed!** The Rated layouts stats are now on a seperate section in the profile page. Click the new Planet Button in the profile page to view your Rated Layouts stats!
+- **Added Gauntlet Select Levels!** You can now select and play Layout Gauntlet levels from the Gauntlet Select Layer.
 - Improved the Layout Moderators and Admins UI.
 - New Mod Title! Thanks to [KrazyGFX](https://x.com/Krazy_GFX/status/2006175258361905195?s=20) for the design
 - Changed "Design" to "Originality" in the Community Vote popup.
@@ -8,6 +9,7 @@
 - Fixed issue where the Leaderboard tabs is transparent when selected.
 - Event Layouts are now more responsive when pressing the play button
 - Comment Glow will now apply when an user has planets in their stats.
+- Minor fixes relating to Popup informations
 
 Thanks to [delivel-tech](https://github.com/delivel-tech) for this update!
 
