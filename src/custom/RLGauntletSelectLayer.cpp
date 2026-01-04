@@ -31,6 +31,13 @@ bool RLGauntletSelectLayer::init() {
       auto titleSprite = CCSprite::create("RL_titleGauntlet.png"_spr);
       titleSprite->setPosition({winSize.width / 2, winSize.height - 30});
       titleSprite->setScale(.7f);
+      // shadow
+      auto titleShadow = CCSprite::create("RL_titleGauntlet.png"_spr);
+      titleShadow->setPosition({titleSprite->getPositionX() + 2, titleSprite->getPositionY() - 2});
+      titleShadow->setScale(.7f);
+      titleShadow->setColor({0, 0, 0});
+      titleShadow->setOpacity(100);
+      this->addChild(titleShadow, 9);
       this->addChild(titleSprite, 10);
 
       // crap

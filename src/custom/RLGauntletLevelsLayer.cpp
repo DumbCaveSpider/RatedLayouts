@@ -55,6 +55,12 @@ bool RLGauntletLevelsLayer::init(matjson::Value const& gauntletData) {
 
       auto titleLabel = CCLabelBMFont::create(m_gauntletName.c_str(), "goldFont.fnt");
       titleLabel->setPosition({winSize.width / 2, winSize.height - 20});
+      // shadow
+      auto titleLabelShadow = CCLabelBMFont::create(m_gauntletName.c_str(), "goldFont.fnt");
+      titleLabelShadow->setPosition({titleLabel->getPositionX() + 2, titleLabel->getPositionY() - 2});
+      titleLabelShadow->setColor({0, 0, 0});
+      titleLabelShadow->setOpacity(60);
+      this->addChild(titleLabelShadow, 9);
       this->addChild(titleLabel, 10);
 
       auto backMenu = CCMenu::create();
@@ -397,10 +403,6 @@ void RLGauntletLevelsLayer::onGauntletClick(CCObject* sender) {
       glm->getOnlineLevels(searchObj);
 }
 
-void RLGauntletLevelsLayer::registerWithTouchDispatcher() {
-      CCDirector::sharedDirector()->getTouchDispatcher()->addStandardDelegate(this, 0);
-}
-
 void RLGauntletLevelsLayer::onGauntletInfo(CCObject* sender) {
       MDPopup::create(m_gauntletName, m_gauntletDescription, "OK")->show();
 }
@@ -510,7 +512,7 @@ void RLGauntletLevelsLayer::ccTouchesEnded(CCSet* touches, CCEvent* event) {
       if (m_dragging) {
             m_dragging = false;
             // if velocity large enough, start fling
-            float speed = ccpLength(m_velocity);
+            float speed = std::hypotf(m_velocity.x, m_velocity.y);
             if (speed > 300.0f) {
                   m_flinging = true;
             } else {
@@ -585,7 +587,7 @@ void RLGauntletLevelsLayer::update(float dt) {
       if (!m_flinging || !m_levelsMenu) return;
 
       updateBackgroundParallax(m_levelsMenu->getPosition());
-      float vlen = ccpLength(m_velocity);
+      float vlen = std::hypotf(m_velocity.x, m_velocity.y);
       if (vlen <= 1.0f) {
             m_velocity = ccp(0, 0);
             m_flinging = false;
@@ -638,7 +640,7 @@ void RLGauntletLevelsLayer::update(float dt) {
       m_levelsMenu->setPosition(newPos);
 
       // stop if velocities are nearly zero
-      if (ccpLength(m_velocity) < 5.0f) {
+      if (std::hypotf(m_velocity.x, m_velocity.y) < 5.0f) {
             m_velocity = ccp(0, 0);
             m_flinging = false;
       }

@@ -19,7 +19,6 @@ class RLGauntletLevelsLayer : public CCLayer {
       void onGauntletInfo(CCObject* sender);
 
       void onEnter() override;
-      void registerWithTouchDispatcher() override;
       void ccTouchesBegan(CCSet* touches, CCEvent* event) override;
       void ccTouchesMoved(CCSet* touches, CCEvent* event) override;
       void ccTouchesEnded(CCSet* touches, CCEvent* event) override;
