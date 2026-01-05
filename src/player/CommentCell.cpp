@@ -379,7 +379,7 @@ class $modify(RLCommentCell, CommentCell) {
       }
       void onSupporterBadge(CCObject* sender) {
             geode::createQuickPopup(
-                "Supporter Badge",
+                "Layout Supporter",
                 "This user is a <cp>Layout Supporter</c>! They have supported the development of <cl>Rated Layouts</c> through membership donations.\n\nYou can become a <cp>Layout Supporter</c> by donating via <cp>Ko-Fi</c>",
                 "OK",
                 "Ko-Fi", [this](auto, bool yes) {

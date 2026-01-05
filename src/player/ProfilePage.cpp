@@ -298,6 +298,11 @@ class $modify(RLProfilePage, ProfilePage) {
 
             log::info("Profile data - points: {}, stars: {}, planets: {}, supporter: {}", points, stars, planets, isSupporter);
 
+            if (!m_mainLayer) {
+                  log::warn("ProfilePage destroyed before updating UI, skipping UI updates");
+                  co_return;
+            }
+
             cacheUserProfile_ProfilePage(m_fields->accountId, role, stars, planets);
 
             if (m_ownProfile) {
@@ -308,18 +313,19 @@ class $modify(RLProfilePage, ProfilePage) {
             updateStatLabel("rl-planets-label", GameToolbox::pointsToString(m_fields->m_planets));
 
             auto pointsText = GameToolbox::pointsToString(m_fields->m_points);
-
-            auto pointsEntry = createStatEntry(
-                "rl-points-entry",
-                "rl-points-label",
-                pointsText,
-                "RL_blueprintPoint01.png"_spr,
-                menu_selector(RLProfilePage::onLayoutPointsClicked));
-
             auto rlStatsMenu = getChildByIDRecursive("rl-stats-menu");
 
-            if (points > 0) {
-                  rlStatsMenu->addChild(pointsEntry);
+            if (!Mod::get()->getSettingValue<bool>("disableCreatorPoints")) {
+                  auto pointsEntry = createStatEntry(
+                      "rl-points-entry",
+                      "rl-points-label",
+                      pointsText,
+                      "RL_blueprintPoint01.png"_spr,
+                      menu_selector(RLProfilePage::onLayoutPointsClicked));
+
+                  if (points > 0) {
+                        rlStatsMenu->addChild(pointsEntry);
+                  }
             }
 
             if (rlStatsMenu) {
@@ -418,12 +424,11 @@ class $modify(RLProfilePage, ProfilePage) {
             postReq.bodyJSON(jsonBody);
 
             auto postTask = postReq.post("https://gdrate.arcticwoof.xyz/profile");
-            Ref<RLProfilePage> pageRef = this;
 
-            postTask.listen([pageRef, this](web::WebResponse* response) {
+            postTask.listen([this](web::WebResponse* response) {
                   log::info("Received response from server");
 
-                  if (!pageRef || !pageRef->m_mainLayer) {
+                  if (!m_mainLayer) {
                         log::warn("ProfilePage has been destroyed, skipping profile data update");
                         return;
                   }
@@ -450,13 +455,13 @@ class $modify(RLProfilePage, ProfilePage) {
                   m_fields->m_planets = planets;
                   m_fields->m_points = points;
 
-                  pageRef->m_fields->role = role;
-                  pageRef->m_fields->isSupporter = isSupporter;
+                  m_fields->role = role;
+                  m_fields->isSupporter = isSupporter;
 
-                  cacheUserProfile_ProfilePage(pageRef->m_fields->accountId, role, stars, planets);
+                  cacheUserProfile_ProfilePage(m_fields->accountId, role, stars, planets);
 
-                  if (pageRef->m_ownProfile) {
-                        Mod::get()->setSavedValue("role", pageRef->m_fields->role);
+                  if (m_ownProfile) {
+                        Mod::get()->setSavedValue("role", m_fields->role);
                   }
 
                   updateStatLabel("rl-stars-label", GameToolbox::pointsToString(m_fields->m_stars));
@@ -466,7 +471,7 @@ class $modify(RLProfilePage, ProfilePage) {
                         rlStatsMenu->updateLayout();
                   }
 
-                  pageRef->loadBadgeFromUserInfo();
+                  loadBadgeFromUserInfo();
             });
       }
 
@@ -585,7 +590,7 @@ class $modify(RLProfilePage, ProfilePage) {
       }
       void onSupporterBadge(CCObject* sender) {
             geode::createQuickPopup(
-                "Supporter Badge",
+                "Layout Supporter",
                 "This user is a <cp>Layout Supporter</c>! They have supported the development of <cl>Rated Layouts</c> through membership donations.\n\nYou can become a <cp>Layout Supporter</c> by donating via <cp>Ko-Fi</c>",
                 "OK",
                 "Ko-Fi", [this](auto, bool yes) {

@@ -435,7 +435,7 @@ void RLCommunityVotePopup::onInfo(CCObject*) {
           "<co>Originality (1 to 10)</c>: How original and distinct the layout is.\n\n"
           "<cr>Difficulty (1 to 30)</c>: The difficulty the level is according to your experience.\n\n"
           "<cg>Gameplay (1 to 10)</c>: How fun and enjoyable the layout is overall.\n\n"
-          "### Please rate suggested layouts <cg>honestly and fairly</c> based on your experience playing them as <cr>Layout Admins</c> uses this votes to help accurately rate layouts.!",
+          "### Please rate suggested layouts <cg>honestly and fairly</c> based on your experience playing them as <cr>Layout Admins</c> uses this votes to help accurately rate layouts!",
           "OK")
           ->show();
 }
