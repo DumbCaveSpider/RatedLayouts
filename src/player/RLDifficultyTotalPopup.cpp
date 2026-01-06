@@ -195,11 +195,13 @@ bool RLDifficultyTotalPopup::setup() {
       if (m_mode == RLDifficultyTotalPopup::Mode::Planets) {
             req.param("isPlat", "1");
       }
-      req.get("https://gdrate.arcticwoof.xyz/getDifficulty").listen([this](web::WebResponse* res) {
+      Ref<RLDifficultyTotalPopup> self = this;
+      req.get("https://gdrate.arcticwoof.xyz/getDifficulty").listen([self](web::WebResponse* res) {
+            if (!self) return;
             if (!res || !res->ok()) {
-                  if (m_spinner) {
-                        m_spinner->removeFromParent();
-                        m_spinner = nullptr;
+                  if (self->m_spinner) {
+                        self->m_spinner->removeFromParent();
+                        self->m_spinner = nullptr;
                   }
                   Notification::create("Failed to fetch difficulty", NotificationIcon::Error)->show();
                   return;
@@ -207,16 +209,16 @@ bool RLDifficultyTotalPopup::setup() {
             auto jsonRes = res->json();
             if (!jsonRes) {
                   Notification::create("Failed to parse difficulty response", NotificationIcon::Error)->show();
-                  if (m_spinner) {
-                        m_spinner->removeFromParent();
-                        m_spinner = nullptr;
+                  if (self->m_spinner) {
+                        self->m_spinner->removeFromParent();
+                        self->m_spinner = nullptr;
                   }
                   return;
             }
             auto json = jsonRes.unwrap();
-            if (m_spinner) {
-                  m_spinner->removeFromParent();
-                  m_spinner = nullptr;
+            if (self->m_spinner) {
+                  self->m_spinner->removeFromParent();
+                  self->m_spinner = nullptr;
             }
             std::unordered_map<int, int> counts;
             auto difficultyObj = json["difficulty"];
@@ -224,29 +226,29 @@ bool RLDifficultyTotalPopup::setup() {
             for (int k : keys) {
                   counts[k] = difficultyObj[numToString(k)].asInt().unwrapOrDefault();
             }
-            m_counts = counts;
+            self->m_counts = counts;
             int totalCount = 0;
             for (auto const& kv : counts) {
                   totalCount += kv.second;
             }
             // player's rank
             int position = json["position"].asInt().unwrapOrDefault();
-            std::string titlePrefix = m_mode == RLDifficultyTotalPopup::Mode::Planets ? "Rated Layouts Platformer: " : "Rated Layouts Classic: ";
-            setTitle((titlePrefix + numToString(GameToolbox::pointsToString(totalCount))).c_str());
-            if (m_rankLabel) {
+            std::string titlePrefix = self->m_mode == RLDifficultyTotalPopup::Mode::Planets ? "Rated Layouts Platformer: " : "Rated Layouts Classic: ";
+            self->setTitle((titlePrefix + numToString(GameToolbox::pointsToString(totalCount))).c_str());
+            if (self->m_rankLabel) {
                   if (position > 0) {
-                        m_rankLabel->setString((std::string("Global Rank: ") + numToString(position)).c_str());
-                        m_rankLabel->setVisible(true);
+                        self->m_rankLabel->setString((std::string("Global Rank: ") + numToString(position)).c_str());
+                        self->m_rankLabel->setVisible(true);
                   } else {
-                        m_rankLabel->setVisible(false);
+                        self->m_rankLabel->setVisible(false);
                   }
             }
-            if (m_resultsLabel) {
-                  m_resultsLabel->removeFromParent();
-                  m_resultsLabel = nullptr;
+            if (self->m_resultsLabel) {
+                  self->m_resultsLabel->removeFromParent();
+                  self->m_resultsLabel = nullptr;
             }
             // build UI
-            buildDifficultyUI(m_counts);
+            self->buildDifficultyUI(self->m_counts);
       });
       return true;
 }

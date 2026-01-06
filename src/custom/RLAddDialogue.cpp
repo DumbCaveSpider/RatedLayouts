@@ -71,12 +71,14 @@ void RLAddDialogue::onSubmit(CCObject* sender) {
 
       auto req = web::WebRequest();
       req.bodyJSON(body);
-      req.post("https://gdrate.arcticwoof.xyz/setDialogue").listen([this](web::WebResponse* res) {
+      Ref<RLAddDialogue> self = this;
+      req.post("https://gdrate.arcticwoof.xyz/setDialogue").listen([self](web::WebResponse* res) {
+            if (!self) return;
             if (!res || !res->ok()) {
                   Notification::create("Failed to submit dialogue!", NotificationIcon::Error)->show();
                   return;
             }
             Notification::create("Dialogue submitted successfully!", NotificationIcon::Success)->show();
-            this->removeFromParent();
+            self->removeFromParent();
       });
 }

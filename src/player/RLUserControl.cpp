@@ -91,7 +91,10 @@ bool RLUserControl::setup() {
             postReq.bodyJSON(jsonBody);
             auto postTask = postReq.post("https://gdrate.arcticwoof.xyz/profile");
 
-            postTask.listen([this](web::WebResponse* response) {
+            Ref<RLUserControl> self = this;
+            postTask.listen([self](web::WebResponse* response) {
+                  if (!self) return;  // popup destroyed or otherwise invalid
+
                   if (!response->ok()) {
                         log::warn("Profile fetch returned non-ok status: {}", response->code());
                         return;
@@ -107,9 +110,9 @@ bool RLUserControl::setup() {
                   auto json = jsonRes.unwrap();
                   bool isExcluded = json["excluded"].asBool().unwrapOrDefault();
 
-                  this->m_isInitializing = true;
-                  this->setOptionState("exclude", isExcluded, true);
-                  this->m_isInitializing = false;
+                  self->m_isInitializing = true;
+                  self->setOptionState("exclude", isExcluded, true);
+                  self->m_isInitializing = false;
             });
       }
 
@@ -186,36 +189,38 @@ void RLUserControl::onApplyChanges(CCObject* sender) {
       log::info("Applying user settings for account {}", m_targetAccountId);
       auto postTask = postReq.post("https://gdrate.arcticwoof.xyz/setUser");
 
-      postTask.listen([this, jsonBody](web::WebResponse* response) {
+      Ref<RLUserControl> self = this;
+      postTask.listen([self, jsonBody](web::WebResponse* response) {
+            if (!self) return;  // popup destroyed or otherwise invalid
             // re-enable UI regardless
-            this->setAllOptionsEnabled(true);
+            self->setAllOptionsEnabled(true);
             // compute whether any option still differs
             bool differs = false;
-            for (auto& opt : this->m_userOptions) {
+            for (auto& opt : self->m_userOptions) {
                   if (opt.desired != opt.persisted) {
                         differs = true;
                         break;
                   }
             }
-            if (this->m_applyButton) this->m_applyButton->setEnabled(differs);
-            if (this->m_applySprite) this->m_applySprite->updateBGImage(differs ? "GJ_button_01.png" : "GJ_button_04.png");
-            if (this->m_applySpinner) this->m_applySpinner->setVisible(false);
-            if (this->m_applyButton) this->m_applyButton->setVisible(true);
+            if (self->m_applyButton) self->m_applyButton->setEnabled(differs);
+            if (self->m_applySprite) self->m_applySprite->updateBGImage(differs ? "GJ_button_01.png" : "GJ_button_04.png");
+            if (self->m_applySpinner) self->m_applySpinner->setVisible(false);
+            if (self->m_applyButton) self->m_applyButton->setVisible(true);
 
             if (!response->ok()) {
                   log::warn("setUser returned non-ok status: {}", response->code());
                   Notification::create("Failed to update user", NotificationIcon::Error)->show();
                   // revert each option to persisted state
-                  this->m_isInitializing = true;
-                  for (auto& opt : this->m_userOptions) {
+                  self->m_isInitializing = true;
+                  for (auto& opt : self->m_userOptions) {
                         opt.desired = opt.persisted;
                         if (opt.button) opt.button->updateBGImage(opt.persisted ? "GJ_button_02.png" : "GJ_button_01.png");
                   }
-                  this->m_isInitializing = false;
-                  if (this->m_applyButton) this->m_applyButton->setEnabled(false);
-                  if (this->m_applySprite) this->m_applySprite->updateBGImage("GJ_button_04.png");
-                  if (this->m_applyButton) this->m_applyButton->setVisible(true);
-                  if (this->m_applySpinner) this->m_applySpinner->setVisible(false);
+                  self->m_isInitializing = false;
+                  if (self->m_applyButton) self->m_applyButton->setEnabled(false);
+                  if (self->m_applySprite) self->m_applySprite->updateBGImage("GJ_button_04.png");
+                  if (self->m_applyButton) self->m_applyButton->setVisible(true);
+                  if (self->m_applySpinner) self->m_applySpinner->setVisible(false);
                   return;
             }
 
@@ -223,39 +228,39 @@ void RLUserControl::onApplyChanges(CCObject* sender) {
             if (!jsonRes) {
                   log::warn("Failed to parse setUser response");
                   Notification::create("Invalid server response", NotificationIcon::Error)->show();
-                  this->m_isInitializing = true;
-                  for (auto& opt : this->m_userOptions) {
+                  self->m_isInitializing = true;
+                  for (auto& opt : self->m_userOptions) {
                         opt.desired = opt.persisted;
                         if (opt.button) opt.button->updateBGImage(opt.persisted ? "GJ_button_02.png" : "GJ_button_01.png");
                   }
-                  this->m_isInitializing = false;
-                  if (this->m_applyButton) this->m_applyButton->setEnabled(false);
-                  if (this->m_applySprite) this->m_applySprite->updateBGImage("GJ_button_04.png");
-                  if (this->m_applyButton) this->m_applyButton->setVisible(true);
-                  if (this->m_applySpinner) this->m_applySpinner->setVisible(false);
+                  self->m_isInitializing = false;
+                  if (self->m_applyButton) self->m_applyButton->setEnabled(false);
+                  if (self->m_applySprite) self->m_applySprite->updateBGImage("GJ_button_04.png");
+                  if (self->m_applyButton) self->m_applyButton->setVisible(true);
+                  if (self->m_applySpinner) self->m_applySpinner->setVisible(false);
                   return;
             }
 
             auto json = jsonRes.unwrap();
             bool success = json["success"].asBool().unwrapOrDefault();
             if (success) {
-                  for (auto& opt : this->m_userOptions) {
+                  for (auto& opt : self->m_userOptions) {
                         opt.persisted = opt.desired;
                         if (opt.button) opt.button->updateBGImage(opt.persisted ? "GJ_button_02.png" : "GJ_button_01.png");
                   }
                   Notification::create("User has been updated!", NotificationIcon::Success)->show();
-                  if (this->m_applyButton) this->m_applyButton->setEnabled(false);
-                  if (this->m_applySprite) this->m_applySprite->updateBGImage("GJ_button_04.png");
-                  this->onClose(nullptr);
+                  if (self->m_applyButton) self->m_applyButton->setEnabled(false);
+                  if (self->m_applySprite) self->m_applySprite->updateBGImage("GJ_button_04.png");
+                  self->onClose(nullptr);
             } else {
                   Notification::create("Failed to update user", NotificationIcon::Error)->show();
                   // revert each option to persisted state
-                  this->m_isInitializing = true;
-                  for (auto& opt : this->m_userOptions) {
+                  self->m_isInitializing = true;
+                  for (auto& opt : self->m_userOptions) {
                         opt.desired = opt.persisted;
                         if (opt.button) opt.button->updateBGImage(opt.persisted ? "GJ_button_02.png" : "GJ_button_01.png");
                   }
-                  this->m_isInitializing = false;
+                  self->m_isInitializing = false;
             }
       });
 }

@@ -84,7 +84,7 @@ class $modify(LevelCell) {
 
             Ref<LevelCell> cellRef = this;
 
-            getTask.listen([this, cellRef, levelId](web::WebResponse* response) {
+            getTask.listen([cellRef, levelId, this](web::WebResponse* response) {
                   log::debug("Received rating response from server for level cell ID: {}",
                              levelId);
 
@@ -211,7 +211,6 @@ class $modify(LevelCell) {
                   moreDifficultiesSpr->setVisible(false);
                   sprite->setOpacity(255);
             }
-
 
             // star or planet icon (planet for platformer levels)
             CCSprite* newStarIcon = nullptr;

@@ -116,8 +116,9 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             log::debug("isPlatformer = {}, starRatings = {}, legitCompleted = {}",
                        isPlatformer, starRatings, legitCompleted);
 
-            if (Mod::get()->getSavedValue<int>("role") == 1) {
-                  // add a mod button
+            int userRole = Mod::get()->getSavedValue<int>("role");
+            if (userRole == 1 || userRole == 2) {
+                  // add a role button for send/rate
                   auto iconSprite = CCSprite::create("RL_starBig.png"_spr);
                   CCSprite* buttonSprite = nullptr;
 
@@ -127,32 +128,14 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                         buttonSprite = CCSprite::create("RL_starBig.png"_spr);
                   }
 
-                  auto modButtonSpr = CircleButtonSprite::create(
+                  auto roleButtonSpr = CircleButtonSprite::create(
                       buttonSprite, CircleBaseColor::Cyan, CircleBaseSize::Medium);
 
-                  auto modButtonItem = CCMenuItemSpriteExtra::create(
-                      modButtonSpr, this, menu_selector(RLLevelInfoLayer::onModButton));
-                  modButtonItem->setID("mod-button");
+                  auto roleButtonItem = CCMenuItemSpriteExtra::create(
+                      roleButtonSpr, this, menu_selector(RLLevelInfoLayer::onRoleButton));
+                  roleButtonItem->setID("role-button");
 
-                  leftMenu->addChild(modButtonItem);
-            } else if (Mod::get()->getSavedValue<int>("role") == 2) {
-                  // add an admin button
-                  CCSprite* buttonSprite = nullptr;
-
-                  if (starRatings != 0) {
-                        buttonSprite = CCSpriteGrayscale::create("RL_starBig.png"_spr);
-                  } else {
-                        buttonSprite = CCSprite::create("RL_starBig.png"_spr);
-                  }
-
-                  auto modButtonSpr = CircleButtonSprite::create(
-                      buttonSprite, CircleBaseColor::Cyan, CircleBaseSize::Medium);
-
-                  auto modButtonItem = CCMenuItemSpriteExtra::create(
-                      modButtonSpr, this, menu_selector(RLLevelInfoLayer::onAdminButton));
-                  modButtonItem->setID("admin-button");
-
-                  leftMenu->addChild(modButtonItem);
+                  leftMenu->addChild(roleButtonItem);
             }
 
             leftMenu->updateLayout();
@@ -227,26 +210,24 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             int featured = json["featured"].asInt().unwrapOrDefault();
             bool isSuggested = json["isSuggested"].asBool().unwrapOrDefault();
 
-            // helper to remove existing button from play or left menus
+            // helper to remove existing button
             auto removeExistingCommunityBtn = [layerRef]() {
-                  auto playMenuNode = layerRef->getChildByID("play-menu");
-                  if (playMenuNode && typeinfo_cast<CCMenu*>(playMenuNode)) {
-                        auto existing = static_cast<CCMenu*>(playMenuNode)->getChildByID("rl-community-vote");
-                        if (existing) existing->removeFromParent();
-                  }
-                  auto leftMenuNode = layerRef->getChildByID("left-side-menu");
-                  if (leftMenuNode && typeinfo_cast<CCMenu*>(leftMenuNode)) {
-                        auto existing = static_cast<CCMenu*>(leftMenuNode)->getChildByID("rl-community-vote");
-                        if (existing) existing->removeFromParent();
+                  auto rightMenuNode = layerRef->getChildByID("right-side-menu");
+                  if (rightMenuNode && typeinfo_cast<CCMenu*>(rightMenuNode)) {
+                        auto existing = static_cast<CCMenu*>(rightMenuNode)->getChildByID("rl-community-vote");
+                        if (existing) {
+                              existing->removeFromParent();
+                              static_cast<CCMenu*>(rightMenuNode)->updateLayout();
+                        }
                   }
             };
 
             if (isSuggested) {
                   // create button if not already present
                   bool exists = false;
-                  auto playMenuNode = layerRef->getChildByID("play-menu");
-                  if (playMenuNode && typeinfo_cast<CCMenu*>(playMenuNode)) {
-                        if (static_cast<CCMenu*>(playMenuNode)->getChildByID("rl-community-vote"))
+                  auto rightMenuNode = layerRef->getChildByID("right-side-menu");
+                  if (rightMenuNode && typeinfo_cast<CCMenu*>(rightMenuNode)) {
+                        if (static_cast<CCMenu*>(rightMenuNode)->getChildByID("rl-community-vote"))
                               exists = true;
                   }
 
@@ -274,20 +255,64 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                               log::debug("Community vote enabled due to role override (role={})", userRole);
                         }
 
-                        auto commSprite = shouldDisable ? CCSpriteGrayscale::create("RL_commVote01.png"_spr) : CCSprite::create("RL_commVote01.png"_spr);
-                        if (commSprite) {
-                              auto commBtnSpr = CircleButtonSprite::create(commSprite, shouldDisable ? CircleBaseColor::Gray : CircleBaseColor::Green, CircleBaseSize::Small);
+                        auto commSpriteGray = CCSpriteGrayscale::create("RL_commVote01.png"_spr);
+                        if (commSpriteGray) {
+                              auto commBtnSpr = CircleButtonSprite::create(commSpriteGray, CircleBaseColor::Gray, CircleBaseSize::Medium);
                               auto commBtnItem = CCMenuItemSpriteExtra::create(commBtnSpr, layerRef, menu_selector(RLLevelInfoLayer::onCommunityVote));
                               commBtnItem->setID("rl-community-vote");
 
-                              if (playMenuNode && typeinfo_cast<CCMenu*>(playMenuNode)) {
-                                    auto playMenu = static_cast<CCMenu*>(playMenuNode);
-                                    commBtnItem->setPosition({-160.f, 60.f});
-                                    playMenu->addChild(commBtnItem);
+                              auto rightMenuNode = layerRef->getChildByID("right-side-menu");
+                              if (rightMenuNode && typeinfo_cast<CCMenu*>(rightMenuNode)) {
+                                    static_cast<CCMenu*>(rightMenuNode)->addChild(commBtnItem);
+                                    // ensure layout updates so the button is placed correctly
+                                    static_cast<CCMenu*>(rightMenuNode)->updateLayout();
+
+                                    // Reactivate immediately if it should be enabled according to data
+                                    if (!shouldDisable) {
+                                          // swap to colored sprite
+                                          auto commSpriteColor = CCSprite::create("RL_commVote01.png"_spr);
+                                          if (commSpriteColor) {
+                                                auto coloredBtnSpr = CircleButtonSprite::create(commSpriteColor, CircleBaseColor::Green, CircleBaseSize::Medium);
+                                                commBtnItem->setNormalImage(coloredBtnSpr);
+                                          }
+                                          commBtnItem->setEnabled(true);
+                                          commBtnItem->setOpacity(255);
+                                    }
                               } else {
-                                    auto leftMenuNode = layerRef->getChildByID("left-side-menu");
-                                    if (leftMenuNode && typeinfo_cast<CCMenu*>(leftMenuNode)) {
-                                          static_cast<CCMenu*>(leftMenuNode)->addChild(commBtnItem);
+                                    log::warn("Right-side-menu not found; community vote button not added");
+                              }
+                        }
+                  } else {
+                        // update existing button state based on current data
+                        int normalPct = -1;
+                        int practicePct = -1;
+                        bool hasPctFields = false;
+
+                        if (layerRef && layerRef->m_level) {
+                              hasPctFields = true;
+                              normalPct = layerRef->m_level->m_normalPercent;
+                              practicePct = layerRef->m_level->m_practicePercent;
+                        }
+
+                        bool shouldDisable = true;
+                        if (hasPctFields) {
+                              shouldDisable = !(normalPct >= 20 || practicePct >= 80);
+                        }
+
+                        int userRole = Mod::get()->getSavedValue<int>("role");
+                        if (userRole == 1 || userRole == 2) {
+                              shouldDisable = false;
+                              log::debug("Community vote enabled due to role override (role={})", userRole);
+                        }
+
+                        auto rightMenuNode2 = layerRef->getChildByID("right-side-menu");
+                        if (rightMenuNode2 && typeinfo_cast<CCMenu*>(rightMenuNode2)) {
+                              auto existing = static_cast<CCMenu*>(rightMenuNode2)->getChildByID("rl-community-vote");
+                              if (existing) {
+                                    auto menuItem = static_cast<CCMenuItemSpriteExtra*>(existing);
+                                    if (menuItem) {
+                                          menuItem->setEnabled(!shouldDisable);
+                                          menuItem->setOpacity(shouldDisable ? 100 : 255);
                                     }
                               }
                         }
@@ -701,23 +726,21 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             // handle community vote button visibility when level updates are fetched
             bool isSuggested = json["isSuggested"].asBool().unwrapOrDefault();
             auto removeExistingCommunityBtn = [layerRef]() {
-                  auto playMenuNode = layerRef->getChildByID("play-menu");
-                  if (playMenuNode && typeinfo_cast<CCMenu*>(playMenuNode)) {
-                        auto existing = static_cast<CCMenu*>(playMenuNode)->getChildByID("rl-community-vote");
-                        if (existing) existing->removeFromParent();
-                  }
-                  auto leftMenuNode = layerRef->getChildByID("left-side-menu");
-                  if (leftMenuNode && typeinfo_cast<CCMenu*>(leftMenuNode)) {
-                        auto existing = static_cast<CCMenu*>(leftMenuNode)->getChildByID("rl-community-vote");
-                        if (existing) existing->removeFromParent();
+                  auto rightMenuNode = layerRef->getChildByID("right-side-menu");
+                  if (rightMenuNode && typeinfo_cast<CCMenu*>(rightMenuNode)) {
+                        auto existing = static_cast<CCMenu*>(rightMenuNode)->getChildByID("rl-community-vote");
+                        if (existing) {
+                              existing->removeFromParent();
+                              static_cast<CCMenu*>(rightMenuNode)->updateLayout();
+                        }
                   }
             };
 
             if (isSuggested) {
                   bool exists = false;
-                  auto playMenuNode = layerRef->getChildByID("play-menu");
-                  if (playMenuNode && typeinfo_cast<CCMenu*>(playMenuNode)) {
-                        if (static_cast<CCMenu*>(playMenuNode)->getChildByID("rl-community-vote")) exists = true;
+                  auto rightMenuNode = layerRef->getChildByID("right-side-menu");
+                  if (rightMenuNode && typeinfo_cast<CCMenu*>(rightMenuNode)) {
+                        if (static_cast<CCMenu*>(rightMenuNode)->getChildByID("rl-community-vote")) exists = true;
                   }
                   if (!exists) {
                         // determine whether we can use the level's percentage fields
@@ -743,21 +766,66 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                               log::debug("Community vote enabled due to role override (role={})", userRole);
                         }
 
-                        auto commSprite = shouldDisable ? CCSpriteGrayscale::create("RL_commVote01.png"_spr) : CCSprite::create("RL_commVote01.png"_spr);
-                        if (commSprite) {
-                              auto commBtnSpr = CircleButtonSprite::create(commSprite, shouldDisable ? CircleBaseColor::Gray : CircleBaseColor::Green, CircleBaseSize::Small);
+                        auto commSpriteGray = CCSpriteGrayscale::create("RL_commVote01.png"_spr);
+                        if (commSpriteGray) {
+                              auto commBtnSpr = CircleButtonSprite::create(commSpriteGray, CircleBaseColor::Gray, CircleBaseSize::Medium);
                               auto commBtnItem = CCMenuItemSpriteExtra::create(commBtnSpr, layerRef, menu_selector(RLLevelInfoLayer::onCommunityVote));
                               commBtnItem->setID("rl-community-vote");
 
-                              if (playMenuNode && typeinfo_cast<CCMenu*>(playMenuNode)) {
-                                    auto playMenu = static_cast<CCMenu*>(playMenuNode);
-                                    commBtnItem->setPosition({-160.f, 60.f});
-                                    playMenu->addChild(commBtnItem);
+                              // Initially disabled and visually grayed
+                              commBtnItem->setEnabled(false);
+                              commBtnItem->setOpacity(100);
 
+                              auto rightMenuNode = layerRef->getChildByID("right-side-menu");
+                              if (rightMenuNode && typeinfo_cast<CCMenu*>(rightMenuNode)) {
+                                    static_cast<CCMenu*>(rightMenuNode)->addChild(commBtnItem);
+                                    static_cast<CCMenu*>(rightMenuNode)->updateLayout();
+
+                                    // Reactivate immediately if it should be enabled according to data
+                                    if (!shouldDisable) {
+                                          auto commSpriteColor = CCSprite::create("RL_commVote01.png"_spr);
+                                          if (commSpriteColor) {
+                                                auto coloredBtnSpr = CircleButtonSprite::create(commSpriteColor, CircleBaseColor::Green, CircleBaseSize::Medium);
+                                                commBtnItem->setNormalImage(coloredBtnSpr);
+                                          }
+                                          commBtnItem->setEnabled(true);
+                                          commBtnItem->setOpacity(255);
+                                    }
                               } else {
-                                    auto leftMenuNode = layerRef->getChildByID("left-side-menu");
-                                    if (leftMenuNode && typeinfo_cast<CCMenu*>(leftMenuNode)) {
-                                          static_cast<CCMenu*>(leftMenuNode)->addChild(commBtnItem);
+                                    log::warn("Right-side-menu not found; community vote button not added");
+                              }
+                        }
+                  } else {
+                        // update existing button state based on current data
+                        int normalPct = -1;
+                        int practicePct = -1;
+                        bool hasPctFields = false;
+
+                        if (layerRef && layerRef->m_level) {
+                              hasPctFields = true;
+                              normalPct = layerRef->m_level->m_normalPercent;
+                              practicePct = layerRef->m_level->m_practicePercent;
+                        }
+
+                        bool shouldDisable = true;
+                        if (hasPctFields) {
+                              shouldDisable = !(normalPct >= 20 || practicePct >= 80);
+                        }
+
+                        int userRole = Mod::get()->getSavedValue<int>("role");
+                        if (userRole == 1 || userRole == 2) {
+                              shouldDisable = false;
+                              log::debug("Community vote enabled due to role override (role={})", userRole);
+                        }
+
+                        auto rightMenuNode2 = layerRef->getChildByID("right-side-menu");
+                        if (rightMenuNode2 && typeinfo_cast<CCMenu*>(rightMenuNode2)) {
+                              auto existing = static_cast<CCMenu*>(rightMenuNode2)->getChildByID("rl-community-vote");
+                              if (existing) {
+                                    auto menuItem = static_cast<CCMenuItemSpriteExtra*>(existing);
+                                    if (menuItem) {
+                                          menuItem->setEnabled(!shouldDisable);
+                                          menuItem->setOpacity(shouldDisable ? 100 : 255);
                                     }
                               }
                         }
@@ -948,8 +1016,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                       "scheduled");
             }
       }
-
-      void onModButton(CCObject* sender) {
+      void onRoleButton(CCObject* sender) {
             int starRatings = this->m_level->m_stars;
             bool isPlatformer = this->m_level->isPlatformer();
 
@@ -962,48 +1029,20 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   return;
             }
 
-            if (Mod::get()->getSavedValue<int>("role") != 1) {
+            int userRole = Mod::get()->getSavedValue<int>("role");
+            if (userRole != 1 && userRole != 2) {
                   requestStatus(GJAccountManager::get()->m_accountID);
-            }
-
-            if (Mod::get()->getSavedValue<int>("role") == 1) {
-                  log::info("Mod button clicked!");
-                  auto popup = ModRatePopup::create("Mod: Suggest Layout", this->m_level);
-                  popup->show();
-            } else {
-                  Notification::create(
-                      "You do not have the required role to perform this action",
-                      NotificationIcon::Error)
-                      ->show();
-            }
-      }
-
-      void onAdminButton(CCObject* sender) {
-            int starRatings = this->m_level->m_stars;
-            bool isPlatformer = this->m_level->isPlatformer();
-
-            if (starRatings != 0) {
-                  FLAlertLayer::create("Action Unavailable",
-                                       "You cannot perform this action on "
-                                       "<cy>officially rated levels</c>.",
-                                       "OK")
-                      ->show();
                   return;
             }
 
-            if (Mod::get()->getSavedValue<int>("role") != 2) {
-                  requestStatus(GJAccountManager::get()->m_accountID);
-            }
-
-            if (Mod::get()->getSavedValue<int>("role") == 2) {
-                  log::info("Admin button clicked!");
-                  auto popup = ModRatePopup::create("Admin: Rate Layout", this->m_level);
-                  popup->show();
-            } else {
-                  Notification::create(
-                      "You do not have the required role to perform this action",
-                      NotificationIcon::Error)
-                      ->show();
+            if (userRole == 1) {
+                  log::info("Role button clicked as Mod");
+                  auto popup = ModRatePopup::create(ModRatePopup::PopupRole::Mod, "Mod: Suggest Layout", this->m_level);
+                  if (popup) popup->show();
+            } else if (userRole == 2) {
+                  log::info("Role button clicked as Admin");
+                  auto popup = ModRatePopup::create(ModRatePopup::PopupRole::Admin, "Admin: Rate Layout", this->m_level);
+                  if (popup) popup->show();
             }
       }
 
@@ -1140,16 +1179,11 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   // Refresh the community vote button immediately so role overrides take effect
                   auto cached = getCachedLevel(layerRef->m_level->m_levelID);
                   if (cached) {
-                        // remove existing vote button if present so it can be recreated
-                        auto playMenuNode = layerRef->getChildByID("play-menu");
-                        if (playMenuNode && typeinfo_cast<CCMenu*>(playMenuNode)) {
-                              auto existing = static_cast<CCMenu*>(playMenuNode)->getChildByID("rl-community-vote");
+                        auto rightMenuNode = layerRef->getChildByID("right-side-menu");
+                        if (rightMenuNode && typeinfo_cast<CCMenu*>(rightMenuNode)) {
+                              auto existing = static_cast<CCMenu*>(rightMenuNode)->getChildByID("rl-community-vote");
                               if (existing) existing->removeFromParent();
-                        }
-                        auto leftMenuNode = layerRef->getChildByID("left-side-menu");
-                        if (leftMenuNode && typeinfo_cast<CCMenu*>(leftMenuNode)) {
-                              auto existing = static_cast<CCMenu*>(leftMenuNode)->getChildByID("rl-community-vote");
-                              if (existing) existing->removeFromParent();
+                              static_cast<CCMenu*>(rightMenuNode)->updateLayout();
                         }
 
                         // Re-run processing with cached data to recreate the button with the correct state
@@ -1180,7 +1214,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
 
                   Ref<RLLevelInfoLayer> layerRef = this;
 
-                  getTask.listen([this, layerRef, levelId](web::WebResponse* response) {
+                  getTask.listen([layerRef, levelId](web::WebResponse* response) {
                         log::info("Received updated rating data from server for level ID: {}",
                                   levelId);
 

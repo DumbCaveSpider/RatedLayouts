@@ -7,10 +7,16 @@ using namespace geode::prelude;
 
 class ModRatePopup : public geode::Popup<std::string, GJGameLevel*> {
      public:
-      static ModRatePopup* create(std::string title = "Rate Layout",
+      enum class PopupRole {
+            Mod,
+            Admin,
+      };
+
+      static ModRatePopup* create(PopupRole role, std::string title = "Rate Layout",
                                   GJGameLevel* level = nullptr);
 
      private:
+      PopupRole m_role = PopupRole::Mod;
       std::string m_title;
       GJGameLevel* m_level;
       GJDifficultySprite* m_difficultySprite;

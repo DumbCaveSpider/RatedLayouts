@@ -172,9 +172,11 @@ bool RLCreatorLayer::init() {
       }
 
       // check server announcement id and set badge visibility
+      Ref<RLCreatorLayer> self = this;
       web::WebRequest()
           .get("https://gdrate.arcticwoof.xyz/getAnnoucement")
-          .listen([this](web::WebResponse* res) {
+          .listen([self](web::WebResponse* res) {
+                if (!self) return;
                 if (!res || !res->ok()) return;
                 auto jsonRes = res->json();
                 if (!jsonRes) return;
@@ -185,9 +187,9 @@ bool RLCreatorLayer::init() {
                 }
                 int saved = Mod::get()->getSavedValue<int>("annoucementId");
                 if (id && id != saved) {
-                      if (m_newsBadge) m_newsBadge->setVisible(true);
+                      if (self->m_newsBadge) self->m_newsBadge->setVisible(true);
                 } else {
-                      if (m_newsBadge) m_newsBadge->setVisible(false);
+                      if (self->m_newsBadge) self->m_newsBadge->setVisible(false);
                 }
           });
 
@@ -312,9 +314,11 @@ void RLCreatorLayer::onAnnoucementButton(CCObject* sender) {
       auto menuItem = static_cast<CCMenuItemSpriteExtra*>(sender);
       if (menuItem) menuItem->setEnabled(false);
 
+      Ref<RLCreatorLayer> self = this;
       web::WebRequest()
           .get("https://gdrate.arcticwoof.xyz/getAnnoucement")
-          .listen([this, menuItem](web::WebResponse* res) {
+          .listen([self, menuItem](web::WebResponse* res) {
+                if (!self) return;
                 if (!res || !res->ok()) {
                       Notification::create("Failed to fetch announcement", NotificationIcon::Error)->show();
                       if (menuItem) menuItem->setEnabled(true);
@@ -343,14 +347,14 @@ void RLCreatorLayer::onAnnoucementButton(CCObject* sender) {
                       if (id) {
                             Mod::get()->setSavedValue<int>("annoucementId", id);
                             // hide badge since the user just viewed the announcement
-                            if (m_newsBadge) m_newsBadge->setVisible(false);
+                            if (self->m_newsBadge) self->m_newsBadge->setVisible(false);
                       }
                 } else {
                       Notification::create("No announcement available", NotificationIcon::Warning)->show();
                 }
 
-                if (m_newsBadge) {
-                      m_newsBadge->setVisible(false);
+                if (self->m_newsBadge) {
+                      self->m_newsBadge->setVisible(false);
                 }
 
                 if (menuItem) menuItem->setEnabled(true);
@@ -362,9 +366,11 @@ void RLCreatorLayer::onUnknownButton(CCObject* sender) {
       auto menuItem = static_cast<CCMenuItemSpriteExtra*>(sender);
       menuItem->setEnabled(false);
       // fetch dialogue from server and show it in a dialog
+      Ref<RLCreatorLayer> self = this;
       web::WebRequest()
           .get("https://gdrate.arcticwoof.xyz/getDialogue")
-          .listen([this, menuItem](web::WebResponse* res) {
+          .listen([self, menuItem](web::WebResponse* res) {
+                if (!self) return;
                 std::string text = "...";  // default text
                 if (res && res->ok()) {
                       auto jsonRes = res->json();
@@ -375,11 +381,11 @@ void RLCreatorLayer::onUnknownButton(CCObject* sender) {
                             }
                       } else {
                             log::error("Failed to parse getDialogue response");
-                            menuItem->setEnabled(true);
+                            if (menuItem) menuItem->setEnabled(true);
                       }
                 } else {
                       log::error("Failed to fetch dialogue");
-                      menuItem->setEnabled(true);
+                      if (menuItem) menuItem->setEnabled(true);
                 }
 
                 DialogObject* dialogObj = DialogObject::create(
@@ -440,11 +446,13 @@ void RLCreatorLayer::onBackButton(CCObject* sender) {
 }
 
 void RLCreatorLayer::onFeaturedLayouts(CCObject* sender) {
+      Ref<RLCreatorLayer> self = this;
       web::WebRequest()
           .param("type", 2)
           .param("amount", 100)
           .get("https://gdrate.arcticwoof.xyz/getLevels")
-          .listen([this](web::WebResponse* res) {
+          .listen([self](web::WebResponse* res) {
+                if (!self) return;
                 if (res && res->ok()) {
                       auto jsonResult = res->json();
 
@@ -497,19 +505,22 @@ void RLCreatorLayer::onFeaturedLayouts(CCObject* sender) {
 void RLCreatorLayer::onSentLayouts(CCObject* sender) {
       // if the user is admin (role == 2), show a quickpopup to choose between type 1 or type 4
       if (Mod::get()->getSavedValue<int>("role") >= 2) {
+            Ref<RLCreatorLayer> self = this;
             geode::createQuickPopup(
                 "View Sent Layouts",
                 "Choose which sent layouts to view:\n\n<cg>All Sent Layouts</c> or <co>Sent layouts with 3+ sends</c>.",
                 "All",
                 "3+ Sends",
-                [this](auto, bool yes) {
+                [self](auto, bool yes) {
+                      if (!self) return;
                       int type = yes ? 4 : 1;
 
                       web::WebRequest()
                           .param("type", type)
                           .param("amount", 100)
                           .get("https://gdrate.arcticwoof.xyz/getLevels")
-                          .listen([this](web::WebResponse* res) {
+                          .listen([self](web::WebResponse* res) {
+                                if (!self) return;
                                 if (res && res->ok()) {
                                       auto jsonResult = res->json();
 
@@ -561,11 +572,13 @@ void RLCreatorLayer::onSentLayouts(CCObject* sender) {
             return;
       }
       // normal user, just show type 1
+      Ref<RLCreatorLayer> self = this;
       web::WebRequest()
           .param("type", 1)
           .param("amount", 100)
           .get("https://gdrate.arcticwoof.xyz/getLevels")
-          .listen([this](web::WebResponse* res) {
+          .listen([self](web::WebResponse* res) {
+                if (!self) return;
                 if (res && res->ok()) {
                       auto jsonResult = res->json();
 

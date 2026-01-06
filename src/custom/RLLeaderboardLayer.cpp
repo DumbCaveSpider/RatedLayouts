@@ -258,11 +258,13 @@ void RLLeaderboardLayer::onLeaderboardTypeButton(CCObject* sender) {
 }
 
 void RLLeaderboardLayer::fetchLeaderboard(int type, int amount) {
+      Ref<RLLeaderboardLayer> self = this;
       web::WebRequest()
           .param("type", type)
           .param("amount", amount)
           .get("https://gdrate.arcticwoof.xyz/getScore")
-          .listen([this](web::WebResponse* response) {
+          .listen([self](web::WebResponse* response) {
+                if (!self) return;
                 if (!response->ok()) {
                       log::warn("Server returned non-ok status: {}", response->code());
                       Notification::create("Failed to fetch leaderboard",
@@ -291,8 +293,8 @@ void RLLeaderboardLayer::fetchLeaderboard(int type, int amount) {
 
                 if (json.contains("users") && json["users"].isArray()) {
                       auto users = json["users"].asArray().unwrap();
-                      this->populateLeaderboard(users);
-                      this->m_scrollLayer->scrollToTop();
+                      self->populateLeaderboard(users);
+                      if (self->m_scrollLayer) self->m_scrollLayer->scrollToTop();
                 } else {
                       log::warn("No users array in response");
                 }

@@ -300,7 +300,9 @@ bool RLEventLayouts::setup() {
 
       // Fetch event info from server
       {
-            web::WebRequest().get("https://gdrate.arcticwoof.xyz/getEvent").listen([this](web::WebResponse* res) {
+            Ref<RLEventLayouts> self = this;
+            web::WebRequest().get("https://gdrate.arcticwoof.xyz/getEvent").listen([self](web::WebResponse* res) {
+                  if (!self) return;
                   if (!res || !res->ok()) {
                         Notification::create("Failed to fetch event info", NotificationIcon::Error)->show();
                         return;
@@ -313,10 +315,10 @@ bool RLEventLayouts::setup() {
                   auto json = jsonResult.unwrap();
 
                   std::vector<std::string> keys = {"daily", "weekly", "monthly"};
-                  int idx = static_cast<int>(this->m_eventType);
+                  int idx = static_cast<int>(self->m_eventType);
                   if (idx < 0 || idx >= 3) return;
                   const auto& key = keys[idx];
-                  auto sec = &this->m_sections[idx];
+                  auto sec = &self->m_sections[idx];
                   // if the key is missing or contains no levelId, keep showing the loading spinner and hide play buttons
                   if (!json.contains(key)) {
                         if (sec->playSpinner) sec->playSpinner->setVisible(true);
@@ -336,8 +338,8 @@ bool RLEventLayouts::setup() {
                               sec->playButton->setEnabled(true);
                         }
 
-                        this->m_sections[idx].levelId = levelId;
-                        this->m_sections[idx].secondsLeft = obj["secondsLeft"].as<int>().unwrapOrDefault();
+                        self->m_sections[idx].levelId = levelId;
+                        self->m_sections[idx].secondsLeft = obj["secondsLeft"].as<int>().unwrapOrDefault();
                   } else {
                         if (sec->playSpinner) sec->playSpinner->setVisible(true);
                         if (sec->playButton) sec->playButton->setVisible(false);
@@ -763,7 +765,9 @@ void RLEventLayouts::onSafeButton(CCObject* sender) {
       const char* typeStr = (idx >= 0 && idx < 3) ? types[idx] : "daily";
       std::string url = std::string("https://gdrate.arcticwoof.xyz/getEvent?safe=") + typeStr;
 
-      web::WebRequest().get(url).listen([this](web::WebResponse* res) {
+      Ref<RLEventLayouts> self = this;
+      web::WebRequest().get(url).listen([self](web::WebResponse* res) {
+            if (!self) return;
             if (!res || !res->ok()) {
                   Notification::create("Failed to fetch safe list", NotificationIcon::Error)->show();
                   return;

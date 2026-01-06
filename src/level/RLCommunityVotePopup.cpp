@@ -80,7 +80,9 @@ void RLCommunityVotePopup::onSubmit(CCObject*) {
 
                       auto req = web::WebRequest();
                       req.bodyJSON(body);
-                      req.post("https://gdrate.arcticwoof.xyz/setSuggestScore").listen([this, gameplayVote, originalityVote, difficultyVote](web::WebResponse* res) {
+                      Ref<RLCommunityVotePopup> self = this;
+                      req.post("https://gdrate.arcticwoof.xyz/setSuggestScore").listen([self, gameplayVote, originalityVote, difficultyVote](web::WebResponse* res) {
+                            if (!self) return;
                             if (!res || !res->ok()) {
                                   Notification::create("Failed to submit vote", NotificationIcon::Error)->show();
                                   return;
@@ -96,21 +98,21 @@ void RLCommunityVotePopup::onSubmit(CCObject*) {
                                   Notification::create("Vote submitted!", NotificationIcon::Success)->show();
 
                                   // Optimistically mark inputs as VOTED and disable
-                                  if (this->m_gameplayInput && gameplayVote > 0) {
-                                        this->m_gameplayInput->setString("VOTED");
-                                        this->m_gameplayInput->setEnabled(false);
+                                  if (self->m_gameplayInput && gameplayVote > 0) {
+                                        self->m_gameplayInput->setString("VOTED");
+                                        self->m_gameplayInput->setEnabled(false);
                                   }
-                                  if (this->m_originalityInput && originalityVote > 0) {
-                                        this->m_originalityInput->setString("VOTED");
-                                        this->m_originalityInput->setEnabled(false);
+                                  if (self->m_originalityInput && originalityVote > 0) {
+                                        self->m_originalityInput->setString("VOTED");
+                                        self->m_originalityInput->setEnabled(false);
                                   }
-                                  if (this->m_difficultyInput && difficultyVote > 0) {
-                                        this->m_difficultyInput->setString("VOTED");
-                                        this->m_difficultyInput->setEnabled(false);
+                                  if (self->m_difficultyInput && difficultyVote > 0) {
+                                        self->m_difficultyInput->setString("VOTED");
+                                        self->m_difficultyInput->setEnabled(false);
                                   }
 
                                   // Refresh UI by re-fetching data
-                                  this->refreshFromServer();
+                                  self->refreshFromServer();
                             } else {
                                   Notification::create("Vote submission failed", NotificationIcon::Error)->show();
                             }
@@ -272,7 +274,9 @@ void RLCommunityVotePopup::refreshFromServer() {
       }
 
       // First fetch aggregated scores and moderator average
-      web::WebRequest().get(fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", m_levelId)).listen([this](web::WebResponse* res) {
+      Ref<RLCommunityVotePopup> self = this;
+      web::WebRequest().get(fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", m_levelId)).listen([self](web::WebResponse* res) {
+            if (!self) return;
             if (!res || !res->ok()) {
                   Notification::create("Failed to fetch community vote info", NotificationIcon::Error)->show();
                   return;
@@ -288,9 +292,9 @@ void RLCommunityVotePopup::refreshFromServer() {
             double difficultyScore = json["difficultyScore"].asDouble().unwrapOrDefault();
             double gameplayScore = json["gameplayScore"].asDouble().unwrapOrDefault();
 
-            if (this->m_originalityScoreLabel) this->m_originalityScoreLabel->setString(fmt::format("{:.2f}", originalityScore).c_str());
-            if (this->m_difficultyScoreLabel) this->m_difficultyScoreLabel->setString(fmt::format("{:.2f}", difficultyScore).c_str());
-            if (this->m_gameplayScoreLabel) this->m_gameplayScoreLabel->setString(fmt::format("{:.2f}", gameplayScore).c_str());
+            if (self->m_originalityScoreLabel) self->m_originalityScoreLabel->setString(fmt::format("{:.2f}", originalityScore).c_str());
+            if (self->m_difficultyScoreLabel) self->m_difficultyScoreLabel->setString(fmt::format("{:.2f}", difficultyScore).c_str());
+            if (self->m_gameplayScoreLabel) self->m_gameplayScoreLabel->setString(fmt::format("{:.2f}", gameplayScore).c_str());
 
             // moderator difficulty (read-only)
             double avg = -1.0;
@@ -299,22 +303,22 @@ void RLCommunityVotePopup::refreshFromServer() {
                   if (avgRes) avg = avgRes.unwrap();
             }
 
-            if (this->m_modDifficultyLabel) {
+            if (self->m_modDifficultyLabel) {
                   if (avg >= 0.0) {
                         if (std::floor(avg) == avg) {
-                              this->m_modDifficultyLabel->setString(numToString(static_cast<int>(avg)).c_str());
+                              self->m_modDifficultyLabel->setString(numToString(static_cast<int>(avg)).c_str());
                         } else {
-                              this->m_modDifficultyLabel->setString(fmt::format("{:.1f}", avg).c_str());
+                              self->m_modDifficultyLabel->setString(fmt::format("{:.1f}", avg).c_str());
                         }
                   } else {
-                        this->m_modDifficultyLabel->setString("-");
+                        self->m_modDifficultyLabel->setString("-");
                   }
             }
 
             // if the server indicates this level is not suggested, close or remove submit UI
             bool isSuggested = json["isSuggested"].asBool().unwrapOrDefault();
             if (!isSuggested) {
-                  this->onClose(nullptr);
+                  self->onClose(nullptr);
                   Notification::create("Level is not suggested", NotificationIcon::Warning)->show();
             }
       });
@@ -328,7 +332,8 @@ void RLCommunityVotePopup::refreshFromServer() {
 
       web::WebRequest voteReq;
       voteReq.bodyJSON(voteBody);
-      voteReq.post("https://gdrate.arcticwoof.xyz/getVote").listen([this](web::WebResponse* vres) {
+      voteReq.post("https://gdrate.arcticwoof.xyz/getVote").listen([self](web::WebResponse* vres) {
+            if (!self) return;
             if (!vres || !vres->ok()) {
                   return;
             }
@@ -340,91 +345,91 @@ void RLCommunityVotePopup::refreshFromServer() {
             bool hasOriginality = vjson["hasOriginalityVoted"].asBool().unwrapOrDefault();
             bool hasDifficulty = vjson["hasDifficultyVoted"].asBool().unwrapOrDefault();
             int totalVotes = vjson["totalVotes"].asInt().unwrapOrDefault();
-            if (this->m_totalVotesLabel) {
-                  this->m_totalVotesLabel->setString(fmt::format("Total votes: {}", totalVotes).c_str());
+            if (self->m_totalVotesLabel) {
+                  self->m_totalVotesLabel->setString(fmt::format("Total votes: {}", totalVotes).c_str());
             }
 
             // If moderators forced show, keep labels visible regardless of 'hasX' vote state
-            if (this->m_forceShowScores) {
-                  if (this->m_gameplayInput) {
+            if (self->m_forceShowScores) {
+                  if (self->m_gameplayInput) {
                         // do not overwrite moderator's ability to see scores
                         // but keep VOTED status if applicable
                         if (hasGameplay) {
-                              this->m_gameplayInput->setString("VOTED");
-                              this->m_gameplayInput->setEnabled(false);
+                              self->m_gameplayInput->setString("VOTED");
+                              self->m_gameplayInput->setEnabled(false);
                         }
                   }
-                  if (this->m_originalityInput) {
+                  if (self->m_originalityInput) {
                         if (hasOriginality) {
-                              this->m_originalityInput->setString("VOTED");
-                              this->m_originalityInput->setEnabled(false);
+                              self->m_originalityInput->setString("VOTED");
+                              self->m_originalityInput->setEnabled(false);
                         }
                   }
-                  if (this->m_difficultyInput) {
+                  if (self->m_difficultyInput) {
                         if (hasDifficulty) {
-                              this->m_difficultyInput->setString("VOTED");
-                              this->m_difficultyInput->setEnabled(false);
+                              self->m_difficultyInput->setString("VOTED");
+                              self->m_difficultyInput->setEnabled(false);
                         }
                   }
 
-                  if (this->m_gameplayScoreLabel) this->m_gameplayScoreLabel->setVisible(true);
-                  if (this->m_originalityScoreLabel) this->m_originalityScoreLabel->setVisible(true);
-                  if (this->m_difficultyScoreLabel) this->m_difficultyScoreLabel->setVisible(true);
+                  if (self->m_gameplayScoreLabel) self->m_gameplayScoreLabel->setVisible(true);
+                  if (self->m_originalityScoreLabel) self->m_originalityScoreLabel->setVisible(true);
+                  if (self->m_difficultyScoreLabel) self->m_difficultyScoreLabel->setVisible(true);
             } else {
                   if (hasGameplay) {
-                        if (this->m_gameplayInput) {
-                              this->m_gameplayInput->setString("VOTED");
-                              this->m_gameplayInput->setEnabled(false);
+                        if (self->m_gameplayInput) {
+                              self->m_gameplayInput->setString("VOTED");
+                              self->m_gameplayInput->setEnabled(false);
                         }
-                        if (this->m_gameplayScoreLabel) this->m_gameplayScoreLabel->setVisible(true);
+                        if (self->m_gameplayScoreLabel) self->m_gameplayScoreLabel->setVisible(true);
                   } else {
-                        if (this->m_gameplayScoreLabel) this->m_gameplayScoreLabel->setVisible(false);
+                        if (self->m_gameplayScoreLabel) self->m_gameplayScoreLabel->setVisible(false);
                   }
 
                   if (hasOriginality) {
-                        if (this->m_originalityInput) {
-                              this->m_originalityInput->setString("VOTED");
-                              this->m_originalityInput->setEnabled(false);
+                        if (self->m_originalityInput) {
+                              self->m_originalityInput->setString("VOTED");
+                              self->m_originalityInput->setEnabled(false);
                         }
-                        if (this->m_originalityScoreLabel) this->m_originalityScoreLabel->setVisible(true);
+                        if (self->m_originalityScoreLabel) self->m_originalityScoreLabel->setVisible(true);
                   } else {
-                        if (this->m_originalityScoreLabel) this->m_originalityScoreLabel->setVisible(false);
+                        if (self->m_originalityScoreLabel) self->m_originalityScoreLabel->setVisible(false);
                   }
 
                   if (hasDifficulty) {
-                        if (this->m_difficultyInput) {
-                              this->m_difficultyInput->setString("VOTED");
-                              this->m_difficultyInput->setEnabled(false);
+                        if (self->m_difficultyInput) {
+                              self->m_difficultyInput->setString("VOTED");
+                              self->m_difficultyInput->setEnabled(false);
                         }
-                        if (this->m_difficultyScoreLabel) this->m_difficultyScoreLabel->setVisible(true);
+                        if (self->m_difficultyScoreLabel) self->m_difficultyScoreLabel->setVisible(true);
                   } else {
-                        if (this->m_difficultyScoreLabel) this->m_difficultyScoreLabel->setVisible(false);
+                        if (self->m_difficultyScoreLabel) self->m_difficultyScoreLabel->setVisible(false);
                   }
             }
 
             // Ensure toggle buttons reflect current visibility state for moderators
             int userRole = Mod::get()->getSavedValue<int>("role");
             if (userRole == 1 || userRole == 2) {
-                  if (this->m_toggleAllBtn) this->m_toggleAllBtn->setVisible(true);
+                  if (self->m_toggleAllBtn) self->m_toggleAllBtn->setVisible(true);
             } else {
-                  if (this->m_toggleAllBtn) this->m_toggleAllBtn->setVisible(false);
+                  if (self->m_toggleAllBtn) self->m_toggleAllBtn->setVisible(false);
             }
 
             // If all three categories have already been voted on, disable submit
             if (hasGameplay && hasOriginality && hasDifficulty) {
-                  if (this->m_submitBtn) {
-                        this->m_submitBtn->setEnabled(false);
-                        this->m_submitBtn->setNormalImage(ButtonSprite::create("Submit", "goldFont.fnt", "GJ_button_04.png"));
+                  if (self->m_submitBtn) {
+                        self->m_submitBtn->setEnabled(false);
+                        self->m_submitBtn->setNormalImage(ButtonSprite::create("Submit", "goldFont.fnt", "GJ_button_04.png"));
                   }
             } else {
-                  if (this->m_submitBtn) {
-                        this->m_submitBtn->setEnabled(true);
-                        this->m_submitBtn->setNormalImage(ButtonSprite::create("Submit", "goldFont.fnt", "GJ_button_01.png"));
+                  if (self->m_submitBtn) {
+                        self->m_submitBtn->setEnabled(true);
+                        self->m_submitBtn->setNormalImage(ButtonSprite::create("Submit", "goldFont.fnt", "GJ_button_01.png"));
                   }
             }
 
             // When moderators toggle, their actions should not be blocked by 'already voted' state
-            if (this->m_toggleAllBtn) this->m_toggleAllBtn->setEnabled(true);
+            if (self->m_toggleAllBtn) self->m_toggleAllBtn->setEnabled(true);
       });
 }
 

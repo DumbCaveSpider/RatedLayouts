@@ -105,23 +105,25 @@ void RLGauntletLevelsLayer::fetchLevelDetails(int gauntletId) {
 
       request.bodyJSON(postData);
       auto task = request.post("https://gdrate.arcticwoof.xyz/getLevelsGauntlets");
-      task.listen([this](web::WebResponse* response) {
+      Ref<RLGauntletLevelsLayer> self = this;
+      task.listen([self](web::WebResponse* response) {
+            if (!self) return;
             if (response->ok()) {
                   auto jsonRes = response->json();
                   if (jsonRes.isOk()) {
-                        onLevelDetailsFetched(jsonRes.unwrap());
+                        self->onLevelDetailsFetched(jsonRes.unwrap());
                   } else {
                         log::error("Failed to parse level details JSON: {}", jsonRes.unwrapErr());
                         Notification::create("Failed to parse level data", NotificationIcon::Error)->show();
-                        if (m_loadingCircle) {
-                              m_loadingCircle->setVisible(false);
+                        if (self->m_loadingCircle) {
+                              self->m_loadingCircle->setVisible(false);
                         }
                   }
             } else {
                   log::error("Failed to fetch level details: {}", response->string().unwrapOr("Unknown error"));
                   Notification::create("Failed to fetch level details", NotificationIcon::Error)->show();
-                  if (m_loadingCircle) {
-                        m_loadingCircle->setVisible(false);
+                  if (self->m_loadingCircle) {
+                        self->m_loadingCircle->setVisible(false);
                   }
             }
       });

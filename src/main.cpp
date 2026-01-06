@@ -44,7 +44,10 @@ class $modify(SupportLayer) {
             auto postTask = postReq.post("https://gdrate.arcticwoof.xyz/access");
 
             // handle the response
-            postTask.listen([this, popup](web::WebResponse* response) {
+            Ref<SupportLayer> self = this;
+            Ref<UploadActionPopup> upopup = popup;
+            postTask.listen([self, upopup](web::WebResponse* response) {
+                  if (!self || !upopup) return;
                   log::info("Received response from server");
 
                   if (!response->ok()) {
@@ -64,12 +67,12 @@ class $modify(SupportLayer) {
                   // role check lol
                   if (role == 1) {
                         log::info("Granted Layout Mod role");
-                        popup->showSuccessMessage("Granted Layout Mod.");
+                        upopup->showSuccessMessage("Granted Layout Mod.");
                   } else if (role == 2) {
                         log::info("Granted Layout Admin role");
-                        popup->showSuccessMessage("Granted Layout Admin.");
+                        upopup->showSuccessMessage("Granted Layout Admin.");
                   } else {
-                        popup->showFailMessage("Nothing Happened.");
+                        upopup->showFailMessage("Nothing Happened.");
                   }
             });
       }

@@ -57,7 +57,9 @@ void RLBadgeRequestPopup::onSubmit(CCObject* sender) {
 
       auto req = web::WebRequest();
       req.bodyJSON(body);
-      req.post("https://gdrate.arcticwoof.xyz/getSupporter").listen([this](web::WebResponse* res) {
+      Ref<RLBadgeRequestPopup> self = this;
+      req.post("https://gdrate.arcticwoof.xyz/getSupporter").listen([self](web::WebResponse* res) {
+            if (!self) return;
             if (!res) {
                   Notification::create("Discord Username doesn't exists.", NotificationIcon::Error)->show();
                   return;
@@ -70,7 +72,7 @@ void RLBadgeRequestPopup::onSubmit(CCObject* sender) {
                         return;
                   }
                   Notification::create(str, NotificationIcon::Success)->show();
-                  this->removeFromParent();
+                  self->removeFromParent();
                   return;
             }
 
@@ -81,6 +83,6 @@ void RLBadgeRequestPopup::onSubmit(CCObject* sender) {
             }
 
             Notification::create("Supporter Badge acquired!", NotificationIcon::Success)->show();
-            this->removeFromParent();
+            self->removeFromParent();
       });
 }

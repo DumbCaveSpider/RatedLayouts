@@ -137,8 +137,16 @@ bool ModRatePopup::setup(std::string title, GJGameLevel* level) {
       demonToggle->setScale(1.2f);
       menuButtons->addChild(demonToggle);
 
+      // info button
+      auto infoButton = CCMenuItemSpriteExtra::create(
+          CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"), this,
+          menu_selector(ModRatePopup::onInfoButton));
+      infoButton->setPosition({m_mainLayer->getContentSize().width,
+                               m_mainLayer->getContentSize().height});
+      menuButtons->addChild(infoButton);
+
       // submit button
-      int userRole = Mod::get()->getSavedValue<int>("role", 0);
+      int userRole = (m_role == PopupRole::Admin) ? 2 : ((m_role == PopupRole::Mod) ? 1 : 0);
       float centerX = m_mainLayer->getContentSize().width / 2;
 
       auto submitButtonSpr = ButtonSprite::create("Submit", "goldFont.fnt", "GJ_button_01.png", .8f);
@@ -174,14 +182,6 @@ bool ModRatePopup::setup(std::string title, GJGameLevel* level) {
             suggestButtonItem->setPosition({centerX + spacing, 0});
             suggestButtonItem->setID("suggest-button");
             menuButtons->addChild(suggestButtonItem);
-
-            // info button for admin
-            auto infoButton = CCMenuItemSpriteExtra::create(
-                CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"), this,
-                menu_selector(ModRatePopup::onInfoButton));
-            infoButton->setPosition({m_mainLayer->getContentSize().width,
-                                     m_mainLayer->getContentSize().height});
-            menuButtons->addChild(infoButton);
       }
 
       // toggle between featured or stars only
@@ -264,7 +264,9 @@ void ModRatePopup::onInfoButton(CCObject* sender) {
       postReq.bodyJSON(jsonBody);
       auto postTask = postReq.post("https://gdrate.arcticwoof.xyz/level");
 
-      postTask.listen([this](web::WebResponse* response) {
+      Ref<ModRatePopup> self = this;
+      postTask.listen([self](web::WebResponse* response) {
+            if (!self) return;
             log::info("Received response from server");
 
             if (!response->ok()) {
@@ -362,19 +364,22 @@ void ModRatePopup::onSubmitButton(CCObject* sender) {
       postReq.bodyJSON(jsonBody);
       auto postTask = postReq.post("https://gdrate.arcticwoof.xyz/rate");
 
-      postTask.listen([this, popup](web::WebResponse* response) {
+      Ref<ModRatePopup> self = this;
+      Ref<UploadActionPopup> upopup = popup;
+      postTask.listen([self, upopup](web::WebResponse* response) {
+            if (!self || !upopup) return;
             log::info("Received response from server");
 
             if (!response->ok()) {
                   log::warn("Server returned non-ok status: {}", response->code());
-                  popup->showFailMessage("Failed! Try again later.");
+                  upopup->showFailMessage("Failed! Try again later.");
                   return;
             }
 
             auto jsonRes = response->json();
             if (!jsonRes) {
                   log::warn("Failed to parse JSON response");
-                  popup->showFailMessage("Invalid server response.");
+                  upopup->showFailMessage("Invalid server response.");
                   return;
             }
 
@@ -392,21 +397,21 @@ void ModRatePopup::onSubmitButton(CCObject* sender) {
                         if (parsed) {
                               auto root = parsed.unwrap();
                               if (root.isObject()) {
-                                    std::string key = fmt::format("{}", this->m_levelId);
+                                    std::string key = fmt::format("{}", self->m_levelId);
                                     auto result = root.erase(key);
                               }
                               auto jsonString = root.dump();
                               auto writeResult =
                                   utils::file::writeString(utils::string::pathToString(cachePath), jsonString);
                               log::debug("Deleted level ID {} from cache after submission",
-                                         this->m_levelId);
+                                         self->m_levelId);
                         }
                   }
 
-                  popup->showSuccessMessage("Submitted successfully!");
+                  upopup->showSuccessMessage("Submitted successfully!");
             } else {
                   log::warn("Rate submission failed: success is false");
-                  popup->showFailMessage("Failed! Try again later.");
+                  upopup->showFailMessage("Failed! Try again later.");
             }
       });
 }
@@ -431,7 +436,7 @@ void ModRatePopup::onUnrateButton(CCObject* sender) {
                   rejectBtnItem->setNormalImage(rejectBg);
             }
             // re-enable submit for admin when reject is cleared
-            if (Mod::get()->getSavedValue<int>("role", 0) == 2 && m_submitButtonItem) {
+            if (m_role == PopupRole::Admin && m_submitButtonItem) {
                   auto enabledSpr = ButtonSprite::create("Submit", "goldFont.fnt", "GJ_button_01.png", .8f);
                   m_submitButtonItem->setNormalImage(enabledSpr);
                   m_submitButtonItem->setEnabled(true);
@@ -460,19 +465,22 @@ void ModRatePopup::onUnrateButton(CCObject* sender) {
       postReq.bodyJSON(jsonBody);
       auto postTask = postReq.post("https://gdrate.arcticwoof.xyz/unrate");
 
-      postTask.listen([this, popup](web::WebResponse* response) {
+      Ref<ModRatePopup> self = this;
+      Ref<UploadActionPopup> upopup = popup;
+      postTask.listen([self, upopup](web::WebResponse* response) {
+            if (!self || !upopup) return;
             log::info("Received response from server");
 
             if (!response->ok()) {
                   log::warn("Server returned non-ok status: {}", response->code());
-                  popup->showFailMessage("Failed! Try again later.");
+                  upopup->showFailMessage("Failed! Try again later.");
                   return;
             }
 
             auto jsonRes = response->json();
             if (!jsonRes) {
                   log::warn("Failed to parse JSON response");
-                  popup->showFailMessage("Invalid server response.");
+                  upopup->showFailMessage("Invalid server response.");
                   return;
             }
 
@@ -490,21 +498,21 @@ void ModRatePopup::onUnrateButton(CCObject* sender) {
                         if (parsed) {
                               auto root = parsed.unwrap();
                               if (root.isObject()) {
-                                    std::string key = fmt::format("{}", this->m_levelId);
+                                    std::string key = fmt::format("{}", self->m_levelId);
                                     auto result = root.erase(key);
                               }
                               auto jsonString = root.dump();
                               auto writeResult =
                                   utils::file::writeString(utils::string::pathToString(cachePath), jsonString);
                               log::debug("Deleted level ID {} from cache after unrate",
-                                         this->m_levelId);
+                                         self->m_levelId);
                         }
                   }
 
-                  popup->showSuccessMessage("Layout unrated successfully!");
+                  upopup->showSuccessMessage("Layout unrated successfully!");
             } else {
                   log::warn("Unrate submission failed: success is false");
-                  popup->showFailMessage("Failed! Try again later.");
+                  upopup->showFailMessage("Failed! Try again later.");
             }
       });
 }
@@ -545,7 +553,7 @@ void ModRatePopup::onRejectButton(CCObject* sender) {
       m_isRejected = true;
 
       // disable submit for admin when rejected
-      if (Mod::get()->getSavedValue<int>("role", 0) == 2 && m_submitButtonItem) {
+      if (m_role == PopupRole::Admin && m_submitButtonItem) {
             auto disabledSpr = ButtonSprite::create("Submit", "goldFont.fnt", "GJ_button_04.png", .8f);
             m_submitButtonItem->setNormalImage(disabledSpr);
             m_submitButtonItem->setEnabled(false);
@@ -594,19 +602,22 @@ void ModRatePopup::onSuggestButton(CCObject* sender) {
       postReq.bodyJSON(jsonBody);
       auto postTask = postReq.post("https://gdrate.arcticwoof.xyz/rate");
 
-      postTask.listen([this, popup](web::WebResponse* response) {
+      Ref<ModRatePopup> self = this;
+      Ref<UploadActionPopup> upopup = popup;
+      postTask.listen([self, upopup](web::WebResponse* response) {
+            if (!self || !upopup) return;
             log::info("Received response from server");
 
             if (!response->ok()) {
                   log::warn("Server returned non-ok status: {}", response->code());
-                  popup->showFailMessage("Failed! Try again later.");
+                  upopup->showFailMessage("Failed! Try again later.");
                   return;
             }
 
             auto jsonRes = response->json();
             if (!jsonRes) {
                   log::warn("Failed to parse JSON response");
-                  popup->showFailMessage("Invalid server response.");
+                  upopup->showFailMessage("Invalid server response.");
                   return;
             }
 
@@ -624,28 +635,28 @@ void ModRatePopup::onSuggestButton(CCObject* sender) {
                         if (parsed) {
                               auto root = parsed.unwrap();
                               if (root.isObject()) {
-                                    std::string key = fmt::format("{}", this->m_levelId);
+                                    std::string key = fmt::format("{}", self->m_levelId);
                                     auto result = root.erase(key);
                               }
                               auto jsonString = root.dump();
                               auto writeResult =
                                   utils::file::writeString(utils::string::pathToString(cachePath), jsonString);
                               log::debug("Deleted level ID {} from cache after suggest",
-                                         this->m_levelId);
+                                         self->m_levelId);
                         }
                   }
 
-                  popup->showSuccessMessage("Suggested successfully!");
+                  upopup->showSuccessMessage("Suggested successfully!");
             } else {
                   log::warn("Suggest submission failed: success is false");
-                  popup->showFailMessage("Failed! Try again later.");
+                  upopup->showFailMessage("Failed! Try again later.");
             }
       });
 }
 
 void ModRatePopup::onToggleFeatured(CCObject* sender) {
-      // Check if user has admin role
-      int userRole = Mod::get()->getSavedValue<int>("role", 0);
+      // compute userRole from popup role
+      int userRole = (m_role == PopupRole::Admin) ? 2 : ((m_role == PopupRole::Mod) ? 1 : 0);
 
       m_isFeatured = !m_isFeatured;
 
@@ -664,7 +675,7 @@ void ModRatePopup::onToggleFeatured(CCObject* sender) {
                   rejectBtnItem->setNormalImage(rejectBg);
             }
             // re-enable submit for admin when reject is cleared
-            if (Mod::get()->getSavedValue<int>("role", 0) == 2 && m_submitButtonItem) {
+            if (m_role == PopupRole::Admin && m_submitButtonItem) {
                   auto enabledSpr = ButtonSprite::create("Submit", "goldFont.fnt", "GJ_button_01.png", .8f);
                   m_submitButtonItem->setNormalImage(enabledSpr);
                   m_submitButtonItem->setEnabled(true);
@@ -722,7 +733,7 @@ void ModRatePopup::onToggleDemon(CCObject* sender) {
 }
 
 void ModRatePopup::onToggleEpicFeatured(CCObject* sender) {
-      int userRole = Mod::get()->getSavedValue<int>("role", 0);
+      int userRole = (m_role == PopupRole::Admin) ? 2 : ((m_role == PopupRole::Mod) ? 1 : 0);
       m_isEpicFeatured = !m_isEpicFeatured;
 
       // clear reject if set
@@ -823,7 +834,7 @@ void ModRatePopup::onRatingButton(CCObject* sender) {
                   rejectBtnItem->setNormalImage(rejectBg);
             }
             // re-enable submit for admin when reject is cleared
-            if (Mod::get()->getSavedValue<int>("role", 0) == 2 && m_submitButtonItem) {
+            if (m_role == PopupRole::Admin && m_submitButtonItem) {
                   auto enabledSpr = ButtonSprite::create("Submit", "goldFont.fnt", "GJ_button_01.png", .8f);
                   m_submitButtonItem->setNormalImage(enabledSpr);
                   m_submitButtonItem->setEnabled(true);
@@ -951,33 +962,37 @@ void ModRatePopup::onSetEventButton(CCObject* sender) {
                 postReq.bodyJSON(jsonBody);
                 auto postTask = postReq.post("https://gdrate.arcticwoof.xyz/setEvent");
 
-                postTask.listen([this, type, popup](web::WebResponse* response) {
+                Ref<ModRatePopup> self = this;
+                Ref<UploadActionPopup> upopup = popup;
+                postTask.listen([self, type, upopup](web::WebResponse* response) {
+                      if (!self || !upopup) return;
                       log::info("Received setEvent response for type: {}", type);
                       if (!response->ok()) {
                             log::warn("Server returned non-ok status: {}", response->code());
-                            popup->showFailMessage("Failed! Try again later.");
+                            upopup->showFailMessage("Failed! Try again later.");
                             return;
                       }
                       auto jsonRes = response->json();
                       if (!jsonRes) {
                             log::warn("Failed to parse setEvent JSON response");
-                            popup->showFailMessage("Invalid server response.");
+                            upopup->showFailMessage("Invalid server response.");
                             return;
                       }
                       auto json = jsonRes.unwrap();
                       bool success = json["success"].asBool().unwrapOrDefault();
                       std::string message = json["message"].asString().unwrapOrDefault();
                       if (success || message == "Event set successfully") {
-                            popup->showSuccessMessage("Event set: " + type);
+                            upopup->showSuccessMessage("Event set: " + type);
                       } else {
-                            popup->showFailMessage("Failed to set event.");
+                            upopup->showFailMessage("Failed to set event.");
                       }
                 });
           });
 }
 
-ModRatePopup* ModRatePopup::create(std::string title, GJGameLevel* level) {
+ModRatePopup* ModRatePopup::create(ModRatePopup::PopupRole role, std::string title, GJGameLevel* level) {
       auto ret = new ModRatePopup();
+      ret->m_role = role;
 
       if (ret && ret->initAnchored(380.f, 180.f, title, level, "GJ_square02.png")) {
             ret->autorelease();

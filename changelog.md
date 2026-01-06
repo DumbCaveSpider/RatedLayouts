@@ -15,6 +15,9 @@
 - Event Layouts are now more responsive when pressing the play button
 - Comment Glow will now apply when an user has planets in their stats.
 - Minor fixes relating to Popup information
+- Fixed issues where sometimes the game crashes when the web requests finishes but the popup/layer is already closed.
+- Community Vote button is now shown at the right side of the menu in the Level Info Layer.
+- Layout Mods can now see the Level Stats in the Mod Rate Popup.
 
 Thanks to [delivel-tech](https://github.com/delivel-tech) for this update!
 

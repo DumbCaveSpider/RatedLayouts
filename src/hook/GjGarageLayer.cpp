@@ -63,7 +63,9 @@ class $modify(GJGarageLayer) {
             auto postTask = postReq.post("https://gdrate.arcticwoof.xyz/profile");
 
             // Handle the response
-            postTask.listen([this](web::WebResponse* response) {
+            auto self = this;
+            postTask.listen([self](web::WebResponse* response) {
+                  if (!self) return;
                   log::info("Received response from server");
 
                   if (!response->ok()) {
@@ -84,37 +86,37 @@ class $modify(GJGarageLayer) {
                   int stars = json["stars"].asInt().unwrapOrDefault();
 
                   log::info("Profile data - points: {}, stars: {}", points, stars);
-                  m_fields->storedStars = stars;
+                  self->m_fields->storedStars = stars;
 
                   // create/update the stat item now that we have the value
                   log::debug("Updating stat item with {} stars", stars);
-                  if (m_fields->statMenu) {
+                  if (self->m_fields->statMenu) {
                         // if an existing stat item exists, remove it first
-                        if (m_fields->starsValue) {
-                              m_fields->starsValue->removeFromParent();
-                              m_fields->starsValue = nullptr;
+                        if (self->m_fields->starsValue) {
+                              self->m_fields->starsValue->removeFromParent();
+                              self->m_fields->starsValue = nullptr;
                         }
-                        if (m_fields->planetsValue) {
-                              m_fields->planetsValue->removeFromParent();
-                              m_fields->planetsValue = nullptr;
+                        if (self->m_fields->planetsValue) {
+                              self->m_fields->planetsValue->removeFromParent();
+                              self->m_fields->planetsValue = nullptr;
                         }
 
                         auto starSprite = CCSprite::create("RL_starMed.png"_spr);
                         auto starsValue = StatsDisplayAPI::getNewItem(
                             "blueprint-stars"_spr, starSprite,
-                            m_fields->storedStars, 0.54f);
+                            self->m_fields->storedStars, 0.54f);
 
-                        m_fields->starsValue = starsValue;
-                        m_fields->statMenu->addChild(starsValue);
+                        self->m_fields->starsValue = starsValue;
+                        self->m_fields->statMenu->addChild(starsValue);
 
                         auto planetSprite = CCSprite::create("RL_planetMed.png"_spr);
                         auto planetsValue = StatsDisplayAPI::getNewItem(
                             "planets-collected"_spr, planetSprite,
                             planets, 0.54f);
-                        m_fields->planetsValue = planetsValue;
-                        m_fields->statMenu->addChild(planetsValue);
+                        self->m_fields->planetsValue = planetsValue;
+                        self->m_fields->statMenu->addChild(planetsValue);
                         // call updateLayout if available
-                        if (auto menu = typeinfo_cast<CCMenu*>(m_fields->statMenu)) {
+                        if (auto menu = typeinfo_cast<CCMenu*>(self->m_fields->statMenu)) {
                               menu->updateLayout();
                         }
                   } else {
