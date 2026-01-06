@@ -15,6 +15,10 @@
 		"sprites": ["resources/*"]
 	},
 	"dependencies": {
+		"geode.node-ids": {
+			"importance": "required",
+			"version": ">=1.0.0"
+		},
 		"jouca.badgesapi": {
 			"importance": "recommended",
 			"version": ">=1.0.0"

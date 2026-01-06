@@ -495,6 +495,72 @@ void RLCreatorLayer::onFeaturedLayouts(CCObject* sender) {
 }
 
 void RLCreatorLayer::onSentLayouts(CCObject* sender) {
+      // if the user is admin (role == 2), show a quickpopup to choose between type 1 or type 4
+      if (Mod::get()->getSavedValue<int>("role") >= 2) {
+            geode::createQuickPopup(
+                "View Sent Layouts",
+                "Choose which sent layouts to view:\n\n<cg>All Sent Layouts</c> or <co>Sent layouts with 3+ sends</c>.",
+                "All",
+                "3+ Sends",
+                [this](auto, bool yes) {
+                      int type = yes ? 4 : 1;
+
+                      web::WebRequest()
+                          .param("type", type)
+                          .param("amount", 100)
+                          .get("https://gdrate.arcticwoof.xyz/getLevels")
+                          .listen([this](web::WebResponse* res) {
+                                if (res && res->ok()) {
+                                      auto jsonResult = res->json();
+
+                                      if (jsonResult) {
+                                            auto json = jsonResult.unwrap();
+                                            std::string levelIDs;
+                                            bool first = true;
+                                            if (json.contains("levelIds")) {
+                                                  auto levelsArr = json["levelIds"];
+
+                                                  // iterate
+                                                  for (auto levelIDValue : levelsArr) {
+                                                        auto levelID = levelIDValue.as<int>();
+                                                        if (levelID) {
+                                                              if (!first)
+                                                                    levelIDs += ",";
+                                                              levelIDs += numToString(levelID.unwrap());
+                                                              first = false;
+                                                        }
+                                                  }
+                                            }
+
+                                            if (!levelIDs.empty()) {
+                                                  auto searchObject =
+                                                      GJSearchObject::create(SearchType::Type19, levelIDs);
+                                                  auto browserLayer = LevelBrowserLayer::create(searchObject);
+                                                  auto scene = CCScene::create();
+                                                  scene->addChild(browserLayer);
+                                                  auto transitionFade = CCTransitionFade::create(0.5f, scene);
+                                                  CCDirector::sharedDirector()->pushScene(transitionFade);
+                                            } else {
+                                                  log::warn("No levels found in response");
+                                                  Notification::create("No sent layouts found",
+                                                                       NotificationIcon::Warning)
+                                                      ->show();
+                                            }
+                                      } else {
+                                            log::error("Failed to parse response JSON");
+                                      }
+                                } else {
+                                      log::error("Failed to fetch levels from server");
+                                      Notification::create("Failed to fetch levels from server",
+                                                           NotificationIcon::Error)
+                                          ->show();
+                                }
+                          });
+                });
+
+            return;
+      }
+      // normal user, just show type 1
       web::WebRequest()
           .param("type", 1)
           .param("amount", 100)

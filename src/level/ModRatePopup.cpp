@@ -25,6 +25,7 @@ bool ModRatePopup::setup(std::string title, GJGameLevel* level) {
       m_isFeatured = false;
       m_isEpicFeatured = false;
       m_selectedRating = -1;
+      m_isRejected = false;
       m_levelId = -1;
       m_accountId = 0;
 
@@ -102,6 +103,23 @@ bool ModRatePopup::setup(std::string title, GJGameLevel* level) {
             m_demonButtonsContainer->addChild(ratingButtonItem);
       }
 
+      // add reject
+      {
+            auto rejectBg = CCSprite::create("GJ_button_06.png");
+            auto rejectLabel = CCLabelBMFont::create("-", "bigFont.fnt");
+            rejectLabel->setScale(0.75f);
+            rejectLabel->setPosition(rejectBg->getContentSize() / 2);
+            rejectBg->addChild(rejectLabel);
+            rejectBg->setID("button-bg-reject");
+
+            auto rejectButton = CCMenuItemSpriteExtra::create(rejectBg, this, menu_selector(ModRatePopup::onRejectButton));
+            // place to the right of the 9 button
+            rejectButton->setPosition({startX + 4 * buttonSpacing, firstRowY - 55.f});
+            rejectButton->setTag(-2);
+            rejectButton->setID("rating-button-reject");
+            m_normalButtonsContainer->addChild(rejectButton);
+      }
+
       menuButtons->addChild(m_normalButtonsContainer);
       menuButtons->addChild(m_demonButtonsContainer);
       m_demonButtonsContainer->setVisible(false);
@@ -121,26 +139,41 @@ bool ModRatePopup::setup(std::string title, GJGameLevel* level) {
 
       // submit button
       int userRole = Mod::get()->getSavedValue<int>("role", 0);
-      float submitButtonX = (userRole == 2)
-                                ? m_mainLayer->getContentSize().width / 2 - 65
-                                : m_mainLayer->getContentSize().width / 2;
+      float centerX = m_mainLayer->getContentSize().width / 2;
 
-      auto submitButtonSpr = ButtonSprite::create("Submit", 1.f);
+      auto submitButtonSpr = ButtonSprite::create("Submit", "goldFont.fnt", "GJ_button_01.png", .8f);
       auto submitButtonItem = CCMenuItemSpriteExtra::create(
           submitButtonSpr, this, menu_selector(ModRatePopup::onSubmitButton));
 
-      submitButtonItem->setPosition({submitButtonX, 0});
-      menuButtons->addChild(submitButtonItem);
-
-      // unrate button (only for admins)
       if (userRole == 2) {
-            auto unreateSpr = ButtonSprite::create("Unrate", 1.f);
+            // when admin, arrange Submit / Unrate / Suggest evenly around center
+            float spacing = 105.f;
+            submitButtonItem->setPosition({centerX - spacing, 0});
+      } else {
+            // non-admins only have Submit centered
+            submitButtonItem->setPosition({centerX, 0});
+      }
+      menuButtons->addChild(submitButtonItem);
+      m_submitButtonItem = submitButtonItem;
+
+      // unrate and suggest buttons (only for admins)
+      if (userRole == 2) {
+            float spacing = 105.f;
+
+            auto unreateSpr = ButtonSprite::create("Unrate", .8f);
             auto unrateButtonItem = CCMenuItemSpriteExtra::create(
                 unreateSpr, this, menu_selector(ModRatePopup::onUnrateButton));
 
-            unrateButtonItem->setPosition(
-                {m_mainLayer->getContentSize().width / 2 + 65, 0});
+            unrateButtonItem->setPosition({centerX, 0});
             menuButtons->addChild(unrateButtonItem);
+
+            // suggest button for admin
+            auto suggestSpr = ButtonSprite::create("Suggest", .8f);
+            auto suggestButtonItem = CCMenuItemSpriteExtra::create(
+                suggestSpr, this, menu_selector(ModRatePopup::onSuggestButton));
+            suggestButtonItem->setPosition({centerX + spacing, 0});
+            suggestButtonItem->setID("suggest-button");
+            menuButtons->addChild(suggestButtonItem);
 
             // info button for admin
             auto infoButton = CCMenuItemSpriteExtra::create(
@@ -257,16 +290,18 @@ void ModRatePopup::onInfoButton(CCObject* sender) {
             int suggestedFeatured = json["suggestedFeatured"].asInt().unwrapOrDefault();
             int suggestedEpic = json["suggestedEpic"].asInt().unwrapOrDefault();
             int featuredScore = json["featuredScore"].asInt().unwrapOrDefault();
+            int rejectedTotal = json["rejectedTotal"].asInt().unwrapOrDefault();
 
             std::string infoText =
                 fmt::format(
-                    "Average Difficulty: {:.1f}\n"
-                    "Total Suggested: {}\n"
-                    "Total Suggested Featured: {}\n"
-                    "Total Suggested Epic: {}\n"
-                    "Featured Score: {}\n",
+                    "<cl>Average Difficulty:</c> {:.1f}\n"
+                    "<cg>Total Suggested:</c> {}\n"
+                    "<co>Total Suggested Featured:</c> {}\n"
+                    "<cp>Total Suggested Epic:</c> {}\n"
+                    "<cy>Featured Score:</c> {}\n"
+                    "<cr>Total Rejected:</c> {}\n",
                     averageDifficulty, suggestedTotal,
-                    suggestedFeatured, suggestedEpic, featuredScore);
+                    suggestedFeatured, suggestedEpic, featuredScore, rejectedTotal);
 
             FLAlertLayer::create("Level Status Info", infoText, "OK")->show();
       });
@@ -275,8 +310,8 @@ void ModRatePopup::onInfoButton(CCObject* sender) {
 void ModRatePopup::onSubmitButton(CCObject* sender) {
       auto popup = UploadActionPopup::create(nullptr, "Submitting layout...");
       popup->show();
-      log::info("Submitting - Difficulty: {}, Featured: {}, Demon: {}",
-                m_selectedRating, m_isFeatured ? 1 : 0, m_isDemonMode ? 1 : 0);
+      log::info("Submitting - Difficulty: {}, Featured: {}, Demon: {}, Rejected: {}",
+                m_selectedRating, m_isFeatured ? 1 : 0, m_isDemonMode ? 1 : 0, m_isRejected ? 1 : 0);
 
       // Get argon token
       auto token = Mod::get()->getSavedValue<std::string>("argon_token");
@@ -286,13 +321,17 @@ void ModRatePopup::onSubmitButton(CCObject* sender) {
             return;
       }
 
+      if (!m_isRejected && m_selectedRating == -1) {
+            popup->showFailMessage("Select a rating first!");
+            return;
+      }
+
       // matjson payload
       matjson::Value jsonBody = matjson::Value::object();
       jsonBody["accountId"] = GJAccountManager::get()->m_accountID;
       jsonBody["argonToken"] = token;
       jsonBody["levelId"] = m_levelId;
       jsonBody["levelOwnerId"] = m_accountId;
-      jsonBody["difficulty"] = m_selectedRating;
       jsonBody["isPlat"] = m_level->isPlatformer();
       int featured = 0;
       if (m_isFeatured) {
@@ -302,12 +341,18 @@ void ModRatePopup::onSubmitButton(CCObject* sender) {
       }
       jsonBody["featured"] = featured;
 
-      // add featured score if featured or epic featured mode is enabled
-      if ((m_isFeatured || m_isEpicFeatured) && m_featuredScoreInput) {
-            auto scoreStr = m_featuredScoreInput->getString();
-            if (!scoreStr.empty()) {
-                  int score = numFromString<int>(scoreStr).unwrapOr(0);
-                  jsonBody["featuredScore"] = score;
+      if (m_isRejected) {
+            jsonBody["isRejected"] = true;
+      } else {
+            jsonBody["difficulty"] = m_selectedRating;
+
+            // add featured score if featured or epic featured mode is enabled
+            if ((m_isFeatured || m_isEpicFeatured) && m_featuredScoreInput) {
+                  auto scoreStr = m_featuredScoreInput->getString();
+                  if (!scoreStr.empty()) {
+                        int score = numFromString<int>(scoreStr).unwrapOr(0);
+                        jsonBody["featuredScore"] = score;
+                  }
             }
       }
 
@@ -370,6 +415,28 @@ void ModRatePopup::onUnrateButton(CCObject* sender) {
       auto popup = UploadActionPopup::create(nullptr, "Unrating layout...");
       popup->show();
       log::info("Unrate button clicked");
+
+      // clear reject state when admin uses unrate
+      if (m_isRejected) {
+            m_isRejected = false;
+            auto rejectBtn = m_normalButtonsContainer->getChildByID("rating-button-reject");
+            if (rejectBtn) {
+                  auto rejectBtnItem = static_cast<CCMenuItemSpriteExtra*>(rejectBtn);
+                  auto rejectBg = CCSprite::create("GJ_button_06.png");
+                  auto rejectLabel = CCLabelBMFont::create("-", "bigFont.fnt");
+                  rejectLabel->setScale(0.75f);
+                  rejectLabel->setPosition(rejectBg->getContentSize() / 2);
+                  rejectBg->addChild(rejectLabel);
+                  rejectBg->setID("button-bg-reject");
+                  rejectBtnItem->setNormalImage(rejectBg);
+            }
+            // re-enable submit for admin when reject is cleared
+            if (Mod::get()->getSavedValue<int>("role", 0) == 2 && m_submitButtonItem) {
+                  auto enabledSpr = ButtonSprite::create("Submit", "goldFont.fnt", "GJ_button_01.png", .8f);
+                  m_submitButtonItem->setNormalImage(enabledSpr);
+                  m_submitButtonItem->setEnabled(true);
+            }
+      }
 
       // Get argon token
       auto token = Mod::get()->getSavedValue<std::string>("argon_token");
@@ -442,11 +509,167 @@ void ModRatePopup::onUnrateButton(CCObject* sender) {
       });
 }
 
+void ModRatePopup::onRejectButton(CCObject* sender) {
+      auto btn = static_cast<CCMenuItemSpriteExtra*>(sender);
+      if (!btn) return;
+
+      // reset previously selected rating's background
+      if (m_selectedRating != -1) {
+            CCMenu* prevContainer = (m_selectedRating <= 9) ? m_normalButtonsContainer
+                                                            : m_demonButtonsContainer;
+            auto prevButton = prevContainer->getChildByID(
+                "rating-button-" + numToString(m_selectedRating));
+            if (prevButton) {
+                  auto prevButtonItem = static_cast<CCMenuItemSpriteExtra*>(prevButton);
+                  auto prevButtonBg = CCSprite::create("GJ_button_04.png");
+                  auto prevButtonLabel = CCLabelBMFont::create(
+                      numToString(m_selectedRating).c_str(), "bigFont.fnt");
+                  prevButtonLabel->setPosition(prevButtonBg->getContentSize() / 2);
+                  prevButtonLabel->setScale(0.75f);
+                  prevButtonBg->addChild(prevButtonLabel);
+                  prevButtonBg->setID("button-bg-" + numToString(m_selectedRating));
+                  prevButtonItem->setNormalImage(prevButtonBg);
+            }
+            m_selectedRating = -1;
+      }
+
+      // set this button to selected style
+      auto selectedBg = CCSprite::create("GJ_button_01.png");
+      auto selectedLabel = CCLabelBMFont::create("-", "bigFont.fnt");
+      selectedLabel->setPosition(selectedBg->getContentSize() / 2);
+      selectedLabel->setScale(0.75f);
+      selectedBg->addChild(selectedLabel);
+      selectedBg->setID("button-bg-reject");
+      btn->setNormalImage(selectedBg);
+
+      m_isRejected = true;
+
+      // disable submit for admin when rejected
+      if (Mod::get()->getSavedValue<int>("role", 0) == 2 && m_submitButtonItem) {
+            auto disabledSpr = ButtonSprite::create("Submit", "goldFont.fnt", "GJ_button_04.png", .8f);
+            m_submitButtonItem->setNormalImage(disabledSpr);
+            m_submitButtonItem->setEnabled(false);
+      }
+
+      // update difficulty UI to neutral (0 => NA)
+      updateDifficultySprite(0);
+}
+
+void ModRatePopup::onSuggestButton(CCObject* sender) {
+      auto popup = UploadActionPopup::create(nullptr, "Suggesting layout...");
+      popup->show();
+      log::info("Suggest button clicked");
+
+      // Get argon token
+      auto token = Mod::get()->getSavedValue<std::string>("argon_token");
+      if (token.empty()) {
+            log::error("Failed to get user token");
+            popup->showFailMessage("Token not found");
+            return;
+      }
+
+      if (!m_isRejected && m_selectedRating == -1) {
+            popup->showFailMessage("Select a rating first!");
+            return;
+      }
+
+      // matjson payload
+      matjson::Value jsonBody = matjson::Value::object();
+      jsonBody["accountId"] = GJAccountManager::get()->m_accountID;
+      jsonBody["argonToken"] = token;
+      jsonBody["levelId"] = m_levelId;
+      jsonBody["levelOwnerId"] = m_accountId;
+      jsonBody["isPlat"] = (m_level && m_level->isPlatformer());
+      jsonBody["suggest"] = true;
+
+      if (m_isRejected) {
+            jsonBody["isRejected"] = true;
+      } else {
+            jsonBody["difficulty"] = m_selectedRating;
+      }
+
+      log::info("Sending suggest request: {}", jsonBody.dump());
+
+      auto postReq = web::WebRequest();
+      postReq.bodyJSON(jsonBody);
+      auto postTask = postReq.post("https://gdrate.arcticwoof.xyz/rate");
+
+      postTask.listen([this, popup](web::WebResponse* response) {
+            log::info("Received response from server");
+
+            if (!response->ok()) {
+                  log::warn("Server returned non-ok status: {}", response->code());
+                  popup->showFailMessage("Failed! Try again later.");
+                  return;
+            }
+
+            auto jsonRes = response->json();
+            if (!jsonRes) {
+                  log::warn("Failed to parse JSON response");
+                  popup->showFailMessage("Invalid server response.");
+                  return;
+            }
+
+            auto json = jsonRes.unwrap();
+            bool success = json["success"].asBool().unwrapOrDefault();
+
+            if (success) {
+                  log::info("Suggest submission successful!");
+
+                  // delete cached level to force refresh on next view
+                  auto cachePath = dirs::getModsSaveDir() / "level_ratings_cache.json";
+                  auto existingData = utils::file::readString(utils::string::pathToString(cachePath));
+                  if (existingData) {
+                        auto parsed = matjson::parse(existingData.unwrap());
+                        if (parsed) {
+                              auto root = parsed.unwrap();
+                              if (root.isObject()) {
+                                    std::string key = fmt::format("{}", this->m_levelId);
+                                    auto result = root.erase(key);
+                              }
+                              auto jsonString = root.dump();
+                              auto writeResult =
+                                  utils::file::writeString(utils::string::pathToString(cachePath), jsonString);
+                              log::debug("Deleted level ID {} from cache after suggest",
+                                         this->m_levelId);
+                        }
+                  }
+
+                  popup->showSuccessMessage("Suggested successfully!");
+            } else {
+                  log::warn("Suggest submission failed: success is false");
+                  popup->showFailMessage("Failed! Try again later.");
+            }
+      });
+}
+
 void ModRatePopup::onToggleFeatured(CCObject* sender) {
       // Check if user has admin role
       int userRole = Mod::get()->getSavedValue<int>("role", 0);
 
       m_isFeatured = !m_isFeatured;
+
+      // ensure rejecting state is cleared when toggling features
+      if (m_isRejected) {
+            m_isRejected = false;
+            auto rejectBtn = m_normalButtonsContainer->getChildByID("rating-button-reject");
+            if (rejectBtn) {
+                  auto rejectBtnItem = static_cast<CCMenuItemSpriteExtra*>(rejectBtn);
+                  auto rejectBg = CCSprite::create("GJ_button_06.png");
+                  auto rejectLabel = CCLabelBMFont::create("-", "bigFont.fnt");
+                  rejectLabel->setScale(0.75f);
+                  rejectLabel->setPosition(rejectBg->getContentSize() / 2);
+                  rejectBg->addChild(rejectLabel);
+                  rejectBg->setID("button-bg-reject");
+                  rejectBtnItem->setNormalImage(rejectBg);
+            }
+            // re-enable submit for admin when reject is cleared
+            if (Mod::get()->getSavedValue<int>("role", 0) == 2 && m_submitButtonItem) {
+                  auto enabledSpr = ButtonSprite::create("Submit", "goldFont.fnt", "GJ_button_01.png", .8f);
+                  m_submitButtonItem->setNormalImage(enabledSpr);
+                  m_submitButtonItem->setEnabled(true);
+            }
+      }
 
       auto existingCoin = m_difficultyContainer->getChildByID("featured-coin");
       auto existingEpicCoin = m_difficultyContainer->getChildByID("epic-featured-coin");
@@ -470,9 +693,21 @@ void ModRatePopup::onToggleFeatured(CCObject* sender) {
             // score only for admin
             if (userRole == 2) {
                   m_featuredScoreInput->setVisible(true);
+                  // hide reject button while featured score input is shown
+                  if (m_normalButtonsContainer) {
+                        if (auto rejectBtn = m_normalButtonsContainer->getChildByID("rating-button-reject")) {
+                              rejectBtn->setVisible(false);
+                        }
+                  }
             }
       } else {
             m_featuredScoreInput->setVisible(false);
+            // show reject button when featured score input is hidden
+            if (m_normalButtonsContainer) {
+                  if (auto rejectBtn = m_normalButtonsContainer->getChildByID("rating-button-reject")) {
+                        rejectBtn->setVisible(true);
+                  }
+            }
             if (m_epicFeaturedToggleItem) {
                   setTogglerGrayscale(m_epicFeaturedToggleItem, "rlepicFeaturedCoin.png"_spr, false);
             }
@@ -489,6 +724,22 @@ void ModRatePopup::onToggleDemon(CCObject* sender) {
 void ModRatePopup::onToggleEpicFeatured(CCObject* sender) {
       int userRole = Mod::get()->getSavedValue<int>("role", 0);
       m_isEpicFeatured = !m_isEpicFeatured;
+
+      // clear reject if set
+      if (m_isRejected) {
+            m_isRejected = false;
+            auto rejectBtn = m_normalButtonsContainer->getChildByID("rating-button-reject");
+            if (rejectBtn) {
+                  auto rejectBtnItem = static_cast<CCMenuItemSpriteExtra*>(rejectBtn);
+                  auto rejectBg = CCSprite::create("GJ_button_06.png");
+                  auto rejectLabel = CCLabelBMFont::create("-", "bigFont.fnt");
+                  rejectLabel->setScale(0.75f);
+                  rejectLabel->setPosition(rejectBg->getContentSize() / 2);
+                  rejectBg->addChild(rejectLabel);
+                  rejectBg->setID("button-bg-reject");
+                  rejectBtnItem->setNormalImage(rejectBg);
+            }
+      }
 
       auto existingEpicCoin = m_difficultyContainer->getChildByID("epic-featured-coin");
       auto existingCoin = m_difficultyContainer->getChildByID("featured-coin");
@@ -511,9 +762,21 @@ void ModRatePopup::onToggleEpicFeatured(CCObject* sender) {
             m_difficultyContainer->addChild(newEpicCoin, -1);
             if (userRole == 2) {
                   m_featuredScoreInput->setVisible(true);
+                  // hide reject while featured score input is shown
+                  if (m_normalButtonsContainer) {
+                        if (auto rejectBtn = m_normalButtonsContainer->getChildByID("rating-button-reject")) {
+                              rejectBtn->setVisible(false);
+                        }
+                  }
             }
       } else {
             m_featuredScoreInput->setVisible(false);
+            // show reject when featured score input is hidden
+            if (m_normalButtonsContainer) {
+                  if (auto rejectBtn = m_normalButtonsContainer->getChildByID("rating-button-reject")) {
+                        rejectBtn->setVisible(true);
+                  }
+            }
             if (m_featuredToggleItem) {
                   setTogglerGrayscale(m_featuredToggleItem, "rlfeaturedCoin.png"_spr, false);
             }
@@ -544,6 +807,29 @@ void ModRatePopup::onRatingButton(CCObject* sender) {
       }
 
       auto currentButton = static_cast<CCMenuItemSpriteExtra*>(sender);
+
+      // if previously reject was selected, clear it
+      if (m_isRejected) {
+            m_isRejected = false;
+            auto rejectBtn = m_normalButtonsContainer->getChildByID("rating-button-reject");
+            if (rejectBtn) {
+                  auto rejectBtnItem = static_cast<CCMenuItemSpriteExtra*>(rejectBtn);
+                  auto rejectBg = CCSprite::create("GJ_button_06.png");
+                  auto rejectLabel = CCLabelBMFont::create("-", "bigFont.fnt");
+                  rejectLabel->setScale(0.75f);
+                  rejectLabel->setPosition(rejectBg->getContentSize() / 2);
+                  rejectBg->addChild(rejectLabel);
+                  rejectBg->setID("button-bg-reject");
+                  rejectBtnItem->setNormalImage(rejectBg);
+            }
+            // re-enable submit for admin when reject is cleared
+            if (Mod::get()->getSavedValue<int>("role", 0) == 2 && m_submitButtonItem) {
+                  auto enabledSpr = ButtonSprite::create("Submit", "goldFont.fnt", "GJ_button_01.png", .8f);
+                  m_submitButtonItem->setNormalImage(enabledSpr);
+                  m_submitButtonItem->setEnabled(true);
+            }
+      }
+
       auto currentButtonBg = CCSprite::create("GJ_button_01.png");
       auto currentButtonLabel =
           CCLabelBMFont::create(numToString(rating).c_str(), "bigFont.fnt");

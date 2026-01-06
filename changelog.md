@@ -7,6 +7,9 @@
 - Changed "Design" to "Originality" in the Community Vote popup.
 - Added Confirmation popup when submitting a vote in the Community Vote popup.
 - Added Layout Gauntlet Button on the Vanilla Gauntlet Select Layer to easily access the Rated Layout Gauntlets.
+- Added "Suggest" button for Layout Admins
+- Layout Admins can now view between 3+ sends in the Sent Layouts section.
+- Layout Moderators and Admins can now reject suggested layouts.
 - Fixed issue where submitting a vote with no score defaulted to 1. It should not be included in the vote if empty.
 - Fixed issue where the Leaderboard tabs is transparent when selected.
 - Event Layouts are now more responsive when pressing the play button
