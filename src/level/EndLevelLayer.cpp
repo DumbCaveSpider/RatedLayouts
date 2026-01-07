@@ -171,7 +171,7 @@ class $modify(EndLevelLayer) {
                               endLayerRef->m_mainLayer->addChild(bigStarSprite);
 
                               // star animation lol
-                              auto scaleAction = CCScaleBy::create(.8f, .8f);
+                              auto scaleAction = CCScaleBy::create(.6f, .6f);
                               auto bounceAction = CCEaseBounceOut::create(scaleAction);
                               auto fadeAction = CCFadeIn::create(0.5f);
                               auto spawnAction =

@@ -41,7 +41,7 @@ class $modify(SupportLayer) {
             // verify the user's role
             auto postReq = web::WebRequest();
             postReq.bodyJSON(jsonBody);
-            auto postTask = postReq.post("https://gdrate.arcticwoof.xyz/access");
+            auto postTask = postReq.post("https://gdrate.arcticwoof.xyz/getAccess");
 
             // handle the response
             Ref<SupportLayer> self = this;

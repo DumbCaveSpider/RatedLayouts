@@ -51,11 +51,11 @@ bool RLCreditsPopup::setup() {
       // Fetch mod players
       Ref<RLCreditsPopup> self = this;
       web::WebRequest()
-          .get("https://gdrate.arcticwoof.xyz/getMod")
+          .get("https://gdrate.arcticwoof.xyz/getCredits")
           .listen([self](web::WebResponse* response) {
                 if (!self) return;
                 if (!response || !response->ok()) {
-                      log::warn("getMod returned non-ok status: {}", response ? response->code() : -1);
+                      log::warn("getCredits returned non-ok status: {}", response ? response->code() : -1);
                       if (self->m_spinner) {
                             self->m_spinner->removeFromParent();
                             self->m_spinner = nullptr;

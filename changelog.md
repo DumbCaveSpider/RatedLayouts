@@ -2,6 +2,7 @@
 
 - **Profile Stats Changed!** The Rated layouts stats are now on a seperate section in the profile page. Click the new Planet Button in the profile page to view your Rated Layouts stats!
 - **Added Gauntlet Select Levels!** You can now select and play Layout Gauntlet levels from the Gauntlet Select Layer.
+- **Added Report Rated Layouts!** You can now report Rated Layouts that violates the Rated Layouts guidelines directly from the Level Info Layer.
 - Improved the Layout Moderators and Admins UI.
 - New Mod Title! Thanks to [KrazyGFX](https://x.com/Krazy_GFX/status/2006175258361905195?s=20) for the design
 - Changed "Design" to "Originality" in the Community Vote popup.
@@ -17,7 +18,9 @@
 - Minor fixes relating to Popup information
 - Fixed issues where sometimes the game crashes when the web requests finishes but the popup/layer is already closed.
 - Community Vote button is now shown at the right side of the menu in the Level Info Layer.
+- Community Vote will now show on rated layouts.
 - Layout Mods can now see the Level Stats in the Mod Rate Popup.
+- Backend fixes and improvements.
 
 Thanks to [delivel-tech](https://github.com/delivel-tech) for this update!
 

@@ -95,6 +95,11 @@ void RLCommunityVotePopup::onSubmit(CCObject*) {
                             auto json = j.unwrap();
                             bool success = json["success"].asBool().unwrapOrDefault();
                             if (success) {
+                                  if (!self->m_mainLayer || !self->getParent()) {
+                                        Notification::create("Vote submitted!", NotificationIcon::Success)->show();
+                                        return;
+                                  }
+
                                   Notification::create("Vote submitted!", NotificationIcon::Success)->show();
 
                                   // Optimistically mark inputs as VOTED and disable
@@ -273,55 +278,7 @@ void RLCommunityVotePopup::refreshFromServer() {
             if (m_gameplayScoreLabel) m_gameplayScoreLabel->setVisible(true);
       }
 
-      // First fetch aggregated scores and moderator average
       Ref<RLCommunityVotePopup> self = this;
-      web::WebRequest().get(fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", m_levelId)).listen([self](web::WebResponse* res) {
-            if (!self) return;
-            if (!res || !res->ok()) {
-                  Notification::create("Failed to fetch community vote info", NotificationIcon::Error)->show();
-                  return;
-            }
-            auto jres = res->json();
-            if (!jres) {
-                  Notification::create("Invalid response for community vote", NotificationIcon::Warning)->show();
-                  return;
-            }
-            auto json = jres.unwrap();
-            // update score labels (strings only; visibility handled by getVote)
-            double originalityScore = json["originalityScore"].asDouble().unwrapOrDefault();
-            double difficultyScore = json["difficultyScore"].asDouble().unwrapOrDefault();
-            double gameplayScore = json["gameplayScore"].asDouble().unwrapOrDefault();
-
-            if (self->m_originalityScoreLabel) self->m_originalityScoreLabel->setString(fmt::format("{:.2f}", originalityScore).c_str());
-            if (self->m_difficultyScoreLabel) self->m_difficultyScoreLabel->setString(fmt::format("{:.2f}", difficultyScore).c_str());
-            if (self->m_gameplayScoreLabel) self->m_gameplayScoreLabel->setString(fmt::format("{:.2f}", gameplayScore).c_str());
-
-            // moderator difficulty (read-only)
-            double avg = -1.0;
-            if (json.contains("averageDifficulty")) {
-                  auto avgRes = json["averageDifficulty"].asDouble();
-                  if (avgRes) avg = avgRes.unwrap();
-            }
-
-            if (self->m_modDifficultyLabel) {
-                  if (avg >= 0.0) {
-                        if (std::floor(avg) == avg) {
-                              self->m_modDifficultyLabel->setString(numToString(static_cast<int>(avg)).c_str());
-                        } else {
-                              self->m_modDifficultyLabel->setString(fmt::format("{:.1f}", avg).c_str());
-                        }
-                  } else {
-                        self->m_modDifficultyLabel->setString("-");
-                  }
-            }
-
-            // if the server indicates this level is not suggested, close or remove submit UI
-            bool isSuggested = json["isSuggested"].asBool().unwrapOrDefault();
-            if (!isSuggested) {
-                  self->onClose(nullptr);
-                  Notification::create("Level is not suggested", NotificationIcon::Warning)->show();
-            }
-      });
 
       // Then query whether this account has already voted on this level and
       // show/hide score labels accordingly
@@ -341,12 +298,67 @@ void RLCommunityVotePopup::refreshFromServer() {
             if (!vj) return;
             auto vjson = vj.unwrap();
 
+            if (!self->m_mainLayer || !self->getParent()) {
+                  return;
+            }
+
             bool hasGameplay = vjson["hasGameplayVoted"].asBool().unwrapOrDefault();
             bool hasOriginality = vjson["hasOriginalityVoted"].asBool().unwrapOrDefault();
             bool hasDifficulty = vjson["hasDifficultyVoted"].asBool().unwrapOrDefault();
             int totalVotes = vjson["totalVotes"].asInt().unwrapOrDefault();
             if (self->m_totalVotesLabel) {
                   self->m_totalVotesLabel->setString(fmt::format("Total votes: {}", totalVotes).c_str());
+            }
+
+            double originalityScore = -1.0;
+            if (vjson.contains("originalityScore")) {
+                  auto osRes = vjson["originalityScore"].asDouble();
+                  if (osRes) originalityScore = osRes.unwrap();
+            }
+            double difficultyScore = -1.0;
+            if (vjson.contains("difficultyScore")) {
+                  auto dsRes = vjson["difficultyScore"].asDouble();
+                  if (dsRes) difficultyScore = dsRes.unwrap();
+            }
+            double gameplayScore = -1.0;
+            if (vjson.contains("gameplayScore")) {
+                  auto gpRes = vjson["gameplayScore"].asDouble();
+                  if (gpRes) gameplayScore = gpRes.unwrap();
+            }
+
+            if (self->m_originalityScoreLabel) {
+                  if (originalityScore >= 0.0) {
+                        self->m_originalityScoreLabel->setString(fmt::format("{:.2f}", originalityScore).c_str());
+                  }
+            }
+            if (self->m_difficultyScoreLabel) {
+                  if (difficultyScore >= 0.0) {
+                        self->m_difficultyScoreLabel->setString(fmt::format("{:.2f}", difficultyScore).c_str());
+                  }
+            }
+            if (self->m_gameplayScoreLabel) {
+                  if (gameplayScore >= 0.0) {
+                        self->m_gameplayScoreLabel->setString(fmt::format("{:.2f}", gameplayScore).c_str());
+                  }
+            }
+
+            // moderator difficulty (read-only) - prefer averageDifficulty from getVote
+            double avg = -1.0;
+            if (vjson.contains("averageDifficulty")) {
+                  auto avgRes = vjson["averageDifficulty"].asDouble();
+                  if (avgRes) avg = avgRes.unwrap();
+            }
+
+            if (self->m_modDifficultyLabel) {
+                  if (avg >= 0.0) {
+                        if (std::floor(avg) == avg) {
+                              self->m_modDifficultyLabel->setString(numToString(static_cast<int>(avg)).c_str());
+                        } else {
+                              self->m_modDifficultyLabel->setString(fmt::format("{:.1f}", avg).c_str());
+                        }
+                  } else {
+                        self->m_modDifficultyLabel->setString("-");
+                  }
             }
 
             // If moderators forced show, keep labels visible regardless of 'hasX' vote state
@@ -436,11 +448,11 @@ void RLCommunityVotePopup::refreshFromServer() {
 void RLCommunityVotePopup::onInfo(CCObject*) {
       MDPopup::create(
           "Community Voting Info",
-          "You can vote on <cl>suggested/sent layouts</c> based on three categories:\n\n"
+          "You can vote on <cl>suggested/rated layouts</c> based on three categories:\n\n"
           "<co>Originality (1 to 10)</c>: How original and distinct the layout is.\n\n"
           "<cr>Difficulty (1 to 30)</c>: The difficulty the level is according to your experience.\n\n"
           "<cg>Gameplay (1 to 10)</c>: How fun and enjoyable the layout is overall.\n\n"
-          "### Please rate suggested layouts <cg>honestly and fairly</c> based on your experience playing them as <cr>Layout Admins</c> uses this votes to help accurately rate layouts!",
+          "### Please rate suggested/rated layouts <cg>honestly and fairly</c> based on your experience playing them as <cr>Layout Admins</c> uses this votes to help accurately rate layouts!",
           "OK")
           ->show();
 }

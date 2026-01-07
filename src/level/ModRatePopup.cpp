@@ -262,7 +262,7 @@ void ModRatePopup::onInfoButton(CCObject* sender) {
 
       auto postReq = web::WebRequest();
       postReq.bodyJSON(jsonBody);
-      auto postTask = postReq.post("https://gdrate.arcticwoof.xyz/level");
+      auto postTask = postReq.post("https://gdrate.arcticwoof.xyz/getModLevel");
 
       Ref<ModRatePopup> self = this;
       postTask.listen([self](web::WebResponse* response) {
@@ -463,7 +463,7 @@ void ModRatePopup::onUnrateButton(CCObject* sender) {
 
       auto postReq = web::WebRequest();
       postReq.bodyJSON(jsonBody);
-      auto postTask = postReq.post("https://gdrate.arcticwoof.xyz/unrate");
+      auto postTask = postReq.post("https://gdrate.arcticwoof.xyz/setUnrate");
 
       Ref<ModRatePopup> self = this;
       Ref<UploadActionPopup> upopup = popup;

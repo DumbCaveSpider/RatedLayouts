@@ -423,18 +423,12 @@ class $modify(RLProfilePage, ProfilePage) {
             auto postTask = postReq.post("https://gdrate.arcticwoof.xyz/profile");
 
             Ref<RLProfilePage> pageRef = this;
-            postTask.listen([pageRef](web::WebResponse* response) {
+            postTask.listen([pageRef, accountId](web::WebResponse* response) {
                   if (!pageRef) {
                         log::warn("skipping profile data update");
                         return;
                   }
                   log::info("Received response from server");
-
-                  auto page = pageRef;
-                  if (!page->m_mainLayer) {
-                        log::warn("skipping profile data update");
-                        return;
-                  }
 
                   if (!response->ok()) {
                         log::warn("Server returned non-ok status: {}", response->code());
@@ -454,14 +448,23 @@ class $modify(RLProfilePage, ProfilePage) {
                   int planets = json["planets"].asInt().unwrapOrDefault();
                   bool isSupporter = json["isSupporter"].asBool().unwrapOrDefault();
 
+                  cacheUserProfile_ProfilePage(accountId, role, stars, planets);
+
+                  if (!pageRef->m_mainLayer) {
+                        log::debug("ProfilePage UI destroyed; cached profile data updated only");
+                        if (pageRef->m_ownProfile) {
+                              Mod::get()->setSavedValue("role", role);
+                        }
+                        return;
+                  }
+
+                  auto page = pageRef;
                   page->m_fields->m_stars = stars;
                   page->m_fields->m_planets = planets;
                   page->m_fields->m_points = points;
 
                   page->m_fields->role = role;
                   page->m_fields->isSupporter = isSupporter;
-
-                  cacheUserProfile_ProfilePage(page->m_fields->accountId, role, stars, planets);
 
                   if (page->m_ownProfile) {
                         Mod::get()->setSavedValue("role", page->m_fields->role);

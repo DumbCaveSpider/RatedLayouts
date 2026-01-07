@@ -200,15 +200,17 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   // Cache the response
                   cacheLevelData(layerRef->m_level->m_levelID, json);
 
-                  layerRef->processLevelRating(json, layerRef, difficultySprite);
+                  layerRef->processLevelRating(json, layerRef, difficultySprite, true);
             });
       }
       void processLevelRating(const matjson::Value& json,
                               Ref<RLLevelInfoLayer> layerRef,
-                              CCNode* difficultySprite) {
+                              CCNode* difficultySprite,
+                              bool forceShow = false) {
+            if (!layerRef) return;
             int difficulty = json["difficulty"].asInt().unwrapOrDefault();
             int featured = json["featured"].asInt().unwrapOrDefault();
-            bool isSuggested = json["isSuggested"].asBool().unwrapOrDefault();
+            bool showCommunity = forceShow;
 
             // helper to remove existing button
             auto removeExistingCommunityBtn = [layerRef]() {
@@ -222,7 +224,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   }
             };
 
-            if (isSuggested) {
+            if (showCommunity) {
                   // create button if not already present
                   bool exists = false;
                   auto rightMenuNode = layerRef->getChildByID("right-side-menu");
@@ -714,17 +716,19 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                         // Cache the response
                         cacheLevelData(layerRef->m_level->m_levelID, json);
 
-                        layerRef->processLevelUpdateWithDifficulty(json, layerRef);
+                        layerRef->processLevelUpdateWithDifficulty(json, layerRef, true);
                   });
             }
       }
 
       void processLevelUpdateWithDifficulty(const matjson::Value& json,
-                                            Ref<RLLevelInfoLayer> layerRef) {
+                                            Ref<RLLevelInfoLayer> layerRef,
+                                            bool forceShow = false) {
             int difficulty = json["difficulty"].asInt().unwrapOrDefault();
 
             // handle community vote button visibility when level updates are fetched
-            bool isSuggested = json["isSuggested"].asBool().unwrapOrDefault();
+            bool showCommunity = forceShow;
+
             auto removeExistingCommunityBtn = [layerRef]() {
                   auto rightMenuNode = layerRef->getChildByID("right-side-menu");
                   if (rightMenuNode && typeinfo_cast<CCMenu*>(rightMenuNode)) {
@@ -736,7 +740,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   }
             };
 
-            if (isSuggested) {
+            if (showCommunity) {
                   bool exists = false;
                   auto rightMenuNode = layerRef->getChildByID("right-side-menu");
                   if (rightMenuNode && typeinfo_cast<CCMenu*>(rightMenuNode)) {
@@ -1306,7 +1310,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
 
                         // Update the display with latest data
                         layerRef->processLevelRating(
-                            json, layerRef, layerRef->getChildByID("difficulty-sprite"));
+                            json, layerRef, layerRef->getChildByID("difficulty-sprite"), true);
                   });
             }
       }

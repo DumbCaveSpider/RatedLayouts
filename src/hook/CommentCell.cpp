@@ -261,15 +261,16 @@ class $modify(RLCommentCell, CommentCell) {
                   int role = json["role"].asInt().unwrapOrDefault();
                   int stars = json["stars"].asInt().unwrapOrDefault();
                   int planets = json["planets"].asInt().unwrapOrDefault();
+                  bool isSupporter = json["isSupporter"].asBool().unwrapOrDefault();
 
-                  // If user has no role and no stars and no planets, delete from cache and clear UI
+                  // If user has no role and no stars and no planets, delete from cache
                   if (role == 0 && stars == 0 && planets == 0) {
                         log::debug("User {} has no role/stars/planets - removing from cache", accountId);
                         removeCachedUserProfile(accountId);
                         if (!cellRef) return;
                         cellRef->m_fields->role = 0;
                         cellRef->m_fields->stars = 0;
-                        // remove any role badges if present
+                        // remove any role badges and glow only if UI exists
                         if (cellRef->m_mainLayer) {
                               if (auto userNameMenu = typeinfo_cast<CCMenu*>(cellRef->m_mainLayer->getChildByIDRecursive("username-menu"))) {
                                     if (auto owner = userNameMenu->getChildByID("rl-comment-owner-badge")) owner->removeFromParent();
@@ -287,15 +288,17 @@ class $modify(RLCommentCell, CommentCell) {
                   cellRef->m_fields->role = role;
                   cellRef->m_fields->stars = stars;
                   cellRef->m_fields->planets = planets;
-                  cellRef->m_fields->supporter = json["isSupporter"].asBool().unwrapOrDefault();
+                  cellRef->m_fields->supporter = isSupporter;
+                  cacheUserProfile(accountId, role, stars, planets, isSupporter);
 
-                  cacheUserProfile(accountId, role, stars, planets, cellRef->m_fields->supporter);
+                  log::debug("User comment role: {} supporter={} stars={} planets={}", role, isSupporter, stars, planets);
 
-                  log::debug("User comment role: {} supporter={} stars={} planets={}", role, cellRef->m_fields->supporter, stars, planets);
-
-                  cellRef->loadBadgeForComment(accountId);
-                  cellRef->applyCommentTextColor(accountId);
-                  cellRef->applyStarGlow(accountId, stars, planets);
+                  // Only update UI if it still exists
+                  if (cellRef->m_mainLayer) {
+                        cellRef->loadBadgeForComment(accountId);
+                        cellRef->applyCommentTextColor(accountId);
+                        cellRef->applyStarGlow(accountId, stars, planets);
+                  }
             });
       }
 
