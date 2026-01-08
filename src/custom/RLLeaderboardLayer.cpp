@@ -77,51 +77,7 @@ bool RLLeaderboardLayer::init() {
       backButton->setPosition({25, winSize.height - 25});
       backMenu->addChild(backButton);
       this->addChild(backMenu);
-      auto typeMenu = CCMenu::create();
-      typeMenu->setPosition({0, 0});
-
-      auto starsTab = TabButton::create(
-          TabBaseColor::Unselected,
-          TabBaseColor::UnselectedDark,
-          "Top Sparks",
-          this,
-          menu_selector(RLLeaderboardLayer::onLeaderboardTypeButton));
-      starsTab->setTag(1);
-      starsTab->toggle(true);
-      starsTab->setPosition({winSize.width / 2 - 120, winSize.height - 27});
-      typeMenu->addChild(starsTab);
-      m_starsTab = starsTab;
-
-      auto planetsTab = TabButton::create(
-          TabBaseColor::Unselected,
-          TabBaseColor::UnselectedDark,
-          "Top Planets", this,
-          menu_selector(RLLeaderboardLayer::onLeaderboardTypeButton));
-      planetsTab->setTag(3);
-      planetsTab->toggle(false);
-      planetsTab->setPosition({winSize.width / 2, winSize.height - 27});
-      typeMenu->addChild(planetsTab);
-      m_planetsTab = planetsTab;
-
-      auto creatorTab = TabButton::create(
-          TabBaseColor::Unselected,
-          TabBaseColor::UnselectedDark,
-          "Top Creator", this,
-          menu_selector(RLLeaderboardLayer::onLeaderboardTypeButton));
-      creatorTab->setTag(2);
-      creatorTab->toggle(false);
-      creatorTab->setPosition({winSize.width / 2 + 120, winSize.height - 27});
-      typeMenu->addChild(creatorTab);
-      m_creatorTab = creatorTab;
-
-      if (Mod::get()->getSettingValue<bool>("disableCreatorPoints") == true) {
-            if (m_creatorTab) {
-                  m_creatorTab->setEnabled(false);
-                  m_creatorTab->setVisible(false);
-            }
-      }
-
-      this->addChild(typeMenu);
+      
       this->fetchLeaderboard(1, 100);
 
       auto listLayer = GJListLayer::create(nullptr, nullptr, {191, 114, 62, 255},
@@ -151,6 +107,53 @@ bool RLLeaderboardLayer::init() {
       this->addChild(listLayer);
       m_listLayer = listLayer;
       m_scrollLayer = scrollLayer;
+
+      auto typeMenu = CCMenu::create();
+      typeMenu->setPosition({0, 0});
+      typeMenu->setContentSize(listLayer->getContentSize());
+
+      auto starsTab = TabButton::create(
+          TabBaseColor::Unselected,
+          TabBaseColor::UnselectedDark,
+          "Top Sparks",
+          this,
+          menu_selector(RLLeaderboardLayer::onLeaderboardTypeButton));
+      starsTab->setTag(1);
+      starsTab->toggle(true);
+      starsTab->setPosition({178.f - 120, 247.f});
+      typeMenu->addChild(starsTab);
+      m_starsTab = starsTab;
+
+      auto planetsTab = TabButton::create(
+          TabBaseColor::Unselected,
+          TabBaseColor::UnselectedDark,
+          "Top Planets", this,
+          menu_selector(RLLeaderboardLayer::onLeaderboardTypeButton));
+      planetsTab->setTag(3);
+      planetsTab->toggle(false);
+      planetsTab->setPosition({178.f, 247.f});
+      typeMenu->addChild(planetsTab);
+      m_planetsTab = planetsTab;
+
+      auto creatorTab = TabButton::create(
+          TabBaseColor::Unselected,
+          TabBaseColor::UnselectedDark,
+          "Top Creator", this,
+          menu_selector(RLLeaderboardLayer::onLeaderboardTypeButton));
+      creatorTab->setTag(2);
+      creatorTab->toggle(false);
+      creatorTab->setPosition({178.f + 120, 247.f});
+      typeMenu->addChild(creatorTab);
+      m_creatorTab = creatorTab;
+
+      if (Mod::get()->getSettingValue<bool>("disableCreatorPoints") == true) {
+            if (m_creatorTab) {
+                  m_creatorTab->setEnabled(false);
+                  m_creatorTab->setVisible(false);
+            }
+      }
+
+      listLayer->addChild(typeMenu);
 
       // info button at the bottom left
       auto infoMenu = CCMenu::create();

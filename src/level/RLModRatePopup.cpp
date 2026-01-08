@@ -262,10 +262,10 @@ void RLModRatePopup::onInfoButton(CCObject* sender) {
 
       auto postReq = web::WebRequest();
       postReq.bodyJSON(jsonBody);
-      auto postTask = postReq.post("https://gdrate.arcticwoof.xyz/getModLevel");
+      m_getModLevelTask = postReq.post("https://gdrate.arcticwoof.xyz/getModLevel");
 
       Ref<RLModRatePopup> self = this;
-      postTask.listen([self](web::WebResponse* response) {
+      m_getModLevelTask.listen([self](web::WebResponse* response) {
             if (!self) return;
             log::info("Received response from server");
 
@@ -362,7 +362,7 @@ void RLModRatePopup::onSubmitButton(CCObject* sender) {
 
       auto postReq = web::WebRequest();
       postReq.bodyJSON(jsonBody);
-      auto postTask = postReq.post("https://gdrate.arcticwoof.xyz/setRate");
+      auto postTask = m_setRateTask = postReq.post("https://gdrate.arcticwoof.xyz/setRate");
 
       Ref<RLModRatePopup> self = this;
       Ref<UploadActionPopup> upopup = popup;
@@ -463,11 +463,11 @@ void RLModRatePopup::onUnrateButton(CCObject* sender) {
 
       auto postReq = web::WebRequest();
       postReq.bodyJSON(jsonBody);
-      auto postTask = postReq.post("https://gdrate.arcticwoof.xyz/setUnrate");
+      m_setUnrateTask = postReq.post("https://gdrate.arcticwoof.xyz/setUnrate");
 
       Ref<RLModRatePopup> self = this;
       Ref<UploadActionPopup> upopup = popup;
-      postTask.listen([self, upopup](web::WebResponse* response) {
+      m_setUnrateTask.listen([self, upopup](web::WebResponse* response) {
             if (!self || !upopup) return;
             log::info("Received response from server");
 
@@ -617,11 +617,11 @@ void RLModRatePopup::onSuggestButton(CCObject* sender) {
 
       auto postReq = web::WebRequest();
       postReq.bodyJSON(jsonBody);
-      auto postTask = postReq.post("https://gdrate.arcticwoof.xyz/setRate");
+      m_setRateTask = postReq.post("https://gdrate.arcticwoof.xyz/setRate");
 
       Ref<RLModRatePopup> self = this;
       Ref<UploadActionPopup> upopup = popup;
-      postTask.listen([self, upopup](web::WebResponse* response) {
+      m_setRateTask.listen([self, upopup](web::WebResponse* response) {
             if (!self || !upopup) return;
             log::info("Received response from server");
 
@@ -977,7 +977,8 @@ void RLModRatePopup::onSetEventButton(CCObject* sender) {
                 log::info("Sending setEvent request: {}", jsonBody.dump());
                 auto postReq = web::WebRequest();
                 postReq.bodyJSON(jsonBody);
-                auto postTask = postReq.post("https://gdrate.arcticwoof.xyz/setEvent");
+                Ref<RLModRatePopup> popupRef = this;
+                auto postTask = popupRef->m_setEventTask = postReq.post("https://gdrate.arcticwoof.xyz/setEvent");
 
                 Ref<RLModRatePopup> self = this;
                 Ref<UploadActionPopup> upopup = popup;

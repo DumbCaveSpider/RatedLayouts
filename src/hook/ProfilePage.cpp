@@ -52,6 +52,11 @@ class $modify(RLProfilePage, ProfilePage) {
             int m_points = 0;
             int m_planets = 0;
             int m_stars = 0;
+
+            utils::web::WebTask profileTask;
+            ~Fields() {
+                  profileTask.cancel();
+            }
       };
 
       CCMenu* createStatEntry(
@@ -420,10 +425,10 @@ class $modify(RLProfilePage, ProfilePage) {
             auto postReq = web::WebRequest();
             postReq.bodyJSON(jsonBody);
 
-            auto postTask = postReq.post("https://gdrate.arcticwoof.xyz/profile");
+            m_fields->profileTask = postReq.post("https://gdrate.arcticwoof.xyz/profile");
 
             Ref<RLProfilePage> pageRef = this;
-            postTask.listen([pageRef, accountId](web::WebResponse* response) {
+            m_fields->profileTask.listen([pageRef, accountId](web::WebResponse* response) {
                   if (!pageRef) {
                         log::warn("skipping profile data update");
                         return;

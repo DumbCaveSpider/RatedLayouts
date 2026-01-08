@@ -301,7 +301,8 @@ bool RLEventLayouts::setup() {
       // Fetch event info from server
       {
             Ref<RLEventLayouts> self = this;
-            web::WebRequest().get("https://gdrate.arcticwoof.xyz/getEvent").listen([self](web::WebResponse* res) {
+            self->m_eventTask = web::WebRequest().get("https://gdrate.arcticwoof.xyz/getEvent");
+            self->m_eventTask.listen([self](web::WebResponse* res) {
                   if (!self) return;
                   if (!res || !res->ok()) {
                         Notification::create("Failed to fetch event info", NotificationIcon::Error)->show();

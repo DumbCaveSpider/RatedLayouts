@@ -23,5 +23,9 @@ class RLReportPopup : public geode::Popup<> {
       CCMenuItemToggler* m_decoratedToggle = nullptr;
 
       CCMenu* m_toggleMenu = nullptr;
-      geode::TextInput* m_reasonInput = nullptr; 
+      geode::TextInput* m_reasonInput = nullptr;
+      utils::web::WebTask m_reportTask;
+      ~RLReportPopup() {
+            m_reportTask.cancel();
+      }
 };

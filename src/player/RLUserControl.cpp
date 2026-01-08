@@ -85,10 +85,10 @@ bool RLUserControl::setup() {
 
             auto postReq = web::WebRequest();
             postReq.bodyJSON(jsonBody);
-            auto postTask = postReq.post("https://gdrate.arcticwoof.xyz/profile");
+            m_profileTask = postReq.post("https://gdrate.arcticwoof.xyz/profile");
 
             Ref<RLUserControl> self = this;
-            postTask.listen([self](web::WebResponse* response) {
+            m_profileTask.listen([self](web::WebResponse* response) {
                   if (!self) return;  // popup destroyed or otherwise invalid
 
                   if (!response->ok()) {
@@ -235,10 +235,10 @@ void RLUserControl::applySingleOption(const std::string& key, bool value) {
 
       auto postReq = web::WebRequest();
       postReq.bodyJSON(jsonBody);
-      auto postTask = postReq.post("https://gdrate.arcticwoof.xyz/setUser");
+      m_setUserTask = postReq.post("https://gdrate.arcticwoof.xyz/setUser");
 
       Ref<RLUserControl> self = this;
-      postTask.listen([self, upopup, key, value](web::WebResponse* response) {
+      m_setUserTask.listen([self, key, value, upopup](web::WebResponse* response) {
             if (!self || !upopup) return;
             // re-enable buttons
             self->setOptionEnabled(key, true);
