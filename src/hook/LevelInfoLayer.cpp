@@ -679,6 +679,15 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                         if (epicFeaturedCoin) epicFeaturedCoin->removeFromParent();
                   }
             }
+
+            // delayed reposition to ensure proper star label placement after frame updates
+            // ts is stupid cuz of the levelUpdate function shenanigans
+            auto delayAction = CCDelayTime::create(0.01f);
+            auto callFunc = CCCallFunc::create(
+                layerRef, callfunc_selector(RLLevelInfoLayer::repositionRLStars));
+            auto sequence = CCSequence::create(delayAction, callFunc, nullptr);
+            layerRef->runAction(sequence);
+            log::debug("repositionRLStars callback scheduled");
       }
 
       void processLevelUpdateWithDifficulty(const matjson::Value& json,
