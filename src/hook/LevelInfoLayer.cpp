@@ -362,9 +362,11 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   int attemptTime = 0;
                   int jumps = 0;
                   int clicks = 0;
+                  bool isPlat = false;
                   if (layerRef && layerRef->m_level) {
                         attempts = layerRef->m_level->m_attempts;
-                        attemptTime = layerRef->m_level->m_attemptTime;
+                        isPlat = layerRef->m_level->isPlatformer();
+                        attemptTime = isPlat ? (layerRef->m_level->m_bestTime / 1000) : layerRef->m_level->m_attemptTime;
                         jumps = layerRef->m_level->m_jumps;
                         clicks = layerRef->m_level->m_clicks;
                   }
@@ -379,11 +381,6 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   jsonBody["attemptTime"] = attemptTime;
                   jsonBody["jumps"] = jumps;
                   jsonBody["clicks"] = clicks;
-
-                  bool isPlat = false;
-                  if (layerRef && layerRef->m_level) {
-                        isPlat = layerRef->m_level->isPlatformer();
-                  }
                   jsonBody["isPlat"] = isPlat;
 
                   auto submitReq = web::WebRequest();

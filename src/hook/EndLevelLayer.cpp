@@ -83,8 +83,8 @@ class $modify(EndLevelLayer) {
                   if (auto playLayer = PlayLayer::get()) {
                         if (playLayer->m_level) {
                               attempts = playLayer->m_level->m_attempts;
-                              attemptTime = playLayer->m_level->m_attemptTime;
                               isPlat = playLayer->m_level->isPlatformer();
+                              attemptTime = isPlat ? (playLayer->m_level->m_bestTime / 1000) : playLayer->m_level->m_attemptTime;
                               jumps = playLayer->m_level->m_jumps;
                               clicks = playLayer->m_level->m_clicks;
                         }

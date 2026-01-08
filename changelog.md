@@ -17,12 +17,13 @@
 - Community Vote will now always show on Rated layouts instead of just suggested layouts.
 - Event Layouts are now more responsive when pressing the play button
 - Fixed issue where submitting a vote with no score defaulted to 1. It should not be included in the vote if empty.
-- Fixed issue where the Leaderboard tabs is misaligned on smaller screens.
-- Fixed issue where the Leaderboard tabs is transparent when selected.
+- Fixed issue where the Leaderboard tabs are misaligned on smaller screens.
+- Fixed issue where the Leaderboard tabs are transparent when selected.
 - Fixed issue where the game crashes when the web requests finishes but the layer is already destroyed.
 - Fixed issue when refreshing or liking a rated layout level, the difficulty sprites in the profile page isn't updated correctly.
+- Fixed issue where the time completion for platformer rated layouts isn't showing the correct time.
 
-Thanks to [delivel-tech](https://github.com/delivel-tech) & [iAndyHD3](https://github.com/iAndyHD3) for this update!
+_Thanks to [delivel-tech](https://github.com/delivel-tech) & [iAndyHD3](https://github.com/iAndyHD3) for this update and fixes!_
 
 # v0.3.4-beta.2
 

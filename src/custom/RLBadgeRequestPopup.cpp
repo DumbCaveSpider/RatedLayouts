@@ -25,7 +25,7 @@ bool RLBadgeRequestPopup::setup() {
       // info text
       auto infoText = MDTextArea::create(
           "Enter your <co>Discord Username (not display name)</c> that is linked to your <cp>Ko-fi account</c> to receieve a <cp>Layout Supporter Badge</c>.\n\n"
-          "Make sure that you have already <cg>linked</c> your <cb>Discord Account</c> through <cp>Ko-fi.</c> beforehand!\n\n"
+          "Make sure that you got the <cd>Rated Layouts Supporter Membership</c> and have already <cg>linked</c> your <cb>Discord Account</c> through <cp>Ko-fi.</c> beforehand!\n\n"
           "### If you encounter any <cr>issue</c> during this process, please contact <cf>ArcticWoof</c> on <cb>Discord</c>.",
           {cs.width - 40.f, 100.f});
       infoText->setPosition({cs.width / 2.f, cs.height - 120.f});
