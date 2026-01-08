@@ -15,13 +15,10 @@ class $modify(GJGarageLayer) {
             int storedStars = 0;
             int storedPlanets = 0;
             utils::web::WebTask profileTask;
-
+            ~Fields() {
+                  profileTask.cancel();
+            }
       };
-
-      void onBack(CCObject* sender) {
-            m_fields->profileTask.cancel();
-            GJGarageLayer::onBack(sender);
-      }
 
       bool init() {
             if (!GJGarageLayer::init())
