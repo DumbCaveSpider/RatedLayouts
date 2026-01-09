@@ -98,7 +98,7 @@ class $modify(EndLevelLayer) {
                         log::debug("Level {} is not suggested; updating end-level coin visuals", levelId);
                         endLayerRef->m_coinsVerified = true;  // always show its verified so it shows that white coins
                         removeUITint(endLayerRef);
-                        auto blueTex = CCTextureCache::sharedTextureCache()->addImage("RL_BlueCoin1.png"_spr, false);
+                        auto blueTex = CCTextureCache::sharedTextureCache()->addImage("RL_BlueCoinUI.png"_spr, false);
                         auto blueFrame = CCSpriteFrame::createWithTexture(blueTex, {{0, 0}, blueTex->getContentSize()});
                         auto emptyTex = CCTextureCache::sharedTextureCache()->addImage("RL_BlueCoinEmpty1.png"_spr, false);
                         auto emptyFrame = CCSpriteFrame::createWithTexture(emptyTex, {{0, 0}, emptyTex->getContentSize()});

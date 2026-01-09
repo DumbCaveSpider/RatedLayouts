@@ -342,7 +342,7 @@ class $modify(LevelCell) {
                                     }
 
                                     if (m_compactView) {
-                                          coinSprite->setScale(0.5f);
+                                          coinSprite->setScale(0.4f);
                                     }
                               };
 
