@@ -1,3 +1,8 @@
+# v0.3.6-beta.1
+
+- **Added Blue Coins!** Thanks to [Darkore](user:3595559) for the Blue Coin texture design! You can now collect Blue Coins by collecting them in the Rated Layouts levels. _(Be sure to re-enter your previously beaten levels to collect Blue Coins if you have played Rated Layouts before this update!)_
+- Fixed issue where liking/refreshing level in level info will set the difficulty sprite incorrectly especially on any levels that isn't rated layouts.
+
 # v0.3.5-beta.1
 
 - **Profile Stats Changed!** The Rated layouts stats are now on a seperate section in the profile page. Click the new Planet Button in the profile page to view your Rated Layouts stats!

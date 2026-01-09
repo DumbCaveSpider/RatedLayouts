@@ -3,6 +3,32 @@
 
 using namespace geode::prelude;
 
+// remove UI tint from end-level coin sprites/backgrounds and animated coins
+static void removeUITint(Ref<EndLevelLayer> layer) {
+      if (!layer || !layer->m_mainLayer) return;
+
+      for (int i = 1; i <= 3; ++i) {
+            auto spriteNode = layer->m_mainLayer->getChildByID(fmt::format("coin-{}-sprite", i));
+            auto bgNode = layer->m_mainLayer->getChildByID(fmt::format("coin-{}-background", i));
+            if (spriteNode) {
+                  if (auto cs = typeinfo_cast<CCSprite*>(spriteNode)) {
+                        cs->setColor(ccWHITE);
+                  }
+            }
+            if (bgNode) {
+                  if (auto bs = typeinfo_cast<CCSprite*>(bgNode)) {
+                        bs->setColor(ccWHITE);
+                  }
+            }
+      }
+
+      if (layer->m_coinsToAnimate) {
+            for (auto spr : CCArrayExt<CCSprite>(layer->m_coinsToAnimate)) {
+                  if (spr) spr->setColor(ccWHITE);
+            }
+      }
+}
+
 class $modify(EndLevelLayer) {
       void customSetup() override {
             EndLevelLayer::customSetup();  // call original method cuz if not then
@@ -65,6 +91,43 @@ class $modify(EndLevelLayer) {
                   int difficulty = json["difficulty"].asInt().unwrapOrDefault();
 
                   log::debug("Difficulty value: {}", difficulty);
+
+                  // If level is not suggested, update end-level coin visuals
+                  bool isSuggested = json["isSuggested"].asBool().unwrapOrDefault();
+                  if (!isSuggested) {
+                        log::debug("Level {} is not suggested; updating end-level coin visuals", levelId);
+                        endLayerRef->m_coinsVerified = true;  // always show its verified so it shows that white coins
+                        removeUITint(endLayerRef);
+                        auto blueTex = CCTextureCache::sharedTextureCache()->addImage("RL_BlueCoin1.png"_spr, false);
+                        auto blueFrame = CCSpriteFrame::createWithTexture(blueTex, {{0, 0}, blueTex->getContentSize()});
+                        auto emptyTex = CCTextureCache::sharedTextureCache()->addImage("RL_BlueCoinEmpty1.png"_spr, false);
+                        auto emptyFrame = CCSpriteFrame::createWithTexture(emptyTex, {{0, 0}, emptyTex->getContentSize()});
+
+                        if (endLayerRef && endLayerRef->m_mainLayer) {
+                              for (int i = 1; i <= 3; ++i) {
+                                    auto spriteNode = endLayerRef->m_mainLayer->getChildByID(fmt::format("coin-{}-sprite", i));
+                                    auto bgNode = endLayerRef->m_mainLayer->getChildByID(fmt::format("coin-{}-background", i));
+                                    if (spriteNode) {
+                                          if (auto cs = typeinfo_cast<CCSprite*>(spriteNode)) {
+                                                cs->setDisplayFrame(blueFrame);
+                                                cs->setColor(ccWHITE);
+                                          }
+                                    }
+                                    if (bgNode) {
+                                          if (auto bs = typeinfo_cast<CCSprite*>(bgNode)) {
+                                                bs->setDisplayFrame(emptyFrame);
+                                          }
+                                    }
+                              }
+                        }
+
+                        // Set animate coins to white
+                        if (endLayerRef->m_coinsToAnimate) {
+                              for (auto spr : CCArrayExt<CCSprite>(endLayerRef->m_coinsToAnimate)) {
+                                    if (spr) spr->setColor(ccWHITE);
+                              }
+                        }
+                  }
 
                   // Reward stars based on difficulty value
                   int starReward = std::max(0, difficulty);

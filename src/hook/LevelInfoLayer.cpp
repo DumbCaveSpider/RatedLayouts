@@ -677,6 +677,43 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   }
             }
 
+            // Replace coin sprites if level is not suggested
+            bool isSuggested = json["isSuggested"].asBool().unwrapOrDefault();
+            if (!isSuggested) {
+                  auto coinIcon1 = layerRef->getChildByID("coin-icon-1");
+                  auto coinIcon2 = layerRef->getChildByID("coin-icon-2");
+                  auto coinIcon3 = layerRef->getChildByID("coin-icon-3");
+
+                  auto replaceCoinSprite = [layerRef](CCNode* coinNode, int coinIndex) {
+                        if (!coinNode || !layerRef || !layerRef->m_level) return;
+                        auto coinSprite = typeinfo_cast<CCSprite*>(coinNode);
+                        if (!coinSprite) return;
+
+                        // Check if coin exists/collected using getCoinKey
+                        std::string coinKey = layerRef->m_level->getCoinKey(coinIndex);
+                        log::debug("Checking coin collected status for coin {}: key={}", coinIndex, coinKey);
+                        bool coinCollected = GameStatsManager::sharedState()->hasPendingUserCoin(coinKey.c_str());
+                        auto blueCoinTexture = CCTextureCache::sharedTextureCache()->addImage("RL_BlueCoin1.png"_spr, false);
+                        auto displayFrame = CCSpriteFrame::createWithTexture(blueCoinTexture, {{0, 0}, blueCoinTexture->getContentSize()});
+
+                        if (coinCollected) {
+                              coinSprite->setDisplayFrame(displayFrame);
+                              coinSprite->setColor({255, 255, 255});
+                              coinSprite->setScale(0.3f);
+                              log::debug("Replaced coin {} sprite with RL_BlueCoin1.png", coinIndex);
+                        } else {
+                              coinSprite->setDisplayFrame(displayFrame);
+                              coinSprite->setColor({120, 120, 120});
+                              coinSprite->setScale(0.3f);
+                              log::debug("Darkened coin {} because not collected", coinIndex);
+                        }
+                  };
+
+                  replaceCoinSprite(coinIcon1, 1);
+                  replaceCoinSprite(coinIcon2, 2);
+                  replaceCoinSprite(coinIcon3, 3);
+            }
+
             // delayed reposition to ensure proper star label placement after frame updates
             // ts is stupid cuz of the levelUpdate function shenanigans
             auto delayAction = CCDelayTime::create(0.01f);

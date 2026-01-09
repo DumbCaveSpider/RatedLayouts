@@ -278,30 +278,97 @@ class $modify(LevelCell) {
                         }
                   }
 
-                  // if not compacted and has at least a coin
+                  // handle coin icons (if compact view, fetch coin nodes directly from m_mainLayer)
                   auto coinContainer = m_mainLayer->getChildByID("difficulty-container");
-                  if (coinContainer && !m_compactView) {
-                        auto coinIcon1 = coinContainer->getChildByID("coin-icon-1");
-                        auto coinIcon2 = coinContainer->getChildByID("coin-icon-2");
-                        auto coinIcon3 = coinContainer->getChildByID("coin-icon-3");
-                        if (coinIcon1 || coinIcon2 || coinIcon3) {
+                  if (coinContainer) {
+                        CCNode* coinIcon1 = nullptr;
+                        CCNode* coinIcon2 = nullptr;
+                        CCNode* coinIcon3 = nullptr;
+
+                        if (!m_compactView) {
+                              coinIcon1 = coinContainer->getChildByID("coin-icon-1");
+                              coinIcon2 = coinContainer->getChildByID("coin-icon-2");
+                              coinIcon3 = coinContainer->getChildByID("coin-icon-3");
+                        } else {
+                              // compact view: coin icons live on the main layer
+                              coinIcon1 = m_mainLayer->getChildByID("coin-icon-1");
+                              coinIcon2 = m_mainLayer->getChildByID("coin-icon-2");
+                              coinIcon3 = m_mainLayer->getChildByID("coin-icon-3");
+                        }
+
+                        // push difficulty sprite down if coins exist in non-compact view
+                        if ((coinIcon1 || coinIcon2 || coinIcon3) && !m_compactView) {
                               difficultySprite->setPositionY(difficultySprite->getPositionY() + 10);
                         }
+
+                        // Replace or darken coins when level is not suggested
+                        bool isSuggested = json["isSuggested"].asBool().unwrapOrDefault();
+                        if (!isSuggested) {
+                              // try to obtain a GJGameLevel for coin keys
+                              GJGameLevel* levelPtr = this->m_level;
+                              if (!levelPtr) {
+                                    auto glm = GameLevelManager::sharedState();
+                                    auto stored = glm->getStoredOnlineLevels(fmt::format("{}", levelId).c_str());
+                                    if (stored && stored->count() > 0) {
+                                          levelPtr = static_cast<GJGameLevel*>(stored->objectAtIndex(0));
+                                    }
+                              }
+
+                              auto replaceCoinSprite = [levelPtr, this](CCNode* coinNode, int coinIndex) {
+                                    auto blueCoinTexture = CCTextureCache::sharedTextureCache()->addImage("RL_BlueCoin1.png"_spr, false);
+                                    auto displayFrame = CCSpriteFrame::createWithTexture(blueCoinTexture, {{0, 0}, blueCoinTexture->getContentSize()});
+                                    if (!coinNode) return;
+                                    auto coinSprite = typeinfo_cast<CCSprite*>(coinNode);
+                                    if (!coinSprite) return;
+
+                                    bool coinCollected = false;
+                                    if (levelPtr) {
+                                          std::string coinKey = levelPtr->getCoinKey(coinIndex);
+                                          log::debug("LevelCell: checking coin {} key={}", coinIndex, coinKey);
+                                          coinCollected = GameStatsManager::sharedState()->hasPendingUserCoin(coinKey.c_str());
+                                    }
+
+                                    if (coinCollected) {
+                                          coinSprite->setDisplayFrame(displayFrame);
+                                          coinSprite->setColor({255, 255, 255});
+                                          coinSprite->setOpacity(255);
+                                          coinSprite->setScale(0.3f);
+                                          log::debug("LevelCell: replaced coin {} with blue sprite", coinIndex);
+                                    } else {
+                                          coinSprite->setDisplayFrame(displayFrame);
+                                          coinSprite->setColor({120, 120, 120});
+                                          coinSprite->setScale(0.3f);
+                                          log::debug("LevelCell: darkened coin {} (not present)", coinIndex);
+                                    }
+
+                                    if (m_compactView) {
+                                          coinSprite->setScale(0.25f);
+                                    }
+                              };
+
+                              replaceCoinSprite(coinIcon1, 1);
+                              replaceCoinSprite(coinIcon2, 2);
+                              replaceCoinSprite(coinIcon3, 3);
+                        }
+
                         // doing the dumb coin move
-                        if (coinIcon1) {
-                              coinIcon1->setPositionY(coinIcon1->getPositionY() - 5);
-                        }
-                        if (coinIcon2) {
-                              coinIcon2->setPositionY(coinIcon2->getPositionY() - 5);
-                        }
-                        if (coinIcon3) {
-                              coinIcon3->setPositionY(coinIcon3->getPositionY() - 5);
+                        if (!m_compactView) {
+                              if (coinIcon1) {
+                                    coinIcon1->setPositionY(coinIcon1->getPositionY() - 5);
+                              }
+                              if (coinIcon2) {
+                                    coinIcon2->setPositionY(coinIcon2->getPositionY() - 5);
+                              }
+                              if (coinIcon3) {
+                                    coinIcon3->setPositionY(coinIcon3->getPositionY() - 5);
+                              }
                         }
                   }
             }
       }
 
-      void loadFromLevel(GJGameLevel* level) {
+      void
+      loadFromLevel(GJGameLevel* level) {
             LevelCell::loadFromLevel(level);
 
             // no local levels
