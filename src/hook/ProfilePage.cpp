@@ -371,8 +371,24 @@ class $modify(RLProfilePage, ProfilePage) {
                   page->m_fields->role = role;
                   page->m_fields->isSupporter = isSupporter;
 
-                  if (page->m_ownProfile) {
+                  if (page->m_ownProfile && page->m_fields->role == 0) {
                         Mod::get()->setSavedValue("role", page->m_fields->role);
+                        log::info("removing layout mod access");
+                  }
+
+                  if (page->m_fields->role > 1 && !page->getChildByIDRecursive("rl-user-manage-btn")) {
+                        auto userManageSpr = CCSprite::create("RL_badgeAdmin01.png"_spr);
+                        auto rlStatsSpr = EditorButtonSprite::create(userManageSpr, EditorBaseColor::Gray, EditorBaseSize::Normal);
+
+                        auto userManageButton = CCMenuItemSpriteExtra::create(
+                            rlStatsSpr,
+                            pageRef,
+                            menu_selector(RLProfilePage::onUserManage));
+                        userManageButton->setID("rl-user-manage-btn");
+                        if (auto leftMenu = pageRef->getChildByIDRecursive("left-menu")) {
+                              leftMenu->addChild(userManageButton);
+                              leftMenu->updateLayout();
+                        }
                   }
 
                   page->updateStatLabel("rl-stars-label", GameToolbox::pointsToString(page->m_fields->m_stars));
@@ -418,7 +434,8 @@ class $modify(RLProfilePage, ProfilePage) {
             });
       }
 
-      void onUserManage(CCObject* sender) {
+      void
+      onUserManage(CCObject* sender) {
             int accountId = m_fields->accountId;
             auto userControl = RLUserControl::create(accountId);
             userControl->show();

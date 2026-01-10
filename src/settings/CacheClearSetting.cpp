@@ -59,7 +59,7 @@ class CacheClearSettingNodeV3 : public SettingNodeV3 {
       void onButton(CCObject*) {
             geode::createQuickPopup(
                 "Delete Cached Data",
-                "Are you sure you want to <cr>delete</c> all cached <cl>Rated Layouts</c> data?\n <cy>This action cannot be undone.</c>",
+                "Are you sure you want to <cr>delete/clear</c> all cached <cl>Rated Layouts</c> level ratings and user roles data?\n<cg>This does not reset/delete your account stats!</c>\n<cy>This action cannot be undone.</c>",
                 "No",
                 "Delete",
                 [this](auto, bool yes) {

@@ -419,7 +419,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                       submitReq.post("https://gdrate.arcticwoof.xyz/submitComplete");
 
                   m_fields->m_submitTask.listen([layerRef, difficulty, levelId,
-                                     difficultySprite](web::WebResponse* submitResponse) {
+                                                 difficultySprite](web::WebResponse* submitResponse) {
                         log::info("Received submitComplete response for level ID: {}", levelId);
 
                         if (!layerRef) {
