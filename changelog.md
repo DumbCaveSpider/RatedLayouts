@@ -2,10 +2,11 @@
 
 - **Added Blue Coins!** Thanks to [Darkore](user:3595559) for the Blue Coin texture design! You can now collect Blue Coins by collecting them in the Rated Layouts levels. _(Be sure to re-enter your previously beaten levels to collect Blue Coins if you have played Rated Layouts before this update!)_
 - Fixed issue where liking/refreshing level in level info will set the difficulty sprite incorrectly especially on any levels that isn't rated layouts.
+- Fixed the web request crash... again
 
 # v0.3.5-beta.1
 
-- **Profile Stats Changed!** The Rated layouts stats are now on a seperate section in the profile page. Click the new Planet Button in the profile page to view your Rated Layouts stats!
+- **Profile Stats Changed!** The Rated layouts stats are now on a separate section in the profile page. Click the new Planet Button in the profile page to view your Rated Layouts stats!
 - **Added Gauntlet Select Levels!** You can now select and play Layout Gauntlet levels from the Gauntlet Select Layer.
 - **Added Report Rated Layouts!** You can now report Rated Layouts that violates the Rated Layouts guidelines directly from the Level Info Layer.
 - **New Mod Title!** Thanks to [KrazyGFX](https://x.com/Krazy_GFX/status/2006175258361905195?s=20) for the design

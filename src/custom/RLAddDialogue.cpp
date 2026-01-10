@@ -74,7 +74,8 @@ void RLAddDialogue::onSubmit(CCObject* sender) {
       auto req = web::WebRequest();
       req.bodyJSON(body);
       Ref<RLAddDialogue> self = this;
-      req.post("https://gdrate.arcticwoof.xyz/setDialogue").listen([self, upopup](web::WebResponse* res) {
+      self->m_setDialogueTask = req.post("https://gdrate.arcticwoof.xyz/setDialogue");
+      self->m_setDialogueTask.listen([self, upopup](web::WebResponse* res) {
             if (!self) return;
             if (!res || !res->ok()) {
                   upopup->showFailMessage("Failed to submit dialogue!");

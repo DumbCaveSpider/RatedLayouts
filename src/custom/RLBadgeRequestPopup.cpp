@@ -60,7 +60,8 @@ void RLBadgeRequestPopup::onSubmit(CCObject* sender) {
       auto req = web::WebRequest();
       req.bodyJSON(body);
       Ref<RLBadgeRequestPopup> self = this;
-      req.post("https://gdrate.arcticwoof.xyz/getSupporter").listen([self, upopup](web::WebResponse* res) {
+      self->m_getSupporterTask = req.post("https://gdrate.arcticwoof.xyz/getSupporter");
+      self->m_getSupporterTask.listen([self, upopup](web::WebResponse* res) {
             if (!self) return;
             if (!res) {
                   upopup->showFailMessage("Discord Username doesn't exists.");

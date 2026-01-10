@@ -35,4 +35,11 @@ class RLCommunityVotePopup : public geode::Popup<> {
 
       void onToggleAll(CCObject* sender);
       void refreshFromServer();
+
+      utils::web::WebTask m_getVoteTask;
+      utils::web::WebTask m_submitVoteTask;
+      ~RLCommunityVotePopup() {
+            m_getVoteTask.cancel();
+            m_submitVoteTask.cancel();
+      }
 };

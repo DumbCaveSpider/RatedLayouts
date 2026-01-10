@@ -6,6 +6,7 @@
 using namespace geode::prelude;
 
 class $modify(RLLInfoLayer, InfoLayer) {
+      struct Fields { utils::web::WebTask m_fetchTask; ~Fields() { m_fetchTask.cancel(); } };
       bool init(GJGameLevel* level, GJUserScore* score, GJLevelList* list) {
             if (!InfoLayer::init(level, score, list))
                   return false;
@@ -15,10 +16,10 @@ class $modify(RLLInfoLayer, InfoLayer) {
                   int levelId = level->m_levelID;
 
                   auto getReq = web::WebRequest();
-                  auto getTask = getReq.get(fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId));
+                  m_fields->m_fetchTask = getReq.get(fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId));
 
                   Ref<RLLInfoLayer> layerRef = this;
-                  getTask.listen([layerRef](web::WebResponse* response) {
+                  m_fields->m_fetchTask.listen([layerRef](web::WebResponse* response) {
                         log::info("Received /fetch response for level ID: {}",
                                   layerRef && layerRef->m_level ? layerRef->m_level->m_levelID : 0);
 

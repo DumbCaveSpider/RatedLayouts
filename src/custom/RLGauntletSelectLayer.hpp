@@ -33,4 +33,6 @@ class RLGauntletSelectLayer : public CCLayer {
       CCMenuItemSpriteExtra* m_nextPageBtn = nullptr;
       CCLabelBMFont* m_pageLabel = nullptr;
       std::function<void(web::WebResponse*)> m_gauntletsListener;
+      utils::web::WebTask m_gauntletsTask;
+      ~RLGauntletSelectLayer() { m_gauntletsTask.cancel(); }
 };

@@ -67,4 +67,7 @@ class RLSearchLayer : public CCLayer {
       void onUsernameToggle(CCObject* sender);
       void onDemonDifficultyButton(CCObject* sender);
       void onDifficultyButton(CCObject* sender);
+
+      utils::web::WebTask m_searchTask;
+      ~RLSearchLayer() { m_searchTask.cancel(); }
 };

@@ -203,7 +203,8 @@ bool RLDifficultyTotalPopup::setup() {
             req.param("isPlat", "1");
       }
       Ref<RLDifficultyTotalPopup> self = this;
-      req.get("https://gdrate.arcticwoof.xyz/getDifficulty").listen([self](web::WebResponse* res) {
+      m_difficultyTask = req.get("https://gdrate.arcticwoof.xyz/getDifficulty");
+      m_difficultyTask.listen([self](web::WebResponse* res) {
             if (!self) return;
             if (!res || !res->ok()) {
                   if (self->m_spinner) {

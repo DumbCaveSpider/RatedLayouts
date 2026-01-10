@@ -14,4 +14,8 @@ class RLBadgeRequestPopup : public geode::Popup<> {
       void onSubmit(CCObject* sender);
 
       TextInput* m_discordInput = nullptr;
+      utils::web::WebTask m_getSupporterTask;
+      ~RLBadgeRequestPopup() {
+            m_getSupporterTask.cancel();
+      }
 };

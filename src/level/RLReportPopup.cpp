@@ -186,7 +186,8 @@ void RLReportPopup::onSubmit(CCObject* sender) {
                 auto req = web::WebRequest();
                 req.bodyJSON(body);
                 Ref<RLReportPopup> self = this;
-                req.post("https://gdrate.arcticwoof.xyz/setReport").listen([self, uploadPopup](web::WebResponse* res) {
+                self->m_reportTask = req.post("https://gdrate.arcticwoof.xyz/setReport");
+                self->m_reportTask.listen([self, uploadPopup](web::WebResponse* res) {
                       if (!self) return;
                       if (!res || !res->ok()) {
                             uploadPopup->showFailMessage("Failed to submit report");

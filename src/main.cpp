@@ -5,6 +5,7 @@
 using namespace geode::prelude;
 
 class $modify(SupportLayer) {
+      struct Fields { utils::web::WebTask m_getAccessTask; ~Fields() { m_getAccessTask.cancel(); } };
       void onRequestAccess(CCObject* sender) {  // i assume that no one will ever get gd mod xddd
             auto popup = UploadActionPopup::create(nullptr, "Requesting Access...");
             popup->show();
@@ -41,12 +42,12 @@ class $modify(SupportLayer) {
             // verify the user's role
             auto postReq = web::WebRequest();
             postReq.bodyJSON(jsonBody);
-            auto postTask = postReq.post("https://gdrate.arcticwoof.xyz/getAccess");
+            m_fields->m_getAccessTask = postReq.post("https://gdrate.arcticwoof.xyz/getAccess");
 
             // handle the response
             Ref<SupportLayer> self = this;
             Ref<UploadActionPopup> upopup = popup;
-            postTask.listen([self, upopup](web::WebResponse* response) {
+            m_fields->m_getAccessTask.listen([self, upopup](web::WebResponse* response) {
                   if (!self || !upopup) return;
                   log::info("Received response from server");
 

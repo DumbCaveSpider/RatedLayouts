@@ -68,7 +68,9 @@ class RLEventLayouts : public geode::Popup<> {
       CCLayer* m_eventMenu = nullptr;
       bool m_setupFinished = false;
       utils::web::WebTask m_eventTask;
+      utils::web::WebTask m_safeListTask;
       ~RLEventLayouts() {
             m_eventTask.cancel();
+            m_safeListTask.cancel();
       }
 };

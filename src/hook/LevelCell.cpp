@@ -61,6 +61,11 @@ static void cacheLevelData(int levelId, const matjson::Value& data) {
 }
 
 class $modify(LevelCell) {
+      struct Fields {
+            utils::web::WebTask m_fetchTask;
+            ~Fields() { m_fetchTask.cancel(); }
+      };
+
       void loadCustomLevelCell(int levelId) {
             // load from cache first
             auto cachedData = getCachedLevel(levelId);
@@ -79,12 +84,12 @@ class $modify(LevelCell) {
             log::debug("Fetching rating data for level cell ID: {}", levelId);
 
             auto getReq = web::WebRequest();
-            auto getTask = getReq.get(
+            m_fields->m_fetchTask = getReq.get(
                 fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId));
 
             Ref<LevelCell> cellRef = this;
 
-            getTask.listen([cellRef, levelId, this](web::WebResponse* response) {
+            m_fields->m_fetchTask.listen([cellRef, levelId, this](web::WebResponse* response) {
                   log::debug("Received rating response from server for level cell ID: {}",
                              levelId);
 

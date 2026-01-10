@@ -113,7 +113,8 @@ void RLGauntletSelectLayer::fetchGauntlets() {
                   Notification::create("Failed to fetch gauntlets", NotificationIcon::Error)->show();
             }
       };
-      request.get("https://gdrate.arcticwoof.xyz/getGauntlets").listen(m_gauntletsListener);
+      m_gauntletsTask = request.get("https://gdrate.arcticwoof.xyz/getGauntlets");
+      m_gauntletsTask.listen(m_gauntletsListener);
 }
 
 void RLGauntletSelectLayer::onGauntletsFetched(matjson::Value const& json) {

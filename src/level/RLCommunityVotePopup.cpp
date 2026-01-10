@@ -81,7 +81,8 @@ void RLCommunityVotePopup::onSubmit(CCObject*) {
                       auto req = web::WebRequest();
                       req.bodyJSON(body);
                       Ref<RLCommunityVotePopup> self = this;
-                      req.post("https://gdrate.arcticwoof.xyz/setSuggestScore").listen([self, gameplayVote, originalityVote, difficultyVote](web::WebResponse* res) {
+                      self->m_submitVoteTask = req.post("https://gdrate.arcticwoof.xyz/setSuggestScore");
+                      self->m_submitVoteTask.listen([self, gameplayVote, originalityVote, difficultyVote](web::WebResponse* res) {
                             if (!self) return;
                             if (!res || !res->ok()) {
                                   Notification::create("Failed to submit vote", NotificationIcon::Error)->show();
@@ -286,7 +287,8 @@ void RLCommunityVotePopup::refreshFromServer() {
 
       web::WebRequest voteReq;
       voteReq.bodyJSON(voteBody);
-      voteReq.post("https://gdrate.arcticwoof.xyz/getVote").listen([self](web::WebResponse* vres) {
+      self->m_getVoteTask = voteReq.post("https://gdrate.arcticwoof.xyz/getVote");
+      self->m_getVoteTask.listen([self](web::WebResponse* vres) {
             if (!self) return;
             if (!vres || !vres->ok()) {
                   return;

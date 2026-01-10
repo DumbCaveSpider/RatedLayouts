@@ -100,6 +100,14 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             float m_originalCoin1Y = 0.0f;
             float m_originalCoin2Y = 0.0f;
             float m_originalCoin3Y = 0.0f;
+            utils::web::WebTask m_fetchTask;
+            utils::web::WebTask m_submitTask;
+            utils::web::WebTask m_accessTask;
+            ~Fields() {
+                  m_fetchTask.cancel();
+                  m_submitTask.cancel();
+                  m_accessTask.cancel();
+            }
       };
 
       bool init(GJGameLevel* level, bool challenge) {
@@ -170,13 +178,13 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             }
 
             auto getReq = web::WebRequest();
-            auto getTask = getReq.get(
+            m_fields->m_fetchTask = getReq.get(
                 fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId));
 
             Ref<RLLevelInfoLayer> layerRef = this;
             auto difficultySprite = layerRef->getChildByID("difficulty-sprite");
 
-            getTask.listen([layerRef, difficultySprite](web::WebResponse* response) {
+            m_fields->m_fetchTask.listen([layerRef, difficultySprite](web::WebResponse* response) {
                   log::info("Received rating response from server");
 
                   if (!layerRef) {
@@ -407,10 +415,10 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
 
                   auto submitReq = web::WebRequest();
                   submitReq.bodyJSON(jsonBody);
-                  auto submitTask =
+                  m_fields->m_submitTask =
                       submitReq.post("https://gdrate.arcticwoof.xyz/submitComplete");
 
-                  submitTask.listen([layerRef, difficulty, levelId,
+                  m_fields->m_submitTask.listen([layerRef, difficulty, levelId,
                                      difficultySprite](web::WebResponse* submitResponse) {
                         log::info("Received submitComplete response for level ID: {}", levelId);
 
@@ -1166,12 +1174,12 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             // verify the user's role
             auto postReq = web::WebRequest();
             postReq.bodyJSON(jsonBody);
-            auto postTask = postReq.post("https://gdrate.arcticwoof.xyz/access");
+            m_fields->m_accessTask = postReq.post("https://gdrate.arcticwoof.xyz/access");
 
             Ref<RLLevelInfoLayer> layerRef = this;
 
             // handle the response
-            postTask.listen([layerRef](web::WebResponse* response) {
+            m_fields->m_accessTask.listen([layerRef](web::WebResponse* response) {
                   log::info("Received response from server");
 
                   if (!layerRef) {
@@ -1284,12 +1292,12 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   deleteLevelFromCache(levelId);  // clear cache to force fresh fetch
 
                   auto getReq = web::WebRequest();
-                  auto getTask = getReq.get(fmt::format(
+                  m_fields->m_fetchTask = getReq.get(fmt::format(
                       "https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId));
 
                   Ref<RLLevelInfoLayer> layerRef = this;
 
-                  getTask.listen([layerRef, levelId](web::WebResponse* response) {
+                  m_fields->m_fetchTask.listen([layerRef, levelId](web::WebResponse* response) {
                         log::info("Received updated rating data from server for level ID: {}",
                                   levelId);
 

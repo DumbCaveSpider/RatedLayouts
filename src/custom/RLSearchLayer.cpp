@@ -458,7 +458,8 @@ void RLSearchLayer::onSearchButton(CCObject* sender) {
       req.param("user", numToString(usernameParam));
 
       Ref<RLSearchLayer> self = this;
-      req.get("https://gdrate.arcticwoof.xyz/search").listen([self, menuItem](web::WebResponse* res) {
+      self->m_searchTask = req.get("https://gdrate.arcticwoof.xyz/search");
+      self->m_searchTask.listen([self, menuItem](web::WebResponse* res) {
             if (!self) return;
             if (!res || !res->ok()) {
                   Notification::create("Search request failed", NotificationIcon::Error)->show();

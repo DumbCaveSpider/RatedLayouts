@@ -104,9 +104,9 @@ void RLGauntletLevelsLayer::fetchLevelDetails(int gauntletId) {
       postData["id"] = gauntletId;
 
       request.bodyJSON(postData);
-      auto task = request.post("https://gdrate.arcticwoof.xyz/getLevelsGauntlets");
+      m_getLevelsTask = request.post("https://gdrate.arcticwoof.xyz/getLevelsGauntlets");
       Ref<RLGauntletLevelsLayer> self = this;
-      task.listen([self](web::WebResponse* response) {
+      m_getLevelsTask.listen([self](web::WebResponse* response) {
             if (!self) return;
             if (response->ok()) {
                   auto jsonRes = response->json();

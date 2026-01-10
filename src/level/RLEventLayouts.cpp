@@ -767,7 +767,8 @@ void RLEventLayouts::onSafeButton(CCObject* sender) {
       std::string url = std::string("https://gdrate.arcticwoof.xyz/getEvent?safe=") + typeStr;
 
       Ref<RLEventLayouts> self = this;
-      web::WebRequest().get(url).listen([self](web::WebResponse* res) {
+      self->m_safeListTask = web::WebRequest().get(url);
+      self->m_safeListTask.listen([self](web::WebResponse* res) {
             if (!self) return;
             if (!res || !res->ok()) {
                   Notification::create("Failed to fetch safe list", NotificationIcon::Error)->show();

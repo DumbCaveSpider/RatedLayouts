@@ -54,9 +54,17 @@ class $modify(RLProfilePage, ProfilePage) {
             int m_stars = 0;
             int m_coins = 0;
 
-            utils::web::WebTask profileTask;
+            utils::web::WebTask m_profileTask;
+            int m_profileForAccount = -1;
+            bool m_profileInFlight = false;
+
+            utils::web::WebTask m_accountLevelsTask;
+            int m_accountLevelsForAccount = -1;
+            bool m_accountLevelsInFlight = false;
+
             ~Fields() {
-                  profileTask.cancel();
+                  m_profileTask.cancel();
+                  m_accountLevelsTask.cancel();
             }
       };
 
@@ -440,10 +448,22 @@ class $modify(RLProfilePage, ProfilePage) {
             auto postReq = web::WebRequest();
             postReq.bodyJSON(jsonBody);
 
-            m_fields->profileTask = postReq.post("https://gdrate.arcticwoof.xyz/profile");
+            m_fields->m_profileTask.cancel();
+            if (m_fields->m_profileInFlight && m_fields->m_profileForAccount == accountId) {
+                  log::debug("Profile request already in-flight for account {}", accountId);
+                  return;
+            }
+            m_fields->m_profileInFlight = true;
+            m_fields->m_profileForAccount = accountId;
+
+            m_fields->m_profileTask = postReq.post("https://gdrate.arcticwoof.xyz/profile");
 
             Ref<RLProfilePage> pageRef = this;
-            m_fields->profileTask.listen([pageRef, accountId](web::WebResponse* response) {
+            m_fields->m_profileTask.listen([pageRef, accountId](web::WebResponse* response) {
+                  if (pageRef) {
+                        pageRef->m_fields->m_profileInFlight = false;
+                        pageRef->m_fields->m_profileForAccount = -1;
+                  }
                   if (!pageRef) {
                         log::warn("skipping profile data update");
                         return;
@@ -521,13 +541,26 @@ class $modify(RLProfilePage, ProfilePage) {
             int accountId = m_fields->accountId;
             log::info("Fetching account levels for account ID: {}", accountId);
 
-            auto task = web::WebRequest()
-                            .param("accountId", accountId)
-                            .get("https://gdrate.arcticwoof.xyz/getAccountLevels");
+            m_fields->m_accountLevelsTask.cancel();
+            if (m_fields->m_accountLevelsInFlight && m_fields->m_accountLevelsForAccount == accountId) {
+                  log::debug("Account levels request already in-flight for account {}", accountId);
+                  if (menuItem) menuItem->setEnabled(true);
+                  return;
+            }
+            m_fields->m_accountLevelsInFlight = true;
+            m_fields->m_accountLevelsForAccount = accountId;
+
+            m_fields->m_accountLevelsTask = web::WebRequest()
+                                                .param("accountId", accountId)
+                                                .get("https://gdrate.arcticwoof.xyz/getAccountLevels");
 
             Ref<RLProfilePage> pageRef = this;
 
-            task.listen([pageRef, menuItem](web::WebResponse* res) {
+            m_fields->m_accountLevelsTask.listen([pageRef, menuItem, accountId](web::WebResponse* res) {
+                  if (pageRef) {
+                        pageRef->m_fields->m_accountLevelsInFlight = false;
+                        pageRef->m_fields->m_accountLevelsForAccount = -1;
+                  }
                   if (!pageRef) return;
                   if (!res || !res->ok()) {
                         Notification::create("Failed to fetch account levels", NotificationIcon::Error)->show();

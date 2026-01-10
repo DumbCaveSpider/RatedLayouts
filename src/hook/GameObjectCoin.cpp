@@ -9,6 +9,8 @@ const int USER_COIN = 1329;
 
 // Replace coin visuals when GameObjects are set up
 class $modify(GameObject) {
+      struct Fields { utils::web::WebTask m_fetchTask; ~Fields() { m_fetchTask.cancel(); } };
+
       void customSetup() {
             GameObject::customSetup();
 
@@ -27,7 +29,8 @@ class $modify(GameObject) {
             // fetch level info from server; if isSuggested == true OR request fails, DO NOT apply blue-coin visuals
             auto url = fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId);
             Ref<GameObject> selfRef = this;
-            web::WebRequest().get(url).listen([selfRef, levelId](web::WebResponse* res) {
+            m_fields->m_fetchTask = web::WebRequest().get(url);
+            m_fields->m_fetchTask.listen([selfRef, levelId](web::WebResponse* res) {
                   if (!selfRef) return;
 
                   if (!res || !res->ok()) {
