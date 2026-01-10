@@ -225,8 +225,13 @@ class $modify(EndLevelLayer) {
                                   success, responseStars);
 
                         if (success) {
+                              // choose medium icon and rewards text depending on whether the level is a platformer
+                              std::string rewards = isPlat ? "Planets" : "Sparks";
+                              std::string medSprite = isPlat ? "RL_planetMed.png"_spr : "RL_starMed.png"_spr;
+
                               if (responseStars == 0 && responsePlanets == 0) {
                                     log::warn("No stars or planets rewarded, possibly already rewarded before");
+                                    Notification::create(rewards + " has already been claimed for this level!", CCSprite::create(medSprite.c_str()))->show();
                                     return;
                               }
                               int displayStars = isPlat ? (responsePlanets - starReward) : (responseStars - starReward);
@@ -237,9 +242,6 @@ class $modify(EndLevelLayer) {
                                     log::info("Display stars: {} - {} = {}", responseStars, starReward, displayStars);
                                     Mod::get()->setSavedValue<int>("stars", responseStars);
                               }
-
-                              // choose medium icon depending on whether the level is a platformer
-                              std::string medSprite = isPlat ? "RL_planetMed.png"_spr : "RL_starMed.png"_spr;
 
                               if (!endLayerRef || !endLayerRef->m_mainLayer) {
                                     log::warn("m_mainLayer is invalid");
@@ -334,7 +336,7 @@ class $modify(EndLevelLayer) {
                                     fakeCircleWave->setPosition(bigStarSprite->getPosition());
                                     endLayerRef->addChild(fakeCircleWave, 1);
                               }
-                        } else if (!success && responseStars == 0) {
+                        } else if (!success && (responseStars == 0 || responsePlanets == 0)) {
                               std::string rewards = isPlat ? "Planets" : "Sparks";
                               std::string medSprite = isPlat ? "RL_planetMed.png"_spr : "RL_starMed.png"_spr;
                               Notification::create(rewards + " has already been claimed for this level!", CCSprite::create(medSprite.c_str()))->show();
