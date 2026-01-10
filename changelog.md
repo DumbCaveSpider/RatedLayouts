@@ -1,8 +1,9 @@
 # v0.3.6-beta.1
 
-- **Added Blue Coins!** Thanks to [Darkore](user:3595559) for the Blue Coin texture design! You can now collect Blue Coins by collecting them in the Rated Layouts levels. _(Be sure to re-enter your previously beaten levels to collect Blue Coins if you have played Rated Layouts before this update!)_
-- Fixed issue where liking/refreshing level in level info will set the difficulty sprite incorrectly especially on any levels that isn't rated layouts.
-- Fixed the web request crash... again
+- **Added Blue Coins!** Thanks to [Darkore](user:3595559) for the Blue Coin texture design! You can now collect Blue Coins by collecting them in the Rated Layouts levels. <co>The Blue Coin sprite in level hasn't been implemented yet! Still show as brozen coin.</co>
+_(Be sure to re-enter your previously beaten levels to collect Blue Coins if you have played Rated Layouts before this update!)_
+- Fixed issue where liking/refreshing level in level info will set the difficulty sprite incorrectly especially on any levels that isn't rated layouts. <co>It was caused by one line of code that. oops.</co> 
+- Fully patched/fixed the web request crashes.
 
 # v0.3.5-beta.1
 
