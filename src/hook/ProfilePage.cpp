@@ -376,7 +376,7 @@ class $modify(RLProfilePage, ProfilePage) {
                         log::info("removing layout mod access");
                   }
 
-                  if (page->m_fields->role > 1 && !page->getChildByIDRecursive("rl-user-manage-btn")) {
+                  if (Mod::get()->getSavedValue<int>("role") >= 1 && !page->getChildByIDRecursive("rl-user-manage-btn")) {
                         auto userManageSpr = CCSprite::create("RL_badgeAdmin01.png"_spr);
                         auto rlStatsSpr = EditorButtonSprite::create(userManageSpr, EditorBaseColor::Gray, EditorBaseSize::Normal);
 
