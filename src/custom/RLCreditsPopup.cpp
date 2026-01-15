@@ -49,14 +49,16 @@ bool RLCreditsPopup::setup() {
       }
 
       // Fetch mod players
+      Ref<RLCreditsPopup> self = this;
       web::WebRequest()
-          .get("https://gdrate.arcticwoof.xyz/getMod")
-          .listen([this](web::WebResponse* response) {
+          .get("https://gdrate.arcticwoof.xyz/getCredits")
+          .listen([self](web::WebResponse* response) {
+                if (!self) return;
                 if (!response || !response->ok()) {
-                      log::warn("getMod returned non-ok status: {}", response ? response->code() : -1);
-                      if (m_spinner) {
-                            m_spinner->removeFromParent();
-                            m_spinner = nullptr;
+                      log::warn("getCredits returned non-ok status: {}", response ? response->code() : -1);
+                      if (self->m_spinner) {
+                            self->m_spinner->removeFromParent();
+                            self->m_spinner = nullptr;
                       }
                       Notification::create("Failed to fetch mod players", NotificationIcon::Error)->show();
                       return;
@@ -65,9 +67,9 @@ bool RLCreditsPopup::setup() {
                 auto jsonRes = response->json();
                 if (!jsonRes) {
                       log::warn("Failed to parse mod players JSON");
-                      if (m_spinner) {
-                            m_spinner->removeFromParent();
-                            m_spinner = nullptr;
+                      if (self->m_spinner) {
+                            self->m_spinner->removeFromParent();
+                            self->m_spinner = nullptr;
                       }
                       Notification::create("Invalid server response", NotificationIcon::Error)->show();
                       return;
@@ -77,19 +79,19 @@ bool RLCreditsPopup::setup() {
                 bool success = json["success"].asBool().unwrapOrDefault();
                 if (!success) {
                       log::warn("Server returned success=false for getMod");
-                      if (m_spinner) {
-                            m_spinner->removeFromParent();
-                            m_spinner = nullptr;
+                      if (self->m_spinner) {
+                            self->m_spinner->removeFromParent();
+                            self->m_spinner = nullptr;
                       }
                       return;
                 }
 
                 // populate players
-                auto content = m_scrollLayer->m_contentLayer;
+                auto content = self->m_scrollLayer->m_contentLayer;
                 if (!content) return;
-                if (m_spinner) {
-                      m_spinner->removeFromParent();
-                      m_spinner = nullptr;
+                if (self->m_spinner) {
+                      self->m_spinner->removeFromParent();
+                      self->m_spinner = nullptr;
                 }
                 content->removeAllChildrenWithCleanup(true);
 
@@ -169,7 +171,7 @@ bool RLCreditsPopup::setup() {
 
                       auto menu = CCMenu::create();
                       menu->setPosition({0, 0});
-                      auto accountButton = CCMenuItemSpriteExtra::create(nameLabel, this, menu_selector(RLCreditsPopup::onAccountClicked));
+                      auto accountButton = CCMenuItemSpriteExtra::create(nameLabel, self, menu_selector(RLCreditsPopup::onAccountClicked));
                       accountButton->setTag(accountId);
                       accountButton->setPosition({70.f, 25.f});
                       accountButton->setAnchorPoint({0.f, 0.5f});
@@ -200,7 +202,7 @@ bool RLCreditsPopup::setup() {
                 }
 
                 content->updateLayout();
-                m_scrollLayer->scrollToTop();
+                if (self->m_scrollLayer) self->m_scrollLayer->scrollToTop();
           });
 
       return true;

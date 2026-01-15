@@ -2,7 +2,7 @@
 
 #include <Geode/Geode.hpp>
 #include <argon/argon.hpp>
-#include <vector>
+#include <unordered_map>
 
 using namespace geode::prelude;
 
@@ -10,34 +10,36 @@ class RLUserControl : public geode::Popup<> {
      public:
       static RLUserControl* create();
       static RLUserControl* create(int accountId);
+      ~RLUserControl() {
+            m_profileTask.cancel();
+            m_setUserTask.cancel();
+      }
 
      private:
       int m_targetAccountId = 0;
       RowLayout* m_optionsLayout = nullptr;
+      CCMenu* m_optionsMenu = nullptr;
 
-      struct UserOption {
-            std::string key;
+      struct OptionState {
+            CCMenuItemSpriteExtra* actionButton = nullptr;
+            ButtonSprite* actionSprite = nullptr;
             bool persisted = false;
             bool desired = false;
-            ButtonSprite* button = nullptr;
-            CCMenuItemSpriteExtra* item = nullptr;
       };
 
-      std::vector<UserOption> m_userOptions;
+      std::unordered_map<std::string, OptionState> m_userOptions;
       CCMenuItemSpriteExtra* m_optionsButton = nullptr;
-      CCMenuItemSpriteExtra* m_applyButton = nullptr;
-      ButtonSprite* m_applySprite = nullptr;
-      LoadingSpinner* m_applySpinner = nullptr;
       bool m_isInitializing = false;
-      bool m_waitingForApplyDialog = false;
-      void onApplyChanges(CCObject* sender);
-      void onToggleChanged(CCObject* sender);
-      void onOptionClicked(CCObject* sender);
+      LoadingSpinner* m_spinner = nullptr;
+      utils::web::WebTask m_profileTask;
+      utils::web::WebTask m_setUserTask;
+      void onOptionAction(CCObject* sender);
+      void applySingleOption(const std::string& key, bool value);
 
-      UserOption* getOptionByKey(const std::string& key);
+      OptionState* getOptionByKey(const std::string& key);
       void setOptionState(const std::string& key, bool desired, bool updatePersisted = false);
       void setOptionEnabled(const std::string& key, bool enabled);
       void setAllOptionsEnabled(bool enabled);
-      
+
       bool setup() override;
 };

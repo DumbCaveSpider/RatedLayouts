@@ -3,8 +3,8 @@
 #include <Geode/modify/LevelInfoLayer.hpp>
 #include <argon/argon.hpp>
 
-#include "ModRatePopup.hpp"
-#include "RLCommunityVotePopup.hpp"
+#include "../level/RLCommunityVotePopup.hpp"
+#include "../level/RLModRatePopup.hpp"
 
 using namespace geode::prelude;
 
@@ -100,6 +100,14 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             float m_originalCoin1Y = 0.0f;
             float m_originalCoin2Y = 0.0f;
             float m_originalCoin3Y = 0.0f;
+            utils::web::WebTask m_fetchTask;
+            utils::web::WebTask m_submitTask;
+            utils::web::WebTask m_accessTask;
+            ~Fields() {
+                  m_fetchTask.cancel();
+                  m_submitTask.cancel();
+                  m_accessTask.cancel();
+            }
       };
 
       bool init(GJGameLevel* level, bool challenge) {
@@ -116,8 +124,9 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             log::debug("isPlatformer = {}, starRatings = {}, legitCompleted = {}",
                        isPlatformer, starRatings, legitCompleted);
 
-            if (Mod::get()->getSavedValue<int>("role") == 1) {
-                  // add a mod button
+            int userRole = Mod::get()->getSavedValue<int>("role");
+            if (userRole == 1 || userRole == 2) {
+                  // add a role button for send/rate
                   auto iconSprite = CCSprite::create("RL_starBig.png"_spr);
                   CCSprite* buttonSprite = nullptr;
 
@@ -127,32 +136,14 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                         buttonSprite = CCSprite::create("RL_starBig.png"_spr);
                   }
 
-                  auto modButtonSpr = CircleButtonSprite::create(
+                  auto roleButtonSpr = CircleButtonSprite::create(
                       buttonSprite, CircleBaseColor::Cyan, CircleBaseSize::Medium);
 
-                  auto modButtonItem = CCMenuItemSpriteExtra::create(
-                      modButtonSpr, this, menu_selector(RLLevelInfoLayer::onModButton));
-                  modButtonItem->setID("mod-button");
+                  auto roleButtonItem = CCMenuItemSpriteExtra::create(
+                      roleButtonSpr, this, menu_selector(RLLevelInfoLayer::onRoleButton));
+                  roleButtonItem->setID("role-button");
 
-                  leftMenu->addChild(modButtonItem);
-            } else if (Mod::get()->getSavedValue<int>("role") == 2) {
-                  // add an admin button
-                  CCSprite* buttonSprite = nullptr;
-
-                  if (starRatings != 0) {
-                        buttonSprite = CCSpriteGrayscale::create("RL_starBig.png"_spr);
-                  } else {
-                        buttonSprite = CCSprite::create("RL_starBig.png"_spr);
-                  }
-
-                  auto modButtonSpr = CircleButtonSprite::create(
-                      buttonSprite, CircleBaseColor::Cyan, CircleBaseSize::Medium);
-
-                  auto modButtonItem = CCMenuItemSpriteExtra::create(
-                      modButtonSpr, this, menu_selector(RLLevelInfoLayer::onAdminButton));
-                  modButtonItem->setID("admin-button");
-
-                  leftMenu->addChild(modButtonItem);
+                  leftMenu->addChild(roleButtonItem);
             }
 
             leftMenu->updateLayout();
@@ -187,13 +178,13 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             }
 
             auto getReq = web::WebRequest();
-            auto getTask = getReq.get(
+            m_fields->m_fetchTask = getReq.get(
                 fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId));
 
             Ref<RLLevelInfoLayer> layerRef = this;
             auto difficultySprite = layerRef->getChildByID("difficulty-sprite");
 
-            getTask.listen([layerRef, difficultySprite](web::WebResponse* response) {
+            m_fields->m_fetchTask.listen([layerRef, difficultySprite](web::WebResponse* response) {
                   log::info("Received rating response from server");
 
                   if (!layerRef) {
@@ -217,36 +208,36 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   // Cache the response
                   cacheLevelData(layerRef->m_level->m_levelID, json);
 
-                  layerRef->processLevelRating(json, layerRef, difficultySprite);
+                  layerRef->processLevelRating(json, layerRef, difficultySprite, true);
             });
       }
       void processLevelRating(const matjson::Value& json,
                               Ref<RLLevelInfoLayer> layerRef,
-                              CCNode* difficultySprite) {
+                              CCNode* difficultySprite,
+                              bool forceShow = false) {
+            if (!layerRef) return;
             int difficulty = json["difficulty"].asInt().unwrapOrDefault();
             int featured = json["featured"].asInt().unwrapOrDefault();
-            bool isSuggested = json["isSuggested"].asBool().unwrapOrDefault();
+            bool showCommunity = forceShow;
 
-            // helper to remove existing button from play or left menus
+            // helper to remove existing button
             auto removeExistingCommunityBtn = [layerRef]() {
-                  auto playMenuNode = layerRef->getChildByID("play-menu");
-                  if (playMenuNode && typeinfo_cast<CCMenu*>(playMenuNode)) {
-                        auto existing = static_cast<CCMenu*>(playMenuNode)->getChildByID("rl-community-vote");
-                        if (existing) existing->removeFromParent();
-                  }
-                  auto leftMenuNode = layerRef->getChildByID("left-side-menu");
-                  if (leftMenuNode && typeinfo_cast<CCMenu*>(leftMenuNode)) {
-                        auto existing = static_cast<CCMenu*>(leftMenuNode)->getChildByID("rl-community-vote");
-                        if (existing) existing->removeFromParent();
+                  auto rightMenuNode = layerRef->getChildByID("right-side-menu");
+                  if (rightMenuNode && typeinfo_cast<CCMenu*>(rightMenuNode)) {
+                        auto existing = static_cast<CCMenu*>(rightMenuNode)->getChildByID("rl-community-vote");
+                        if (existing) {
+                              existing->removeFromParent();
+                              static_cast<CCMenu*>(rightMenuNode)->updateLayout();
+                        }
                   }
             };
 
-            if (isSuggested) {
+            if (showCommunity) {
                   // create button if not already present
                   bool exists = false;
-                  auto playMenuNode = layerRef->getChildByID("play-menu");
-                  if (playMenuNode && typeinfo_cast<CCMenu*>(playMenuNode)) {
-                        if (static_cast<CCMenu*>(playMenuNode)->getChildByID("rl-community-vote"))
+                  auto rightMenuNode = layerRef->getChildByID("right-side-menu");
+                  if (rightMenuNode && typeinfo_cast<CCMenu*>(rightMenuNode)) {
+                        if (static_cast<CCMenu*>(rightMenuNode)->getChildByID("rl-community-vote"))
                               exists = true;
                   }
 
@@ -274,20 +265,64 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                               log::debug("Community vote enabled due to role override (role={})", userRole);
                         }
 
-                        auto commSprite = shouldDisable ? CCSpriteGrayscale::create("RL_commVote01.png"_spr) : CCSprite::create("RL_commVote01.png"_spr);
-                        if (commSprite) {
-                              auto commBtnSpr = CircleButtonSprite::create(commSprite, shouldDisable ? CircleBaseColor::Gray : CircleBaseColor::Green, CircleBaseSize::Small);
+                        auto commSpriteGray = CCSpriteGrayscale::create("RL_commVote01.png"_spr);
+                        if (commSpriteGray) {
+                              auto commBtnSpr = CircleButtonSprite::create(commSpriteGray, CircleBaseColor::Gray, CircleBaseSize::Medium);
                               auto commBtnItem = CCMenuItemSpriteExtra::create(commBtnSpr, layerRef, menu_selector(RLLevelInfoLayer::onCommunityVote));
                               commBtnItem->setID("rl-community-vote");
 
-                              if (playMenuNode && typeinfo_cast<CCMenu*>(playMenuNode)) {
-                                    auto playMenu = static_cast<CCMenu*>(playMenuNode);
-                                    commBtnItem->setPosition({-160.f, 60.f});
-                                    playMenu->addChild(commBtnItem);
+                              auto rightMenuNode = layerRef->getChildByID("right-side-menu");
+                              if (rightMenuNode && typeinfo_cast<CCMenu*>(rightMenuNode)) {
+                                    static_cast<CCMenu*>(rightMenuNode)->addChild(commBtnItem);
+                                    // ensure layout updates so the button is placed correctly
+                                    static_cast<CCMenu*>(rightMenuNode)->updateLayout();
+
+                                    // Reactivate immediately if it should be enabled according to data
+                                    if (!shouldDisable) {
+                                          // swap to colored sprite
+                                          auto commSpriteColor = CCSprite::create("RL_commVote01.png"_spr);
+                                          if (commSpriteColor) {
+                                                auto coloredBtnSpr = CircleButtonSprite::create(commSpriteColor, CircleBaseColor::Green, CircleBaseSize::Medium);
+                                                commBtnItem->setNormalImage(coloredBtnSpr);
+                                          }
+                                          commBtnItem->setEnabled(true);
+                                          commBtnItem->setOpacity(255);
+                                    }
                               } else {
-                                    auto leftMenuNode = layerRef->getChildByID("left-side-menu");
-                                    if (leftMenuNode && typeinfo_cast<CCMenu*>(leftMenuNode)) {
-                                          static_cast<CCMenu*>(leftMenuNode)->addChild(commBtnItem);
+                                    log::warn("Right-side-menu not found; community vote button not added");
+                              }
+                        }
+                  } else {
+                        // update existing button state based on current data
+                        int normalPct = -1;
+                        int practicePct = -1;
+                        bool hasPctFields = false;
+
+                        if (layerRef && layerRef->m_level) {
+                              hasPctFields = true;
+                              normalPct = layerRef->m_level->m_normalPercent;
+                              practicePct = layerRef->m_level->m_practicePercent;
+                        }
+
+                        bool shouldDisable = true;
+                        if (hasPctFields) {
+                              shouldDisable = !(normalPct >= 20 || practicePct >= 80);
+                        }
+
+                        int userRole = Mod::get()->getSavedValue<int>("role");
+                        if (userRole == 1 || userRole == 2) {
+                              shouldDisable = false;
+                              log::debug("Community vote enabled due to role override (role={})", userRole);
+                        }
+
+                        auto rightMenuNode2 = layerRef->getChildByID("right-side-menu");
+                        if (rightMenuNode2 && typeinfo_cast<CCMenu*>(rightMenuNode2)) {
+                              auto existing = static_cast<CCMenu*>(rightMenuNode2)->getChildByID("rl-community-vote");
+                              if (existing) {
+                                    auto menuItem = static_cast<CCMenuItemSpriteExtra*>(existing);
+                                    if (menuItem) {
+                                          menuItem->setEnabled(!shouldDisable);
+                                          menuItem->setOpacity(shouldDisable ? 100 : 255);
                                     }
                               }
                         }
@@ -335,14 +370,35 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   int attemptTime = 0;
                   int jumps = 0;
                   int clicks = 0;
+                  bool isPlat = false;
                   if (layerRef && layerRef->m_level) {
                         attempts = layerRef->m_level->m_attempts;
-                        attemptTime = layerRef->m_level->m_attemptTime;
+                        isPlat = layerRef->m_level->isPlatformer();
+                        attemptTime = isPlat ? (layerRef->m_level->m_bestTime / 1000) : layerRef->m_level->m_attemptTime;
                         jumps = layerRef->m_level->m_jumps;
                         clicks = layerRef->m_level->m_clicks;
                   }
 
                   log::debug("Submitting completion with attempts: {} time: {} jumps: {} clicks: {}", attempts, attemptTime, jumps, clicks);
+
+                  // Build comma-separated coins list based on pending user coins
+                  std::string coinsStr;
+                  if (layerRef && layerRef->m_level) {
+                        std::vector<int> coins;
+                        for (int i = 1; i <= 3; ++i) {
+                              auto coinKey = layerRef->m_level->getCoinKey(i);
+                              if (GameStatsManager::sharedState()->hasPendingUserCoin(coinKey)) {
+                                    coins.push_back(i);
+                              }
+                        }
+                        for (size_t idx = 0; idx < coins.size(); ++idx) {
+                              if (idx) coinsStr += ",";
+                              coinsStr += std::to_string(coins[idx]);
+                        }
+                  } else {
+                        log::warn("Unable to build coins list: level pointer is null for levelId {}", levelId);
+                  }
+                  log::debug("Collected pending coins for level {}: {}", levelId, coinsStr);
 
                   matjson::Value jsonBody;
                   jsonBody["accountId"] = accountId;
@@ -352,20 +408,18 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   jsonBody["attemptTime"] = attemptTime;
                   jsonBody["jumps"] = jumps;
                   jsonBody["clicks"] = clicks;
-
-                  bool isPlat = false;
-                  if (layerRef && layerRef->m_level) {
-                        isPlat = layerRef->m_level->isPlatformer();
-                  }
                   jsonBody["isPlat"] = isPlat;
+                  if (!coinsStr.empty()) {
+                        jsonBody["coins"] = coinsStr;
+                  }
 
                   auto submitReq = web::WebRequest();
                   submitReq.bodyJSON(jsonBody);
-                  auto submitTask =
+                  m_fields->m_submitTask =
                       submitReq.post("https://gdrate.arcticwoof.xyz/submitComplete");
 
-                  submitTask.listen([layerRef, difficulty, levelId,
-                                     difficultySprite](web::WebResponse* submitResponse) {
+                  m_fields->m_submitTask.listen([layerRef, difficulty, levelId,
+                                                 difficultySprite](web::WebResponse* submitResponse) {
                         log::info("Received submitComplete response for level ID: {}", levelId);
 
                         if (!layerRef) {
@@ -393,6 +447,10 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                                   responseStars);
 
                         if (success) {
+                              if (responseStars == 0 && responsePlanets == 0) {
+                                    log::warn("No stars or planets rewarded, possibly already rewarded before");
+                                    return;
+                              }
                               bool isPlat = false;
                               if (layerRef && layerRef->m_level) isPlat = layerRef->m_level->isPlatformer();
                               log::info("submitComplete values - stars: {}, planets: {}", responseStars, responsePlanets);
@@ -406,7 +464,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                               }
 
                               std::string medSprite = isPlat ? "RL_planetMed.png"_spr : "RL_starMed.png"_spr;
-                              std::string reward = isPlat ? "planets" : "stars";
+                              std::string reward = isPlat ? "planets" : "sparks";
 
                               if (!Mod::get()->getSettingValue<bool>("disableRewardAnimation")) {
                                     if (auto rewardLayer = CurrencyRewardLayer::create(
@@ -592,8 +650,11 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
 
                         // compute absolute base and set absolute Y to avoid drift
                         float baseY = layerRef->m_fields->m_originalDifficultySpriteY;
+                        bool coinPresent = coinIcon1 != nullptr;
+                        log::debug("Applying difficulty offset (processLevelRating): baseY={}, isDemon={}, coinPresent={}", baseY, isDemon, coinPresent);
                         float newY = baseY + (isDemon ? 15.f : 10.f);
                         sprite->setPositionY(newY);
+                        log::debug("Sprite Y after apply (processLevelRating): {}", sprite->getPositionY());
                         layerRef->m_fields->m_difficultyOffsetApplied = true;
 
                         // set coin absolute positions based on saved originals
@@ -605,13 +666,17 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                         // No coins, but still apply offset for levels without coins
                         // save original Y so we can revert on refresh
                         if (!layerRef->m_fields->m_originalYSaved) {
-                              layerRef->m_fields->m_originalDifficultySpriteY = sprite->getPositionY();
+                              float currentY = sprite->getPositionY();
+                              log::debug("Saving originalDifficultySpriteY (no coins): {}", currentY);
+                              layerRef->m_fields->m_originalDifficultySpriteY = currentY;
                               layerRef->m_fields->m_originalYSaved = true;
                         }
                         layerRef->m_fields->m_lastAppliedIsDemon = isDemon;
                         float baseY = layerRef->m_fields->m_originalDifficultySpriteY;
+                        log::debug("Applying difficulty offset (no coins): baseY={}, isDemon={}", baseY, isDemon);
                         float newY = baseY + (isDemon ? 15.f : 10.f);
                         sprite->setPositionY(newY);
+                        log::debug("Sprite Y after apply (no coins): {}", sprite->getPositionY());
                         layerRef->m_fields->m_difficultyOffsetApplied = true;
                   }
             }
@@ -624,7 +689,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                         // ensure epic is removed
                         if (epicFeaturedCoin) epicFeaturedCoin->removeFromParent();
                         if (!featuredCoin) {
-                              auto newFeaturedCoin = CCSprite::create("rlfeaturedCoin.png"_spr);
+                              auto newFeaturedCoin = CCSprite::create("RL_featuredCoin.png"_spr);
                               newFeaturedCoin->setPosition({difficultySprite2->getContentSize().width / 2,
                                                             difficultySprite2->getContentSize().height / 2});
                               newFeaturedCoin->setID("featured-coin");
@@ -634,7 +699,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                         // ensure standard is removed
                         if (featuredCoin) featuredCoin->removeFromParent();
                         if (!epicFeaturedCoin) {
-                              auto newEpicCoin = CCSprite::create("rlepicFeaturedCoin.png"_spr);
+                              auto newEpicCoin = CCSprite::create("RL_epicFeaturedCoin.png"_spr);
                               newEpicCoin->setPosition({difficultySprite2->getContentSize().width / 2,
                                                         difficultySprite2->getContentSize().height / 2});
                               newEpicCoin->setID("epic-featured-coin");
@@ -645,79 +710,78 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                         if (epicFeaturedCoin) epicFeaturedCoin->removeFromParent();
                   }
             }
-      }
 
-      // this shouldnt exist but it must be done to fix that positions
-      void levelUpdateFinished(GJGameLevel* level, UpdateResponse response) {
-            LevelInfoLayer::levelUpdateFinished(level, response);
+            // Replace coin sprites if level is not suggested
+            bool isSuggested = json["isSuggested"].asBool().unwrapOrDefault();
+            if (!isSuggested) {
+                  auto coinIcon1 = layerRef->getChildByID("coin-icon-1");
+                  auto coinIcon2 = layerRef->getChildByID("coin-icon-2");
+                  auto coinIcon3 = layerRef->getChildByID("coin-icon-3");
 
-            auto difficultySprite = this->getChildByID("difficulty-sprite");
-            if (difficultySprite && m_fields->m_difficultyOffsetApplied) {
-                  auto sprite = static_cast<GJDifficultySprite*>(difficultySprite);
+                  auto replaceCoinSprite = [layerRef](CCNode* coinNode, int coinIndex) {
+                        if (!coinNode || !layerRef || !layerRef->m_level) return;
+                        auto coinSprite = typeinfo_cast<CCSprite*>(coinNode);
+                        if (!coinSprite) return;
 
-                  int levelId = this->m_level->m_levelID;
+                        // Check if coin exists/collected using getCoinKey
+                        std::string coinKey = layerRef->m_level->getCoinKey(coinIndex);
+                        log::debug("Checking coin collected status for coin {}: key={}", coinIndex, coinKey);
+                        bool coinCollected = GameStatsManager::sharedState()->hasPendingUserCoin(coinKey.c_str());
+                        auto blueCoinTexture = CCTextureCache::sharedTextureCache()->addImage("RL_BlueCoinSmall.png"_spr, false);
+                        auto displayFrame = CCSpriteFrame::createWithTexture(blueCoinTexture, {{0, 0}, blueCoinTexture->getContentSize()});
 
-                  // Try to load from cache first
-                  auto cachedData = getCachedLevel(levelId);
-
-                  Ref<RLLevelInfoLayer> layerRef = this;
-
-                  if (cachedData) {
-                        log::debug("Using cached data for levelUpdateFinished");
-                        processLevelUpdateWithDifficulty(cachedData.value(), layerRef);
-                        return;
-                  }
-
-                  auto getReq = web::WebRequest();
-                  auto getTask = getReq.get(fmt::format(
-                      "https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId));
-
-                  getTask.listen([layerRef](web::WebResponse* response) {
-                        if (!layerRef) {
-                              log::warn(
-                                  "LevelInfoLayer has been destroyed, skipping level "
-                                  "update");
-                              return;
+                        if (coinCollected) {
+                              coinSprite->setDisplayFrame(displayFrame);
+                              coinSprite->setColor({255, 255, 255});
+                              coinSprite->setScale(0.6f);
+                              log::debug("Replaced coin {} sprite with blue coin", coinIndex);
+                        } else {
+                              coinSprite->setDisplayFrame(displayFrame);
+                              coinSprite->setColor({120, 120, 120});
+                              coinSprite->setScale(0.6f);
+                              log::debug("Darkened coin {} because not collected", coinIndex);
                         }
+                  };
 
-                        if (!response->ok() || !response->json()) {
-                              return;
-                        }
-
-                        auto json = response->json().unwrap();
-
-                        // Cache the response
-                        cacheLevelData(layerRef->m_level->m_levelID, json);
-
-                        layerRef->processLevelUpdateWithDifficulty(json, layerRef);
-                  });
+                  replaceCoinSprite(coinIcon1, 1);
+                  replaceCoinSprite(coinIcon2, 2);
+                  replaceCoinSprite(coinIcon3, 3);
             }
+
+            // delayed reposition to ensure proper star label placement after frame updates
+            // ts is stupid cuz of the levelUpdate function shenanigans
+            auto delayAction = CCDelayTime::create(0.01f);
+            auto callFunc = CCCallFunc::create(
+                layerRef, callfunc_selector(RLLevelInfoLayer::repositionRLStars));
+            auto sequence = CCSequence::create(delayAction, callFunc, nullptr);
+            layerRef->runAction(sequence);
+            log::debug("repositionRLStars callback scheduled");
       }
 
       void processLevelUpdateWithDifficulty(const matjson::Value& json,
-                                            Ref<RLLevelInfoLayer> layerRef) {
+                                            Ref<RLLevelInfoLayer> layerRef,
+                                            bool forceShow = false) {
             int difficulty = json["difficulty"].asInt().unwrapOrDefault();
 
             // handle community vote button visibility when level updates are fetched
-            bool isSuggested = json["isSuggested"].asBool().unwrapOrDefault();
+            bool showCommunity = forceShow;
+
             auto removeExistingCommunityBtn = [layerRef]() {
-                  auto playMenuNode = layerRef->getChildByID("play-menu");
-                  if (playMenuNode && typeinfo_cast<CCMenu*>(playMenuNode)) {
-                        auto existing = static_cast<CCMenu*>(playMenuNode)->getChildByID("rl-community-vote");
-                        if (existing) existing->removeFromParent();
-                  }
-                  auto leftMenuNode = layerRef->getChildByID("left-side-menu");
-                  if (leftMenuNode && typeinfo_cast<CCMenu*>(leftMenuNode)) {
-                        auto existing = static_cast<CCMenu*>(leftMenuNode)->getChildByID("rl-community-vote");
-                        if (existing) existing->removeFromParent();
+                  auto rightMenuNode = layerRef->getChildByID("right-side-menu");
+                  if (rightMenuNode && typeinfo_cast<CCMenu*>(rightMenuNode)) {
+                        auto existing = static_cast<CCMenu*>(rightMenuNode)->getChildByID("rl-community-vote");
+                        if (existing) {
+                              existing->removeFromParent();
+                              static_cast<CCMenu*>(rightMenuNode)->updateLayout();
+                        }
                   }
             };
 
-            if (isSuggested) {
+            if (showCommunity) {
                   bool exists = false;
-                  auto playMenuNode = layerRef->getChildByID("play-menu");
-                  if (playMenuNode && typeinfo_cast<CCMenu*>(playMenuNode)) {
-                        if (static_cast<CCMenu*>(playMenuNode)->getChildByID("rl-community-vote")) exists = true;
+                  auto rightMenuNode = layerRef->getChildByID("right-side-menu");
+                  if (rightMenuNode && typeinfo_cast<CCMenu*>(rightMenuNode)) {
+                        if (static_cast<CCMenu*>(rightMenuNode)->getChildByID("rl-community-vote")) exists = true;
                   }
                   if (!exists) {
                         // determine whether we can use the level's percentage fields
@@ -743,21 +807,66 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                               log::debug("Community vote enabled due to role override (role={})", userRole);
                         }
 
-                        auto commSprite = shouldDisable ? CCSpriteGrayscale::create("RL_commVote01.png"_spr) : CCSprite::create("RL_commVote01.png"_spr);
-                        if (commSprite) {
-                              auto commBtnSpr = CircleButtonSprite::create(commSprite, shouldDisable ? CircleBaseColor::Gray : CircleBaseColor::Green, CircleBaseSize::Small);
+                        auto commSpriteGray = CCSpriteGrayscale::create("RL_commVote01.png"_spr);
+                        if (commSpriteGray) {
+                              auto commBtnSpr = CircleButtonSprite::create(commSpriteGray, CircleBaseColor::Gray, CircleBaseSize::Medium);
                               auto commBtnItem = CCMenuItemSpriteExtra::create(commBtnSpr, layerRef, menu_selector(RLLevelInfoLayer::onCommunityVote));
                               commBtnItem->setID("rl-community-vote");
 
-                              if (playMenuNode && typeinfo_cast<CCMenu*>(playMenuNode)) {
-                                    auto playMenu = static_cast<CCMenu*>(playMenuNode);
-                                    commBtnItem->setPosition({-160.f, 60.f});
-                                    playMenu->addChild(commBtnItem);
+                              // Initially disabled and visually grayed
+                              commBtnItem->setEnabled(false);
+                              commBtnItem->setOpacity(100);
 
+                              auto rightMenuNode = layerRef->getChildByID("right-side-menu");
+                              if (rightMenuNode && typeinfo_cast<CCMenu*>(rightMenuNode)) {
+                                    static_cast<CCMenu*>(rightMenuNode)->addChild(commBtnItem);
+                                    static_cast<CCMenu*>(rightMenuNode)->updateLayout();
+
+                                    // Reactivate immediately if it should be enabled according to data
+                                    if (!shouldDisable) {
+                                          auto commSpriteColor = CCSprite::create("RL_commVote01.png"_spr);
+                                          if (commSpriteColor) {
+                                                auto coloredBtnSpr = CircleButtonSprite::create(commSpriteColor, CircleBaseColor::Green, CircleBaseSize::Medium);
+                                                commBtnItem->setNormalImage(coloredBtnSpr);
+                                          }
+                                          commBtnItem->setEnabled(true);
+                                          commBtnItem->setOpacity(255);
+                                    }
                               } else {
-                                    auto leftMenuNode = layerRef->getChildByID("left-side-menu");
-                                    if (leftMenuNode && typeinfo_cast<CCMenu*>(leftMenuNode)) {
-                                          static_cast<CCMenu*>(leftMenuNode)->addChild(commBtnItem);
+                                    log::warn("Right-side-menu not found; community vote button not added");
+                              }
+                        }
+                  } else {
+                        // update existing button state based on current data
+                        int normalPct = -1;
+                        int practicePct = -1;
+                        bool hasPctFields = false;
+
+                        if (layerRef && layerRef->m_level) {
+                              hasPctFields = true;
+                              normalPct = layerRef->m_level->m_normalPercent;
+                              practicePct = layerRef->m_level->m_practicePercent;
+                        }
+
+                        bool shouldDisable = true;
+                        if (hasPctFields) {
+                              shouldDisable = !(normalPct >= 20 || practicePct >= 80);
+                        }
+
+                        int userRole = Mod::get()->getSavedValue<int>("role");
+                        if (userRole == 1 || userRole == 2) {
+                              shouldDisable = false;
+                              log::debug("Community vote enabled due to role override (role={})", userRole);
+                        }
+
+                        auto rightMenuNode2 = layerRef->getChildByID("right-side-menu");
+                        if (rightMenuNode2 && typeinfo_cast<CCMenu*>(rightMenuNode2)) {
+                              auto existing = static_cast<CCMenu*>(rightMenuNode2)->getChildByID("rl-community-vote");
+                              if (existing) {
+                                    auto menuItem = static_cast<CCMenuItemSpriteExtra*>(existing);
+                                    if (menuItem) {
+                                          menuItem->setEnabled(!shouldDisable);
+                                          menuItem->setOpacity(shouldDisable ? 100 : 255);
                                     }
                               }
                         }
@@ -884,15 +993,10 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
 
                   layerRef->m_fields->m_lastAppliedIsDemon = isDemon;
                   float baseY = layerRef->m_fields->m_originalDifficultySpriteY;
-
-                  if (isDemon) {
-                        float newY = baseY + (coinIcon1 ? 20.f : 10.f);
-                        sprite->setPositionY(newY);
-                  } else {
-                        sprite->setPositionY(baseY + 10.f);
-                  }
-
-                  layerRef->m_fields->m_difficultyOffsetApplied = true;
+                  log::debug("Applying difficulty offset (processLevelUpdateWithDifficulty): originalYSaved={}, baseY={}, isDemon={}", layerRef->m_fields->m_originalYSaved, baseY, isDemon);
+                  float newY = baseY + (isDemon ? 15.f : 10.f);
+                  sprite->setPositionY(newY);
+                  log::debug("Sprite Y after apply (processLevelUpdateWithDifficulty): {}", sprite->getPositionY());
 
                   if (coinIcon1) {
                         int delta = isDemon ? 6 : 4;
@@ -940,16 +1044,15 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   // proper positioning
                   auto delayAction = CCDelayTime::create(0.15f);
                   auto callFunc = CCCallFunc::create(
-                      layerRef, callfunc_selector(RLLevelInfoLayer::repositionStars));
+                      layerRef, callfunc_selector(RLLevelInfoLayer::repositionRLStars));
                   auto sequence = CCSequence::create(delayAction, callFunc, nullptr);
                   layerRef->runAction(sequence);
                   log::debug(
-                      "levelUpdateFinished: repositionStars callback "
+                      "levelUpdateFinished: repositionRLStars callback "
                       "scheduled");
             }
       }
-
-      void onModButton(CCObject* sender) {
+      void onRoleButton(CCObject* sender) {
             int starRatings = this->m_level->m_stars;
             bool isPlatformer = this->m_level->isPlatformer();
 
@@ -962,48 +1065,20 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   return;
             }
 
-            if (Mod::get()->getSavedValue<int>("role") != 1) {
+            int userRole = Mod::get()->getSavedValue<int>("role");
+            if (userRole != 1 && userRole != 2) {
                   requestStatus(GJAccountManager::get()->m_accountID);
-            }
-
-            if (Mod::get()->getSavedValue<int>("role") == 1) {
-                  log::info("Mod button clicked!");
-                  auto popup = ModRatePopup::create("Mod: Suggest Layout", this->m_level);
-                  popup->show();
-            } else {
-                  Notification::create(
-                      "You do not have the required role to perform this action",
-                      NotificationIcon::Error)
-                      ->show();
-            }
-      }
-
-      void onAdminButton(CCObject* sender) {
-            int starRatings = this->m_level->m_stars;
-            bool isPlatformer = this->m_level->isPlatformer();
-
-            if (starRatings != 0) {
-                  FLAlertLayer::create("Action Unavailable",
-                                       "You cannot perform this action on "
-                                       "<cy>officially rated levels</c>.",
-                                       "OK")
-                      ->show();
                   return;
             }
 
-            if (Mod::get()->getSavedValue<int>("role") != 2) {
-                  requestStatus(GJAccountManager::get()->m_accountID);
-            }
-
-            if (Mod::get()->getSavedValue<int>("role") == 2) {
-                  log::info("Admin button clicked!");
-                  auto popup = ModRatePopup::create("Admin: Rate Layout", this->m_level);
-                  popup->show();
-            } else {
-                  Notification::create(
-                      "You do not have the required role to perform this action",
-                      NotificationIcon::Error)
-                      ->show();
+            if (userRole == 1) {
+                  log::info("Role button clicked as Mod");
+                  auto popup = RLModRatePopup::create(RLModRatePopup::PopupRole::Mod, "Mod: Suggest Layout", this->m_level);
+                  if (popup) popup->show();
+            } else if (userRole == 2) {
+                  log::info("Role button clicked as Admin");
+                  auto popup = RLModRatePopup::create(RLModRatePopup::PopupRole::Admin, "Admin: Rate Layout", this->m_level);
+                  if (popup) popup->show();
             }
       }
 
@@ -1037,8 +1112,8 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
       }
 
       // bruh
-      void repositionStars() {
-            log::info("repositionStars() called!");
+      void repositionRLStars() {
+            log::info("repositionRLStars() called!");
             auto difficultySprite = this->getChildByID("difficulty-sprite");
             if (difficultySprite) {
                   auto sprite = static_cast<GJDifficultySprite*>(difficultySprite);
@@ -1099,12 +1174,12 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             // verify the user's role
             auto postReq = web::WebRequest();
             postReq.bodyJSON(jsonBody);
-            auto postTask = postReq.post("https://gdrate.arcticwoof.xyz/access");
+            m_fields->m_accessTask = postReq.post("https://gdrate.arcticwoof.xyz/access");
 
             Ref<RLLevelInfoLayer> layerRef = this;
 
             // handle the response
-            postTask.listen([layerRef](web::WebResponse* response) {
+            m_fields->m_accessTask.listen([layerRef](web::WebResponse* response) {
                   log::info("Received response from server");
 
                   if (!layerRef) {
@@ -1140,16 +1215,11 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   // Refresh the community vote button immediately so role overrides take effect
                   auto cached = getCachedLevel(layerRef->m_level->m_levelID);
                   if (cached) {
-                        // remove existing vote button if present so it can be recreated
-                        auto playMenuNode = layerRef->getChildByID("play-menu");
-                        if (playMenuNode && typeinfo_cast<CCMenu*>(playMenuNode)) {
-                              auto existing = static_cast<CCMenu*>(playMenuNode)->getChildByID("rl-community-vote");
+                        auto rightMenuNode = layerRef->getChildByID("right-side-menu");
+                        if (rightMenuNode && typeinfo_cast<CCMenu*>(rightMenuNode)) {
+                              auto existing = static_cast<CCMenu*>(rightMenuNode)->getChildByID("rl-community-vote");
                               if (existing) existing->removeFromParent();
-                        }
-                        auto leftMenuNode = layerRef->getChildByID("left-side-menu");
-                        if (leftMenuNode && typeinfo_cast<CCMenu*>(leftMenuNode)) {
-                              auto existing = static_cast<CCMenu*>(leftMenuNode)->getChildByID("rl-community-vote");
-                              if (existing) existing->removeFromParent();
+                              static_cast<CCMenu*>(rightMenuNode)->updateLayout();
                         }
 
                         // Re-run processing with cached data to recreate the button with the correct state
@@ -1159,14 +1229,61 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
       }
 
       void likedItem(LikeItemType type, int id, bool liked) override {
-            // call base implementation
             LevelInfoLayer::likedItem(type, id, liked);
-            log::debug("likedItem triggered (type={}, id={}, liked={}), repositioning star", static_cast<int>(type), id, liked);
-            this->repositionStars();
+            this->updateRLLevelInfo();
       }
 
-      // refresh rating data when level is refreshed
-      void onRefresh() {
+      // this shouldnt exist but it must be done to fix that positions
+      void levelUpdateFinished(GJGameLevel* level, UpdateResponse response) override {
+            LevelInfoLayer::levelUpdateFinished(level, response);
+            this->updateRLLevelInfo();
+      }
+
+      void updateRLLevelInfo() {
+            auto difficultySpriteNode = this->getChildByID("difficulty-sprite");
+            if (difficultySpriteNode) {
+                  // remove star icon and label if present
+                  auto starIcon = difficultySpriteNode->getChildByID("rl-star-icon");
+                  if (starIcon) starIcon->removeFromParent();
+                  auto starLabel = difficultySpriteNode->getChildByID("rl-star-label");
+                  if (starLabel) starLabel->removeFromParent();
+
+                  // remove featured/epic coins if present
+                  auto featuredCoin = difficultySpriteNode->getChildByID("featured-coin");
+                  if (featuredCoin) featuredCoin->removeFromParent();
+                  auto epicFeaturedCoin = difficultySpriteNode->getChildByID("epic-featured-coin");
+                  if (epicFeaturedCoin) epicFeaturedCoin->removeFromParent();
+
+                  // reset difficulty frame and revert any applied offsets
+                  auto sprite = static_cast<GJDifficultySprite*>(difficultySpriteNode);
+                  // sprite->updateDifficultyFrame(0, GJDifficultyName::Long); // this breaks on non-rated layouts
+
+                  if (this->m_fields->m_originalYSaved) {
+                        log::debug("restoring original Y (originalYSaved={}, originalY={})", this->m_fields->m_originalYSaved, this->m_fields->m_originalDifficultySpriteY);
+                        sprite->setPositionY(this->m_fields->m_originalDifficultySpriteY);
+                        auto coinIcon1 = this->getChildByID("coin-icon-1");
+                        auto coinIcon2 = this->getChildByID("coin-icon-2");
+                        auto coinIcon3 = this->getChildByID("coin-icon-3");
+                        if (this->m_fields->m_originalCoinsSaved) {
+                              if (coinIcon1) coinIcon1->setPositionY(this->m_fields->m_originalCoin1Y);
+                              if (coinIcon2) coinIcon2->setPositionY(this->m_fields->m_originalCoin2Y);
+                              if (coinIcon3) coinIcon3->setPositionY(this->m_fields->m_originalCoin3Y);
+                        }
+
+                        // reset flags so next fetch can apply offsets cleanly
+                        this->m_fields->m_difficultyOffsetApplied = false;
+                        this->m_fields->m_originalYSaved = false;
+                        this->m_fields->m_lastAppliedIsDemon = false;
+                        this->m_fields->m_originalCoinsSaved = false;
+                  }
+            }
+
+            // reposition (cleared state) and then fetch fresh data to re-apply rating
+            this->repositionRLStars();
+            this->fetchRLLevelInfo();
+      }
+
+      void fetchRLLevelInfo() {
             if (this->m_level && this->m_level->m_levelID != 0) {
                   log::debug("Refreshing level info for level ID: {}",
                              this->m_level->m_levelID);
@@ -1175,12 +1292,12 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   deleteLevelFromCache(levelId);  // clear cache to force fresh fetch
 
                   auto getReq = web::WebRequest();
-                  auto getTask = getReq.get(fmt::format(
+                  m_fields->m_fetchTask = getReq.get(fmt::format(
                       "https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId));
 
                   Ref<RLLevelInfoLayer> layerRef = this;
 
-                  getTask.listen([this, layerRef, levelId](web::WebResponse* response) {
+                  m_fields->m_fetchTask.listen([layerRef, levelId](web::WebResponse* response) {
                         log::info("Received updated rating data from server for level ID: {}",
                                   levelId);
 
@@ -1272,20 +1389,18 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
 
                         // Update the display with latest data
                         layerRef->processLevelRating(
-                            json, layerRef, layerRef->getChildByID("difficulty-sprite"));
+                            json, layerRef, layerRef->getChildByID("difficulty-sprite"), true);
                   });
             }
       }
 
       // delete cache and refresh when level is updated
       void onUpdate(CCObject* sender) {
-            if (this->m_level && this->m_level->m_levelID != 0 &&
-                shouldDownloadLevel()) {
+            if (this->m_level && this->m_level->m_levelID != 0 && shouldDownloadLevel()) {
                   log::debug("Level updated, clearing cache for level ID: {}",
                              this->m_level->m_levelID);
                   deleteLevelFromCache(this->m_level->m_levelID);
-                  this->repositionStars();
-                  this->onRefresh();
+                  this->repositionRLStars();
             }
             LevelInfoLayer::onUpdate(sender);
       }

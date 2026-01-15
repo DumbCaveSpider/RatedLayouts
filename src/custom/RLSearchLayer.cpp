@@ -457,16 +457,19 @@ void RLSearchLayer::onSearchButton(CCObject* sender) {
       req.param("oldest", numToString(oldestParam));
       req.param("user", numToString(usernameParam));
 
-      req.get("https://gdrate.arcticwoof.xyz/search").listen([this, menuItem](web::WebResponse* res) {
+      Ref<RLSearchLayer> self = this;
+      self->m_searchTask = req.get("https://gdrate.arcticwoof.xyz/search");
+      self->m_searchTask.listen([self, menuItem](web::WebResponse* res) {
+            if (!self) return;
             if (!res || !res->ok()) {
                   Notification::create("Search request failed", NotificationIcon::Error)->show();
-                  menuItem->setEnabled(true);
+                  if (menuItem) menuItem->setEnabled(true);
                   return;
             }
             auto jsonResult = res->json();
             if (!jsonResult) {
                   Notification::create("Failed to parse search response", NotificationIcon::Error)->show();
-                  menuItem->setEnabled(true);
+                  if (menuItem) menuItem->setEnabled(true);
                   return;
             }
             auto json = jsonResult.unwrap();
@@ -483,7 +486,7 @@ void RLSearchLayer::onSearchButton(CCObject* sender) {
                   }
             }
             if (!levelIDs.empty()) {
-                  menuItem->setEnabled(true);
+                  if (menuItem) menuItem->setEnabled(true);
                   auto searchObject = GJSearchObject::create(SearchType::Type19, levelIDs);
                   auto browserLayer = LevelBrowserLayer::create(searchObject);
                   auto scene = CCScene::create();

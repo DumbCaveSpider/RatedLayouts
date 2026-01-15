@@ -25,7 +25,7 @@ bool RLBadgeRequestPopup::setup() {
       // info text
       auto infoText = MDTextArea::create(
           "Enter your <co>Discord Username (not display name)</c> that is linked to your <cp>Ko-fi account</c> to receieve a <cp>Layout Supporter Badge</c>.\n\n"
-          "Make sure that you have already <cg>linked</c> your <cb>Discord Account</c> through <cp>Ko-fi.</c> beforehand!\n\n"
+          "Make sure that you got the <cd>Rated Layouts Supporter Membership</c> and have already <cg>linked</c> your <cb>Discord Account</c> through <cp>Ko-fi.</c> beforehand!\n\n"
           "### If you encounter any <cr>issue</c> during this process, please contact <cf>ArcticWoof</c> on <cb>Discord</c>.",
           {cs.width - 40.f, 100.f});
       infoText->setPosition({cs.width / 2.f, cs.height - 120.f});
@@ -44,9 +44,11 @@ bool RLBadgeRequestPopup::setup() {
 
 void RLBadgeRequestPopup::onSubmit(CCObject* sender) {
       if (!m_discordInput) return;
+      auto upopup = UploadActionPopup::create(nullptr, "Submitting Badge Request...");
+      upopup->show();
       auto discord = m_discordInput->getString();
       if (discord.empty()) {
-            Notification::create("Please enter your Discord username", NotificationIcon::Error)->show();
+            upopup->showFailMessage("Please enter your Discord username");
             return;
       }
 
@@ -57,31 +59,33 @@ void RLBadgeRequestPopup::onSubmit(CCObject* sender) {
 
       auto req = web::WebRequest();
       req.bodyJSON(body);
-      Ref<RLBadgeRequestPopup> thisRef = this;
-      req.post("https://gdrate.arcticwoof.xyz/getSupporter").listen([thisRef](web::WebResponse* res) {
+      Ref<RLBadgeRequestPopup> self = this;
+      self->m_getSupporterTask = req.post("https://gdrate.arcticwoof.xyz/getSupporter");
+      self->m_getSupporterTask.listen([self, upopup](web::WebResponse* res) {
+            if (!self) return;
             if (!res) {
-                  Notification::create("Discord Username doesn't exists.", NotificationIcon::Error)->show();
+                  upopup->showFailMessage("Discord Username doesn't exists.");
                   return;
             }
 
             auto str = res->string().unwrapOrDefault();
             if (!str.empty()) {
                   if (!res->ok()) {
-                        Notification::create(str, NotificationIcon::Error)->show();
+                        upopup->showFailMessage(str);
                         return;
                   }
                   Notification::create(str, NotificationIcon::Success)->show();
-                  if (thisRef) thisRef->removeFromParent();
+                  self->removeFromParent();
                   return;
             }
 
             if (!res->ok()) {
                   // show status code
-                  Notification::create(fmt::format("Failed to submit request (code {})", res->code()), NotificationIcon::Error)->show();
+                  upopup->showFailMessage(fmt::format("Failed to submit request (code {})", res->code()));
                   return;
             }
 
-            Notification::create("Supporter Badge acquired!", NotificationIcon::Success)->show();
-            if (thisRef) thisRef->removeFromParent();
+            upopup->showSuccessMessage("Supporter Badge acquired!");
+            self->removeFromParent();
       });
 }

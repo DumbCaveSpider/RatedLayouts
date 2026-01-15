@@ -10,6 +10,7 @@
 #include "RLAnnoucementPopup.hpp"
 #include "RLCreditsPopup.hpp"
 #include "RLDonationPopup.hpp"
+#include "RLGauntletSelectLayer.hpp"
 #include "RLLeaderboardLayer.hpp"
 #include "RLSearchLayer.hpp"
 
@@ -64,7 +65,7 @@ bool RLCreatorLayer::init() {
 
       auto title = CCSprite::create("RL_title.png"_spr);
       title->setPosition({winSize.width / 2, winSize.height / 2 + 130});
-      title->setScale(0.8f);
+      title->setScale(1.4f);
       this->addChild(title);
 
       auto featuredSpr = CCSprite::create("RL_featured01.png"_spr);
@@ -134,14 +135,6 @@ bool RLCreatorLayer::init() {
 
       mainMenu->updateLayout();
 
-      if (Mod::get()->getSettingValue<bool>("disableBackground") == false) {
-            auto mainMenuBg = CCScale9Sprite::create("square02_001.png");
-            mainMenuBg->setContentSize(mainMenu->getContentSize());
-            mainMenuBg->setAnchorPoint({0, 0});
-            mainMenuBg->setOpacity(50);
-            mainMenu->addChild(mainMenuBg, -1);
-      }
-
       // info button at the bottom left
       auto infoMenu = CCMenu::create();
       infoMenu->setPosition({0, 0});
@@ -179,9 +172,11 @@ bool RLCreatorLayer::init() {
       }
 
       // check server announcement id and set badge visibility
+      Ref<RLCreatorLayer> self = this;
       web::WebRequest()
           .get("https://gdrate.arcticwoof.xyz/getAnnoucement")
-          .listen([this](web::WebResponse* res) {
+          .listen([self](web::WebResponse* res) {
+                if (!self) return;
                 if (!res || !res->ok()) return;
                 auto jsonRes = res->json();
                 if (!jsonRes) return;
@@ -192,9 +187,9 @@ bool RLCreatorLayer::init() {
                 }
                 int saved = Mod::get()->getSavedValue<int>("annoucementId");
                 if (id && id != saved) {
-                      if (m_newsBadge) m_newsBadge->setVisible(true);
+                      if (self->m_newsBadge) self->m_newsBadge->setVisible(true);
                 } else {
-                      if (m_newsBadge) m_newsBadge->setVisible(false);
+                      if (self->m_newsBadge) self->m_newsBadge->setVisible(false);
                 }
           });
 
@@ -294,8 +289,11 @@ void RLCreatorLayer::onDiscordButton(CCObject* sender) {
 }
 
 void RLCreatorLayer::onLayoutGauntlets(CCObject* sender) {
-      auto annoucement = RLAnnoucementPopup::create();
-      annoucement->show();
+      auto gauntletSelect = RLGauntletSelectLayer::create();
+      auto scene = CCScene::create();
+      scene->addChild(gauntletSelect);
+      auto transitionFade = CCTransitionFade::create(0.5f, scene);
+      CCDirector::sharedDirector()->pushScene(transitionFade);
 }
 
 void RLCreatorLayer::onSupporterButton(CCObject* sender) {
@@ -316,9 +314,11 @@ void RLCreatorLayer::onAnnoucementButton(CCObject* sender) {
       auto menuItem = static_cast<CCMenuItemSpriteExtra*>(sender);
       if (menuItem) menuItem->setEnabled(false);
 
+      Ref<RLCreatorLayer> self = this;
       web::WebRequest()
           .get("https://gdrate.arcticwoof.xyz/getAnnoucement")
-          .listen([this, menuItem](web::WebResponse* res) {
+          .listen([self, menuItem](web::WebResponse* res) {
+                if (!self) return;
                 if (!res || !res->ok()) {
                       Notification::create("Failed to fetch announcement", NotificationIcon::Error)->show();
                       if (menuItem) menuItem->setEnabled(true);
@@ -347,14 +347,14 @@ void RLCreatorLayer::onAnnoucementButton(CCObject* sender) {
                       if (id) {
                             Mod::get()->setSavedValue<int>("annoucementId", id);
                             // hide badge since the user just viewed the announcement
-                            if (m_newsBadge) m_newsBadge->setVisible(false);
+                            if (self->m_newsBadge) self->m_newsBadge->setVisible(false);
                       }
                 } else {
                       Notification::create("No announcement available", NotificationIcon::Warning)->show();
                 }
 
-                if (m_newsBadge) {
-                      m_newsBadge->setVisible(false);
+                if (self->m_newsBadge) {
+                      self->m_newsBadge->setVisible(false);
                 }
 
                 if (menuItem) menuItem->setEnabled(true);
@@ -366,9 +366,11 @@ void RLCreatorLayer::onUnknownButton(CCObject* sender) {
       auto menuItem = static_cast<CCMenuItemSpriteExtra*>(sender);
       menuItem->setEnabled(false);
       // fetch dialogue from server and show it in a dialog
+      Ref<RLCreatorLayer> self = this;
       web::WebRequest()
           .get("https://gdrate.arcticwoof.xyz/getDialogue")
-          .listen([this, menuItem](web::WebResponse* res) {
+          .listen([self, menuItem](web::WebResponse* res) {
+                if (!self) return;
                 std::string text = "...";  // default text
                 if (res && res->ok()) {
                       auto jsonRes = res->json();
@@ -379,11 +381,11 @@ void RLCreatorLayer::onUnknownButton(CCObject* sender) {
                             }
                       } else {
                             log::error("Failed to parse getDialogue response");
-                            menuItem->setEnabled(true);
+                            if (menuItem) menuItem->setEnabled(true);
                       }
                 } else {
                       log::error("Failed to fetch dialogue");
-                      menuItem->setEnabled(true);
+                      if (menuItem) menuItem->setEnabled(true);
                 }
 
                 DialogObject* dialogObj = DialogObject::create(
@@ -405,15 +407,15 @@ void RLCreatorLayer::onUnknownButton(CCObject* sender) {
 void RLCreatorLayer::onInfoButton(CCObject* sender) {
       MDPopup::create(
           "About Rated Layouts",
-          "## <cl>Rated Layouts</cl> is a community-run rating system focusing on fun gameplay in classic layout levels.\n\n"
+          "## <cl>Rated Layouts</cl> is a community-run rating system focusing on gameplay in layout levels.\n\n"
           "### Each of the buttons on this screen lets you browse different categories of rated layouts:\n\n"
           "<cg>**Featured Layouts**</c>: Featured layouts that showcase fun gameplay and visuals. Each featured levels are ranked based of their featured score.\n\n"
           "<cg>**Leaderboard**</c>: The top-rated players ranked by blueprint stars and creator points.\n\n"
           "<cg>**Layout Gauntlets**</c>: Special themed layouts hosted by the Rated Layouts Team. This holds the <cl>Layout Creator Contests</c>!\n\n"
-          "<cg>**Sent Layouts**</c>: Suggested or sent layouts by the Layout Moderators. The community can vote on these layouts based of their Design, Difficulty and Gameplay. <cg>(Only enabled if you have at least 20% in Normal Mode or 80% in Practice Mode)</c>\n\n"
-          "<cg>**Search Layouts**</c>: Search for rated layouts by their level ID.\n\n"
+          "<cg>**Sent Layouts**</c>: Suggested or sent layouts by the Layout Moderators. The community can vote on these layouts based of their Design, Difficulty and Gameplay. <co>(Only enabled if you have at least 20% in Normal Mode or 80% in Practice Mode)</c>\n\n"
+          "<cg>**Search Layouts**</c>: Search for rated layouts by their level name/ID.\n\n"
           "<cg>**Event Layouts**</c>: Showcases time-limited Daily, Weekly and Monthly layouts picked by the <cr>Layout Admins</c>.\n\n"
-          "### Join the <cb>[Rated Layout Discord](https://discord.gg/jBf2wfBgVT)</c> server for more information and to submit your layouts for rating.\n\n",
+          "### Join the <cb>[Rated Layouts Discord](https://discord.gg/jBf2wfBgVT)</c> server for more information and to submit your layouts for rating.\n\n",
           "OK")
           ->show();
 }
@@ -444,11 +446,13 @@ void RLCreatorLayer::onBackButton(CCObject* sender) {
 }
 
 void RLCreatorLayer::onFeaturedLayouts(CCObject* sender) {
+      Ref<RLCreatorLayer> self = this;
       web::WebRequest()
           .param("type", 2)
           .param("amount", 100)
           .get("https://gdrate.arcticwoof.xyz/getLevels")
-          .listen([this](web::WebResponse* res) {
+          .listen([self](web::WebResponse* res) {
+                if (!self) return;
                 if (res && res->ok()) {
                       auto jsonResult = res->json();
 
@@ -499,11 +503,82 @@ void RLCreatorLayer::onFeaturedLayouts(CCObject* sender) {
 }
 
 void RLCreatorLayer::onSentLayouts(CCObject* sender) {
+      // if the user is admin (role == 2), show a quickpopup to choose between type 1 or type 4
+      if (Mod::get()->getSavedValue<int>("role") >= 2) {
+            Ref<RLCreatorLayer> self = this;
+            geode::createQuickPopup(
+                "View Sent Layouts",
+                "Choose which sent layouts to view:\n\n<cg>All Sent Layouts</c> or <co>Sent layouts with 3+ sends</c>.",
+                "All",
+                "3+ Sends",
+                [self](auto, bool yes) {
+                      if (!self) return;
+                      int type = yes ? 4 : 1;
+
+                      web::WebRequest()
+                          .param("type", type)
+                          .param("amount", 100)
+                          .get("https://gdrate.arcticwoof.xyz/getLevels")
+                          .listen([self](web::WebResponse* res) {
+                                if (!self) return;
+                                if (res && res->ok()) {
+                                      auto jsonResult = res->json();
+
+                                      if (jsonResult) {
+                                            auto json = jsonResult.unwrap();
+                                            std::string levelIDs;
+                                            bool first = true;
+                                            if (json.contains("levelIds")) {
+                                                  auto levelsArr = json["levelIds"];
+
+                                                  // iterate
+                                                  for (auto levelIDValue : levelsArr) {
+                                                        auto levelID = levelIDValue.as<int>();
+                                                        if (levelID) {
+                                                              if (!first)
+                                                                    levelIDs += ",";
+                                                              levelIDs += numToString(levelID.unwrap());
+                                                              first = false;
+                                                        }
+                                                  }
+                                            }
+
+                                            if (!levelIDs.empty()) {
+                                                  auto searchObject =
+                                                      GJSearchObject::create(SearchType::Type19, levelIDs);
+                                                  auto browserLayer = LevelBrowserLayer::create(searchObject);
+                                                  auto scene = CCScene::create();
+                                                  scene->addChild(browserLayer);
+                                                  auto transitionFade = CCTransitionFade::create(0.5f, scene);
+                                                  CCDirector::sharedDirector()->pushScene(transitionFade);
+                                            } else {
+                                                  log::warn("No levels found in response");
+                                                  Notification::create("No sent layouts found",
+                                                                       NotificationIcon::Warning)
+                                                      ->show();
+                                            }
+                                      } else {
+                                            log::error("Failed to parse response JSON");
+                                      }
+                                } else {
+                                      log::error("Failed to fetch levels from server");
+                                      Notification::create("Failed to fetch levels from server",
+                                                           NotificationIcon::Error)
+                                          ->show();
+                                }
+                          });
+                });
+
+            return;
+      }
+      // normal user, just show type 1
+      Ref<RLCreatorLayer> self = this;
       web::WebRequest()
           .param("type", 1)
           .param("amount", 100)
           .get("https://gdrate.arcticwoof.xyz/getLevels")
-          .listen([this](web::WebResponse* res) {
+          .listen([self](web::WebResponse* res) {
+                if (!self) return;
                 if (res && res->ok()) {
                       auto jsonResult = res->json();
 

@@ -1,9 +1,7 @@
 #include "RLCommunityVotePopup.hpp"
 
 using namespace geode::prelude;
-#include <algorithm>  // for std::clamp
-
-// Note: up/down CircleButton UI removed in favor of numeric TextInput controls.
+#include <algorithm>
 
 RLCommunityVotePopup* RLCommunityVotePopup::create() {
       return RLCommunityVotePopup::create(0);
@@ -22,76 +20,111 @@ RLCommunityVotePopup* RLCommunityVotePopup::create(int levelId) {
 
 void RLCommunityVotePopup::onSubmit(CCObject*) {
       // prepare payload (plays payload by dex)
-      int accountId = GJAccountManager::get()->m_accountID;
-      auto argonToken = Mod::get()->getSavedValue<std::string>("argon_token");
-      if (argonToken.empty()) {
-            Notification::create("Auth required to submit vote", NotificationIcon::Error)->show();
-            return;
-      }
-      int gameplayVote = 0;
-      int designVote = 0;
-      int difficultyVote = 0;
+      createQuickPopup(
+          "Submit Vote",
+          "Are you sure you want to submit your vote?\n<cy>You won't be able to change it later.</c>",
+          "Cancel", "Submit",
+          [this](auto, bool yes) {
+                if (yes) {
+                      int accountId = GJAccountManager::get()->m_accountID;
+                      auto argonToken = Mod::get()->getSavedValue<std::string>("argon_token");
+                      if (argonToken.empty()) {
+                            Notification::create("Auth required to submit vote", NotificationIcon::Error)->show();
+                            return;
+                      }
+                      int gameplayVote = 0;
+                      int originalityVote = 0;
+                      int difficultyVote = 0;
 
-      if (m_gameplayInput) {
-            gameplayVote = numFromString<int>(m_gameplayInput->getString()).unwrapOr(0);
-            gameplayVote = std::clamp(gameplayVote, 1, 30);
-      }
-      if (m_designInput) {
-            designVote = numFromString<int>(m_designInput->getString()).unwrapOr(0);
-            designVote = std::clamp(designVote, 1, 10);
-      }
-      if (m_difficultyInput) {
-            difficultyVote = numFromString<int>(m_difficultyInput->getString()).unwrapOr(0);
-            difficultyVote = std::clamp(difficultyVote, 1, 10);
-      }
+                      bool includeGameplay = false;
+                      bool includeOriginality = false;
+                      bool includeDifficulty = false;
 
-      matjson::Value body = matjson::Value::object();
-      body["accountId"] = accountId;
-      body["argonToken"] = argonToken;
-      body["levelId"] = m_levelId;
-      body["gameplayScore"] = gameplayVote;
-      body["designScore"] = designVote;
-      body["difficultyScore"] = difficultyVote;
+                      if (m_gameplayInput) {
+                            auto s = m_gameplayInput->getString();
+                            if (!s.empty()) {
+                                  gameplayVote = numFromString<int>(s).unwrapOr(0);
+                                  gameplayVote = std::clamp(gameplayVote, 1, 30);
+                                  includeGameplay = true;
+                            }
+                      }
+                      if (m_originalityInput) {
+                            auto s = m_originalityInput->getString();
+                            if (!s.empty()) {
+                                  originalityVote = numFromString<int>(s).unwrapOr(0);
+                                  originalityVote = std::clamp(originalityVote, 1, 10);
+                                  includeOriginality = true;
+                            }
+                      }
+                      if (m_difficultyInput) {
+                            auto string = m_difficultyInput->getString();
+                            if (!string.empty()) {
+                                  difficultyVote = numFromString<int>(string).unwrapOr(0);
+                                  difficultyVote = std::clamp(difficultyVote, 1, 10);
+                                  includeDifficulty = true;
+                            }
+                      }
 
-      Ref<RLCommunityVotePopup> selfRef = this;
-      auto req = web::WebRequest();
-      req.bodyJSON(body);
-      req.post("https://gdrate.arcticwoof.xyz/setSuggestScore").listen([selfRef, gameplayVote, designVote, difficultyVote](web::WebResponse* res) {
-            if (!selfRef) return;
-            if (!res || !res->ok()) {
-                  Notification::create("Failed to submit vote", NotificationIcon::Error)->show();
-                  return;
-            }
-            auto j = res->json();
-            if (!j) {
-                  Notification::create("Invalid submit response", NotificationIcon::Warning)->show();
-                  return;
-            }
-            auto json = j.unwrap();
-            bool success = json["success"].asBool().unwrapOrDefault();
-            if (success) {
-                  Notification::create("Vote submitted!", NotificationIcon::Success)->show();
+                      if (!includeGameplay && !includeOriginality && !includeDifficulty) {
+                            Notification::create("No votes provided", NotificationIcon::Warning)->show();
+                            return;
+                      }
 
-                  // Optimistically mark inputs as VOTED and disable
-                  if (selfRef->m_gameplayInput && gameplayVote > 0) {
-                        selfRef->m_gameplayInput->setString("VOTED");
-                        selfRef->m_gameplayInput->setEnabled(false);
-                  }
-                  if (selfRef->m_designInput && designVote > 0) {
-                        selfRef->m_designInput->setString("VOTED");
-                        selfRef->m_designInput->setEnabled(false);
-                  }
-                  if (selfRef->m_difficultyInput && difficultyVote > 0) {
-                        selfRef->m_difficultyInput->setString("VOTED");
-                        selfRef->m_difficultyInput->setEnabled(false);
-                  }
+                      matjson::Value body = matjson::Value::object();
+                      body["accountId"] = accountId;
+                      body["argonToken"] = argonToken;
+                      body["levelId"] = m_levelId;
+                      if (includeGameplay) body["gameplayScore"] = gameplayVote;
+                      if (includeOriginality) body["originalityScore"] = originalityVote;
+                      if (includeDifficulty) body["difficultyScore"] = difficultyVote;
 
-                  // Refresh UI by re-fetching data
-                  selfRef->refreshFromServer();
-            } else {
-                  Notification::create("Vote submission failed", NotificationIcon::Error)->show();
-            }
-      });
+                      auto req = web::WebRequest();
+                      req.bodyJSON(body);
+                      Ref<RLCommunityVotePopup> self = this;
+                      self->m_submitVoteTask = req.post("https://gdrate.arcticwoof.xyz/setSuggestScore");
+                      self->m_submitVoteTask.listen([self, gameplayVote, originalityVote, difficultyVote](web::WebResponse* res) {
+                            if (!self) return;
+                            if (!res || !res->ok()) {
+                                  Notification::create("Failed to submit vote", NotificationIcon::Error)->show();
+                                  return;
+                            }
+                            auto j = res->json();
+                            if (!j) {
+                                  Notification::create("Invalid submit response", NotificationIcon::Warning)->show();
+                                  return;
+                            }
+                            auto json = j.unwrap();
+                            bool success = json["success"].asBool().unwrapOrDefault();
+                            if (success) {
+                                  if (!self->m_mainLayer || !self->getParent()) {
+                                        Notification::create("Vote submitted!", NotificationIcon::Success)->show();
+                                        return;
+                                  }
+
+                                  Notification::create("Vote submitted!", NotificationIcon::Success)->show();
+
+                                  // Optimistically mark inputs as VOTED and disable
+                                  if (self->m_gameplayInput && gameplayVote > 0) {
+                                        self->m_gameplayInput->setString("VOTED");
+                                        self->m_gameplayInput->setEnabled(false);
+                                  }
+                                  if (self->m_originalityInput && originalityVote > 0) {
+                                        self->m_originalityInput->setString("VOTED");
+                                        self->m_originalityInput->setEnabled(false);
+                                  }
+                                  if (self->m_difficultyInput && difficultyVote > 0) {
+                                        self->m_difficultyInput->setString("VOTED");
+                                        self->m_difficultyInput->setEnabled(false);
+                                  }
+
+                                  // Refresh UI by re-fetching data
+                                  self->refreshFromServer();
+                            } else {
+                                  Notification::create("Vote submission failed", NotificationIcon::Error)->show();
+                            }
+                      });
+                }
+          });
 }
 
 bool RLCommunityVotePopup::setup() {
@@ -102,35 +135,35 @@ bool RLCommunityVotePopup::setup() {
       float rowH = 120.f;
       float rowSpacing = 8.f;
 
-      // design row (vertical layout: label top, score under label, input under score)
-      auto designRow = CCLayer::create();
-      designRow->setContentSize({rowW, rowH});
-      designRow->setPosition({10.f, 55.f});
-      m_mainLayer->addChild(designRow);
+      // originality row (vertical layout: label top, score under label, input under score)
+      auto originalityRow = CCLayer::create();
+      originalityRow->setContentSize({rowW, rowH});
+      originalityRow->setPosition({10.f, 55.f});
+      m_mainLayer->addChild(originalityRow);
 
-      auto designLabel = CCLabelBMFont::create("Design", "chatFont.fnt");
-      designLabel->setPosition({rowW / 2.f, rowH - 10.f});
-      designRow->addChild(designLabel);
+      auto originalityLabel = CCLabelBMFont::create("Originality", "chatFont.fnt");
+      originalityLabel->setPosition({rowW / 2.f, rowH - 10.f});
+      originalityRow->addChild(originalityLabel);
 
-      m_designScoreLabel = CCLabelBMFont::create("-", "bigFont.fnt");
-      m_designScoreLabel->setAnchorPoint({0.5f, 0.5f});
-      m_designScoreLabel->setPosition({rowW / 2.f, rowH - 40.f});
-      m_designScoreLabel->setScale(0.7f);
-      designRow->addChild(m_designScoreLabel);
+      m_originalityScoreLabel = CCLabelBMFont::create("-", "bigFont.fnt");
+      m_originalityScoreLabel->setAnchorPoint({0.5f, 0.5f});
+      m_originalityScoreLabel->setPosition({rowW / 2.f, rowH - 40.f});
+      m_originalityScoreLabel->setScale(0.7f);
+      originalityRow->addChild(m_originalityScoreLabel);
 
       // numeric text input below score
-      m_designInput = TextInput::create(80.f, "1-10");
-      m_designInput->setPosition({rowW / 2.f, rowH - 80.f});
-      m_designInput->setID("design-vote-input");
-      m_designInput->setCommonFilter(CommonFilter::Int);
-      designRow->addChild(m_designInput);
+      m_originalityInput = TextInput::create(80.f, "1-10");
+      m_originalityInput->setPosition({rowW / 2.f, rowH - 80.f});
+      m_originalityInput->setID("originality-vote-input");
+      m_originalityInput->setCommonFilter(CommonFilter::Int);
+      originalityRow->addChild(m_originalityInput);
 
-      m_designVote = numFromString<int>(m_designInput->getString()).unwrapOr(0);
+      m_originalityVote = numFromString<int>(m_originalityInput->getString()).unwrapOr(0);
 
       // difficulty row (vertical layout)
       auto difficultyRow = CCLayer::create();
       difficultyRow->setContentSize({rowW, rowH});
-      difficultyRow->setPosition({designRow->getPositionX() + 100.f, designRow->getPositionY()});
+      difficultyRow->setPosition({originalityRow->getPositionX() + 100.f, originalityRow->getPositionY()});
       m_mainLayer->addChild(difficultyRow);
 
       auto diffLabel = CCLabelBMFont::create("Difficulty", "chatFont.fnt");
@@ -155,7 +188,7 @@ bool RLCommunityVotePopup::setup() {
       // gameplay row (vertical layout)
       auto gameplayRow = CCLayer::create();
       gameplayRow->setContentSize({rowW, rowH});
-      gameplayRow->setPosition({difficultyRow->getPositionX() + 100.f, designRow->getPositionY()});
+      gameplayRow->setPosition({difficultyRow->getPositionX() + 100.f, originalityRow->getPositionY()});
       m_mainLayer->addChild(gameplayRow);
 
       auto gpLabel = CCLabelBMFont::create("Gameplay", "chatFont.fnt");
@@ -180,7 +213,7 @@ bool RLCommunityVotePopup::setup() {
       // moderators' average difficulty (vertical layout)
       auto modRow = CCLayer::create();
       modRow->setContentSize({rowW, rowH});
-      modRow->setPosition({gameplayRow->getPositionX() + 100.f, designRow->getPositionY()});
+      modRow->setPosition({gameplayRow->getPositionX() + 100.f, originalityRow->getPositionY()});
       m_mainLayer->addChild(modRow);
 
       auto modLabel = CCLabelBMFont::create("Layout Mods'\nAverage Difficulty", "chatFont.fnt");
@@ -197,12 +230,9 @@ bool RLCommunityVotePopup::setup() {
       // submit button
       auto submitSpr = ButtonSprite::create("Submit", "goldFont.fnt", "GJ_button_01.png");
       auto submitBtn = CCMenuItemSpriteExtra::create(submitSpr, this, menu_selector(RLCommunityVotePopup::onSubmit));
-      submitBtn->setPosition({m_mainLayer->getContentSize().width / 2.f, 0});
+      submitBtn->setPosition({m_mainLayer->getContentSize().width / 2.f, 25.f});
       m_submitBtn = submitBtn;
-      auto submitMenu = CCMenu::create();
-      submitMenu->setPosition({0, 0});
-      submitMenu->addChild(submitBtn);
-      m_mainLayer->addChild(submitMenu, 3);
+      m_buttonMenu->addChild(submitBtn);
 
       // total votes label
       m_totalVotesLabel = CCLabelBMFont::create("Total votes: -", "goldFont.fnt");
@@ -236,68 +266,17 @@ bool RLCommunityVotePopup::setup() {
 }
 
 void RLCommunityVotePopup::refreshFromServer() {
-      Ref<RLCommunityVotePopup> selfRef = this;
-
-      // Hide score labels until we know whether this account has voted
-      // Moderators can force-show labels via m_forceShowScores
       if (!m_forceShowScores) {
-            if (m_designScoreLabel) m_designScoreLabel->setVisible(false);
+            if (m_originalityScoreLabel) m_originalityScoreLabel->setVisible(false);
             if (m_difficultyScoreLabel) m_difficultyScoreLabel->setVisible(false);
             if (m_gameplayScoreLabel) m_gameplayScoreLabel->setVisible(false);
       } else {
-            if (m_designScoreLabel) m_designScoreLabel->setVisible(true);
+            if (m_originalityScoreLabel) m_originalityScoreLabel->setVisible(true);
             if (m_difficultyScoreLabel) m_difficultyScoreLabel->setVisible(true);
             if (m_gameplayScoreLabel) m_gameplayScoreLabel->setVisible(true);
       }
 
-      // First fetch aggregated scores and moderator average
-      web::WebRequest().get(fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", m_levelId)).listen([selfRef](web::WebResponse* res) {
-            if (!selfRef) return;
-            if (!res || !res->ok()) {
-                  Notification::create("Failed to fetch community vote info", NotificationIcon::Error)->show();
-                  return;
-            }
-            auto jres = res->json();
-            if (!jres) {
-                  Notification::create("Invalid response for community vote", NotificationIcon::Warning)->show();
-                  return;
-            }
-            auto json = jres.unwrap();
-            // update score labels (strings only; visibility handled by getVote)
-            double designScore = json["designScore"].asDouble().unwrapOrDefault();
-            double difficultyScore = json["difficultyScore"].asDouble().unwrapOrDefault();
-            double gameplayScore = json["gameplayScore"].asDouble().unwrapOrDefault();
-
-            if (selfRef->m_designScoreLabel) selfRef->m_designScoreLabel->setString(fmt::format("{:.2f}", designScore).c_str());
-            if (selfRef->m_difficultyScoreLabel) selfRef->m_difficultyScoreLabel->setString(fmt::format("{:.2f}", difficultyScore).c_str());
-            if (selfRef->m_gameplayScoreLabel) selfRef->m_gameplayScoreLabel->setString(fmt::format("{:.2f}", gameplayScore).c_str());
-
-            // moderator difficulty (read-only)
-            double avg = -1.0;
-            if (json.contains("averageDifficulty")) {
-                  auto avgRes = json["averageDifficulty"].asDouble();
-                  if (avgRes) avg = avgRes.unwrap();
-            }
-
-            if (selfRef->m_modDifficultyLabel) {
-                  if (avg >= 0.0) {
-                        if (std::floor(avg) == avg) {
-                              selfRef->m_modDifficultyLabel->setString(numToString((int)avg).c_str());
-                        } else {
-                              selfRef->m_modDifficultyLabel->setString(fmt::format("{:.1f}", avg).c_str());
-                        }
-                  } else {
-                        selfRef->m_modDifficultyLabel->setString("-");
-                  }
-            }
-
-            // if the server indicates this level is not suggested, close or remove submit UI
-            bool isSuggested = json["isSuggested"].asBool().unwrapOrDefault();
-            if (!isSuggested) {
-                  selfRef->onClose(nullptr);
-                  Notification::create("Level is not suggested", NotificationIcon::Warning)->show();
-            }
-      });
+      Ref<RLCommunityVotePopup> self = this;
 
       // Then query whether this account has already voted on this level and
       // show/hide score labels accordingly
@@ -308,8 +287,9 @@ void RLCommunityVotePopup::refreshFromServer() {
 
       web::WebRequest voteReq;
       voteReq.bodyJSON(voteBody);
-      voteReq.post("https://gdrate.arcticwoof.xyz/getVote").listen([selfRef](web::WebResponse* vres) {
-            if (!selfRef) return;
+      self->m_getVoteTask = voteReq.post("https://gdrate.arcticwoof.xyz/getVote");
+      self->m_getVoteTask.listen([self](web::WebResponse* vres) {
+            if (!self) return;
             if (!vres || !vres->ok()) {
                   return;
             }
@@ -317,127 +297,174 @@ void RLCommunityVotePopup::refreshFromServer() {
             if (!vj) return;
             auto vjson = vj.unwrap();
 
+            if (!self->m_mainLayer || !self->getParent()) {
+                  return;
+            }
+
             bool hasGameplay = vjson["hasGameplayVoted"].asBool().unwrapOrDefault();
-            bool hasDesign = vjson["hasDesignVoted"].asBool().unwrapOrDefault();
+            bool hasOriginality = vjson["hasOriginalityVoted"].asBool().unwrapOrDefault();
             bool hasDifficulty = vjson["hasDifficultyVoted"].asBool().unwrapOrDefault();
             int totalVotes = vjson["totalVotes"].asInt().unwrapOrDefault();
-            if (selfRef->m_totalVotesLabel) {
-                  selfRef->m_totalVotesLabel->setString(fmt::format("Total votes: {}", totalVotes).c_str());
+            if (self->m_totalVotesLabel) {
+                  self->m_totalVotesLabel->setString(fmt::format("Total votes: {}", totalVotes).c_str());
+            }
+
+            double originalityScore = -1.0;
+            if (vjson.contains("originalityScore")) {
+                  auto osRes = vjson["originalityScore"].asDouble();
+                  if (osRes) originalityScore = osRes.unwrap();
+            }
+            double difficultyScore = -1.0;
+            if (vjson.contains("difficultyScore")) {
+                  auto dsRes = vjson["difficultyScore"].asDouble();
+                  if (dsRes) difficultyScore = dsRes.unwrap();
+            }
+            double gameplayScore = -1.0;
+            if (vjson.contains("gameplayScore")) {
+                  auto gpRes = vjson["gameplayScore"].asDouble();
+                  if (gpRes) gameplayScore = gpRes.unwrap();
+            }
+
+            if (self->m_originalityScoreLabel) {
+                  if (originalityScore >= 0.0) {
+                        self->m_originalityScoreLabel->setString(fmt::format("{:.2f}", originalityScore).c_str());
+                  }
+            }
+            if (self->m_difficultyScoreLabel) {
+                  if (difficultyScore >= 0.0) {
+                        self->m_difficultyScoreLabel->setString(fmt::format("{:.2f}", difficultyScore).c_str());
+                  }
+            }
+            if (self->m_gameplayScoreLabel) {
+                  if (gameplayScore >= 0.0) {
+                        self->m_gameplayScoreLabel->setString(fmt::format("{:.2f}", gameplayScore).c_str());
+                  }
+            }
+
+            // moderator difficulty (read-only) - prefer averageDifficulty from getVote
+            double avg = -1.0;
+            if (vjson.contains("averageDifficulty")) {
+                  auto avgRes = vjson["averageDifficulty"].asDouble();
+                  if (avgRes) avg = avgRes.unwrap();
+            }
+
+            if (self->m_modDifficultyLabel) {
+                  if (avg >= 0.0) {
+                        if (std::floor(avg) == avg) {
+                              self->m_modDifficultyLabel->setString(numToString(static_cast<int>(avg)).c_str());
+                        } else {
+                              self->m_modDifficultyLabel->setString(fmt::format("{:.1f}", avg).c_str());
+                        }
+                  } else {
+                        self->m_modDifficultyLabel->setString("-");
+                  }
             }
 
             // If moderators forced show, keep labels visible regardless of 'hasX' vote state
-            if (selfRef->m_forceShowScores) {
-                  if (selfRef->m_gameplayInput) {
+            if (self->m_forceShowScores) {
+                  if (self->m_gameplayInput) {
                         // do not overwrite moderator's ability to see scores
                         // but keep VOTED status if applicable
                         if (hasGameplay) {
-                              selfRef->m_gameplayInput->setString("VOTED");
-                              selfRef->m_gameplayInput->setEnabled(false);
+                              self->m_gameplayInput->setString("VOTED");
+                              self->m_gameplayInput->setEnabled(false);
                         }
                   }
-                  if (selfRef->m_designInput) {
-                        if (hasDesign) {
-                              selfRef->m_designInput->setString("VOTED");
-                              selfRef->m_designInput->setEnabled(false);
+                  if (self->m_originalityInput) {
+                        if (hasOriginality) {
+                              self->m_originalityInput->setString("VOTED");
+                              self->m_originalityInput->setEnabled(false);
                         }
                   }
-                  if (selfRef->m_difficultyInput) {
+                  if (self->m_difficultyInput) {
                         if (hasDifficulty) {
-                              selfRef->m_difficultyInput->setString("VOTED");
-                              selfRef->m_difficultyInput->setEnabled(false);
+                              self->m_difficultyInput->setString("VOTED");
+                              self->m_difficultyInput->setEnabled(false);
                         }
                   }
 
-                  if (selfRef->m_gameplayScoreLabel) selfRef->m_gameplayScoreLabel->setVisible(true);
-                  if (selfRef->m_designScoreLabel) selfRef->m_designScoreLabel->setVisible(true);
-                  if (selfRef->m_difficultyScoreLabel) selfRef->m_difficultyScoreLabel->setVisible(true);
+                  if (self->m_gameplayScoreLabel) self->m_gameplayScoreLabel->setVisible(true);
+                  if (self->m_originalityScoreLabel) self->m_originalityScoreLabel->setVisible(true);
+                  if (self->m_difficultyScoreLabel) self->m_difficultyScoreLabel->setVisible(true);
             } else {
                   if (hasGameplay) {
-                        if (selfRef->m_gameplayInput) {
-                              selfRef->m_gameplayInput->setString("VOTED");
-                              selfRef->m_gameplayInput->setEnabled(false);
+                        if (self->m_gameplayInput) {
+                              self->m_gameplayInput->setString("VOTED");
+                              self->m_gameplayInput->setEnabled(false);
                         }
-                        if (selfRef->m_gameplayScoreLabel) selfRef->m_gameplayScoreLabel->setVisible(true);
+                        if (self->m_gameplayScoreLabel) self->m_gameplayScoreLabel->setVisible(true);
                   } else {
-                        if (selfRef->m_gameplayScoreLabel) selfRef->m_gameplayScoreLabel->setVisible(false);
+                        if (self->m_gameplayScoreLabel) self->m_gameplayScoreLabel->setVisible(false);
                   }
 
-                  if (hasDesign) {
-                        if (selfRef->m_designInput) {
-                              selfRef->m_designInput->setString("VOTED");
-                              selfRef->m_designInput->setEnabled(false);
+                  if (hasOriginality) {
+                        if (self->m_originalityInput) {
+                              self->m_originalityInput->setString("VOTED");
+                              self->m_originalityInput->setEnabled(false);
                         }
-                        if (selfRef->m_designScoreLabel) selfRef->m_designScoreLabel->setVisible(true);
+                        if (self->m_originalityScoreLabel) self->m_originalityScoreLabel->setVisible(true);
                   } else {
-                        if (selfRef->m_designScoreLabel) selfRef->m_designScoreLabel->setVisible(false);
+                        if (self->m_originalityScoreLabel) self->m_originalityScoreLabel->setVisible(false);
                   }
 
                   if (hasDifficulty) {
-                        if (selfRef->m_difficultyInput) {
-                              selfRef->m_difficultyInput->setString("VOTED");
-                              selfRef->m_difficultyInput->setEnabled(false);
+                        if (self->m_difficultyInput) {
+                              self->m_difficultyInput->setString("VOTED");
+                              self->m_difficultyInput->setEnabled(false);
                         }
-                        if (selfRef->m_difficultyScoreLabel) selfRef->m_difficultyScoreLabel->setVisible(true);
+                        if (self->m_difficultyScoreLabel) self->m_difficultyScoreLabel->setVisible(true);
                   } else {
-                        if (selfRef->m_difficultyScoreLabel) selfRef->m_difficultyScoreLabel->setVisible(false);
+                        if (self->m_difficultyScoreLabel) self->m_difficultyScoreLabel->setVisible(false);
                   }
             }
 
             // Ensure toggle buttons reflect current visibility state for moderators
             int userRole = Mod::get()->getSavedValue<int>("role");
             if (userRole == 1 || userRole == 2) {
-                  if (selfRef->m_toggleAllBtn) selfRef->m_toggleAllBtn->setVisible(true);
+                  if (self->m_toggleAllBtn) self->m_toggleAllBtn->setVisible(true);
             } else {
-                  if (selfRef->m_toggleAllBtn) selfRef->m_toggleAllBtn->setVisible(false);
+                  if (self->m_toggleAllBtn) self->m_toggleAllBtn->setVisible(false);
             }
 
             // If all three categories have already been voted on, disable submit
-            if (hasGameplay && hasDesign && hasDifficulty) {
-                  if (selfRef->m_submitBtn) {
-                        selfRef->m_submitBtn->setEnabled(false);
-                        selfRef->m_submitBtn->setNormalImage(ButtonSprite::create("Submit", "goldFont.fnt", "GJ_button_04.png"));
+            if (hasGameplay && hasOriginality && hasDifficulty) {
+                  if (self->m_submitBtn) {
+                        self->m_submitBtn->setEnabled(false);
+                        self->m_submitBtn->setNormalImage(ButtonSprite::create("Submit", "goldFont.fnt", "GJ_button_04.png"));
                   }
             } else {
-                  if (selfRef->m_submitBtn) {
-                        selfRef->m_submitBtn->setEnabled(true);
-                        selfRef->m_submitBtn->setNormalImage(ButtonSprite::create("Submit", "goldFont.fnt", "GJ_button_01.png"));
+                  if (self->m_submitBtn) {
+                        self->m_submitBtn->setEnabled(true);
+                        self->m_submitBtn->setNormalImage(ButtonSprite::create("Submit", "goldFont.fnt", "GJ_button_01.png"));
                   }
             }
 
             // When moderators toggle, their actions should not be blocked by 'already voted' state
-            if (selfRef->m_toggleAllBtn) selfRef->m_toggleAllBtn->setEnabled(true);
+            if (self->m_toggleAllBtn) self->m_toggleAllBtn->setEnabled(true);
       });
 }
 
 void RLCommunityVotePopup::onInfo(CCObject*) {
       MDPopup::create(
           "Community Voting Info",
-          "You can vote on <cl>suggested/sent layouts</c> based on three categories:\n\n"
-          "<cg>Design</c>: How well-designed and visually appealing the layout is.\n\n"
-          "<cg>Difficulty</c>: The difficulty the level is according to your experience.\n\n"
-          "<cg>Gameplay</c>: How fun and enjoyable the layout is overall.\n\n"
-          "Each category has its own score range:\n"
-          "- Design: 1 to 10\n"
-          "- Difficulty: 1 to 30\n"
-          "- Gameplay: 1 to 10\n\n"
-          "Please rate suggested layouts <cg>honestly and fairly</c> based on your experience playing them!",
+          "You can vote on <cl>suggested/rated layouts</c> based on three categories:\n\n"
+          "<co>Originality (1 to 10)</c>: How original and distinct the layout is.\n\n"
+          "<cr>Difficulty (1 to 30)</c>: The difficulty the level is according to your experience.\n\n"
+          "<cg>Gameplay (1 to 10)</c>: How fun and enjoyable the layout is overall.\n\n"
+          "### Please rate suggested/rated layouts <cg>honestly and fairly</c> based on your experience playing them as <cr>Layout Admins</c> uses this votes to help accurately rate layouts!",
           "OK")
           ->show();
 }
 
-void RLCommunityVotePopup::onToggleScore(CCObject* sender) {
-      // kept for backward-compat; individual toggles no longer exist
-}
-
 void RLCommunityVotePopup::onToggleAll(CCObject* sender) {
       // toggle visibility for all three score labels
-      if (!m_designScoreLabel || !m_difficultyScoreLabel || !m_gameplayScoreLabel) return;
+      if (!m_originalityScoreLabel || !m_difficultyScoreLabel || !m_gameplayScoreLabel) return;
 
-      bool anyVisible = m_designScoreLabel->isVisible() || m_difficultyScoreLabel->isVisible() || m_gameplayScoreLabel->isVisible();
+      bool anyVisible = m_originalityScoreLabel->isVisible() || m_difficultyScoreLabel->isVisible() || m_gameplayScoreLabel->isVisible();
       bool newVis = !anyVisible;
       m_forceShowScores = newVis;
 
-      m_designScoreLabel->setVisible(newVis);
+      m_originalityScoreLabel->setVisible(newVis);
       m_difficultyScoreLabel->setVisible(newVis);
       m_gameplayScoreLabel->setVisible(newVis);
 

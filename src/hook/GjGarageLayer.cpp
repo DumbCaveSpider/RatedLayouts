@@ -10,10 +10,17 @@ class $modify(GJGarageLayer) {
       struct Fields {
             CCNode* myStatItem = nullptr;
             CCNode* statMenu = nullptr;
+
             CCNode* starsValue = nullptr;
             CCNode* planetsValue = nullptr;
+            CCNode* coinsValue = nullptr;
             int storedStars = 0;
             int storedPlanets = 0;
+            int storedCoins = 0;
+            utils::web::WebTask profileTask;
+            ~Fields() {
+                  profileTask.cancel();
+            }
       };
 
       bool init() {
@@ -60,10 +67,10 @@ class $modify(GJGarageLayer) {
             // web request
             auto postReq = web::WebRequest();
             postReq.bodyJSON(jsonBody);
-            auto postTask = postReq.post("https://gdrate.arcticwoof.xyz/profile");
+            m_fields->profileTask = postReq.post("https://gdrate.arcticwoof.xyz/profile");
 
             // Handle the response
-            postTask.listen([this](web::WebResponse* response) {
+            m_fields->profileTask.listen([this](web::WebResponse* response) {
                   log::info("Received response from server");
 
                   if (!response->ok()) {
@@ -82,6 +89,7 @@ class $modify(GJGarageLayer) {
                   int points = json["points"].asInt().unwrapOrDefault();
                   int planets = json["planets"].asInt().unwrapOrDefault();
                   int stars = json["stars"].asInt().unwrapOrDefault();
+                  int coins = json["coins"].asInt().unwrapOrDefault();
 
                   log::info("Profile data - points: {}, stars: {}", points, stars);
                   m_fields->storedStars = stars;
@@ -98,6 +106,10 @@ class $modify(GJGarageLayer) {
                               m_fields->planetsValue->removeFromParent();
                               m_fields->planetsValue = nullptr;
                         }
+                        if (m_fields->coinsValue) {
+                              m_fields->coinsValue->removeFromParent();
+                              m_fields->coinsValue = nullptr;
+                        }
 
                         auto starSprite = CCSprite::create("RL_starMed.png"_spr);
                         auto starsValue = StatsDisplayAPI::getNewItem(
@@ -105,6 +117,7 @@ class $modify(GJGarageLayer) {
                             m_fields->storedStars, 0.54f);
 
                         m_fields->starsValue = starsValue;
+                        starsValue->setID("rl-stars-value");
                         m_fields->statMenu->addChild(starsValue);
 
                         auto planetSprite = CCSprite::create("RL_planetMed.png"_spr);
@@ -112,7 +125,17 @@ class $modify(GJGarageLayer) {
                             "planets-collected"_spr, planetSprite,
                             planets, 0.54f);
                         m_fields->planetsValue = planetsValue;
+                        planetsValue->setID("rl-planets-value");
                         m_fields->statMenu->addChild(planetsValue);
+
+                        auto coinsSprite = CCSprite::create("RL_BlueCoinSmall.png"_spr);
+                        auto coinsValue = StatsDisplayAPI::getNewItem(
+                            "coins-collected"_spr, coinsSprite,
+                            coins, 0.54f);
+                        m_fields->coinsValue = coinsValue;
+                        coinsValue->setID("rl-coins-value");
+                        m_fields->statMenu->addChild(coinsValue);
+
                         // call updateLayout if available
                         if (auto menu = typeinfo_cast<CCMenu*>(m_fields->statMenu)) {
                               menu->updateLayout();

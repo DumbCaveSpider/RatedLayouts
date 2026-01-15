@@ -12,6 +12,7 @@ class RLLeaderboardLayer : public CCLayer {
       TabButton* m_starsTab;
       TabButton* m_planetsTab;
       TabButton* m_creatorTab;
+      TabButton* m_coinsTab;
 
       bool init();
       void onBackButton(CCObject* sender);

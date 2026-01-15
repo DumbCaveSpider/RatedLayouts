@@ -58,9 +58,11 @@ void RLAddDialogue::onPreview(CCObject* sender) {
 
 void RLAddDialogue::onSubmit(CCObject* sender) {
       if (!m_dialogueInput) return;
+      auto upopup = UploadActionPopup::create(nullptr, "Submitting Dialogue...");
+      upopup->show();
       std::string dialogueText = m_dialogueInput->getString();
       if (dialogueText.empty()) {
-            Notification::create("Dialogue cannot be empty!", NotificationIcon::Error)->show();
+            upopup->showFailMessage("Dialogue cannot be empty!");
             return;
       }
       // send to server
@@ -71,13 +73,14 @@ void RLAddDialogue::onSubmit(CCObject* sender) {
 
       auto req = web::WebRequest();
       req.bodyJSON(body);
-      Ref<RLAddDialogue> thisRef = this;
-      req.post("https://gdrate.arcticwoof.xyz/setDialogue").listen([thisRef](web::WebResponse* res) {
+      Ref<RLAddDialogue> self = this;
+      self->m_setDialogueTask = req.post("https://gdrate.arcticwoof.xyz/setDialogue");
+      self->m_setDialogueTask.listen([self, upopup](web::WebResponse* res) {
+            if (!self) return;
             if (!res || !res->ok()) {
-                  Notification::create("Failed to submit dialogue!", NotificationIcon::Error)->show();
+                  upopup->showFailMessage("Failed to submit dialogue!");
                   return;
             }
-            Notification::create("Dialogue submitted successfully!", NotificationIcon::Success)->show();
-            if (thisRef) thisRef->removeFromParent();
+            upopup->showSuccessMessage("Dialogue submitted successfully!");
       });
 }

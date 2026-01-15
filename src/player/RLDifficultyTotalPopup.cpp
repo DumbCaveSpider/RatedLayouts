@@ -157,16 +157,23 @@ bool RLDifficultyTotalPopup::setup() {
       m_mainLayer->addChild(spinner);
       m_spinner = spinner;
 
+      // remove close button
+      if (auto closeBtn = this->m_closeBtn) {
+            closeBtn->removeFromParent();
+      }
+
+      // ok (close)
+      auto closeBtnSpr = ButtonSprite::create("OK", "goldFont.fnt", "GJ_button_01.png");
+      auto closeBtn = CCMenuItemSpriteExtra::create(closeBtnSpr, this, menu_selector(RLDifficultyTotalPopup::onClose));
+      closeBtn->setPosition({contentSize.width / 2.f, 25.f});
+      m_buttonMenu->addChild(closeBtn);
       // demon toggle
       auto demonOff = CCSpriteGrayscale::createWithSpriteFrameName("GJ_demonIcon_001.png");
       auto demonOn = CCSprite::createWithSpriteFrameName("GJ_demonIcon_001.png");
       auto demonToggle = CCMenuItemToggler::create(demonOff, demonOn, this, menu_selector(RLDifficultyTotalPopup::onDemonToggle));
       demonToggle->setScale(1.0f);
       demonToggle->setPosition({contentSize.width - 25.f, contentSize.height - 25.f});
-      auto toggleMenu = CCMenu::create();
-      toggleMenu->setPosition({0, 0});
-      toggleMenu->addChild(demonToggle);
-      m_mainLayer->addChild(toggleMenu);
+      m_buttonMenu->addChild(demonToggle);
 
       m_rankLabel = CCLabelBMFont::create("-", "goldFont.fnt");
       m_rankLabel->setScale(0.4f);
@@ -180,28 +187,29 @@ bool RLDifficultyTotalPopup::setup() {
             setTitle("Rated Layouts Classic: -");
       }
 
-      this->m_facesContainer = CCMenu::create();
+      m_facesContainer = CCMenu::create();
       auto facesLayout = RowLayout::create();
       facesLayout->setGap(15.f)->setGrowCrossAxis(true)->setCrossAxisOverflow(false)->setAxisAlignment(AxisAlignment::Center);
-      this->m_facesLayout = facesLayout;
-      this->m_facesContainer->setLayout(this->m_facesLayout);
-      this->m_facesContainer->setContentSize({contentSize.width - 40.f, contentSize.height - 120.f});
-      this->m_facesContainer->setAnchorPoint({0.5f, 0.5f});
-      this->m_facesContainer->setPosition({contentSize.width / 2.f, contentSize.height / 2.f + 10.f});
-      this->m_mainLayer->addChild(this->m_facesContainer);
+      m_facesLayout = facesLayout;
+      m_facesContainer->setLayout(m_facesLayout);
+      m_facesContainer->setContentSize({contentSize.width - 40.f, contentSize.height - 120.f});
+      m_facesContainer->setAnchorPoint({0.5f, 0.5f});
+      m_facesContainer->setPosition({contentSize.width / 2.f, contentSize.height / 2.f + 10.f});
+      m_mainLayer->addChild(m_facesContainer);
 
-      Ref<RLDifficultyTotalPopup> thisRef = this;
       auto req = web::WebRequest();
       req.param("accountid", numToString(m_accountId));
-      if (thisRef->m_mode == RLDifficultyTotalPopup::Mode::Planets) {
+      if (m_mode == RLDifficultyTotalPopup::Mode::Planets) {
             req.param("isPlat", "1");
       }
-      req.get("https://gdrate.arcticwoof.xyz/getDifficulty").listen([thisRef](web::WebResponse* res) {
-            if (!thisRef || !thisRef->m_mainLayer) return;
+      Ref<RLDifficultyTotalPopup> self = this;
+      m_difficultyTask = req.get("https://gdrate.arcticwoof.xyz/getDifficulty");
+      m_difficultyTask.listen([self](web::WebResponse* res) {
+            if (!self) return;
             if (!res || !res->ok()) {
-                  if (thisRef->m_spinner) {
-                        thisRef->m_spinner->removeFromParent();
-                        thisRef->m_spinner = nullptr;
+                  if (self->m_spinner) {
+                        self->m_spinner->removeFromParent();
+                        self->m_spinner = nullptr;
                   }
                   Notification::create("Failed to fetch difficulty", NotificationIcon::Error)->show();
                   return;
@@ -209,16 +217,16 @@ bool RLDifficultyTotalPopup::setup() {
             auto jsonRes = res->json();
             if (!jsonRes) {
                   Notification::create("Failed to parse difficulty response", NotificationIcon::Error)->show();
-                  if (thisRef->m_spinner) {
-                        thisRef->m_spinner->removeFromParent();
-                        thisRef->m_spinner = nullptr;
+                  if (self->m_spinner) {
+                        self->m_spinner->removeFromParent();
+                        self->m_spinner = nullptr;
                   }
                   return;
             }
             auto json = jsonRes.unwrap();
-            if (thisRef->m_spinner) {
-                  thisRef->m_spinner->removeFromParent();
-                  thisRef->m_spinner = nullptr;
+            if (self->m_spinner) {
+                  self->m_spinner->removeFromParent();
+                  self->m_spinner = nullptr;
             }
             std::unordered_map<int, int> counts;
             auto difficultyObj = json["difficulty"];
@@ -226,29 +234,29 @@ bool RLDifficultyTotalPopup::setup() {
             for (int k : keys) {
                   counts[k] = difficultyObj[numToString(k)].asInt().unwrapOrDefault();
             }
-            thisRef->m_counts = counts;
+            self->m_counts = counts;
             int totalCount = 0;
             for (auto const& kv : counts) {
                   totalCount += kv.second;
             }
             // player's rank
             int position = json["position"].asInt().unwrapOrDefault();
-            std::string titlePrefix = thisRef->m_mode == RLDifficultyTotalPopup::Mode::Planets ? "Rated Layouts Platformer: " : "Rated Layouts Classic: ";
-            thisRef->setTitle((titlePrefix + numToString(GameToolbox::pointsToString(totalCount))).c_str());
-            if (thisRef->m_rankLabel) {
+            std::string titlePrefix = self->m_mode == RLDifficultyTotalPopup::Mode::Planets ? "Rated Layouts Platformer: " : "Rated Layouts Classic: ";
+            self->setTitle((titlePrefix + numToString(GameToolbox::pointsToString(totalCount))).c_str());
+            if (self->m_rankLabel) {
                   if (position > 0) {
-                        thisRef->m_rankLabel->setString((std::string("Global Rank: ") + numToString(position)).c_str());
-                        thisRef->m_rankLabel->setVisible(true);
+                        self->m_rankLabel->setString((std::string("Global Rank: ") + numToString(position)).c_str());
+                        self->m_rankLabel->setVisible(true);
                   } else {
-                        thisRef->m_rankLabel->setVisible(false);
+                        self->m_rankLabel->setVisible(false);
                   }
             }
-            if (thisRef->m_resultsLabel) {
-                  thisRef->m_resultsLabel->removeFromParent();
-                  thisRef->m_resultsLabel = nullptr;
+            if (self->m_resultsLabel) {
+                  self->m_resultsLabel->removeFromParent();
+                  self->m_resultsLabel = nullptr;
             }
             // build UI
-            thisRef->buildDifficultyUI(thisRef->m_counts);
+            self->buildDifficultyUI(self->m_counts);
       });
       return true;
 }

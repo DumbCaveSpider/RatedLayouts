@@ -26,7 +26,11 @@ class RLDifficultyTotalPopup : public geode::Popup<> {
       std::vector<GJDifficultySprite*> m_difficultySprites;
 
       bool m_demonModeActive = false;
+      utils::web::WebTask m_difficultyTask;
       void buildDifficultyUI(const std::unordered_map<int, int>& counts);
       void onDemonToggle(CCObject* sender);
       std::unordered_map<int, int> m_counts;
+      ~RLDifficultyTotalPopup() {
+            m_difficultyTask.cancel();
+      }
 };

@@ -17,11 +17,20 @@ class $modify(RLHCreatorLayer, CreatorLayer) {
             lbButtonSpr->setScale(1.2f);
             auto lbButton = CCMenuItemSpriteExtra::create(
                 lbButtonSpr, this, menu_selector(RLHCreatorLayer::onRatedLayoutLayer));
+            lbButton->setID("rated-layouts-button"_spr);
             bottomLeftMenu->addChild(lbButton);
             bottomLeftMenu->updateLayout();
             return true;
       }
       void onRatedLayoutLayer(CCObject* sender) {
+            if (GJAccountManager::sharedState()->m_accountID == 0) {
+                  FLAlertLayer::create(
+                      "Rated Layouts",
+                      "You must be <cg>logged in</c> to access this feature in <cl>Rated Layouts.</c>",
+                      "OK")
+                      ->show();
+                  return;
+            }
             auto layer = RLCreatorLayer::create();
             auto scene = CCScene::create();
             scene->addChild(layer);

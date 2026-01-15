@@ -8,13 +8,19 @@
 	},
 	"id": "arcticwoof.rated_layouts",
 	"name": "Rated Layouts",
-	"version": "v0.3.4-beta.2",
+	"version": "v0.3.6-beta.1",
 	"developer": "ArcticWoof",
 	"description": "Play layout rated levels",
 	"resources": {
-		"sprites": ["resources/*"]
+		"sprites": [
+			"resources/*"
+		]
 	},
 	"dependencies": {
+		"geode.node-ids": {
+			"importance": "required",
+			"version": ">=1.0.0"
+		},
 		"jouca.badgesapi": {
 			"importance": "recommended",
 			"version": ">=1.0.0"
@@ -26,10 +32,6 @@
 		"alphalaneous.pages_api": {
 			"importance": "recommended",
 			"version": ">=1.4.1"
-		},
-		"alphalaneous.badges_api_reimagined": {
-			"importance": "required",
-			"version": ">=1.0.0"
 		}
 	},
 	"links": {
@@ -74,6 +76,12 @@
 			"type": "bool",
 			"default": false,
 			"description": "Disable all related to Creator Points. <co>This is those who doesn't want to see creator points entirely as they see it as a competition.</c> <cr>Although this won't entirely remove it, it just gives a sense that it is.</c>"
+		},
+		"badgesFixer": {
+			"name": "Fix badges positioning",
+			"type": "bool",
+			"default": true,
+			"description": "Fixes badges positioning, centeres username menu if turned on."
 		},
 		"clearCache": {
 			"type": "custom:rated-layouts-clear-cache",

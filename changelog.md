@@ -1,3 +1,39 @@
+# v0.3.6-beta.1
+
+- **Added Blue Coins!** Thanks to [Darkore](user:3595559) for the Blue Coin texture design! You can now collect Blue Coins by collecting them in the Rated Layouts levels.
+
+_(Be sure to re-enter your previously beaten levels to collect Blue Coins if you have played Rated Layouts before this update!)_
+
+- Fixed issue where liking/refreshing level in level info will set the difficulty sprite incorrectly especially on any levels that isn't rated layouts.
+- Fully patched/fixed the web request crashes.
+
+# v0.3.5-beta.1
+
+- **Profile Stats Changed!** The Rated layouts stats are now on a separate section in the profile page. Click the new Planet Button in the profile page to view your Rated Layouts stats!
+- **Added Gauntlet Select Levels!** You can now select and play Layout Gauntlet levels from the Gauntlet Select Layer.
+- **Added Report Rated Layouts!** You can now report Rated Layouts that violates the Rated Layouts guidelines directly from the Level Info Layer.
+- **New Mod Title!** Thanks to [KrazyGFX](https://x.com/Krazy_GFX/status/2006175258361905195?s=20) for the design
+- Changed "Design" to "Originality" in the Community Vote popup.
+- Added Confirmation popup when submitting a vote in the Community Vote popup.
+- Added Layout Gauntlet Button on the Vanilla Gauntlet Select Layer to easily access the Rated Layout Gauntlets.
+- Added "Suggest" button for Layout Admins
+- Improved the Layout Moderators and Admins UI.
+- Comment Glow will now apply when an user has planets in their stats.
+- Layout Admins can now view 3+ sends in the Sent Layouts section.
+- Layout Moderators and Admins can now reject suggested layouts.
+- Layout Mods can now see the total sends in the Mod Rate Popup.
+- Community Vote button is now shown at the right side of the menu in the Level Info Layer.
+- Community Vote will now always show on Rated layouts instead of just suggested layouts.
+- Event Layouts are now more responsive when pressing the play button
+- Fixed issue where submitting a vote with no score defaulted to 1. It should not be included in the vote if empty.
+- Fixed issue where the Leaderboard tabs are misaligned on smaller screens.
+- Fixed issue where the Leaderboard tabs are transparent when selected.
+- Fixed issue where the game crashes when the web requests finishes but the layer is already destroyed.
+- Fixed issue when refreshing or liking a rated layout level, the difficulty sprites in the profile page isn't updated correctly.
+- Fixed issue where the time completion for platformer rated layouts isn't showing the correct time.
+
+_Thanks to [delivel-tech](https://github.com/delivel-tech) & [iAndyHD3](https://github.com/iAndyHD3) for this update and fixes!_
+
 # v0.3.4-beta.2
 
 - Very minor fixes relating to ko-fi links being invaild.

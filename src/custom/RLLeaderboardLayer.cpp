@@ -77,52 +77,7 @@ bool RLLeaderboardLayer::init() {
       backButton->setPosition({25, winSize.height - 25});
       backMenu->addChild(backButton);
       this->addChild(backMenu);
-      auto typeMenu = CCMenu::create();
-      typeMenu->setPosition({0, 0});
 
-      auto starsTab = TabButton::create(
-            TabBaseColor::Unselected,
-            TabBaseColor::UnselectedDark,
-            "Top Sparks",
-            this,
-            menu_selector(RLLeaderboardLayer::onLeaderboardTypeButton)
-      );
-      starsTab->setTag(1);
-      starsTab->toggle(true);
-      starsTab->setPosition({winSize.width / 2 - 120, winSize.height - 27});
-      typeMenu->addChild(starsTab);
-      m_starsTab = starsTab;
-
-      auto planetsTab = TabButton::create(
-            TabBaseColor::Unselected,
-            TabBaseColor::UnselectedDark,
-          "Top Planets", this,
-          menu_selector(RLLeaderboardLayer::onLeaderboardTypeButton));
-      planetsTab->setTag(3);
-      planetsTab->toggle(false);
-      planetsTab->setPosition({winSize.width / 2, winSize.height - 27});
-      typeMenu->addChild(planetsTab);
-      m_planetsTab = planetsTab;
-
-      auto creatorTab = TabButton::create(
-            TabBaseColor::Unselected,
-            TabBaseColor::UnselectedDark,
-          "Top Creator", this,
-          menu_selector(RLLeaderboardLayer::onLeaderboardTypeButton));
-      creatorTab->setTag(2);
-      creatorTab->toggle(false);
-      creatorTab->setPosition({winSize.width / 2 + 120, winSize.height - 27});
-      typeMenu->addChild(creatorTab);
-      m_creatorTab = creatorTab;
-
-      if (Mod::get()->getSettingValue<bool>("disableCreatorPoints") == true) {
-            if (m_creatorTab) {
-                  m_creatorTab->setEnabled(false);
-                  m_creatorTab->setVisible(false);
-            }
-      }
-
-      this->addChild(typeMenu);
       this->fetchLeaderboard(1, 100);
 
       auto listLayer = GJListLayer::create(nullptr, nullptr, {191, 114, 62, 255},
@@ -153,6 +108,69 @@ bool RLLeaderboardLayer::init() {
       m_listLayer = listLayer;
       m_scrollLayer = scrollLayer;
 
+      auto typeMenu = CCMenu::create();
+      typeMenu->setPosition({0, 0});
+      typeMenu->setContentSize(listLayer->getContentSize());
+
+      auto starsTab = TabButton::create(
+          TabBaseColor::Unselected,
+          TabBaseColor::UnselectedDark,
+          "Top Sparks",
+          this,
+          menu_selector(RLLeaderboardLayer::onLeaderboardTypeButton));
+      float centerX = listLayer->getContentSize().width / 2.f;
+      const float tabY = 247.f;
+      const float spacing = 100.f;
+
+      starsTab->setTag(1);
+      starsTab->toggle(true);
+      starsTab->setPosition({centerX - 1.5f * spacing, tabY});
+      typeMenu->addChild(starsTab);
+      m_starsTab = starsTab;
+
+      auto planetsTab = TabButton::create(
+          TabBaseColor::Unselected,
+          TabBaseColor::UnselectedDark,
+          "Top Planets", this,
+          menu_selector(RLLeaderboardLayer::onLeaderboardTypeButton));
+      planetsTab->setTag(3);
+      planetsTab->toggle(false);
+      planetsTab->setPosition({centerX - 0.5f * spacing, tabY});
+      typeMenu->addChild(planetsTab);
+      m_planetsTab = planetsTab;
+
+      auto creatorTab = TabButton::create(
+          TabBaseColor::Unselected,
+          TabBaseColor::UnselectedDark,
+          "Top Creator", this,
+          menu_selector(RLLeaderboardLayer::onLeaderboardTypeButton));
+      creatorTab->setTag(2);
+      creatorTab->toggle(false);
+      creatorTab->setPosition({centerX + 0.5f * spacing, tabY});
+      typeMenu->addChild(creatorTab);
+      m_creatorTab = creatorTab;
+
+      // Top Coins tab (type 4)
+      auto coinsTab = TabButton::create(
+          TabBaseColor::Unselected,
+          TabBaseColor::UnselectedDark,
+          "Top Coins", this,
+          menu_selector(RLLeaderboardLayer::onLeaderboardTypeButton));
+      coinsTab->setTag(4);
+      coinsTab->toggle(false);
+      coinsTab->setPosition({centerX + 1.5f * spacing, tabY});
+      typeMenu->addChild(coinsTab);
+      m_coinsTab = coinsTab;
+
+      if (Mod::get()->getSettingValue<bool>("disableCreatorPoints") == true) {
+            if (m_creatorTab) {
+                  m_creatorTab->setEnabled(false);
+                  m_creatorTab->setVisible(false);
+            }
+      }
+
+      listLayer->addChild(typeMenu);
+
       // info button at the bottom left
       auto infoMenu = CCMenu::create();
       infoMenu->setPosition({0, 0});
@@ -174,9 +192,11 @@ void RLLeaderboardLayer::onInfoButton(CCObject* sender) {
       MDPopup::create(
           "Rated Layouts Leaderboard",
           "The leaderboard shows the top players in <cb>Rated Layouts</c> based "
-          "on <cl>Stars</c> or <cl>Creator Points</c>. You can view each category by selecting the tabs.\n\n"
-          "<cl>Blueprint Stars</c> are earned by completing a <cb>Rated Layouts</c> level and are only counted when beaten legitimately. Any <cr>unfair</c> means of obtaining these stars will result in an exclusion from the leaderboard.\n\n"
-          "<cl>Blueprint Creator Points</c> are earned based on the how many rated layouts levels you have in your account. Getting a rated layout level earns you 1 point, <cy>Featured Rated Layouts</c> level earns you 2 points and <cp>Epic Rated Layout</c> levels earn you 3 points.\n\n",
+          "on <cl>Sparks</c>, <co>Planets</c> or <cf>Creator Points</c>. You can view each category by selecting the tabs.\n\n"
+          "- <cl>Sparks</c> are earned by completing a <cb>Classic Rated Layouts</c> level and are only counted when beaten legitimately.\n\n"
+          "- <co>Planets</c> are earned by completing a <cb>Platformer Rated Layouts</c> level and are only counted when beaten legitimately.\n\n"
+          "- <cf>Blueprint Creator Points</c> are earned based on the how many rated layouts levels you have in your account. Getting a rated layout level earns you 1 point, <cy>Featured Rated Layouts</c> level earns you 2 points and <cp>Epic Rated Layout</c> levels earn you 3 points. *This is unaffected from those who are exclusion.*\n\n"
+          "### Any <cr>unfair</c> means of obtaining these stars <cy>(eg. instant complete, noclipping, secret way)</c> will result in an <cr>exclusion from the leaderboard and there will be NO APPEALS!</c> Each completion are <co>publicly logged</c> for this purpose.\n\n",
           "OK")
           ->show();
 }
@@ -235,14 +255,22 @@ void RLLeaderboardLayer::onLeaderboardTypeButton(CCObject* sender) {
             m_starsTab->toggle(true);
             m_planetsTab->toggle(false);
             m_creatorTab->toggle(false);
+            if (m_coinsTab) m_coinsTab->toggle(false);
       } else if (type == 3 && !m_planetsTab->isToggled()) {
             m_starsTab->toggle(false);
             m_planetsTab->toggle(true);
             m_creatorTab->toggle(false);
+            if (m_coinsTab) m_coinsTab->toggle(false);
       } else if (type == 2 && !m_creatorTab->isToggled()) {
             m_starsTab->toggle(false);
             m_planetsTab->toggle(false);
             m_creatorTab->toggle(true);
+            if (m_coinsTab) m_coinsTab->toggle(false);
+      } else if (type == 4 && m_coinsTab && !m_coinsTab->isToggled()) {
+            m_starsTab->toggle(false);
+            m_planetsTab->toggle(false);
+            m_creatorTab->toggle(false);
+            m_coinsTab->toggle(true);
       }
 
       auto contentLayer = m_scrollLayer->m_contentLayer;
@@ -257,11 +285,13 @@ void RLLeaderboardLayer::onLeaderboardTypeButton(CCObject* sender) {
 }
 
 void RLLeaderboardLayer::fetchLeaderboard(int type, int amount) {
+      Ref<RLLeaderboardLayer> self = this;
       web::WebRequest()
           .param("type", type)
           .param("amount", amount)
           .get("https://gdrate.arcticwoof.xyz/getScore")
-          .listen([this](web::WebResponse* response) {
+          .listen([self](web::WebResponse* response) {
+                if (!self) return;
                 if (!response->ok()) {
                       log::warn("Server returned non-ok status: {}", response->code());
                       Notification::create("Failed to fetch leaderboard",
@@ -290,8 +320,8 @@ void RLLeaderboardLayer::fetchLeaderboard(int type, int amount) {
 
                 if (json.contains("users") && json["users"].isArray()) {
                       auto users = json["users"].asArray().unwrap();
-                      this->populateLeaderboard(users);
-                      this->m_scrollLayer->scrollToTop();
+                      self->populateLeaderboard(users);
+                      if (self->m_scrollLayer) self->m_scrollLayer->scrollToTop();
                 } else {
                       log::warn("No users array in response");
                 }
@@ -398,7 +428,8 @@ void RLLeaderboardLayer::populateLeaderboard(
 
             const bool isStar = m_starsTab->isToggled();
             const bool isPlanets = m_planetsTab && m_planetsTab->isToggled();
-            const char* iconName = isStar ? "RL_starMed.png"_spr : (isPlanets ? "RL_planetMed.png"_spr : "RL_blueprintPoint01.png"_spr);
+            const bool isCoins = m_coinsTab && m_coinsTab->isToggled();
+            const char* iconName = isStar ? "RL_starMed.png"_spr : (isPlanets ? "RL_planetMed.png"_spr : (isCoins ? "RL_BlueCoinSmall.png"_spr : "RL_blueprintPoint01.png"_spr));
             auto iconSprite = CCSprite::create(iconName);
             iconSprite->setScale(0.65f);
             iconSprite->setPosition({325.f, 20.f});

@@ -23,6 +23,14 @@ class $modify(RLLevelSearchLayer, LevelSearchLayer) {
             return true;
       }
       void onRatedLayoutLayer(CCObject* sender) {
+            if (GJAccountManager::sharedState()->m_accountID == 0) {
+                  FLAlertLayer::create(
+                      "Rated Layouts",
+                      "You must be <cg>logged in</c> to access this feature in <cl>Rated Layouts.</c>",
+                      "OK")
+                      ->show();
+                  return;
+            }
             auto layer = RLCreatorLayer::create();
             auto scene = CCScene::create();
             scene->addChild(layer);

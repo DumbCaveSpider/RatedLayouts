@@ -44,5 +44,6 @@ bool RLAnnoucementPopup::setup() {
 }
 
 void RLAnnoucementPopup::onClick(CCObject* sender) {
-      utils::web::openLinkInBrowser("https://www.youtube.com/post/Ugkxrmmsw1brLhqV-1uXd_lxtb_thT87_qQy");
+      Notification::create("Opening a new link to the browser", NotificationIcon::Info)->show();
+      utils::web::openLinkInBrowser("https://gdrate.arcticwoof.xyz/getRedirectURL");
 }
