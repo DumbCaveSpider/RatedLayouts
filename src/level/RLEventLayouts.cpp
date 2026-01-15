@@ -489,7 +489,7 @@ bool RLEventLayouts::setup() {
 
                               // update difficulty and featured for platformer
                               if (sec->platDiff) {
-                                    sec->platDiff->updateDifficultyFrame(getDifficulty(platDifficulty), GJDifficultyName::Long);
+                                    sec->platDiff->updateDifficultyFrame(getDifficulty(platDifficulty), GJDifficultyName::Short);
                                     if (platFeatured == 1 || platFeatured == 2) {
                                           sec->platFeatured = platFeatured;
                                           const char* coinSprite = (platFeatured == 1) ? "RL_featuredCoin.png"_spr : "RL_epicFeaturedCoin.png"_spr;
