@@ -119,14 +119,6 @@ class $modify(RLProfilePage, ProfilePage) {
             return entry;
       }
 
-      void badgeFixer(float dt) {
-        auto winSize = CCDirector::sharedDirector()->getWinSize();
-        auto usernameMenu = m_mainLayer->getChildByID("username-menu");
-        if (usernameMenu->getChildrenCount() > 1) {
-            usernameMenu->setPositionX(winSize.width / 2.1);
-        }
-    }
-
       void updateStatLabel(char const* labelID, std::string const& text) {
             auto rlStatsMenu = getChildByIDRecursive("rl-stats-menu");
             if (!rlStatsMenu) return;
@@ -177,6 +169,14 @@ class $modify(RLProfilePage, ProfilePage) {
             return true;
       }
 
+      void badgeFixer(float dt) {
+        auto winSize = CCDirector::sharedDirector()->getWinSize();
+        auto usernameMenu = m_mainLayer->getChildByID("username-menu");
+        if (usernameMenu->getChildrenCount() > 1) {
+            usernameMenu->setPositionX(winSize.width / 2.1);
+        }
+    }
+
       void loadPageFromUserInfo(GJUserScore* score) {
             ProfilePage::loadPageFromUserInfo(score);
 
@@ -196,12 +196,6 @@ class $modify(RLProfilePage, ProfilePage) {
             if (auto rlStatsBtnFound = getChildByIDRecursive("rl-stats-btn")) rlStatsBtnFound->removeFromParent();
             if (auto rlStatsMenuFound = getChildByIDRecursive("rl-stats-menu")) rlStatsMenuFound->removeFromParent();
 
-            auto leftMenu = getChildByIDRecursive("left-menu");
-            if (!leftMenu) {
-                  log::warn("left-menu not found");
-                  return;
-            }
-
             auto winSize = CCDirector::sharedDirector()->getWinSize();
 
             auto rlBtnMenuSpr = CCScale9Sprite::create("GJ_square01.png");
@@ -219,6 +213,12 @@ class $modify(RLProfilePage, ProfilePage) {
             m_mainLayer->addChild(rlBtnMenu);
             rlBtnMenu->updateLayout();
             rlBtnMenu->updateLayout();
+
+            auto leftMenu = getChildByIDRecursive("left-menu");
+            if (!leftMenu) {
+                  log::warn("left-menu not found");
+                  return;
+            }
 
             auto planetSpr = CCSprite::create("RL_planetMed.png"_spr);
             planetSpr->setScale(0.8f);
