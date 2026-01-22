@@ -11,7 +11,7 @@ class $modify(RLHookGauntletSelectLayer, GauntletSelectLayer) {
 
             // layout gauntlet in vanilla gd
             if (auto topRight = static_cast<CCMenu*>(this->getChildByID("top-right-menu"))) {
-                  auto gauntletSpr = CCSprite::create("RL_gauntlet-2.png"_spr);
+                  auto gauntletSpr = CCSprite::createWithSpriteFrameName("RL_gauntlet-2.png"_spr);
                   auto gauntletBtnSpr = AccountButtonSprite::create(gauntletSpr, AccountBaseColor::Blue, AccountBaseSize::Normal);
                   auto gauntletBtn = CCMenuItemSpriteExtra::create(
                       gauntletBtnSpr, this, menu_selector(RLHookGauntletSelectLayer::onGauntletButtonClick));

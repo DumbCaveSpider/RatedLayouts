@@ -181,8 +181,8 @@ void RLGauntletLevelsLayer::createLevelButtons(matjson::Value const& levelsData,
             int difficulty = level["difficulty"].asInt().unwrapOr(0);
 
             std::string gauntletName = fmt::format("RL_gauntlet-{}.png"_spr, gauntletId);
-            auto gauntletSprite = CCSprite::create(gauntletName.c_str());
-            auto gauntletSpriteShadow = CCSprite::create(gauntletName.c_str());
+            auto gauntletSprite = CCSprite::createWithSpriteFrameName(gauntletName.c_str());
+            auto gauntletSpriteShadow = CCSprite::createWithSpriteFrameName(gauntletName.c_str());
             gauntletSpriteShadow->setScaleY(1.2f);
             gauntletSpriteShadow->setColor({0, 0, 0});
             gauntletSpriteShadow->setOpacity(50);
@@ -216,7 +216,7 @@ void RLGauntletLevelsLayer::createLevelButtons(matjson::Value const& levelsData,
             difficultyLabel->setPosition({gauntletSprite->getContentSize().width / 2, -10});
             gauntletSprite->addChild(difficultyLabel);
 
-            auto starSpr = CCSprite::create("RL_starBig.png"_spr);
+            auto starSpr = CCSprite::createWithSpriteFrameName("RL_starBig.png"_spr);
             starSpr->setAnchorPoint({0.0f, 0.5f});
             starSpr->setScale(0.5f);
             starSpr->setPosition({difficultyLabel->getPositionX(), -10});

@@ -63,71 +63,71 @@ bool RLCreatorLayer::init() {
 
       this->addChild(mainMenu);
 
-      auto title = CCSprite::create("RL_title.png"_spr);
+      auto title = CCSprite::createWithSpriteFrameName("RL_title.png"_spr);
       title->setPosition({winSize.width / 2, winSize.height / 2 + 130});
       title->setScale(1.4f);
       this->addChild(title);
 
-      auto featuredSpr = CCSprite::create("RL_featured01.png"_spr);
-      if (!featuredSpr) featuredSpr = CCSprite::create("RL_featured01.png"_spr);
+      auto featuredSpr = CCSprite::createWithSpriteFrameName("RL_featured01.png"_spr);
+      if (!featuredSpr) featuredSpr = CCSprite::createWithSpriteFrameName("RL_featured01.png"_spr);
       auto featuredItem = CCMenuItemSpriteExtra::create(
           featuredSpr, this, menu_selector(RLCreatorLayer::onFeaturedLayouts));
       featuredItem->setID("featured-button");
       mainMenu->addChild(featuredItem);
 
-      auto leaderboardSpr = CCSprite::create("RL_leaderboard01.png"_spr);
-      if (!leaderboardSpr) leaderboardSpr = CCSprite::create("RL_leaderboard01.png"_spr);
+      auto leaderboardSpr = CCSprite::createWithSpriteFrameName("RL_leaderboard01.png"_spr);
+      if (!leaderboardSpr) leaderboardSpr = CCSprite::createWithSpriteFrameName("RL_leaderboard01.png"_spr);
       auto leaderboardItem = CCMenuItemSpriteExtra::create(
           leaderboardSpr, this, menu_selector(RLCreatorLayer::onLeaderboard));
       leaderboardItem->setID("leaderboard-button");
       mainMenu->addChild(leaderboardItem);
 
       // gauntlet coming soon
-      auto gauntletSpr = CCSprite::create("RL_gauntlets01.png"_spr);
-      if (!gauntletSpr) gauntletSpr = CCSprite::create("RL_gauntlets01.png"_spr);
+      auto gauntletSpr = CCSprite::createWithSpriteFrameName("RL_gauntlets01.png"_spr);
+      if (!gauntletSpr) gauntletSpr = CCSprite::createWithSpriteFrameName("RL_gauntlets01.png"_spr);
       auto gauntletItem = CCMenuItemSpriteExtra::create(
           gauntletSpr, this, menu_selector(RLCreatorLayer::onLayoutGauntlets));
       gauntletItem->setID("gauntlet-button");
       mainMenu->addChild(gauntletItem);
 
-      auto sentSpr = CCSprite::create("RL_sent01.png"_spr);
-      if (!sentSpr) sentSpr = CCSprite::create("RL_sent01.png"_spr);
+      auto sentSpr = CCSprite::createWithSpriteFrameName("RL_sent01.png"_spr);
+      if (!sentSpr) sentSpr = CCSprite::createWithSpriteFrameName("RL_sent01.png"_spr);
       auto sentItem = CCMenuItemSpriteExtra::create(
           sentSpr, this, menu_selector(RLCreatorLayer::onSentLayouts));
       sentItem->setID("sent-layouts-button");
       mainMenu->addChild(sentItem);
 
-      auto searchSpr = CCSprite::create("RL_search01.png"_spr);
-      if (!searchSpr) searchSpr = CCSprite::create("RL_search01.png"_spr);
+      auto searchSpr = CCSprite::createWithSpriteFrameName("RL_search01.png"_spr);
+      if (!searchSpr) searchSpr = CCSprite::createWithSpriteFrameName("RL_search01.png"_spr);
       auto searchItem = CCMenuItemSpriteExtra::create(
           searchSpr, this, menu_selector(RLCreatorLayer::onSearchLayouts));
       searchItem->setID("search-layouts-button");
       mainMenu->addChild(searchItem);
 
-      auto dailySpr = CCSprite::create("RL_daily01.png"_spr);
-      if (!dailySpr) dailySpr = CCSprite::create("RL_daily01.png"_spr);
+      auto dailySpr = CCSprite::createWithSpriteFrameName("RL_daily01.png"_spr);
+      if (!dailySpr) dailySpr = CCSprite::createWithSpriteFrameName("RL_daily01.png"_spr);
       auto dailyItem = CCMenuItemSpriteExtra::create(
           dailySpr, this, menu_selector(RLCreatorLayer::onDailyLayouts));
       dailyItem->setID("daily-layouts-button");
       mainMenu->addChild(dailyItem);
 
-      auto weeklySpr = CCSprite::create("RL_weekly01.png"_spr);
-      if (!weeklySpr) weeklySpr = CCSprite::create("RL_weekly01.png"_spr);
+      auto weeklySpr = CCSprite::createWithSpriteFrameName("RL_weekly01.png"_spr);
+      if (!weeklySpr) weeklySpr = CCSprite::createWithSpriteFrameName("RL_weekly01.png"_spr);
       auto weeklyItem = CCMenuItemSpriteExtra::create(
           weeklySpr, this, menu_selector(RLCreatorLayer::onWeeklyLayouts));
       weeklyItem->setID("weekly-layouts-button");
       mainMenu->addChild(weeklyItem);
 
-      auto monthlySpr = CCSprite::create("RL_monthly01.png"_spr);
-      if (!monthlySpr) monthlySpr = CCSprite::create("RL_monthly01.png"_spr);
+      auto monthlySpr = CCSprite::createWithSpriteFrameName("RL_monthly01.png"_spr);
+      if (!monthlySpr) monthlySpr = CCSprite::createWithSpriteFrameName("RL_monthly01.png"_spr);
       auto monthlyItem = CCMenuItemSpriteExtra::create(
           monthlySpr, this, menu_selector(RLCreatorLayer::onMonthlyLayouts));
       monthlyItem->setID("monthly-layouts-button");
       mainMenu->addChild(monthlyItem);
 
       // Try to use a grayscale sprite where available, but fallback to a regular sprite
-      cocos2d::CCSprite* unknownSpr = CCSpriteGrayscale::create("RL_unknownBtn.png"_spr);
-      if (!unknownSpr) unknownSpr = CCSpriteGrayscale::create("RL_unknownBtn.png"_spr);
+      cocos2d::CCSprite* unknownSpr = CCSpriteGrayscale::createWithSpriteFrameName("RL_unknownBtn.png"_spr);
+      if (!unknownSpr) unknownSpr = CCSpriteGrayscale::createWithSpriteFrameName("RL_unknownBtn.png"_spr);
       auto unknownItem = CCMenuItemSpriteExtra::create(
           unknownSpr, this, menu_selector(RLCreatorLayer::onUnknownButton));
       unknownItem->setID("unknown-button");
@@ -204,7 +204,7 @@ bool RLCreatorLayer::init() {
       this->addChild(infoMenu);
       // credits button at the bottom right
       auto creditButtonSpr =
-          CCSprite::create("RL_badgeMod01.png"_spr);
+          CCSprite::createWithSpriteFrameName("RL_badgeMod01.png"_spr);
       creditButtonSpr->setScale(1.5f);
       auto creditButton = CCMenuItemSpriteExtra::create(
           creditButtonSpr, this, menu_selector(RLCreatorLayer::onCreditsButton));
@@ -212,7 +212,7 @@ bool RLCreatorLayer::init() {
       infoMenu->addChild(creditButton);
 
       // supporter button left side of the credits
-      auto supportButtonSpr = CCSprite::create("RL_badgeSupporter.png"_spr);
+      auto supportButtonSpr = CCSprite::createWithSpriteFrameName("RL_badgeSupporter.png"_spr);
       supportButtonSpr->setScale(1.5f);
       auto supportButton = CCMenuItemSpriteExtra::create(
           supportButtonSpr, this, menu_selector(RLCreatorLayer::onSupporterButton));

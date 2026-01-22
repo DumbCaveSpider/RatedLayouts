@@ -157,7 +157,7 @@ bool RLEventLayouts::setup() {
       m_sections[idx].platDifficultyValueLabel = platRewardsLabel;
 
       // reward star (classic)
-      auto rewardsStar = CCSprite::create("RL_starMed.png"_spr);
+      auto rewardsStar = CCSprite::createWithSpriteFrameName("RL_starMed.png"_spr);
       if (rewardsStar) {
             rewardsStar->setScale(0.6f);
             // position to the right of centered label
@@ -170,7 +170,7 @@ bool RLEventLayouts::setup() {
       m_sections[idx].starIcon = rewardsStar;
 
       // platform reward icon (planet)
-      auto platStar = CCSprite::create("RL_planetMed.png"_spr);
+      auto platStar = CCSprite::createWithSpriteFrameName("RL_planetMed.png"_spr);
       if (platStar) {
             platStar->setScale(0.6f);
             float labelWidthP = platRewardsLabel->getContentSize().width * platRewardsLabel->getScaleX();
@@ -382,7 +382,7 @@ bool RLEventLayouts::setup() {
                               sec->starIcon->removeFromParent();
                               sec->starIcon = nullptr;
                         }
-                        auto newStar = CCSprite::create("RL_starMed.png"_spr);
+                        auto newStar = CCSprite::createWithSpriteFrameName("RL_starMed.png"_spr);
                         if (newStar) {
                               newStar->setScale(0.6f);
                               float labelWidth = sec->difficultyValueLabel->getContentSize().width * sec->difficultyValueLabel->getScaleX();
@@ -404,7 +404,7 @@ bool RLEventLayouts::setup() {
                                     sec->featuredIcon->removeFromParent();
                                     sec->featuredIcon = nullptr;
                               }
-                              auto coinIcon = CCSprite::create(coinSprite);
+                              auto coinIcon = CCSprite::createWithSpriteFrameName(coinSprite);
                               if (coinIcon) {
                                     coinIcon->setPosition({sec->diff->getContentSize().width / 2.f, sec->diff->getContentSize().height / 2.f});
                                     coinIcon->setZOrder(-1);
@@ -475,7 +475,7 @@ bool RLEventLayouts::setup() {
                                           sec->platStarIcon->removeFromParent();
                                           sec->platStarIcon = nullptr;
                                     }
-                                    auto newPlat = CCSprite::create("RL_planetMed.png"_spr);
+                                    auto newPlat = CCSprite::createWithSpriteFrameName("RL_planetMed.png"_spr);
                                     if (newPlat) {
                                           newPlat->setScale(0.6f);
                                           const float labelWidthP = sec->platDifficultyValueLabel->getContentSize().width * sec->platDifficultyValueLabel->getScaleX();
@@ -497,7 +497,7 @@ bool RLEventLayouts::setup() {
                                                 sec->platFeaturedIcon->removeFromParent();
                                                 sec->platFeaturedIcon = nullptr;
                                           }
-                                          auto coinIconP = CCSprite::create(coinSprite);
+                                          auto coinIconP = CCSprite::createWithSpriteFrameName(coinSprite);
                                           if (coinIconP) {
                                                 coinIconP->setPosition({sec->platDiff->getContentSize().width / 2.f, sec->platDiff->getContentSize().height / 2.f});
                                                 coinIconP->setZOrder(-1);

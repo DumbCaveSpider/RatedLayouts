@@ -54,7 +54,7 @@ bool RLDonationPopup::setup() {
       m_mainLayer->addChild(titleLabel);
 
       // supporter badge next to title
-      auto badgeSpr = CCSprite::create("RL_badgeSupporter.png"_spr);
+      auto badgeSpr = CCSprite::createWithSpriteFrameName("RL_badgeSupporter.png"_spr);
       badgeSpr->setScale(1.5f);
       badgeSpr->setRotation(-20.f);
       badgeSpr->setPosition({titleLabel->getPositionX() - titleLabel->getContentSize().width * 0.75f / 2 - 30.f, titleLabel->getPositionY()});

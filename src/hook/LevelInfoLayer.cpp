@@ -127,13 +127,13 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             int userRole = Mod::get()->getSavedValue<int>("role");
             if (userRole == 1 || userRole == 2) {
                   // add a role button for send/rate
-                  auto iconSprite = CCSprite::create("RL_starBig.png"_spr);
+                  auto iconSprite = CCSprite::createWithSpriteFrameName("RL_starBig.png"_spr);
                   CCSprite* buttonSprite = nullptr;
 
                   if (starRatings != 0) {
                         buttonSprite = CCSpriteGrayscale::create("RL_starBig.png"_spr);
                   } else {
-                        buttonSprite = CCSprite::create("RL_starBig.png"_spr);
+                        buttonSprite = CCSprite::createWithSpriteFrameName("RL_starBig.png"_spr);
                   }
 
                   auto roleButtonSpr = CircleButtonSprite::create(
@@ -280,7 +280,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                                     // Reactivate immediately if it should be enabled according to data
                                     if (!shouldDisable) {
                                           // swap to colored sprite
-                                          auto commSpriteColor = CCSprite::create("RL_commVote01.png"_spr);
+                                          auto commSpriteColor = CCSprite::createWithSpriteFrameName("RL_commVote01.png"_spr);
                                           if (commSpriteColor) {
                                                 auto coloredBtnSpr = CircleButtonSprite::create(commSpriteColor, CircleBaseColor::Green, CircleBaseSize::Medium);
                                                 commBtnItem->setNormalImage(coloredBtnSpr);
@@ -505,7 +505,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                               } else {
                                     log::info("Reward animation disabled");
                                     Notification::create("Received " + numToString(difficulty) + " " + reward + "!",
-                                                         CCSprite::create(medSprite.c_str()), 2.f)
+                                                         CCSprite::createWithSpriteFrameName(medSprite.c_str()), 2.f)
                                         ->show();
                                     FMODAudioEngine::sharedEngine()->playEffect(
                                         // @geode-ignore(unknown-resource)
@@ -592,14 +592,18 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   CCSprite* starIcon = nullptr;
                   // Choose icon based on platformer flag: planets for platformer levels
                   if (layerRef && layerRef->m_level && layerRef->m_level->isPlatformer()) {
-                        starIcon = CCSprite::create("RL_planetSmall.png"_spr);
-                        if (!starIcon) starIcon = CCSprite::create("RL_planetMed.png"_spr);
+                        starIcon = CCSprite::createWithSpriteFrameName("RL_planetSmall.png"_spr);
+                        if (!starIcon) starIcon = CCSprite::createWithSpriteFrameName("RL_planetMed.png"_spr);
                   }
-                  if (!starIcon) starIcon = CCSprite::create("RL_starSmall.png"_spr);
-                  starIcon->setPosition({difficultySprite2->getContentSize().width / 2 + 7, -7});
-                  starIcon->setScale(0.75f);
-                  starIcon->setID("rl-star-icon");
-                  difficultySprite2->addChild(starIcon);
+                  if (!starIcon) starIcon = CCSprite::createWithSpriteFrameName("RL_starSmall.png"_spr);
+                  if (starIcon) {
+                        starIcon->setPosition({difficultySprite2->getContentSize().width / 2 + 7, -7});
+                        starIcon->setScale(0.75f);
+                        starIcon->setID("rl-star-icon");
+                        difficultySprite2->addChild(starIcon);
+                  } else {
+                        log::warn("Failed to create star icon for level {}", layerRef && layerRef->m_level ? layerRef->m_level->m_levelID : 0);
+                  }
 
                   // star value label (update or create)
                   auto existingLabel = difficultySprite2->getChildByID("rl-star-label");
@@ -609,15 +613,18 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                                                             "bigFont.fnt");
 
                   if (existingLabel) {
-                        starLabelValue->setString(numToString(difficulty).c_str());
-                  } else {
+                        if (starLabelValue) starLabelValue->setString(numToString(difficulty).c_str());
+                  } else if (starLabelValue) {
                         starLabelValue->setID("rl-star-label");
-                        starLabelValue->setPosition(
-                            {starIcon->getPositionX() - 7, starIcon->getPositionY()});
+                        if (starIcon) {
+                              starLabelValue->setPosition({starIcon->getPositionX() - 7, starIcon->getPositionY()});
+                        }
                         starLabelValue->setScale(0.4f);
                         starLabelValue->setAnchorPoint({1.0f, 0.5f});
                         starLabelValue->setAlignment(kCCTextAlignmentRight);
                         difficultySprite2->addChild(starLabelValue);
+                  } else {
+                        log::warn("Failed to create star label for level {}", layerRef && layerRef->m_level ? layerRef->m_level->m_levelID : 0);
                   }
 
                   if (GameStatsManager::sharedState()->hasCompletedOnlineLevel(layerRef->m_level->m_levelID)) {
@@ -689,7 +696,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                         // ensure epic is removed
                         if (epicFeaturedCoin) epicFeaturedCoin->removeFromParent();
                         if (!featuredCoin) {
-                              auto newFeaturedCoin = CCSprite::create("RL_featuredCoin.png"_spr);
+                              auto newFeaturedCoin = CCSprite::createWithSpriteFrameName("RL_featuredCoin.png"_spr);
                               newFeaturedCoin->setPosition({difficultySprite2->getContentSize().width / 2,
                                                             difficultySprite2->getContentSize().height / 2});
                               newFeaturedCoin->setID("featured-coin");
@@ -699,7 +706,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                         // ensure standard is removed
                         if (featuredCoin) featuredCoin->removeFromParent();
                         if (!epicFeaturedCoin) {
-                              auto newEpicCoin = CCSprite::create("RL_epicFeaturedCoin.png"_spr);
+                              auto newEpicCoin = CCSprite::createWithSpriteFrameName("RL_epicFeaturedCoin.png"_spr);
                               newEpicCoin->setPosition({difficultySprite2->getContentSize().width / 2,
                                                         difficultySprite2->getContentSize().height / 2});
                               newEpicCoin->setID("epic-featured-coin");
@@ -727,16 +734,29 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                         std::string coinKey = layerRef->m_level->getCoinKey(coinIndex);
                         log::debug("Checking coin collected status for coin {}: key={}", coinIndex, coinKey);
                         bool coinCollected = GameStatsManager::sharedState()->hasPendingUserCoin(coinKey.c_str());
-                        auto blueCoinTexture = CCTextureCache::sharedTextureCache()->addImage("RL_BlueCoinSmall.png"_spr, false);
-                        auto displayFrame = CCSpriteFrame::createWithTexture(blueCoinTexture, {{0, 0}, blueCoinTexture->getContentSize()});
+                        auto frame = CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName("RL_BlueCoinSmall.png"_spr);
+                        CCTexture2D* blueCoinTexture = nullptr;
+                        if (!frame) {
+                              blueCoinTexture = CCTextureCache::sharedTextureCache()->addImage("RL_BlueCoinSmall.png"_spr, false);
+                              if (blueCoinTexture) {
+                                    frame = CCSpriteFrame::createWithTexture(blueCoinTexture, {{0, 0}, blueCoinTexture->getContentSize()});
+                              }
+                        } else {
+                              blueCoinTexture = frame->getTexture();
+                        }
+
+                        if (!frame || !blueCoinTexture) {
+                              log::warn("Failed to load blue coin frame/texture, skipping coin replacement for coin {}", coinIndex);
+                              return;
+                        }
 
                         if (coinCollected) {
-                              coinSprite->setDisplayFrame(displayFrame);
+                              coinSprite->setDisplayFrame(frame);
                               coinSprite->setColor({255, 255, 255});
                               coinSprite->setScale(0.6f);
                               log::debug("Replaced coin {} sprite with blue coin", coinIndex);
                         } else {
-                              coinSprite->setDisplayFrame(displayFrame);
+                              coinSprite->setDisplayFrame(frame);
                               coinSprite->setColor({120, 120, 120});
                               coinSprite->setScale(0.6f);
                               log::debug("Darkened coin {} because not collected", coinIndex);
@@ -824,7 +844,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
 
                                     // Reactivate immediately if it should be enabled according to data
                                     if (!shouldDisable) {
-                                          auto commSpriteColor = CCSprite::create("RL_commVote01.png"_spr);
+                                          auto commSpriteColor = CCSprite::createWithSpriteFrameName("RL_commVote01.png"_spr);
                                           if (commSpriteColor) {
                                                 auto coloredBtnSpr = CircleButtonSprite::create(commSpriteColor, CircleBaseColor::Green, CircleBaseSize::Medium);
                                                 commBtnItem->setNormalImage(coloredBtnSpr);
@@ -1008,25 +1028,32 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   // Choose icon based on platformer flag: planets for platformer levels
                   CCSprite* starIcon = nullptr;
                   if (layerRef && layerRef->m_level && layerRef->m_level->isPlatformer()) {
-                        starIcon = CCSprite::create("RL_planetSmall.png"_spr);
-                        if (!starIcon) starIcon = CCSprite::create("RL_planetMed.png"_spr);
+                        starIcon = CCSprite::createWithSpriteFrameName("RL_planetSmall.png"_spr);
+                        if (!starIcon) starIcon = CCSprite::createWithSpriteFrameName("RL_planetMed.png"_spr);
                   }
-                  if (!starIcon) starIcon = CCSprite::create("RL_starSmall.png"_spr);
-                  starIcon->setScale(0.75f);
-                  starIcon->setID("rl-star-icon");
-                  sprite->addChild(starIcon);
+                  if (!starIcon) starIcon = CCSprite::createWithSpriteFrameName("RL_starSmall.png"_spr);
+                  if (starIcon) {
+                        starIcon->setScale(0.75f);
+                        starIcon->setID("rl-star-icon");
+                        sprite->addChild(starIcon);
+                  } else {
+                        log::warn("Failed to create star icon (update) for level {}", layerRef && layerRef->m_level ? layerRef->m_level->m_levelID : 0);
+                  }
 
-                  auto starLabel =
-                      CCLabelBMFont::create(numToString(difficulty).c_str(), "bigFont.fnt");
-                  starLabel->setID("rl-star-label");
-                  starLabel->setScale(0.4f);
-                  starLabel->setAnchorPoint({1.0f, 0.5f});
-                  starLabel->setAlignment(kCCTextAlignmentRight);
-                  sprite->addChild(starLabel);
-
-                  starIcon->setPosition({sprite->getContentSize().width / 2 + 7, -7});
-                  starLabel->setPosition(
-                      {starIcon->getPositionX() - 7, starIcon->getPositionY()});
+                  auto starLabel = CCLabelBMFont::create(numToString(difficulty).c_str(), "bigFont.fnt");
+                  if (starLabel) {
+                        starLabel->setID("rl-star-label");
+                        starLabel->setScale(0.4f);
+                        starLabel->setAnchorPoint({1.0f, 0.5f});
+                        starLabel->setAlignment(kCCTextAlignmentRight);
+                        sprite->addChild(starLabel);
+                        if (starIcon) {
+                              starIcon->setPosition({sprite->getContentSize().width / 2 + 7, -7});
+                              starLabel->setPosition({starIcon->getPositionX() - 7, starIcon->getPositionY()});
+                        }
+                  } else {
+                        log::warn("Failed to create star label (update) for level {}", layerRef && layerRef->m_level ? layerRef->m_level->m_levelID : 0);
+                  }
 
                   // Update featured coin position
                   auto featureCoin = sprite->getChildByID("featured-coin");

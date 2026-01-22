@@ -5,6 +5,7 @@
 - New Gauntlet Sprites!
 - Added **Customizable Background** in the Rated Layouts Creator Layer and Leaderboard Layer. *(Can be changed in the mod settings)*
 - Added **Rated Layout Browser** button!
+- Change the sprites to be in a spritesheet.
 
 # v0.3.6-beta.1
 

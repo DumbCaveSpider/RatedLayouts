@@ -63,6 +63,8 @@ static void cacheLevelData(int levelId, const matjson::Value& data) {
 class $modify(LevelCell) {
       struct Fields {
             utils::web::WebTask m_fetchTask;
+            std::optional<matjson::Value> m_pendingJson;
+            int m_pendingLevelId = 0;
             ~Fields() { m_fetchTask.cancel(); }
       };
 
@@ -72,7 +74,13 @@ class $modify(LevelCell) {
 
             if (cachedData) {
                   log::debug("Loading cached rating data for level cell ID: {}", levelId);
-                  this->applyRatingToCell(cachedData.value(), levelId);
+                  // If the UI is initialized, apply immediately. Otherwise defer until onEnter.
+                  if (this->m_mainLayer && this->m_level) {
+                        this->applyRatingToCell(cachedData.value(), levelId);
+                  } else {
+                        m_fields->m_pendingJson = cachedData.value();
+                        m_fields->m_pendingLevelId = levelId;
+                  }
                   return;
             }
 
@@ -93,12 +101,19 @@ class $modify(LevelCell) {
                   log::debug("Received rating response from server for level cell ID: {}",
                              levelId);
 
-                  // Validate that the cell still exists
-                  if (!cellRef || !cellRef->m_mainLayer) {
+                  // Validate that the cell still exists and still references the same level
+                  if (!cellRef || !cellRef->m_mainLayer || !cellRef->m_level) {
                         log::warn(
-                            "LevelCell has been destroyed, skipping update for level "
+                            "LevelCell missing or has no level, skipping update for level "
                             "ID: {}",
                             levelId);
+                        return;
+                  }
+
+                  if (cellRef->m_level->m_levelID != levelId) {
+                        log::warn(
+                            "LevelCell level ID mismatch (current: {}, response: {}), skipping",
+                            cellRef->m_level->m_levelID, levelId);
                         return;
                   }
 
@@ -124,6 +139,10 @@ class $modify(LevelCell) {
       }
 
       void applyRatingToCell(const matjson::Value& json, int levelId) {
+            if (!this->m_mainLayer || !this->m_level) {
+                  log::warn("applyRatingToCell called but LevelCell or main layer missing for level ID: {}", levelId);
+                  return;
+            }
             int difficulty = json["difficulty"].asInt().unwrapOrDefault();
             int featured = json["featured"].asInt().unwrapOrDefault();
 
@@ -218,12 +237,19 @@ class $modify(LevelCell) {
             }
 
             // star or planet icon (planet for platformer levels)
+            // remove existing to avoid duplicate icons on repeated updates
+            if (auto existingIcon = difficultySprite->getChildByID("rl-star-icon")) {
+                  existingIcon->removeFromParent();
+            }
+            if (auto existingRewardLabel = difficultySprite->getChildByID("rl-reward-label")) {
+                  existingRewardLabel->removeFromParent();
+            }
             CCSprite* newStarIcon = nullptr;
             if (this->m_level && this->m_level->isPlatformer()) {
-                  newStarIcon = CCSprite::create("RL_planetSmall.png"_spr);
+                  newStarIcon = CCSprite::createWithSpriteFrameName("RL_planetSmall.png"_spr);
                   if (!newStarIcon) newStarIcon = CCSprite::create("RL_planetMed.png"_spr);
             }
-            if (!newStarIcon) newStarIcon = CCSprite::create("RL_starSmall.png"_spr);
+            if (!newStarIcon) newStarIcon = CCSprite::createWithSpriteFrameName("RL_starSmall.png"_spr);
             if (newStarIcon) {
                   newStarIcon->setPosition({difficultySprite->getContentSize().width / 2 + 8, -8});
                   newStarIcon->setScale(0.75f);
@@ -242,8 +268,8 @@ class $modify(LevelCell) {
                         rewardLabelValue->setID("rl-reward-label");
                         difficultySprite->addChild(rewardLabelValue);
 
-                        if (GameStatsManager::sharedState()->hasCompletedOnlineLevel(m_level->m_levelID)) {
-                              if (this->m_level && this->m_level->isPlatformer()) {
+                        if (this->m_level && GameStatsManager::sharedState()->hasCompletedOnlineLevel(this->m_level->m_levelID)) {
+                              if (this->m_level->isPlatformer()) {
                                     rewardLabelValue->setColor({255, 160, 0});  // orange for planets
                               } else {
                                     rewardLabelValue->setColor({0, 150, 255});  // cyan for stars
@@ -258,7 +284,7 @@ class $modify(LevelCell) {
                         if (featured == 1) {
                               if (epicFeaturedCoin) epicFeaturedCoin->removeFromParent();
                               if (!featuredCoin) {
-                                    auto newFeaturedCoin = CCSprite::create("RL_featuredCoin.png"_spr);
+                                    auto newFeaturedCoin = CCSprite::createWithSpriteFrameName("RL_featuredCoin.png"_spr);
                                     if (newFeaturedCoin) {
                                           newFeaturedCoin->setPosition({difficultySprite->getContentSize().width / 2,
                                                                         difficultySprite->getContentSize().height / 2});
@@ -269,7 +295,7 @@ class $modify(LevelCell) {
                         } else if (featured == 2) {
                               if (featuredCoin) featuredCoin->removeFromParent();
                               if (!epicFeaturedCoin) {
-                                    auto newEpicCoin = CCSprite::create("RL_epicFeaturedCoin.png"_spr);
+                                    auto newEpicCoin = CCSprite::createWithSpriteFrameName("RL_epicFeaturedCoin.png"_spr);
                                     if (newEpicCoin) {
                                           newEpicCoin->setPosition({difficultySprite->getContentSize().width / 2,
                                                                     difficultySprite->getContentSize().height / 2});
@@ -320,8 +346,21 @@ class $modify(LevelCell) {
                               }
 
                               auto replaceCoinSprite = [levelPtr, this](CCNode* coinNode, int coinIndex) {
-                                    auto blueCoinTexture = CCTextureCache::sharedTextureCache()->addImage("RL_BlueCoinSmall.png"_spr, false);
-                                    auto displayFrame = CCSpriteFrame::createWithTexture(blueCoinTexture, {{0, 0}, blueCoinTexture->getContentSize()});
+                                    auto frame = CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName("RL_BlueCoinSmall.png"_spr);
+                                    CCTexture2D* blueCoinTexture = nullptr;
+                                    if (!frame) {
+                                          blueCoinTexture = CCTextureCache::sharedTextureCache()->addImage("RL_BlueCoinSmall.png"_spr, true);
+                                          if (blueCoinTexture) {
+                                                frame = CCSpriteFrame::createWithTexture(blueCoinTexture, {{0, 0}, blueCoinTexture->getContentSize()});
+                                          }
+                                    } else {
+                                          blueCoinTexture = frame->getTexture();
+                                    }
+
+                                    if (!frame || !blueCoinTexture) {
+                                          log::warn("failed to load blue coin frame/texture");
+                                          return;
+                                    }
                                     if (!coinNode) return;
                                     auto coinSprite = typeinfo_cast<CCSprite*>(coinNode);
                                     if (!coinSprite) return;
@@ -334,13 +373,13 @@ class $modify(LevelCell) {
                                     }
 
                                     if (coinCollected) {
-                                          coinSprite->setDisplayFrame(displayFrame);
+                                          coinSprite->setDisplayFrame(frame);
                                           coinSprite->setColor({255, 255, 255});
                                           coinSprite->setOpacity(255);
                                           coinSprite->setScale(0.6f);
                                           log::debug("LevelCell: replaced coin {} with blue sprite", coinIndex);
                                     } else {
-                                          coinSprite->setDisplayFrame(displayFrame);
+                                          coinSprite->setDisplayFrame(frame);
                                           coinSprite->setColor({120, 120, 120});
                                           coinSprite->setScale(0.6f);
                                           log::debug("LevelCell: darkened coin {} (not present)", coinIndex);
@@ -384,7 +423,22 @@ class $modify(LevelCell) {
             loadCustomLevelCell(level->m_levelID);
       }
 
-      void onEnter() { LevelCell::onEnter(); }
+      void onEnter() {
+            LevelCell::onEnter();
+
+            // If there was cached data deferred earlier, apply it now if it still matches.
+            if (m_fields->m_pendingJson && this->m_level && this->m_level->m_levelID == m_fields->m_pendingLevelId) {
+                  this->applyRatingToCell(m_fields->m_pendingJson.value(), m_fields->m_pendingLevelId);
+                  m_fields->m_pendingJson = std::nullopt;
+                  m_fields->m_pendingLevelId = 0;
+            }
+      }
+
+      void onExit() {
+            // Make sure any pending web task callback won't run after we've exited
+            m_fields->m_fetchTask.cancel();
+            LevelCell::onExit();
+      }
 
       void refreshLevelCell() {
             if (this->m_level && this->m_level->m_levelID != 0) {

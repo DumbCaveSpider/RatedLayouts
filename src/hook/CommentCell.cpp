@@ -13,7 +13,7 @@ $execute {
           "This user can <cj>suggest layout levels</c> for <cl>Rated "
           "Layouts</c> to the <cr>Layout Admins</c>. They have the ability to <co>moderate the leaderboard</c>.",
           [] {
-                return CCSprite::create("RL_badgeMod01.png"_spr);
+                return CCSprite::createWithSpriteFrameName("RL_badgeMod01.png"_spr);
           },
           [](const Badge& badge, const UserInfo& user) {
                 g_pendingBadges[user.accountID].push_back(badge);
@@ -25,7 +25,7 @@ $execute {
           "Layouts</c>. They have the same power as <cg>Moderators</c> but including the ability to change the <cy>featured ranking on the "
           "featured layout levels</c> and <cg>set event layouts</c>.",
           [] {
-                return CCSprite::create("RL_badgeAdmin01.png"_spr);
+                return CCSprite::createWithSpriteFrameName("RL_badgeAdmin01.png"_spr);
           },
           [](const Badge& badge, const UserInfo& user) {
                 g_pendingBadges[user.accountID].push_back(badge);
@@ -35,7 +35,7 @@ $execute {
           "Rated Layouts Owner",
           "<cf>ArcticWoof</c> is the <ca>Owner and Developer</c> of <cl>Rated Layouts</c> Geode Mod.\nHe controls and manages everything within <cl>Rated Layouts</c>, including updates and adding new features as well as the ability to <cg>promote users to Layout Moderators or Administrators</c>.",
           [] {
-                return CCSprite::create("RL_badgeOwner.png"_spr);
+                return CCSprite::createWithSpriteFrameName("RL_badgeOwner.png"_spr);
           },
           [](const Badge& badge, const UserInfo& user) {
                 g_pendingBadges[user.accountID].push_back(badge);
@@ -45,7 +45,7 @@ $execute {
           "Rated Layouts Supporter",
           "This user is a <cp>Layout Supporter</c>! They have supported the development of <cl>Rated Layouts</c> through membership donations.\n\nYou can become a <cp>Layout Supporter</c> by donating via <cp>Ko-Fi</c>",
           [] {
-                return CCSprite::create("RL_badgeSupporter.png"_spr);
+                return CCSprite::createWithSpriteFrameName("RL_badgeSupporter.png"_spr);
           },
           [](const Badge& badge, const UserInfo& user) {
                 g_pendingBadges[user.accountID].push_back(badge);
@@ -421,7 +421,7 @@ class $modify(RLCommentCell, CommentCell) {
             // Avoid creating duplicate badges if one already exists
             if (accountId == 7689052) {  // ArcticWoof
                   if (!userNameMenu->getChildByID("rl-comment-owner-badge")) {
-                        auto ownerBadgeSprite = CCSprite::create("RL_badgeOwner.png"_spr);
+                        auto ownerBadgeSprite = CCSprite::createWithSpriteFrameName("RL_badgeOwner.png"_spr);
                         ownerBadgeSprite->setScale(0.7f);
                         auto ownerBadgeButton = CCMenuItemSpriteExtra::create(
                             ownerBadgeSprite, this, menu_selector(RLCommentCell::onOwnerBadge));
@@ -430,7 +430,7 @@ class $modify(RLCommentCell, CommentCell) {
                   }
             } else if (m_fields->role == 1) {
                   if (!userNameMenu->getChildByID("rl-comment-mod-badge")) {
-                        auto modBadgeSprite = CCSprite::create("RL_badgeMod01.png"_spr);
+                        auto modBadgeSprite = CCSprite::createWithSpriteFrameName("RL_badgeMod01.png"_spr);
                         modBadgeSprite->setScale(0.7f);
                         auto modBadgeButton = CCMenuItemSpriteExtra::create(
                             modBadgeSprite, this, menu_selector(RLCommentCell::onModBadge));
@@ -440,7 +440,7 @@ class $modify(RLCommentCell, CommentCell) {
                   }
             } else if (m_fields->role == 2) {
                   if (!userNameMenu->getChildByID("rl-comment-admin-badge")) {
-                        auto adminBadgeSprite = CCSprite::create("RL_badgeAdmin01.png"_spr);
+                        auto adminBadgeSprite = CCSprite::createWithSpriteFrameName("RL_badgeAdmin01.png"_spr);
                         adminBadgeSprite->setScale(0.7f);
                         auto adminBadgeButton = CCMenuItemSpriteExtra::create(
                             adminBadgeSprite, this, menu_selector(RLCommentCell::onAdminBadge));
@@ -452,7 +452,7 @@ class $modify(RLCommentCell, CommentCell) {
             // supporter badge
             if (m_fields->supporter) {
                   if (!userNameMenu->getChildByID("rl-comment-supporter-badge")) {
-                        auto supporterSprite = CCSprite::create("RL_badgeSupporter.png"_spr);
+                        auto supporterSprite = CCSprite::createWithSpriteFrameName("RL_badgeSupporter.png"_spr);
                         supporterSprite->setScale(0.7f);
                         auto supporterButton = CCMenuItemSpriteExtra::create(supporterSprite, this, menu_selector(RLCommentCell::onSupporterBadge));
                         supporterButton->setID("rl-comment-supporter-badge");

@@ -18,7 +18,7 @@ $execute {
           "This user can <cj>suggest layout levels</c> for <cl>Rated "
           "Layouts</c> to the <cr>Layout Admins</c>. They have the ability to <co>moderate the leaderboard</c>.",
           [] {
-                return CCSprite::create("RL_badgeMod01.png"_spr);
+                return CCSprite::createWithSpriteFrameName("RL_badgeMod01.png"_spr);
           },
           [](const Badge& badge, const UserInfo& user) {
                 g_pendingBadges[user.accountID].push_back(badge);
@@ -30,7 +30,7 @@ $execute {
           "Layouts</c>. They have the same power as <cg>Moderators</c> but including the ability to change the <cy>featured ranking on the "
           "featured layout levels</c> and <cg>set event layouts</c>.",
           [] {
-                return CCSprite::create("RL_badgeAdmin01.png"_spr);
+                return CCSprite::createWithSpriteFrameName("RL_badgeAdmin01.png"_spr);
           },
           [](const Badge& badge, const UserInfo& user) {
                 g_pendingBadges[user.accountID].push_back(badge);
@@ -40,7 +40,7 @@ $execute {
           "Rated Layouts Owner",
           "<cf>ArcticWoof</c> is the <ca>Owner and Developer</c> of <cl>Rated Layouts</c> Geode Mod.\nHe controls and manages everything within <cl>Rated Layouts</c>, including updates and adding new features as well as the ability to <cg>promote users to Layout Moderators or Administrators</c>.",
           [] {
-                return CCSprite::create("RL_badgeOwner.png"_spr);
+                return CCSprite::createWithSpriteFrameName("RL_badgeOwner.png"_spr);
           },
           [](const Badge& badge, const UserInfo& user) {
                 g_pendingBadges[user.accountID].push_back(badge);
@@ -50,7 +50,7 @@ $execute {
           "Rated Layouts Supporter",
           "This user is a <cp>Layout Supporter</c>! They have supported the development of <cl>Rated Layouts</c> through membership donations.\n\nYou can become a <cp>Layout Supporter</c> by donating via <cp>Ko-Fi</c>",
           [] {
-                return CCSprite::create("RL_badgeSupporter.png"_spr);
+                return CCSprite::createWithSpriteFrameName("RL_badgeSupporter.png"_spr);
           },
           [](const Badge& badge, const UserInfo& user) {
                 g_pendingBadges[user.accountID].push_back(badge);
@@ -123,7 +123,7 @@ class $modify(RLProfilePage, ProfilePage) {
             CCSprite* iconSprite = nullptr;
             iconSprite = CCSprite::createWithSpriteFrameName(iconFrameOrPath);
             if (!iconSprite)
-                  iconSprite = CCSprite::create(iconFrameOrPath);
+                  iconSprite = CCSprite::createWithSpriteFrameName(iconFrameOrPath);
 
             iconSprite->setScale(0.8f);
 
@@ -208,8 +208,8 @@ class $modify(RLProfilePage, ProfilePage) {
             auto rlStatsSpr = CCSprite::create("GJ_button_04.png");
             auto rlStatsSprOn = CCSprite::create("GJ_button_02.png");
 
-            auto rlSprA = CCSprite::create("RL_planetMed.png"_spr);
-            auto rlSprB = CCSprite::create("RL_planetMed.png"_spr);
+            auto rlSprA = CCSprite::createWithSpriteFrameName("RL_planetMed.png"_spr);
+            auto rlSprB = CCSprite::createWithSpriteFrameName("RL_planetMed.png"_spr);
             rlSprA->setPosition({20.f, 20.f});
             rlSprB->setPosition({20.f, 20.f});
 
@@ -451,7 +451,7 @@ class $modify(RLProfilePage, ProfilePage) {
                   auto leftMenu = static_cast<CCMenu*>(
                       m_mainLayer->getChildByIDRecursive("left-menu"));
                   if (leftMenu && !leftMenu->getChildByID("rl-user-manage")) {
-                        auto hammerSprite = CCSprite::create("RL_blueprintPoint01.png"_spr);
+                        auto hammerSprite = CCSprite::createWithSpriteFrameName("RL_blueprintPoint01.png"_spr);
                         auto circleButtonSprite = CircleButtonSprite::create(
                             hammerSprite, CircleBaseColor::DarkAqua, CircleBaseSize::Small);
                         circleButtonSprite->setScale(0.875f);

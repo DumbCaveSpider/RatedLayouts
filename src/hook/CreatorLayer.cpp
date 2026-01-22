@@ -13,7 +13,7 @@ class $modify(RLHCreatorLayer, CreatorLayer) {
             auto winSize = CCDirector::sharedDirector()->getWinSize();
             auto bottomLeftMenu =
                 static_cast<CCMenu*>(this->getChildByID("bottom-left-menu"));
-            auto lbButtonSpr = CCSprite::create("RL_btn01.png"_spr);
+            auto lbButtonSpr = CCSprite::createWithSpriteFrameName("RL_btn01.png"_spr);
             lbButtonSpr->setScale(1.2f);
             auto lbButton = CCMenuItemSpriteExtra::create(
                 lbButtonSpr, this, menu_selector(RLHCreatorLayer::onRatedLayoutLayer));

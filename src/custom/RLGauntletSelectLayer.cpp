@@ -28,11 +28,11 @@ bool RLGauntletSelectLayer::init() {
       auto winSize = CCDirector::sharedDirector()->getWinSize();
 
       // title
-      auto titleSprite = CCSprite::create("RL_titleGauntlet.png"_spr);
+      auto titleSprite = CCSprite::createWithSpriteFrameName("RL_titleGauntlet.png"_spr);
       titleSprite->setPosition({winSize.width / 2, winSize.height - 30});
       titleSprite->setScale(.7f);
       // shadow
-      auto titleShadow = CCSprite::create("RL_titleGauntlet.png"_spr);
+      auto titleShadow = CCSprite::createWithSpriteFrameName("RL_titleGauntlet.png"_spr);
       titleShadow->setPosition({titleSprite->getPositionX() + 2, titleSprite->getPositionY() - 2});
       titleShadow->setScale(.7f);
       titleShadow->setColor({0, 0, 0});
@@ -207,8 +207,8 @@ void RLGauntletSelectLayer::createGauntletButtons(matjson::Value const& gauntlet
                         gauntletBg->addChild(diffLabelShadow, 2);
 
                         // star icon to the right of the difficulty label
-                        auto diffStar = CCSprite::create("RL_starSmall.png"_spr);
-                        auto diffStarShadow = CCSprite::create("RL_starSmall.png"_spr);
+                        auto diffStar = CCSprite::createWithSpriteFrameName("RL_starSmall.png"_spr);
+                        auto diffStarShadow = CCSprite::createWithSpriteFrameName("RL_starSmall.png"_spr);
                         if (diffStar && diffStarShadow) {
                               diffStar->setAnchorPoint({0.f, 0.5f});
                               diffStar->setPosition({gauntletBg->getContentSize().width / 2 + 15, diffLabel->getPositionY()});
@@ -224,8 +224,8 @@ void RLGauntletSelectLayer::createGauntletButtons(matjson::Value const& gauntlet
             }
 
             std::string spriteName = fmt::format("RL_gauntlet-{}.png"_spr, gauntletId);
-            auto gauntletSprite = CCSprite::create(spriteName.c_str());
-            auto gauntletSpriteShadow = CCSprite::create(spriteName.c_str());
+            auto gauntletSprite = CCSprite::createWithSpriteFrameName(spriteName.c_str());
+            auto gauntletSpriteShadow = CCSprite::createWithSpriteFrameName(spriteName.c_str());
             gauntletSpriteShadow->setColor({0, 0, 0});
             gauntletSpriteShadow->setOpacity(50);
             gauntletSpriteShadow->setScaleY(1.2f);

@@ -84,7 +84,7 @@ class $modify(RLProfilePage, ProfilePage) {
             label->setScale(kLabelScale);
             label->limitLabelWidth(kMaxLabelW, kLabelScale, kMinScale);
 
-            CCSprite* iconSprite = CCSprite::create(iconFrameOrPath);
+            CCSprite* iconSprite = CCSprite::createWithSpriteFrameName(iconFrameOrPath);
             auto iconBtn = CCMenuItemSpriteExtra::create(iconSprite, this, iconCallback);
             iconBtn->setID(fmt::format("{}-icon-btn", entryID).c_str());
 
@@ -186,7 +186,7 @@ class $modify(RLProfilePage, ProfilePage) {
                   return;
             }
 
-            auto planetSpr = CCSprite::create("RL_planetMed.png"_spr);
+            auto planetSpr = CCSprite::createWithSpriteFrameName("RL_planetMed.png"_spr);
             planetSpr->setScale(0.8f);
             auto rlStatsSpr = EditorButtonSprite::create(planetSpr, EditorBaseColor::Gray, EditorBaseSize::Normal);
             auto rlStatsSprOn = EditorButtonSprite::create(planetSpr, EditorBaseColor::Cyan, EditorBaseSize::Normal);
@@ -377,7 +377,7 @@ class $modify(RLProfilePage, ProfilePage) {
                   }
 
                   if (Mod::get()->getSavedValue<int>("role") >= 1 && !page->getChildByIDRecursive("rl-user-manage-btn")) {
-                        auto userManageSpr = CCSprite::create("RL_badgeAdmin01.png"_spr);
+                        auto userManageSpr = CCSprite::createWithSpriteFrameName("RL_badgeAdmin01.png"_spr);
                         auto rlStatsSpr = EditorButtonSprite::create(userManageSpr, EditorBaseColor::Gray, EditorBaseSize::Normal);
 
                         auto userManageButton = CCMenuItemSpriteExtra::create(
@@ -587,7 +587,7 @@ class $modify(RLProfilePage, ProfilePage) {
             // supporter badge (show for any profile that is a supporter)
             if (m_fields->isSupporter) {
                   if (!userNameMenu->getChildByID("rl-supporter-badge")) {
-                        auto supporterSprite = CCSprite::create("RL_badgeSupporter.png"_spr);
+                        auto supporterSprite = CCSprite::createWithSpriteFrameName("RL_badgeSupporter.png"_spr);
                         auto supporterButton = CCMenuItemSpriteExtra::create(
                             supporterSprite,
                             this,
@@ -604,7 +604,7 @@ class $modify(RLProfilePage, ProfilePage) {
                   if (auto mod = userNameMenu->getChildByID("rl-mod-badge")) mod->removeFromParent();
                   if (auto admin = userNameMenu->getChildByID("rl-admin-badge")) admin->removeFromParent();
 
-                  auto ownerBadgeSprite = CCSprite::create("RL_badgeOwner.png"_spr);
+                  auto ownerBadgeSprite = CCSprite::createWithSpriteFrameName("RL_badgeOwner.png"_spr);
                   auto ownerBadgeButton = CCMenuItemSpriteExtra::create(
                       ownerBadgeSprite,
                       this,
@@ -618,7 +618,7 @@ class $modify(RLProfilePage, ProfilePage) {
                   if (auto owner = userNameMenu->getChildByID("rl-owner-badge")) owner->removeFromParent();
                   if (auto admin = userNameMenu->getChildByID("rl-admin-badge")) admin->removeFromParent();
 
-                  auto modBadgeSprite = CCSprite::create("RL_badgeMod01.png"_spr);
+                  auto modBadgeSprite = CCSprite::createWithSpriteFrameName("RL_badgeMod01.png"_spr);
                   auto modBadgeButton = CCMenuItemSpriteExtra::create(
                       modBadgeSprite,
                       this,
@@ -634,7 +634,7 @@ class $modify(RLProfilePage, ProfilePage) {
                   if (auto owner = userNameMenu->getChildByID("rl-owner-badge")) owner->removeFromParent();
                   if (auto mod = userNameMenu->getChildByID("rl-mod-badge")) mod->removeFromParent();
 
-                  auto adminBadgeSprite = CCSprite::create("RL_badgeAdmin01.png"_spr);
+                  auto adminBadgeSprite = CCSprite::createWithSpriteFrameName("RL_badgeAdmin01.png"_spr);
                   auto adminBadgeButton = CCMenuItemSpriteExtra::create(
                       adminBadgeSprite,
                       this,

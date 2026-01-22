@@ -434,7 +434,7 @@ void RLLeaderboardLayer::populateLeaderboard(
             const bool isPlanets = m_planetsTab && m_planetsTab->isToggled();
             const bool isCoins = m_coinsTab && m_coinsTab->isToggled();
             const char* iconName = isStar ? "RL_starMed.png"_spr : (isPlanets ? "RL_planetMed.png"_spr : (isCoins ? "RL_BlueCoinSmall.png"_spr : "RL_blueprintPoint01.png"_spr));
-            auto iconSprite = CCSprite::create(iconName);
+            auto iconSprite = CCSprite::createWithSpriteFrameName(iconName);
             iconSprite->setScale(0.65f);
             iconSprite->setPosition({325.f, 20.f});
             iconSprite->setAnchorPoint({0.f, 0.5f});

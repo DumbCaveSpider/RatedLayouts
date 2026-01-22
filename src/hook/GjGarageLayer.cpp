@@ -111,7 +111,7 @@ class $modify(GJGarageLayer) {
                               m_fields->coinsValue = nullptr;
                         }
 
-                        auto starSprite = CCSprite::create("RL_starMed.png"_spr);
+                        auto starSprite = CCSprite::createWithSpriteFrameName("RL_starMed.png"_spr);
                         auto starsValue = StatsDisplayAPI::getNewItem(
                             "blueprint-stars"_spr, starSprite,
                             m_fields->storedStars, 0.54f);
@@ -120,7 +120,7 @@ class $modify(GJGarageLayer) {
                         starsValue->setID("rl-stars-value");
                         m_fields->statMenu->addChild(starsValue);
 
-                        auto planetSprite = CCSprite::create("RL_planetMed.png"_spr);
+                        auto planetSprite = CCSprite::createWithSpriteFrameName("RL_planetMed.png"_spr);
                         auto planetsValue = StatsDisplayAPI::getNewItem(
                             "planets-collected"_spr, planetSprite,
                             planets, 0.54f);
@@ -128,7 +128,7 @@ class $modify(GJGarageLayer) {
                         planetsValue->setID("rl-planets-value");
                         m_fields->statMenu->addChild(planetsValue);
 
-                        auto coinsSprite = CCSprite::create("RL_BlueCoinSmall.png"_spr);
+                        auto coinsSprite = CCSprite::createWithSpriteFrameName("RL_BlueCoinSmall.png"_spr);
                         auto coinsValue = StatsDisplayAPI::getNewItem(
                             "coins-collected"_spr, coinsSprite,
                             coins, 0.54f);

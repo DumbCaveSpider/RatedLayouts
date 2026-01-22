@@ -98,10 +98,28 @@ class $modify(EndLevelLayer) {
                         log::debug("Level {} is not suggested; updating end-level coin visuals", levelId);
                         endLayerRef->m_coinsVerified = true;  // always show its verified so it shows that white coins
                         removeUITint(endLayerRef);
-                        auto blueTex = CCTextureCache::sharedTextureCache()->addImage("RL_BlueCoinUI.png"_spr, false);
-                        auto blueFrame = CCSpriteFrame::createWithTexture(blueTex, {{0, 0}, blueTex->getContentSize()});
-                        auto emptyTex = CCTextureCache::sharedTextureCache()->addImage("RL_BlueCoinEmpty1.png"_spr, false);
-                        auto emptyFrame = CCSpriteFrame::createWithTexture(emptyTex, {{0, 0}, emptyTex->getContentSize()});
+                        auto blueFrame = CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName("RL_BlueCoinUI.png"_spr);
+                        CCTexture2D* blueTex = nullptr;
+                        if (!blueFrame) {
+                              blueTex = CCTextureCache::sharedTextureCache()->addImage("RL_BlueCoinUI.png"_spr, false);
+                              if (blueTex) {
+                                    blueFrame = CCSpriteFrame::createWithTexture(blueTex, {{0, 0}, blueTex->getContentSize()});
+                              }
+                        } else {
+                              blueTex = blueFrame->getTexture();
+                        }
+
+                        // prefer a frame from the spritesheet; fall back to raw texture for empty coin bg
+                        auto emptyFrame = CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName("RL_BlueCoinEmpty1.png"_spr);
+                        CCTexture2D* emptyTex = nullptr;
+                        if (!emptyFrame) {
+                              emptyTex = CCTextureCache::sharedTextureCache()->addImage("RL_BlueCoinEmpty1.png"_spr, false);
+                              if (emptyTex) {
+                                    emptyFrame = CCSpriteFrame::createWithTexture(emptyTex, {{0, 0}, emptyTex->getContentSize()});
+                              }
+                        } else {
+                              emptyTex = emptyFrame->getTexture();
+                        }
 
                         if (endLayerRef && endLayerRef->m_mainLayer) {
                               for (int i = 1; i <= 3; ++i) {
@@ -231,7 +249,7 @@ class $modify(EndLevelLayer) {
 
                               if (responseStars == 0 && responsePlanets == 0) {
                                     log::warn("No stars or planets rewarded, possibly already rewarded before");
-                                    Notification::create(rewards + " has already been claimed for this level!", CCSprite::create(medSprite.c_str()))->show();
+                                    Notification::create(rewards + " has already been claimed for this level!", CCSprite::createWithSpriteFrameName(medSprite.c_str()))->show();
                                     return;
                               }
                               int displayStars = isPlat ? (responsePlanets - starReward) : (responseStars - starReward);
@@ -250,7 +268,7 @@ class $modify(EndLevelLayer) {
 
                               // make the stars reward pop when u complete the level
                               auto bigStarSprite =
-                                  isPlat ? CCSprite::create("RL_planetBig.png"_spr) : CCSprite::create("RL_starBig.png"_spr);
+                                  isPlat ? CCSprite::createWithSpriteFrameName("RL_planetBig.png"_spr) : CCSprite::createWithSpriteFrameName("RL_starBig.png"_spr);
                               bigStarSprite->setScale(1.f);
                               bigStarSprite->setPosition(
                                   {endLayerRef->m_mainLayer->getContentSize().width / 2 +
@@ -302,53 +320,64 @@ class $modify(EndLevelLayer) {
                                                 rewardLayer->m_moons = displayStars;
                                           }
 
-                                          // Replace the main display sprite
-                                          auto texture = CCTextureCache::sharedTextureCache()->addImage(
-                                              isPlat ? "RL_planetBig.png"_spr : "RL_starBig.png"_spr, false);
-                                          auto displayFrame = CCSpriteFrame::createWithTexture(texture, {{0, 0}, texture->getContentSize()});
-
-                                          if (isPlat) {
-                                                rewardLayer->m_starsSprite->setDisplayFrame(displayFrame);
-                                          } else {
-                                                rewardLayer->m_moonsSprite->setDisplayFrame(displayFrame);
-                                          }
-                                          rewardLayer->m_currencyBatchNode->setTexture(texture);
-
-                                          for (auto sprite : CCArrayExt<CurrencySprite>(rewardLayer->m_objects)) {
-                                                sprite->m_burstSprite->setVisible(false);
-                                                if (auto child = sprite->getChildByIndex(0)) {
-                                                      child->setVisible(false);
+                                          std::string frameName = isPlat ? "RL_planetBig.png"_spr : "RL_starBig.png"_spr;
+                                          auto displayFrame = CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName((frameName).c_str());
+                                          CCTexture2D* texture = nullptr;
+                                          if (!displayFrame) {
+                                                texture = CCTextureCache::sharedTextureCache()->addImage((frameName).c_str(), false);
+                                                if (texture) {
+                                                      displayFrame = CCSpriteFrame::createWithTexture(texture, {{0, 0}, texture->getContentSize()});
                                                 }
-                                                sprite->setDisplayFrame(displayFrame);
+                                          } else {
+                                                texture = displayFrame->getTexture();
                                           }
 
-                                          endLayerRef->addChild(rewardLayer, 100);
+                                          if (!displayFrame || !texture) {
+                                                log::warn("Failed to load reward frame/texture: {}", frameName);
+                                          } else {
+                                                if (isPlat) {
+                                                      rewardLayer->m_starsSprite->setDisplayFrame(displayFrame);
+                                                } else {
+                                                      rewardLayer->m_moonsSprite->setDisplayFrame(displayFrame);
+                                                }
+                                                rewardLayer->m_currencyBatchNode->setTexture(texture);
+
+                                                for (auto sprite : CCArrayExt<CurrencySprite>(rewardLayer->m_objects)) {
+                                                      sprite->m_burstSprite->setVisible(false);
+                                                      if (auto child = sprite->getChildByIndex(0)) {
+                                                            child->setVisible(false);
+                                                      }
+                                                      sprite->setDisplayFrame(displayFrame);
+                                                }
+
+                                                endLayerRef->addChild(rewardLayer, 100);
+                                                FMODAudioEngine::sharedEngine()->playEffect(
+                                                    // @geode-ignore(unknown-resource)
+                                                    "gold02.ogg");
+                                          }
+                                    } else {
+                                          log::info("Reward animation disabled");
+                                          std::string reward = isPlat ? "planets" : "sparks";
+                                          Notification::create("Received " +
+                                                                   numToString(starReward) + " " + reward + "!",
+                                                               CCSprite::createWithSpriteFrameName(medSprite.c_str()), 2.f)
+                                              ->show();
                                           FMODAudioEngine::sharedEngine()->playEffect(
                                               // @geode-ignore(unknown-resource)
                                               "gold02.ogg");
+                                          // do the fake reward circle wave effect
+                                          auto fakeCircleWave = CCCircleWave::create(10.f, 110.f, 0.5f, false);
+                                          fakeCircleWave->m_color = ccWHITE;
+                                          fakeCircleWave->setPosition(bigStarSprite->getPosition());
+                                          endLayerRef->addChild(fakeCircleWave, 1);
                                     }
-                              } else {
-                                    log::info("Reward animation disabled");
-                                    std::string reward = isPlat ? "planets" : "sparks";
-                                    Notification::create("Received " +
-                                                             numToString(starReward) + " " + reward + "!",
-                                                         CCSprite::create(medSprite.c_str()), 2.f)
-                                        ->show();
-                                    FMODAudioEngine::sharedEngine()->playEffect(
-                                        // @geode-ignore(unknown-resource)
-                                        "gold02.ogg");
-                                    // do the fake reward circle wave effect
-                                    auto fakeCircleWave = CCCircleWave::create(10.f, 110.f, 0.5f, false);
-                                    fakeCircleWave->m_color = ccWHITE;
-                                    fakeCircleWave->setPosition(bigStarSprite->getPosition());
-                                    endLayerRef->addChild(fakeCircleWave, 1);
+                              } else if (!success && (responseStars == 0 || responsePlanets == 0)) {
+                                    std::string rewards = isPlat ? "Planets" : "Sparks";
+                                    std::string medSprite = isPlat ? "RL_planetMed.png"_spr : "RL_starMed.png"_spr;
+                                    Notification::create(rewards + " has already been claimed for this level!", CCSprite::createWithSpriteFrameName(medSprite.c_str()))->show();
+                                    log::info("already claimed for level ID: {}",
+                                              levelId);
                               }
-                        } else if (!success && (responseStars == 0 || responsePlanets == 0)) {
-                              std::string rewards = isPlat ? "Planets" : "Sparks";
-                              std::string medSprite = isPlat ? "RL_planetMed.png"_spr : "RL_starMed.png"_spr;
-                              Notification::create(rewards + " has already been claimed for this level!", CCSprite::create(medSprite.c_str()))->show();
-                              log::info("already claimed for level ID: {}",
-                                        levelId);
                         }
                   });
             });

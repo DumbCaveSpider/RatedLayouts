@@ -9,8 +9,8 @@ static void setTogglerGrayscale(CCMenuItemToggler* toggler, const char* spriteNa
       if (!toggler) return;
       // Use toggler state to decide whether the normal image should be grayscale
       bool toggled = toggler->isToggled();
-      auto normalSpr = toggled ? CCSprite::create(spriteName) : CCSpriteGrayscale::create(spriteName);
-      auto selectedSpr = CCSprite::create(spriteName);
+      auto normalSpr = toggled ? CCSprite::createWithSpriteFrameName(spriteName) : CCSpriteGrayscale::create(spriteName);
+      auto selectedSpr = CCSprite::createWithSpriteFrameName(spriteName);
       if (auto spriteItem = typeinfo_cast<CCMenuItemSpriteExtra*>(toggler)) {
             if (normalSpr) spriteItem->setNormalImage(normalSpr);
             if (selectedSpr) spriteItem->setSelectedImage(selectedSpr);
@@ -33,6 +33,12 @@ bool RLModRatePopup::setup(std::string title, GJGameLevel* level) {
       if (level) {
             m_levelId = level->m_levelID;
             m_accountId = level->m_accountID;
+      }
+
+      // ensure main layer was initialized by base before using it
+      if (!m_mainLayer) {
+            log::error("RLModRatePopup::setup - m_mainLayer is null");
+            return false;
       }
 
       // title
@@ -133,17 +139,21 @@ bool RLModRatePopup::setup(std::string title, GJGameLevel* level) {
           CCMenuItemToggler::create(offDemonSprite, onDemonSprite, this,
                                     menu_selector(RLModRatePopup::onToggleDemon));
 
-      demonToggle->setPosition({m_mainLayer->getContentSize().width, 0});
-      demonToggle->setScale(1.2f);
-      menuButtons->addChild(demonToggle);
+      if (demonToggle) {
+            demonToggle->setPosition({m_mainLayer->getContentSize().width, 0});
+            demonToggle->setScale(1.2f);
+            menuButtons->addChild(demonToggle);
+      }
 
       // info button
-      auto infoButton = CCMenuItemSpriteExtra::create(
-          CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"), this,
-          menu_selector(RLModRatePopup::onInfoButton));
-      infoButton->setPosition({m_mainLayer->getContentSize().width,
-                               m_mainLayer->getContentSize().height});
-      menuButtons->addChild(infoButton);
+      auto infoSpr = CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png");
+      auto infoButton = CCMenuItemSpriteExtra::create(infoSpr, this,
+                                                      menu_selector(RLModRatePopup::onInfoButton));
+      if (infoButton) {
+            infoButton->setPosition({m_mainLayer->getContentSize().width,
+                                     m_mainLayer->getContentSize().height});
+            menuButtons->addChild(infoButton);
+      }
 
       // submit button
       int userRole = (m_role == PopupRole::Admin) ? 2 : ((m_role == PopupRole::Mod) ? 1 : 0);
@@ -185,8 +195,8 @@ bool RLModRatePopup::setup(std::string title, GJGameLevel* level) {
       }
 
       // toggle between featured or stars only
-      auto offSprite = CCSpriteGrayscale::create("RL_featuredCoin.png"_spr);
-      auto onSprite = CCSprite::create("RL_featuredCoin.png"_spr);
+      auto offSprite = CCSpriteGrayscale::createWithSpriteFrameName("RL_featuredCoin.png"_spr);
+      auto onSprite = CCSprite::createWithSpriteFrameName("RL_featuredCoin.png"_spr);
       auto toggleFeatured = CCMenuItemToggler::create(
           offSprite, onSprite, this, menu_selector(RLModRatePopup::onToggleFeatured));
       m_featuredToggleItem = toggleFeatured;
@@ -197,8 +207,8 @@ bool RLModRatePopup::setup(std::string title, GJGameLevel* level) {
       m_mainLayer->addChild(menuButtons);
 
       if (userRole >= 1) {
-            auto offEpicSprite = CCSpriteGrayscale::create("RL_epicFeaturedCoin.png"_spr);
-            auto onEpicSprite = CCSprite::create("RL_epicFeaturedCoin.png"_spr);
+            auto offEpicSprite = CCSpriteGrayscale::createWithSpriteFrameName("RL_epicFeaturedCoin.png"_spr);
+            auto onEpicSprite = CCSprite::createWithSpriteFrameName("RL_epicFeaturedCoin.png"_spr);
             auto toggleEpicFeatured = CCMenuItemToggler::create(
                 offEpicSprite, onEpicSprite, this, menu_selector(RLModRatePopup::onToggleEpicFeatured));
             m_epicFeaturedToggleItem = toggleEpicFeatured;
@@ -254,6 +264,10 @@ bool RLModRatePopup::setup(std::string title, GJGameLevel* level) {
 void RLModRatePopup::onInfoButton(CCObject* sender) {
       // matjson payload
 
+      // disable the button to prevent multiple clicks
+      if (auto buttonItem = typeinfo_cast<CCMenuItemSpriteExtra*>(sender)) {
+            buttonItem->setEnabled(false);
+      }
       matjson::Value jsonBody = matjson::Value::object();
       jsonBody["accountId"] = GJAccountManager::get()->m_accountID;
       jsonBody["argonToken"] =
@@ -265,7 +279,7 @@ void RLModRatePopup::onInfoButton(CCObject* sender) {
       m_getModLevelTask = postReq.post("https://gdrate.arcticwoof.xyz/getModLevel");
 
       Ref<RLModRatePopup> self = this;
-      m_getModLevelTask.listen([self](web::WebResponse* response) {
+      m_getModLevelTask.listen([self, sender](web::WebResponse* response) {
             if (!self) return;
             log::info("Received response from server");
 
@@ -306,6 +320,10 @@ void RLModRatePopup::onInfoButton(CCObject* sender) {
                     suggestedFeatured, suggestedEpic, featuredScore, rejectedTotal);
 
             FLAlertLayer::create("Level Status Info", infoText, "OK")->show();
+            // enable the button again
+            if (auto buttonItem = typeinfo_cast<CCMenuItemSpriteExtra*>(sender)) {
+                  buttonItem->setEnabled(true);
+            }
       });
 }
 
@@ -427,7 +445,7 @@ void RLModRatePopup::onUnrateButton(CCObject* sender) {
             auto rejectBtn = m_normalButtonsContainer->getChildByID("rating-button-reject");
             if (rejectBtn) {
                   auto rejectBtnItem = static_cast<CCMenuItemSpriteExtra*>(rejectBtn);
-                  auto rejectBg = CCSprite::create("GJ_button_06.png");
+                  auto rejectBg = CCSprite::createWithSpriteFrameName("GJ_button_06.png");
                   auto rejectLabel = CCLabelBMFont::create("-", "bigFont.fnt");
                   rejectLabel->setScale(0.75f);
                   rejectLabel->setPosition(rejectBg->getContentSize() / 2);
@@ -706,7 +724,7 @@ void RLModRatePopup::onToggleFeatured(CCObject* sender) {
       }
 
       if (m_isFeatured) {
-            auto featuredCoin = CCSprite::create("RL_featuredCoin.png"_spr);
+            auto featuredCoin = CCSprite::createWithSpriteFrameName("RL_featuredCoin.png"_spr);
             featuredCoin->setPosition({0, 0});
             featuredCoin->setScale(1.2f);
             featuredCoin->setID("featured-coin");
@@ -783,7 +801,7 @@ void RLModRatePopup::onToggleEpicFeatured(CCObject* sender) {
                   m_featuredToggleItem->toggle(false);
                   setTogglerGrayscale(m_featuredToggleItem, "RL_featuredCoin.png"_spr, false);
             }
-            auto newEpicCoin = CCSprite::create("RL_epicFeaturedCoin.png"_spr);
+            auto newEpicCoin = CCSprite::createWithSpriteFrameName("RL_epicFeaturedCoin.png"_spr);
             newEpicCoin->setPosition({0, 0});
             newEpicCoin->setScale(1.2f);
             newEpicCoin->setID("epic-featured-coin");
