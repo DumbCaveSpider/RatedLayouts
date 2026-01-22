@@ -131,19 +131,22 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   CCSprite* buttonSprite = nullptr;
 
                   if (starRatings != 0) {
-                        buttonSprite = CCSpriteGrayscale::create("RL_starBig.png"_spr);
+                        buttonSprite = CCSpriteGrayscale::createWithSpriteFrameName("RL_starBig.png"_spr);
+                        auto roleButtonSpr = CircleButtonSprite::create(buttonSprite, CircleBaseColor::Gray, CircleBaseSize::Medium);
+                        auto roleButtonItem = CCMenuItemSpriteExtra::create(
+                            roleButtonSpr, this, menu_selector(RLLevelInfoLayer::onRoleButton));
+                        roleButtonItem->setID("role-button");
+
+                        leftMenu->addChild(roleButtonItem);
                   } else {
                         buttonSprite = CCSprite::createWithSpriteFrameName("RL_starBig.png"_spr);
+                        auto roleButtonSpr = CircleButtonSprite::create(buttonSprite, CircleBaseColor::Cyan, CircleBaseSize::Medium);
+                        auto roleButtonItem = CCMenuItemSpriteExtra::create(
+                            roleButtonSpr, this, menu_selector(RLLevelInfoLayer::onRoleButton));
+                        roleButtonItem->setID("role-button");
+
+                        leftMenu->addChild(roleButtonItem);
                   }
-
-                  auto roleButtonSpr = CircleButtonSprite::create(
-                      buttonSprite, CircleBaseColor::Cyan, CircleBaseSize::Medium);
-
-                  auto roleButtonItem = CCMenuItemSpriteExtra::create(
-                      roleButtonSpr, this, menu_selector(RLLevelInfoLayer::onRoleButton));
-                  roleButtonItem->setID("role-button");
-
-                  leftMenu->addChild(roleButtonItem);
             }
 
             leftMenu->updateLayout();
@@ -265,7 +268,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                               log::debug("Community vote enabled due to role override (role={})", userRole);
                         }
 
-                        auto commSpriteGray = CCSpriteGrayscale::create("RL_commVote01.png"_spr);
+                        auto commSpriteGray = CCSpriteGrayscale::createWithSpriteFrameName("RL_commVote01.png"_spr);
                         if (commSpriteGray) {
                               auto commBtnSpr = CircleButtonSprite::create(commSpriteGray, CircleBaseColor::Gray, CircleBaseSize::Medium);
                               auto commBtnItem = CCMenuItemSpriteExtra::create(commBtnSpr, layerRef, menu_selector(RLLevelInfoLayer::onCommunityVote));
@@ -827,7 +830,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                               log::debug("Community vote enabled due to role override (role={})", userRole);
                         }
 
-                        auto commSpriteGray = CCSpriteGrayscale::create("RL_commVote01.png"_spr);
+                        auto commSpriteGray = CCSpriteGrayscale::createWithSpriteFrameName("RL_commVote01.png"_spr);
                         if (commSpriteGray) {
                               auto commBtnSpr = CircleButtonSprite::create(commSpriteGray, CircleBaseColor::Gray, CircleBaseSize::Medium);
                               auto commBtnItem = CCMenuItemSpriteExtra::create(commBtnSpr, layerRef, menu_selector(RLLevelInfoLayer::onCommunityVote));
