@@ -1,3 +1,11 @@
+# v0.3.7-beta.1
+
+- Ported to Geode v5.0.0
+- Remove Page API dependency
+- New Gauntlet Sprites!
+- Added **Customizable Background** in the Rated Layouts Creator Layer and Leaderboard Layer. *(Can be changed in the mod settings)*
+- Added **Rated Layout Browser** button!
+
 # v0.3.6-beta.1
 
 - **Added Blue Coins!** Thanks to [Darkore](user:3595559) for the Blue Coin texture design! You can now collect Blue Coins by collecting them in the Rated Layouts levels.

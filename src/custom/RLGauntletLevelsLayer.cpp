@@ -412,23 +412,8 @@ void RLGauntletLevelsLayer::onGauntletInfo(CCObject* sender) {
 void RLGauntletLevelsLayer::ccTouchesBegan(CCSet* touches, CCEvent* event) {
       if (!m_levelsMenu) return;
 
-      // if two or more touches, start pinch
-      if (touches->count() >= 2) {
-            m_multiTouch = true;
-            auto itr = touches->begin();
-            CCTouch* t1 = (CCTouch*)(*itr);
-            ++itr;
-            CCTouch* t2 = (CCTouch*)(*itr);
-            auto p1 = t1->getLocation();
-            auto p2 = t2->getLocation();
-            m_startPinchDist = ccpDistance(p1, p2);
-            m_startScale = m_levelsMenu->getScale();
-            m_flinging = false;
-            return;
-      }
-
-      // single touch -> start dragging if inside menu
-      CCTouch* touch = (CCTouch*)touches->anyObject();
+      // start dragging if inside menu
+      CCTouch* touch = static_cast<CCTouch*>(touches->anyObject());
       auto touchLoc = touch->getLocation();
       auto local = m_levelsMenu->convertToNodeSpace(touchLoc);
       auto size = m_levelsMenu->getContentSize();
@@ -475,7 +460,7 @@ void RLGauntletLevelsLayer::ccTouchesMoved(CCSet* touches, CCEvent* event) {
 
       // single touch dragging
       if (m_dragging) {
-            CCTouch* touch = (CCTouch*)touches->anyObject();
+            CCTouch* touch = static_cast<CCTouch*>(touches->anyObject());
             auto touchLoc = touch->getLocation();
             auto now = std::chrono::steady_clock::now();
             std::chrono::duration<float> dt = now - m_lastTouchTime;
@@ -505,11 +490,6 @@ void RLGauntletLevelsLayer::ccTouchesMoved(CCSet* touches, CCEvent* event) {
 }
 
 void RLGauntletLevelsLayer::ccTouchesEnded(CCSet* touches, CCEvent* event) {
-      // end pinch
-      if (m_multiTouch && touches->count() >= 1) {
-            m_multiTouch = false;
-            return;
-      }
 
       if (m_dragging) {
             m_dragging = false;
@@ -621,7 +601,7 @@ void RLGauntletLevelsLayer::update(float dt) {
       float minY = std::min(0.0f, winSize.height - content.height);
       float maxY = std::max(0.0f, winSize.height - content.height);
 
-      // clamp and if we hit a bound, stop the corresponding velocity component
+      // stop the corresponding velocity component
       if (newPos.x < minX) {
             newPos.x = minX;
             m_velocity.x = 0;

@@ -159,6 +159,14 @@ bool RLCreatorLayer::init() {
       infoMenu->addChild(annouceBtn);
       m_newsIconBtn = annouceBtn;
 
+      // news button above discord
+      // @geode-ignore(unknown-resource)
+      auto browserSpr = CCSprite::createWithSpriteFrameName("geode.loader/homepage.png");
+      auto browserBtn = CCMenuItemSpriteExtra::create(browserSpr, this, menu_selector(RLCreatorLayer::onBrowserButton));
+      browserBtn->setPosition({infoButton->getPositionX(), infoButton->getPositionY() + 120});
+      infoMenu->addChild(browserBtn);
+      m_newsIconBtn = browserBtn;
+
       // @geode-ignore(unknown-resource)
       auto badgeSpr = CCSprite::createWithSpriteFrameName("geode.loader/updates-failed.png");
       if (badgeSpr) {
@@ -228,7 +236,9 @@ bool RLCreatorLayer::init() {
       this->addChild(m_bgContainer, -7);
 
       if (Mod::get()->getSettingValue<bool>("disableBackground") == false) {
-            std::string bgName = "game_bg_01_001.png";
+            auto value = Mod::get()->getSettingValue<int>("backgroundType");
+            std::string bgIndex = (value >= 1 && value <= 9) ? ("0" + numToString(value)) : numToString(value);
+            std::string bgName = "game_bg_" + bgIndex + "_001.png";
             auto testBg = CCSprite::create(bgName.c_str());
             if (!testBg) {
                   testBg = CCSprite::create("game_bg_01_001.png");
@@ -242,7 +252,7 @@ bool RLCreatorLayer::init() {
                         if (!bgSpr) continue;
                         bgSpr->setAnchorPoint({0.f, 0.f});
                         bgSpr->setPosition({i * tileW, 0.f});
-                        bgSpr->setColor({40, 125, 255});
+                        bgSpr->setColor(Mod::get()->getSettingValue<cocos2d::ccColor3B>("rgbBackground"));
                         m_bgContainer->addChild(bgSpr);
                         m_bgTiles.push_back(bgSpr);
                   }
@@ -252,7 +262,9 @@ bool RLCreatorLayer::init() {
             m_groundContainer->setContentSize(winSize);
             this->addChild(m_groundContainer, -5);
 
-            std::string groundName = "groundSquare_01_001.png";
+            auto floorValue = Mod::get()->getSettingValue<int>("floorType");
+            std::string floorIndex = (floorValue >= 1 && floorValue <= 9) ? ("0" + numToString(floorValue)) : numToString(floorValue);
+            std::string groundName = "groundSquare_" + floorIndex + "_001.png";
             auto testGround = CCSprite::create(groundName.c_str());
             if (!testGround) testGround = CCSprite::create("groundSquare_01_001.png");
             if (testGround) {
@@ -264,7 +276,7 @@ bool RLCreatorLayer::init() {
                         if (!gSpr) continue;
                         gSpr->setAnchorPoint({0.f, 0.f});
                         gSpr->setPosition({i * tileW, -70.f});
-                        gSpr->setColor({0, 102, 255});
+                        gSpr->setColor(Mod::get()->getSettingValue<cocos2d::ccColor3B>("rgbFloor"));
                         m_groundContainer->addChild(gSpr);
                         m_groundTiles.push_back(gSpr);
                   }
@@ -286,6 +298,19 @@ void RLCreatorLayer::onSettingsButton(CCObject* sender) {
 
 void RLCreatorLayer::onDiscordButton(CCObject* sender) {
       utils::web::openLinkInBrowser("https://discord.gg/jBf2wfBgVT");
+}
+
+void RLCreatorLayer::onBrowserButton(CCObject* sender) {
+      createQuickPopup(
+          "Rated Layouts Browser",
+          "You will be redirected to the <cl>Rated Layouts Browser website</c> in your web browser.\n<cy>Continue?</c>",
+          "No",
+          "Yes",
+          [](auto, bool yes) {
+                if (!yes) return;
+                Notification::create("Opening Rated Layouts Browser in your web browser", NotificationIcon::Info)->show();
+                utils::web::openLinkInBrowser("https://ratedlayouts.arcticwoof.xyz");
+          });
 }
 
 void RLCreatorLayer::onLayoutGauntlets(CCObject* sender) {

@@ -230,6 +230,10 @@ void RLGauntletSelectLayer::createGauntletButtons(matjson::Value const& gauntlet
             gauntletSpriteShadow->setOpacity(50);
             gauntletSpriteShadow->setScaleY(1.2f);
 
+            int r = gauntlet["r"].asInt().unwrapOr(255);
+            int g = gauntlet["g"].asInt().unwrapOr(255);
+            int b = gauntlet["b"].asInt().unwrapOr(255);
+            gauntletBg->setColor({static_cast<GLubyte>(r), static_cast<GLubyte>(g), static_cast<GLubyte>(b)});
             gauntletBg->addChild(gauntletSprite, 3);
             gauntletBg->addChild(gauntletSpriteShadow, 2);
             gauntletSprite->setPosition(gauntletBg->getContentSize() / 2);
@@ -246,6 +250,7 @@ void RLGauntletSelectLayer::createGauntletButtons(matjson::Value const& gauntlet
             // add to menu but default hide
             m_gauntletButtons.push_back(button);
             m_gauntletsMenu->addChild(button);
+            button->m_scaleMultiplier = 1.05f;
             button->setVisible(false);
       }
 

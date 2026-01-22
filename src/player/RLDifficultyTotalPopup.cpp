@@ -151,6 +151,7 @@ RLDifficultyTotalPopup* RLDifficultyTotalPopup::create(int accountId, Mode mode)
 bool RLDifficultyTotalPopup::setup() {
       setTitle("Rated Layouts Classic: -");
       auto contentSize = m_mainLayer->getContentSize();
+      m_noElasticity = true;
       // spinner
       auto spinner = LoadingSpinner::create(36.f);
       spinner->setPosition({contentSize.width / 2.f, contentSize.height / 2.f});

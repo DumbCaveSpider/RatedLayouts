@@ -51,10 +51,12 @@ bool RLSearchLayer::init() {
       // test the ground moving thingy :o
       // idk how gd actually does it correctly but this is close enough i guess
       if (Mod::get()->getSettingValue<bool>("disableBackground") == false) {
+            auto value = Mod::get()->getSettingValue<int>("backgroundType");
             m_bgContainer = CCNode::create();
             m_bgContainer->setContentSize(winSize);
             this->addChild(m_bgContainer, -7);
-            std::string bgName = "game_bg_01_001.png";
+            std::string bgIndex = (value >= 1 && value <= 9) ? ("0" + numToString(value)) : numToString(value);
+            std::string bgName = "game_bg_" + bgIndex + "_001.png";
             auto testBg = CCSprite::create(bgName.c_str());
             if (!testBg) {
                   testBg = CCSprite::create("game_bg_01_001.png");
@@ -68,7 +70,7 @@ bool RLSearchLayer::init() {
                         if (!bgSpr) continue;
                         bgSpr->setAnchorPoint({0.f, 0.f});
                         bgSpr->setPosition({i * tileW, 0.f});
-                        bgSpr->setColor({40, 125, 255});
+                        bgSpr->setColor(Mod::get()->getSettingValue<cocos2d::ccColor3B>("rgbBackground"));
                         m_bgContainer->addChild(bgSpr);
                         m_bgTiles.push_back(bgSpr);
                   }
@@ -78,7 +80,9 @@ bool RLSearchLayer::init() {
             m_groundContainer->setContentSize(winSize);
             this->addChild(m_groundContainer, -5);
 
-            std::string groundName = "groundSquare_01_001.png";
+            auto floorValue = Mod::get()->getSettingValue<int>("floorType");
+            std::string floorIndex = (floorValue >= 1 && floorValue <= 9) ? ("0" + numToString(floorValue)) : numToString(floorValue);
+            std::string groundName = "groundSquare_" + floorIndex + "_001.png";
             auto testGround = CCSprite::create(groundName.c_str());
             if (!testGround) testGround = CCSprite::create("groundSquare_01_001.png");
             if (testGround) {
@@ -90,7 +94,7 @@ bool RLSearchLayer::init() {
                         if (!gSpr) continue;
                         gSpr->setAnchorPoint({0.f, 0.f});
                         gSpr->setPosition({i * tileW, -70.f});
-                        gSpr->setColor({0, 102, 255});
+                        gSpr->setColor(Mod::get()->getSettingValue<cocos2d::ccColor3B>("rgbFloor"));
                         m_groundContainer->addChild(gSpr);
                         m_groundTiles.push_back(gSpr);
                   }
