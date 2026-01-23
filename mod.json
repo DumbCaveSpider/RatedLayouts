@@ -26,7 +26,6 @@
 		"sprites": [
 			"resources/*.png"
 		]
-			
 	},
 	"dependencies": {
 		"geode.node-ids": {
@@ -57,7 +56,7 @@
 		"interface",
 		"enhancement",
 		"gameplay"
-	], 
+	],
 	"settings": {
 		"titleBg": {
 			"type": "title",
@@ -73,7 +72,7 @@
 			"type": "int",
 			"name": "Background Type",
 			"default": 1,
-			"description": "Change the custom moving background in the Rated Layouts page. <cy>Numbers are based off the order shown in the background selection in editor.</cy>",
+			"description": "Change the custom moving background in the Rated Layouts page.",
 			"min": 1,
 			"max": 59,
 			"control": {
@@ -90,7 +89,7 @@
 			"type": "int",
 			"name": "Ground Type",
 			"default": 1,
-			"description": "Change the custom moving background ground in the Rated Layouts page. <cy>Numbers are based off the order shown in the ground selection in editor.</cy>",
+			"description": "Change the custom moving background ground in the Rated Layouts page.",
 			"min": 1,
 			"max": 22,
 			"control": {
@@ -104,9 +103,9 @@
 			"enable-if": "!disableBackground"
 		},
 		"rgbBackground": {
-    		"type": "rgb",
-    		"name": "Background Color",
-    		"default": [40, 125, 255],
+			"type": "rgb",
+			"name": "Background Color",
+			"default": [40, 125, 255],
 			"description": "Customize the background color of the **Main Page**, **Custom Search**, and **Leaderboard**",
 			"enable-if": "!disableBackground"
 		},
@@ -125,19 +124,19 @@
 			"name": "Disable Reward Animation",
 			"type": "bool",
 			"default": false,
-			"description": "Disable the reward animation when you complete a rated layout level <cy>Enable this if you kept crashing from the reward animation</cy>"
+			"description": "Disable the reward animation when you complete a rated layout level"
 		},
 		"disableCommentGlow": {
 			"name": "Disable Comment Glow",
 			"type": "bool",
 			"default": false,
-			"description": "Disables the blue glow effect on comments made by users using <cl>Rated Layouts mod</cl>"
+			"description": "Disables the blue glow effect on comments"
 		},
 		"disableCreatorPoints": {
 			"name": "Disable Creator Points",
 			"type": "bool",
 			"default": false,
-			"description": "Disable all related to Creator Points. <co>This is those who doesn't want to see creator points entirely as they see it as a competition.</c> <cr>Although this won't entirely remove it, it just gives a sense that it is.</c>"
+			"description": "Disable all related to Creator Points."
 		},
 		"titleAdvanced": {
 			"type": "title",
@@ -147,7 +146,7 @@
 			"name": "Disable Fetch Requests",
 			"type": "bool",
 			"default": false,
-			"description": "Disables all <cy>/fetch</cy> requests to get level rating data and level comments. <cf>This is useful for mod developers that is having issues with the web request being clogged up... sorry andy</c>. <co>Ratings will not be shown on the Level cell unless you open the level on the Level Info Layer or have cached the ratings already or if the comment has been fetched.</co>"
+			"description": "Disables all <cy>/fetch</cy> requests to get level rating data and level comments."
 		},
 		"clearCache": {
 			"type": "custom:rated-layouts-clear-cache",
