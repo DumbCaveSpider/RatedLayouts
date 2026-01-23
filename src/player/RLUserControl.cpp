@@ -41,7 +41,7 @@ bool RLUserControl::setup() {
             username = "Unknown User";
       }
       // username label
-      auto usernameLabel = CCLabelBMFont::create(username.c_str(), "bigFont.fnt", m_mainLayer->getContentSize().width - 40, kCCTextAlignmentCenter);
+      auto usernameLabel = CCLabelBMFont::create(("Target: " + username).c_str(), "bigFont.fnt", m_mainLayer->getContentSize().width - 40, kCCTextAlignmentCenter);
       usernameLabel->setPosition({m_mainLayer->getContentSize().width / 2, m_mainLayer->getContentSize().height - 40});
       usernameLabel->setScale(0.7f);
       m_mainLayer->addChild(usernameLabel);

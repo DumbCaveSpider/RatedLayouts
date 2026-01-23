@@ -538,7 +538,7 @@ void RLModRatePopup::onSubmitButton(CCObject* sender) {
 }
 
 void RLModRatePopup::onUnrateButton(CCObject* sender) {
-      std::string title = "Unrate " + m_level->m_levelName + "?";
+      std::string title = std::string("Unrate ") + m_level->m_levelName.c_str() + "?";
       geode::createQuickPopup(
           title.c_str(),
           "Are you sure you want to <cr>unrate</c> this layout?\n<cy>This action will be visible to everyone.</c>",
@@ -1136,8 +1136,8 @@ void RLModRatePopup::onSetEventButton(CCObject* sender) {
             return;
       }
 
-      std::string title = "Set " + type + " layout?";
-      std::string content = "Are you sure you want to set this <cg>level</c> as the <co>" + type + " layout?</c>";
+      std::string title = std::string("Set ") + type + " layout?";
+      std::string content = std::string("Are you sure you want to set this <cg>level</c> as the <co>") + type + " layout?</c>";
 
       geode::createQuickPopup(
           title.c_str(),
@@ -1182,7 +1182,7 @@ void RLModRatePopup::onSetEventButton(CCObject* sender) {
                       bool success = json["success"].asBool().unwrapOrDefault();
                       std::string message = json["message"].asString().unwrapOrDefault();
                       if (success || message == "Event set successfully") {
-                            upopup->showSuccessMessage("Event set: " + type);
+                            upopup->showSuccessMessage(std::string("Event set: ") + type);
                       } else {
                             upopup->showFailMessage("Failed to set event.");
                       }
