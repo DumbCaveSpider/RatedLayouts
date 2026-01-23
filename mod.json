@@ -112,7 +112,7 @@
 		},
 		"rgbFloor": {
 			"type": "rgb",
-			"name": "Floor Color",
+			"name": "Ground Color",
 			"default": [0, 105, 255],
 			"description": "Customize the floor color of the **Main Page**, **Custom Search**, and **Leaderboard**",
 			"enable-if": "!disableBackground"

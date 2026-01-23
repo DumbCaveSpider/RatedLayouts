@@ -93,9 +93,9 @@ class $modify(EndLevelLayer) {
                   log::debug("Difficulty value: {}", difficulty);
 
                   // If level is not suggested, update end-level coin visuals
-                  bool isSuggested = json["isSuggested"].asBool().unwrapOrDefault();
-                  if (!isSuggested) {
-                        log::debug("Level {} is not suggested; updating end-level coin visuals", levelId);
+                  bool coinVerified = json["coinVerified"].asBool().unwrapOrDefault();
+                  if (coinVerified) {
+                        log::debug("Level {} coin verified; updating end-level coin visuals", levelId);
                         endLayerRef->m_coinsVerified = true;  // always show its verified so it shows that white coins
                         removeUITint(endLayerRef);
                         auto blueFrame = CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName("RL_BlueCoinUI.png"_spr);

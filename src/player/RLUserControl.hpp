@@ -13,6 +13,8 @@ class RLUserControl : public geode::Popup<> {
       ~RLUserControl() {
             m_profileTask.cancel();
             m_setUserTask.cancel();
+            m_deleteUserTask.cancel();
+            m_promoteUserTask.cancel();
       }
 
      private:
@@ -29,11 +31,19 @@ class RLUserControl : public geode::Popup<> {
 
       std::unordered_map<std::string, OptionState> m_userOptions;
       CCMenuItemSpriteExtra* m_optionsButton = nullptr;
+      CCMenuItemSpriteExtra* m_wipeButton = nullptr;
       bool m_isInitializing = false;
       LoadingSpinner* m_spinner = nullptr;
       utils::web::WebTask m_profileTask;
       utils::web::WebTask m_setUserTask;
+      utils::web::WebTask m_deleteUserTask;
+      utils::web::WebTask m_promoteUserTask;
+      CCMenuItemSpriteExtra* m_promoteModButton = nullptr;
+      CCMenuItemSpriteExtra* m_promoteAdminButton = nullptr;
+      CCMenuItemSpriteExtra* m_demoteButton = nullptr;
       void onOptionAction(CCObject* sender);
+      void onWipeAction(CCObject* sender);
+      void onPromoteAction(CCObject* sender);
       void applySingleOption(const std::string& key, bool value);
 
       OptionState* getOptionByKey(const std::string& key);

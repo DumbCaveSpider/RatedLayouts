@@ -8,6 +8,8 @@
 
 using namespace geode::prelude;
 
+const int DEV_ACCOUNTID = 7689052;
+
 // helper functions all about caching level rating data
 // get the cache file path
 static std::string getCachePath() {
@@ -128,24 +130,36 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             if (userRole == 1 || userRole == 2) {
                   // add a role button for send/rate
                   auto iconSprite = CCSprite::createWithSpriteFrameName("RL_starBig.png"_spr);
-                  CCSprite* buttonSprite = nullptr;
+                  CCSprite* modButtonSprite = nullptr;
+                  CCSprite* devButtonSprite = nullptr;
 
                   if (starRatings != 0) {
-                        buttonSprite = CCSpriteGrayscale::createWithSpriteFrameName("RL_starBig.png"_spr);
-                        auto roleButtonSpr = CircleButtonSprite::create(buttonSprite, CircleBaseColor::Gray, CircleBaseSize::Medium);
+                        modButtonSprite = CCSpriteGrayscale::createWithSpriteFrameName("RL_starBig.png"_spr);
+                        auto roleButtonSpr = CircleButtonSprite::create(modButtonSprite, CircleBaseColor::Gray, CircleBaseSize::Medium);
                         auto roleButtonItem = CCMenuItemSpriteExtra::create(
                             roleButtonSpr, this, menu_selector(RLLevelInfoLayer::onRoleButton));
                         roleButtonItem->setID("role-button");
-
                         leftMenu->addChild(roleButtonItem);
                   } else {
-                        buttonSprite = CCSprite::createWithSpriteFrameName("RL_starBig.png"_spr);
-                        auto roleButtonSpr = CircleButtonSprite::create(buttonSprite, CircleBaseColor::Cyan, CircleBaseSize::Medium);
+                        modButtonSprite = CCSprite::createWithSpriteFrameName("RL_starBig.png"_spr);
+                        auto roleButtonSpr = CircleButtonSprite::create(modButtonSprite, CircleBaseColor::Cyan, CircleBaseSize::Medium);
                         auto roleButtonItem = CCMenuItemSpriteExtra::create(
                             roleButtonSpr, this, menu_selector(RLLevelInfoLayer::onRoleButton));
                         roleButtonItem->setID("role-button");
 
                         leftMenu->addChild(roleButtonItem);
+                  }
+
+                  // this is like robtop dev button but only for me
+                  if (GJAccountManager::sharedState()->m_accountID == DEV_ACCOUNTID) {
+                        devButtonSprite = CCSprite::createWithSpriteFrameName("RL_starBig.png"_spr);
+                        devButtonSprite->setColor({255, 255, 0});
+                        auto devButtonSpr = CircleButtonSprite::create(devButtonSprite, CircleBaseColor::Cyan, CircleBaseSize::Medium);
+                        devButtonSpr->setColor({0, 255, 255});
+                        auto devButtonItem = CCMenuItemSpriteExtra::create(
+                            devButtonSpr, this, menu_selector(RLLevelInfoLayer::onDevButton));
+                        devButtonItem->setID("dev-button");
+                        leftMenu->addChild(devButtonItem);
                   }
             }
 
@@ -721,9 +735,9 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   }
             }
 
-            // Replace coin sprites if level is not suggested
-            bool isSuggested = json["isSuggested"].asBool().unwrapOrDefault();
-            if (!isSuggested) {
+            // Replace coin sprites if coinVerified is true
+            bool coinVerified = json["coinVerified"].asBool().unwrapOrDefault();
+            if (coinVerified) {
                   auto coinIcon1 = layerRef->getChildByID("coin-icon-1");
                   auto coinIcon2 = layerRef->getChildByID("coin-icon-2");
                   auto coinIcon3 = layerRef->getChildByID("coin-icon-3");
@@ -1080,6 +1094,17 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   log::debug(
                       "levelUpdateFinished: repositionRLStars callback "
                       "scheduled");
+            }
+      }
+
+      void onDevButton(CCObject* sender) {
+            if (GJAccountManager::sharedState()->m_accountID != DEV_ACCOUNTID) {
+                  log::warn("nope");
+                  return;
+            } else {
+                  log::info("Dev button clicked!");
+                  auto popup = RLModRatePopup::create(RLModRatePopup::PopupRole::Dev, "Dev: Modify Layout", this->m_level);
+                  if (popup) popup->show();
             }
       }
       void onRoleButton(CCObject* sender) {

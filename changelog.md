@@ -5,7 +5,9 @@
 - New Gauntlet Sprites!
 - Added **Customizable Background** in the Rated Layouts Creator Layer and Leaderboard Layer. *(Can be changed in the mod settings)*
 - Added **Rated Layout Browser** button!
+- Added **Coins Verified** status for levels that has verified Blue Coins.
 - Change the sprites to be in a spritesheet.
+- Clean-up the Mod Rate Popup code/UI.
 
 # v0.3.6-beta.1
 

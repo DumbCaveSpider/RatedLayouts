@@ -10,6 +10,7 @@ class RLModRatePopup : public geode::Popup<std::string, GJGameLevel*> {
       enum class PopupRole {
             Mod,
             Admin,
+            Dev,
       };
 
       static RLModRatePopup* create(PopupRole role, std::string title = "Rate Layout",
@@ -31,10 +32,14 @@ class RLModRatePopup : public geode::Popup<std::string, GJGameLevel*> {
       bool m_isEpicFeatured;
       CCMenuItemToggler* m_featuredToggleItem;
       CCMenuItemToggler* m_epicFeaturedToggleItem;
+      CCMenuItemToggler* m_verifiedToggleItem;
+      CCMenuItemToggler* m_silentToggleItem;
       CCMenu* m_normalButtonsContainer;
       CCMenu* m_demonButtonsContainer;
       CCNode* m_difficultyContainer;
       geode::TextInput* m_featuredScoreInput;
+      geode::TextInput* m_featuredValueInput;
+      geode::TextInput* m_difficultyInput;
       int m_selectedRating;
       CCMenuItemSpriteExtra* m_submitButtonItem;
       bool m_isRejected;

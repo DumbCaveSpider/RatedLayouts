@@ -333,8 +333,8 @@ class $modify(LevelCell) {
                         }
 
                         // Replace or darken coins when level is not suggested
-                        bool isSuggested = json["isSuggested"].asBool().unwrapOrDefault();
-                        if (!isSuggested) {
+                        bool coinVerified = json["coinVerified"].asBool().unwrapOrDefault();
+                        if (coinVerified) {
                               // try to obtain a GJGameLevel for coin keys
                               GJGameLevel* levelPtr = this->m_level;
                               if (!levelPtr) {
