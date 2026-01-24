@@ -57,6 +57,7 @@ bool RLReportPopup::setup() {
       m_nsfwContentToggle = makeToggle("NSFW Content");
       m_misrateToggle = makeToggle("Misrate");
       m_decoratedToggle = makeToggle("Decorated");
+      m_otherToggle = makeToggle("Other");
 
       toggleMenu->addChild(m_plagiarismToggle);
       toggleMenu->addChild(m_secretWayToggle);
@@ -65,6 +66,7 @@ bool RLReportPopup::setup() {
       toggleMenu->addChild(m_nsfwContentToggle);
       toggleMenu->addChild(m_misrateToggle);
       toggleMenu->addChild(m_decoratedToggle);
+      toggleMenu->addChild(m_otherToggle);
 
       // layout/position the toggle menu
       float menuY = m_mainLayer->getContentSize().height / 2.f + 30.f;
@@ -94,7 +96,8 @@ void RLReportPopup::onSubmit(CCObject* sender) {
           (m_unverifiedToggle && m_unverifiedToggle->isToggled()) ||
           (m_nsfwContentToggle && m_nsfwContentToggle->isToggled()) ||
           (m_misrateToggle && m_misrateToggle->isToggled()) ||
-          (m_decoratedToggle && m_decoratedToggle->isToggled())) {
+          (m_decoratedToggle && m_decoratedToggle->isToggled()) ||
+          (m_otherToggle && m_otherToggle->isToggled())) {
             anyToggleSelected = true;
       }
 
@@ -169,6 +172,12 @@ void RLReportPopup::onSubmit(CCObject* sender) {
                 } else {
                       body["decorated"] = false;
                 }
+                if (m_otherToggle && m_otherToggle->isToggled()) {
+                      body["other"] = true;
+                      anyReason = true;
+                } else {
+                      body["other"] = false;
+                }
 
                 if (m_reasonInput) {
                       auto s = m_reasonInput->getString();
@@ -215,6 +224,7 @@ void RLReportPopup::onSubmit(CCObject* sender) {
                             if (self->m_nsfwContentToggle) self->m_nsfwContentToggle->setEnabled(false);
                             if (self->m_misrateToggle) self->m_misrateToggle->setEnabled(false);
                             if (self->m_decoratedToggle) self->m_decoratedToggle->setEnabled(false);
+                            if (self->m_otherToggle) self->m_otherToggle->setEnabled(false);
                       } else {
                             uploadPopup->showFailMessage("Failed to submit report");
                       }
@@ -235,7 +245,8 @@ void RLReportPopup::onInfo(CCObject* sender) {
           "- <cl>**Unverified:**</c> The layout has not been beaten legitimately or has not been properly verified.\n"
           "- <cr>**NSFW Content:**</c> The layout contains NSFW *(explicit/suggestive)*, sensitive *(political/religious/controversial)*, or harassing imagery and text.\n"
           "- <cp>**Misrate:**</c> The level was rated incorrectly, such as having the wrong difficulty or rating category assigned.\n"
-          "- <cf>**Decorated:**</c> The layout has been heavily or partially decorated to the point where it is no longer a 'layout' and could potentially be officially rated in-game.",
+          "- <cf>**Decorated:**</c> The layout has been heavily or partially decorated to the point where it is no longer a 'layout' and could potentially be officially rated in-game.\n"
+          "- <ca>**Other:**</c> The report reason does not fit into any of the above categories and requires additional context.",
           "OK")
           ->show();
 }

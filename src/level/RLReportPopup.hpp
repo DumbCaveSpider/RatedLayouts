@@ -21,6 +21,7 @@ class RLReportPopup : public geode::Popup<> {
       CCMenuItemToggler* m_nsfwContentToggle = nullptr;
       CCMenuItemToggler* m_misrateToggle = nullptr;
       CCMenuItemToggler* m_decoratedToggle = nullptr;
+      CCMenuItemToggler* m_otherToggle = nullptr;
 
       CCMenu* m_toggleMenu = nullptr;
       geode::TextInput* m_reasonInput = nullptr;
