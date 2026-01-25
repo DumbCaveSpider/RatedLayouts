@@ -50,17 +50,17 @@ class $modify(EffectGameObject) {
 
                   auto json = jsonRes.unwrap();
                   bool coinVerified = json["coinVerified"].asBool().unwrapOrDefault();
-                  auto tag = coinVerified ? 69 : 67;  // idk what to name the tags lol
+                  auto tag = coinVerified ? 67 : 69;  // idk what to name the tags lol
 
                   if (auto asSprite = typeinfo_cast<CCSprite*>(selfRef.operator->())) {
                         asSprite->setTag(tag);
-                        if (!coinVerified) asSprite->setColor({0, 127, 232});
+                        if (coinVerified) asSprite->setColor({0, 127, 232});
                   }
                   if (auto children = selfRef->getChildren()) {
                         for (auto node : CCArrayExt<CCNode>(children)) {
                               if (auto cs = typeinfo_cast<CCSprite*>(node)) {
                                     cs->setTag(tag);
-                                    if (!coinVerified) cs->setColor({0, 127, 232});
+                                    if (coinVerified) cs->setColor({0, 127, 232});
                               }
                         }
                   }

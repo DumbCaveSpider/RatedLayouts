@@ -20,6 +20,8 @@ class RLModRatePopup : public geode::Popup<std::string, GJGameLevel*> {
             m_setRateTask.cancel();
             m_setUnrateTask.cancel();
             m_setEventTask.cancel();
+            m_deleteSendsTask.cancel();
+            m_unsendTask.cancel();
       }
 
      private:
@@ -49,6 +51,8 @@ class RLModRatePopup : public geode::Popup<std::string, GJGameLevel*> {
       utils::web::WebTask m_setRateTask;
       utils::web::WebTask m_setUnrateTask;
       utils::web::WebTask m_setEventTask;
+      utils::web::WebTask m_deleteSendsTask;
+      utils::web::WebTask m_unsendTask;
       bool setup(std::string title, GJGameLevel* level) override;
       void onSubmitButton(CCObject* sender);
       void onUnrateButton(CCObject* sender);
@@ -58,6 +62,8 @@ class RLModRatePopup : public geode::Popup<std::string, GJGameLevel*> {
       void onToggleDemon(CCObject* sender);
       void onRatingButton(CCObject* sender);
       void onInfoButton(CCObject* sender);
+      void onDeleteSendsButton(CCObject* sender);
+      void onUnsendButton(CCObject* sender);
       void onSetEventButton(CCObject* sender);
       void onToggleEpicFeatured(CCObject* sender);
       void updateDifficultySprite(int rating);

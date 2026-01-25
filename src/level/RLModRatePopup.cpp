@@ -168,7 +168,7 @@ bool RLModRatePopup::setup(std::string title, GJGameLevel* level) {
       auto modActionMenu = CCMenu::create();  // for the bottom menu buttons
       modActionMenu->setPosition({centerX, 0});
       modActionMenu->setID("mod-action-menu");
-      modActionMenu->setContentSize({m_mainLayer->getContentSize().width, 30.f});
+      modActionMenu->setContentSize({m_mainLayer->getContentSize().width - 40.f, 30.f});
       modActionMenu->setLayout(
           RowLayout::create()
               ->setGap(15.f));
@@ -179,6 +179,13 @@ bool RLModRatePopup::setup(std::string title, GJGameLevel* level) {
 
       modActionMenu->addChild(submitButtonItem);
       m_submitButtonItem = submitButtonItem;
+
+      // unsend button
+      auto unsendSpr = ButtonSprite::create("Unsend", 80, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+      auto unsendButtonItem = CCMenuItemSpriteExtra::create(
+          unsendSpr, this, menu_selector(RLModRatePopup::onUnsendButton));
+      unsendButtonItem->setID("unsend-button");
+      modActionMenu->addChild(unsendButtonItem);
 
       // unrate and suggest buttons (only for admins)
       if (userRole == 2) {
@@ -257,6 +264,14 @@ bool RLModRatePopup::setup(std::string title, GJGameLevel* level) {
                   verifiedToggle->setID("verified-toggle");
                   m_buttonMenu->addChild(verifiedToggle);
                   m_verifiedToggleItem = verifiedToggle;
+            }
+
+            auto deleteSendSpr = ButtonSprite::create("Delete Sends", 80, true, "goldFont.fnt", "GJ_button_06.png", 30.f, 1.f);
+            auto deleteSendBtn = CCMenuItemSpriteExtra::create(deleteSendSpr, this, menu_selector(RLModRatePopup::onDeleteSendsButton));
+            if (deleteSendBtn) {
+                  deleteSendBtn->setPosition({m_mainLayer->getContentSize().width - 80.f, 70});
+                  deleteSendBtn->setID("delete-sends-button");
+                  m_buttonMenu->addChild(deleteSendBtn);
             }
       }
 
@@ -385,6 +400,118 @@ void RLModRatePopup::onInfoButton(CCObject* sender) {
             // enable the button again
             if (auto buttonItem = typeinfo_cast<CCMenuItemSpriteExtra*>(sender)) {
                   buttonItem->setEnabled(true);
+            }
+      });
+}
+
+void RLModRatePopup::onDeleteSendsButton(CCObject* sender) {
+      std::string title = std::string("Delete Sends?");
+      geode::createQuickPopup(
+          "Delete Sends?",
+          "Are you sure you want to <cr>delete sends</c> this layout?\n<cy>This action cannot be undone.</c>",
+          "No",
+          "Delete",
+          [this](auto, bool yes) {
+                if (!yes) return;
+                auto popup = UploadActionPopup::create(nullptr, "Deleting sends...");
+                popup->show();
+                log::info("Deleting sends - Level ID: {}", m_levelId);
+
+                // Get argon token
+                auto token = Mod::get()->getSavedValue<std::string>("argon_token");
+                if (token.empty()) {
+                      log::error("Failed to get user token");
+                      popup->showFailMessage("Token not found!");
+                      return;
+                }
+
+                // matjson payload
+                matjson::Value jsonBody = matjson::Value::object();
+                jsonBody["accountId"] = GJAccountManager::get()->m_accountID;
+                jsonBody["argonToken"] = token;
+                jsonBody["targetLevelId"] = m_levelId;
+
+                log::info("Sending request: {}", jsonBody.dump());
+
+                auto postReq = web::WebRequest();
+                postReq.bodyJSON(jsonBody);
+                auto postTask = m_deleteSendsTask = postReq.post("https://gdrate.arcticwoof.xyz/deleteSends");
+
+                Ref<RLModRatePopup> self = this;
+                Ref<UploadActionPopup> upopup = popup;
+                postTask.listen([self, upopup](web::WebResponse* response) {
+                      if (!self || !upopup) return;
+                      log::info("Received response from server");
+
+                      if (!response->ok()) {
+                            log::warn("Server returned non-ok status: {}", response->code());
+                            upopup->showFailMessage("Failed! Try again later.");
+                            return;
+                      }
+
+                      auto jsonRes = response->json();
+                      if (!jsonRes) {
+                            log::warn("Failed to parse JSON response");
+                            upopup->showFailMessage("Invalid server response.");
+                            return;
+                      }
+
+                      auto json = jsonRes.unwrap();
+                      bool success = json["success"].asBool().unwrapOrDefault();
+
+                      if (success) {
+                            log::info("Delete sends successful!");
+                            upopup->showSuccessMessage("Sends deleted!");
+                      } else {
+                            upopup->showFailMessage("Failed to delete sends.");
+                      }
+                });
+          });
+}
+
+void RLModRatePopup::onUnsendButton(CCObject* sender) {
+      auto popup = UploadActionPopup::create(nullptr, "Unsending layout...");
+      popup->show();
+      log::info("Unsending - Level ID: {}", m_levelId);
+      // Get argon token
+      auto token = Mod::get()->getSavedValue<std::string>("argon_token");
+      if (token.empty()) {
+            log::error("Failed to get user token");
+            popup->showFailMessage("Token not found!");
+            return;
+      }
+      // matjson payload
+      matjson::Value jsonBody = matjson::Value::object();
+      jsonBody["accountId"] = GJAccountManager::get()->m_accountID;
+      jsonBody["argonToken"] = token;
+      jsonBody["targetLevelId"] = m_levelId;
+      log::info("Sending request: {}", jsonBody.dump());
+      auto postReq = web::WebRequest();
+      postReq.bodyJSON(jsonBody);
+      auto postTask = m_unsendTask = postReq.post("https://gdrate.arcticwoof.xyz/setUnsend");
+      Ref<RLModRatePopup> self = this;
+      Ref<UploadActionPopup> upopup = popup;
+      postTask.listen([self, upopup](web::WebResponse* response) {
+            if (!self || !upopup) return;
+            log::info("Received response from server");
+            if (!response->ok()) {
+                  log::warn("Server returned non-ok status: {}", response->code());
+                  upopup->showFailMessage("Failed! Try again later.");
+                  return;
+            }
+            auto jsonRes = response->json();
+            if (!jsonRes) {
+                  log::warn("Failed to parse JSON response");
+                  upopup->showFailMessage("Invalid server response.");
+                  return;
+            }
+            auto json = jsonRes.unwrap();
+            bool success = json["success"].asBool().unwrapOrDefault();
+            if (success) {
+                  log::info("Unsend successful!");
+                  upopup->showSuccessMessage("Layout unsent!");
+            } else {
+                  upopup->showFailMessage("Failed to unsend layout.");
             }
       });
 }
