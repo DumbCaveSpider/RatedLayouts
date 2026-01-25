@@ -6,6 +6,7 @@
 #include <random>
 
 #include "../level/RLEventLayouts.hpp"
+#include "ModInfo.hpp"
 #include "RLAddDialogue.hpp"
 #include "RLAnnoucementPopup.hpp"
 #include "RLCreditsPopup.hpp"
@@ -285,6 +286,62 @@ bool RLCreatorLayer::init() {
             auto floorLineSpr = CCSprite::createWithSpriteFrameName("floorLine_01_001.png");
             floorLineSpr->setPosition({winSize.width / 2, 58});
             m_groundContainer->addChild(floorLineSpr, -4);
+      }
+
+      if (!Mod::get()->getSettingValue<bool>("disableModInfo")) {
+            // mod info stuff
+            auto modInfoBg = CCScale9Sprite::create("square02_small.png");
+            modInfoBg->setPosition({winSize.width / 2, 0});
+            modInfoBg->setContentSize({160.f, 70.f});
+            modInfoBg->setOpacity(100);
+
+            m_modStatusLabel = CCLabelBMFont::create("-", "bigFont.fnt");
+            m_modStatusLabel->setColor({255, 150, 0});
+            m_modStatusLabel->setScale(0.3f);
+            m_modStatusLabel->setPosition({80.f, 60.f});
+            modInfoBg->addChild(m_modStatusLabel);
+
+            std::string modVersionStr = Mod::get()->getVersion().toVString();
+            m_modVersionLabel = CCLabelBMFont::create(modVersionStr.c_str(), "bigFont.fnt");
+            m_modVersionLabel->setColor({255, 150, 0});
+            m_modVersionLabel->setScale(0.3f);
+            m_modVersionLabel->setPosition({80.f, 45.f});
+            modInfoBg->addChild(m_modVersionLabel);
+
+            Ref<RLCreatorLayer> selfRef = this;
+            fetchModInfo([selfRef](std::optional<ModInfo> info) {
+                  if (!selfRef) return;
+
+                  if (!info) {
+                        if (selfRef->m_modStatusLabel) {
+                              selfRef->m_modStatusLabel->setString("Offline");
+                              selfRef->m_modStatusLabel->setColor({255, 64, 64});
+                        }
+                        return;
+                  }
+
+                  std::string statusText = info->status + std::string(" - ") + info->serverVersion;
+                  if (selfRef->m_modStatusLabel) {
+                        selfRef->m_modStatusLabel->setString(statusText.c_str());
+                        if (info->status == "Online") {
+                              selfRef->m_modStatusLabel->setColor({64, 255, 128});
+                        } else {
+                              selfRef->m_modStatusLabel->setColor({255, 150, 0});
+                        }
+                  }
+
+                  if (selfRef->m_modVersionLabel) {
+                        selfRef->m_modVersionLabel->setString(("Up-to-date - " + info->modVersion).c_str());
+                        selfRef->m_modVersionLabel->setColor({64, 255, 128});
+
+                        if (info->modVersion != Mod::get()->getVersion().toVString()) {
+                              selfRef->m_modVersionLabel->setString(("Outdated - " + Mod::get()->getVersion().toVString()).c_str());
+                              selfRef->m_modVersionLabel->setColor({255, 200, 0});
+                        }
+                  }
+            });
+
+            this->addChild(modInfoBg, 10);
       }
 
       this->scheduleUpdate();
@@ -722,6 +779,46 @@ void RLCreatorLayer::onSearchLayouts(CCObject* sender) {
       scene->addChild(searchLayer);
       auto transitionFade = CCTransitionFade::create(0.5f, scene);
       CCDirector::sharedDirector()->pushScene(transitionFade);
+}
+
+void RLCreatorLayer::onEnter() {
+      CCLayer::onEnter();
+
+      if (!Mod::get()->getSettingValue<bool>("disableModInfo")) {
+            // refresh mod info every time the layer is entered
+            Ref<RLCreatorLayer> selfRef = this;
+            fetchModInfo([selfRef](std::optional<ModInfo> info) {
+                  if (!selfRef) return;
+
+                  if (!info) {
+                        if (selfRef->m_modStatusLabel) {
+                              selfRef->m_modStatusLabel->setString("Offline");
+                              selfRef->m_modStatusLabel->setColor({255, 64, 64});
+                        }
+                        return;
+                  }
+
+                  std::string statusText = info->status + std::string(" - ") + info->serverVersion;
+                  if (selfRef->m_modStatusLabel) {
+                        selfRef->m_modStatusLabel->setString(statusText.c_str());
+                        if (info->status == "Online") {
+                              selfRef->m_modStatusLabel->setColor({64, 255, 128});
+                        } else {
+                              selfRef->m_modStatusLabel->setColor({255, 150, 0});
+                        }
+                  }
+
+                  if (selfRef->m_modVersionLabel) {
+                        selfRef->m_modVersionLabel->setString(("Up-to-date - " + info->modVersion).c_str());
+                        selfRef->m_modVersionLabel->setColor({64, 255, 128});
+
+                        if (info->modVersion != Mod::get()->getVersion().toVString()) {
+                              selfRef->m_modVersionLabel->setString(("Outdated - " + Mod::get()->getVersion().toVString()).c_str());
+                              selfRef->m_modVersionLabel->setColor({255, 200, 0});
+                        }
+                  }
+            });
+      }
 }
 
 RLCreatorLayer* RLCreatorLayer::create() {

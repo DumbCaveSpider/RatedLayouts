@@ -48,6 +48,11 @@ class RLCreatorLayer : public CCLayer {
       CCSprite* m_newsBadge = nullptr;
       void update(float dt) override;
 
+      // labels for mod info
+      CCLabelBMFont* m_modStatusLabel = nullptr;
+      CCLabelBMFont* m_modVersionLabel = nullptr;
+
      public:
+      void onEnter() override;
       static RLCreatorLayer* create();
 };

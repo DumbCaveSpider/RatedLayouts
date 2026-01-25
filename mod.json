@@ -92,12 +92,12 @@
 			"default": 1,
 			"description": "Change the custom moving background ground in the Rated Layouts page. <cy>Numbers are based off the order shown in the ground selection in editor.</cy>",
 			"min": 1,
-			"max": 22,
+			"max": 7,
 			"control": {
 				"arrows": true,
 				"slider": false,
 				"input": false,
-				"big-arrows": true,
+				"big-arrows": false,
 				"arrow-step": 1,
 				"big-arrow-step": 10
 			},
@@ -114,7 +114,7 @@
 			"type": "rgb",
 			"name": "Ground Color",
 			"default": [0, 105, 255],
-			"description": "Customize the floor color of the **Main Page**, **Custom Search**, and **Leaderboard**",
+			"description": "Customize the ground color of the **Main Page**, **Custom Search**, and **Leaderboard**",
 			"enable-if": "!disableBackground"
 		},
 		"titleMisc": {
@@ -138,6 +138,12 @@
 			"type": "bool",
 			"default": false,
 			"description": "Disable all related to Creator Points. <co>This is those who doesn't want to see creator points entirely as they see it as a competition.</c> <cr>Although this won't entirely remove it, it just gives a sense that it is.</c>"
+		},
+		"disableModInfo": {
+			"name": "Disable Mod Info",
+			"type": "bool",
+			"default": false,
+			"description": "Disables the mod info shown in the Rated Layouts Creator Layer."
 		},
 		"titleAdvanced": {
 			"type": "title",
