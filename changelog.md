@@ -7,6 +7,7 @@
 - Added **Rated Layout Browser** button!
 - Added **Coins Verified** status for levels that has verified Blue Coins.
 - Added **Version Checker** to check if you are using the latest version of Rated Layouts mod.
+- Added **Completed** and **Uncompleted** filters in the Custom Search Layer.
 - Change the sprites to be in a spritesheet.
 - Clean-up the Mod Rate Popup code/UI.
 

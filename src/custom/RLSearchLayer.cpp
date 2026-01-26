@@ -307,9 +307,9 @@ bool RLSearchLayer::init() {
       auto optionsMenu = CCMenu::create();
       optionsMenu->setID("options-menu");
       optionsMenu->setPosition({winSize.width / 2, 80});
-      optionsMenu->setContentSize({400.f, 140.f});
+      optionsMenu->setContentSize({390.f, 130.f});
       optionsMenu->setLayout(RowLayout::create()
-                                 ->setGap(8.f)
+                                 ->setGap(10.f)
                                  ->setGrowCrossAxis(true)
                                  ->setCrossAxisOverflow(false));
       m_optionsLayout = static_cast<RowLayout*>(optionsMenu->getLayout());
@@ -319,7 +319,7 @@ bool RLSearchLayer::init() {
       optionsLabel->setScale(0.5f);
       this->addChild(optionsLabel);
       auto optionsMenuBg = CCScale9Sprite::create("square02_small.png");
-      optionsMenuBg->setContentSize(optionsMenu->getContentSize());
+      optionsMenuBg->setContentSize({optionsMenu->getContentSize().width + 10.f, optionsMenu->getContentSize().height + 10.f});
       optionsMenuBg->setPosition(optionsMenu->getPosition());
       optionsMenuBg->setOpacity(100);
       this->addChild(optionsMenuBg, -1);
@@ -379,6 +379,23 @@ bool RLSearchLayer::init() {
       oldestItem->setID("oldest-toggle");
       m_oldestItem = oldestItem;
       optionsMenu->addChild(oldestItem);
+
+      // completed toggle
+      auto completedSpr = ButtonSprite::create("Completed", "goldFont.fnt", "GJ_button_01.png");
+      auto completedItem = CCMenuItemSpriteExtra::create(completedSpr, this, menu_selector(RLSearchLayer::onCompletedToggle));
+      completedItem->setScale(1.0f);
+      completedItem->setID("completed-toggle");
+      m_completedItem = completedItem;
+      optionsMenu->addChild(completedItem);
+
+      // uncompleted toggle
+      auto uncompletedSpr = ButtonSprite::create("Uncompleted", "goldFont.fnt", "GJ_button_01.png");
+      auto uncompletedItem = CCMenuItemSpriteExtra::create(uncompletedSpr, this, menu_selector(RLSearchLayer::onUncompletedToggle));
+      uncompletedItem->setScale(1.0f);
+      uncompletedItem->setID("uncompleted-toggle");
+      m_uncompletedItem = uncompletedItem;
+      optionsMenu->addChild(uncompletedItem);
+
       optionsMenu->updateLayout();
 
       // info button yay
@@ -455,11 +472,14 @@ void RLSearchLayer::onSearchButton(CCObject* sender) {
       if (!difficultyParam.empty()) req.param("difficulty", difficultyParam);
       if (m_platformerActive) req.param("platformer", "1");
       if (m_classicActive) req.param("classic", "1");
-      req.param("featured", numToString(featuredParam));
-      req.param("epic", numToString(epicParam));
-      req.param("awarded", numToString(awardedParam));
-      req.param("oldest", numToString(oldestParam));
-      req.param("user", numToString(usernameParam));
+      if (m_featuredActive) req.param("featured", numToString(featuredParam));
+      if (m_epicActive) req.param("epic", numToString(epicParam));
+      if (m_awardedActive) req.param("awarded", numToString(awardedParam));
+      if (m_completedActive) req.param("completed", "1");
+      if (m_uncompletedActive) req.param("uncompleted", "1");
+      if (m_oldestActive) req.param("oldest", numToString(oldestParam));
+      if (m_usernameActive) req.param("user", numToString(usernameParam));
+      req.param("accountId", numToString(GJAccountManager::get()->m_accountID));
 
       Ref<RLSearchLayer> self = this;
       self->m_searchTask = req.get("https://gdrate.arcticwoof.xyz/search");
@@ -598,6 +618,44 @@ void RLSearchLayer::onOldestToggle(CCObject* sender) {
       auto btn = static_cast<ButtonSprite*>(normalNode);
       if (btn) {
             btn->updateBGImage(m_oldestActive ? "GJ_button_02.png" : "GJ_button_01.png");
+      }
+}
+
+void RLSearchLayer::onCompletedToggle(CCObject* sender) {
+      auto item = static_cast<CCMenuItemSpriteExtra*>(sender);
+      if (!item) return;
+      // mutual exclusivity with Uncompleted
+      m_completedActive = !m_completedActive;
+      if (m_completedActive && m_uncompletedActive) {
+            m_uncompletedActive = false;
+            if (m_uncompletedItem) {
+                  auto unNode = static_cast<ButtonSprite*>(m_uncompletedItem->getNormalImage());
+                  if (unNode) unNode->updateBGImage("GJ_button_01.png");
+            }
+      }
+      auto normalNode = item->getNormalImage();
+      auto btn = static_cast<ButtonSprite*>(normalNode);
+      if (btn) {
+            btn->updateBGImage(m_completedActive ? "GJ_button_02.png" : "GJ_button_01.png");
+      }
+}
+
+void RLSearchLayer::onUncompletedToggle(CCObject* sender) {
+      auto item = static_cast<CCMenuItemSpriteExtra*>(sender);
+      if (!item) return;
+      // mutual exclusivity with Completed
+      m_uncompletedActive = !m_uncompletedActive;
+      if (m_uncompletedActive && m_completedActive) {
+            m_completedActive = false;
+            if (m_completedItem) {
+                  auto cNode = static_cast<ButtonSprite*>(m_completedItem->getNormalImage());
+                  if (cNode) cNode->updateBGImage("GJ_button_01.png");
+            }
+      }
+      auto normalNode = item->getNormalImage();
+      auto btn = static_cast<ButtonSprite*>(normalNode);
+      if (btn) {
+            btn->updateBGImage(m_uncompletedActive ? "GJ_button_02.png" : "GJ_button_01.png");
       }
 }
 

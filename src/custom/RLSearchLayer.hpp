@@ -36,9 +36,14 @@ class RLSearchLayer : public CCLayer {
       CCMenuItemSpriteExtra* m_classicItem = nullptr;
       CCMenuItemSpriteExtra* m_usernameItem = nullptr;
       CCMenuItemSpriteExtra* m_oldestItem = nullptr;
+      // Completed / Uncompleted toggles
+      CCMenuItemSpriteExtra* m_completedItem = nullptr;
+      CCMenuItemSpriteExtra* m_uncompletedItem = nullptr;
       bool m_platformerActive = false;
       bool m_classicActive = false;
       bool m_usernameActive = false;
+      bool m_completedActive = false;
+      bool m_uncompletedActive = false;
 
       // difficulty filter buttons
       CCMenu* m_difficultyFilterMenu = nullptr;
@@ -65,6 +70,8 @@ class RLSearchLayer : public CCLayer {
       void onPlatformerToggle(CCObject* sender);
       void onDemonToggle(CCObject* sender);
       void onUsernameToggle(CCObject* sender);
+      void onCompletedToggle(CCObject* sender);
+      void onUncompletedToggle(CCObject* sender);
       void onDemonDifficultyButton(CCObject* sender);
       void onDifficultyButton(CCObject* sender);
 
