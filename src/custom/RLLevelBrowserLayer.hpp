@@ -5,7 +5,7 @@
 
 using namespace geode::prelude;
 
-class RLLevelBrowserLayer : public CCLayer, public LevelManagerDelegate {
+class RLLevelBrowserLayer : public CCLayer, public LevelManagerDelegate, public SetIDPopupDelegate {
      public:
       enum class Mode {
             Featured = 1,
@@ -73,9 +73,14 @@ class RLLevelBrowserLayer : public CCLayer, public LevelManagerDelegate {
       float m_bgSpeed = 40.f;
       float m_groundSpeed = 150.f;
 
+      // page picker UI
+      CCMenuItemSpriteExtra* m_pageButton = nullptr;
+      CCLabelBMFont* m_pageButtonLabel = nullptr;
+
       // helpers
       void populateFromArray(CCArray* levels);
       void fetchLevelsForType(int type);
+      void updatePageButton();
 
       // UI handlers
       void onBackButton(CCObject* sender);
@@ -86,4 +91,8 @@ class RLLevelBrowserLayer : public CCLayer, public LevelManagerDelegate {
       void onModeButton(CCObject* sender);
       void onSearchButton(CCObject* sender);
       void onClearButton(CCObject* sender);
+      void onPageButton(CCObject* sender);
+
+      // SetIDPopup delegate
+      void setIDPopupClosed(SetIDPopup* popup, int value) override;
 };

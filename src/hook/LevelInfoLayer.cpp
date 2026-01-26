@@ -282,6 +282,12 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                               log::debug("Community vote enabled due to role override (role={})", userRole);
                         }
 
+                        // if the level is platformer
+                        if (layerRef && layerRef->m_level && layerRef->m_level->isPlatformer()) {
+                              shouldDisable = false;
+                              log::debug("Community vote enabled due to platformer level");
+                        }
+
                         auto commSpriteGray = CCSpriteGrayscale::createWithSpriteFrameName("RL_commVote01.png"_spr);
                         if (commSpriteGray) {
                               auto commBtnSpr = CircleButtonSprite::create(commSpriteGray, CircleBaseColor::Gray, CircleBaseSize::Medium);

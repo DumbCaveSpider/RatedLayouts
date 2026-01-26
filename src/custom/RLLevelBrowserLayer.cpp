@@ -132,14 +132,35 @@ bool RLLevelBrowserLayer::init(GJSearchObject* object) {
 
       this->addChild(m_listLayer);
 
-      // level count label
       m_levelsLabel = CCLabelBMFont::create("", "goldFont.fnt");
       m_levelsLabel->setPosition({winSize.width - 5, winSize.height - 5});
       m_levelsLabel->setAnchorPoint({1.f, 1.f});
       m_levelsLabel->setScale(0.45f);
       this->addChild(m_levelsLabel, 10);
 
-      // refresh button
+      auto pageBtnSpr = CCSprite::create("GJ_button_02.png");
+      pageBtnSpr->setScale(0.7f);
+      if (pageBtnSpr) {
+            m_pageButton = CCMenuItemSpriteExtra::create(pageBtnSpr, this, menu_selector(RLLevelBrowserLayer::onPageButton));
+            if (m_pageButton) {
+                  m_pageButton->setPosition({winSize.width - 20, winSize.height - 40});
+                  auto pageMenu = CCMenu::create();
+                  pageMenu->setPosition({0, 0});
+                  pageMenu->addChild(m_pageButton);
+                  this->addChild(pageMenu, 10);
+
+                  m_pageButtonLabel = CCLabelBMFont::create(numToString(m_page + 1).c_str(), "bigFont.fnt");
+                  if (m_pageButtonLabel) {
+                        auto size = m_pageButton->getContentSize();
+                        m_pageButtonLabel->setPosition({size.width / 2.f, size.height / 2.f});
+                        m_pageButtonLabel->setAnchorPoint({0.5f, 0.5f});
+                        m_pageButtonLabel->setScale(0.6f);
+                        m_pageButton->addChild(m_pageButtonLabel, 1);
+                  }
+                  this->updatePageButton();
+            }
+      }
+
       auto refreshSpr = CCSprite::createWithSpriteFrameName("GJ_updateBtn_001.png");
       m_refreshBtn = CCMenuItemSpriteExtra::create(refreshSpr, this, menu_selector(RLLevelBrowserLayer::onRefresh));
       m_refreshBtn->setPosition({winSize.width - 35, 35});
@@ -156,6 +177,7 @@ bool RLLevelBrowserLayer::init(GJSearchObject* object) {
       prevMenu->setPosition({0, 0});
       prevMenu->addChild(m_prevButton);
       this->addChild(prevMenu);
+      if (m_prevButton) m_prevButton->setVisible(false);
 
       auto nextSpr = CCSprite::createWithSpriteFrameName("GJ_arrow_03_001.png");
       nextSpr->setFlipX(true);
@@ -165,6 +187,7 @@ bool RLLevelBrowserLayer::init(GJSearchObject* object) {
       nextMenu->setPosition({0, 0});
       nextMenu->addChild(m_nextButton);
       this->addChild(nextMenu);
+      if (m_nextButton) m_nextButton->setVisible(false);
 
       m_circle = nullptr;
 
@@ -218,6 +241,7 @@ void RLLevelBrowserLayer::onPrevPage(CCObject* sender) {
       if (m_page > 0) {
             m_page--;
             m_levelCache.clear();
+            this->updatePageButton();
             if (m_mode == Mode::Featured || m_mode == Mode::Sent || m_mode == Mode::AdminSent) {
                   int type = 0;
                   if (m_mode == Mode::Featured) type = 2;
@@ -241,6 +265,7 @@ void RLLevelBrowserLayer::onNextPage(CCObject* sender) {
       if (m_page + 1 < m_totalPages) {
             m_page++;
             m_levelCache.clear();
+            this->updatePageButton();
             if (m_mode == Mode::Featured || m_mode == Mode::Sent || m_mode == Mode::AdminSent) {
                   int type = 0;
                   if (m_mode == Mode::Featured) type = 2;
@@ -260,7 +285,60 @@ void RLLevelBrowserLayer::onNextPage(CCObject* sender) {
 }
 
 void RLLevelBrowserLayer::onRefresh(CCObject* sender) {
-      this->refreshLevels(true);
+      this->refreshLevels(false);
+}
+
+void RLLevelBrowserLayer::onPageButton(CCObject* sender) {
+      int current = std::clamp(m_page + 1, 1, std::max(1, m_totalPages));
+      int begin = 1;
+      int end = std::max(1, m_totalPages);
+      auto popup = SetIDPopup::create(current, begin, end, "Go to Page", "Go", false, current, 60.f, true, true);
+      if (popup) {
+            popup->m_delegate = this;
+            popup->show();
+      }
+}
+
+void RLLevelBrowserLayer::setIDPopupClosed(SetIDPopup* popup, int value) {
+      if (!this->getParent() || !this->isRunning()) return;
+      if (!popup || popup->m_cancelled) return;
+      if (value < 1) value = 1;
+      if (m_totalPages > 0 && value > m_totalPages) value = m_totalPages;
+      m_page = value - 1;
+      m_levelCache.clear();
+      this->updatePageButton();
+      if (m_mode == Mode::Featured || m_mode == Mode::Sent || m_mode == Mode::AdminSent) {
+            int type = 0;
+            if (m_mode == Mode::Featured) type = 2;
+            else if (m_mode == Mode::AdminSent) type = 4;
+            else type = 1;
+            if (!m_modeParams.empty()) {
+                  auto& val = m_modeParams.front().second;
+                  int parsed = 0;
+                  auto res = std::from_chars(val.data(), val.data() + val.size(), parsed);
+                  if (res.ec == std::errc()) type = parsed;
+            }
+            this->fetchLevelsForType(type);
+      } else if (m_mode == Mode::Search) {
+            this->performSearchQuery(m_modeParams);
+      }
+}
+
+void RLLevelBrowserLayer::updatePageButton() {
+      if (m_pageButtonLabel) {
+            m_pageButtonLabel->setString(numToString(m_page + 1).c_str());
+      }
+      // only show the page picker when we have more than one page and the levels label has been populated
+      bool labelHasText = m_levelsLabel && m_levelsLabel->getString() && m_levelsLabel->getString()[0] != '\0';
+      if (m_pageButton) {
+            m_pageButton->setVisible(m_totalPages > 1 && labelHasText);
+      }
+      if (m_prevButton) {
+            m_prevButton->setVisible(m_page > 0);
+      }
+      if (m_nextButton) {
+            m_nextButton->setVisible(m_page + 1 < m_totalPages);
+      }
 }
 
 void RLLevelBrowserLayer::refreshLevels(bool force) {
@@ -287,11 +365,20 @@ void RLLevelBrowserLayer::refreshLevels(bool force) {
             return;
       }
 
-      if (m_searchObject) {
-            glm->getOnlineLevels(m_searchObject);
+      if (m_mode == Mode::Search) {
+            if (!m_modeParams.empty()) {
+                  this->performSearchQuery(m_modeParams);
+            } else if (m_searchObject) {
+                  glm->getOnlineLevels(m_searchObject);
+            } else {
+                  stopLoading();
+            }
       } else {
-            // fallback: request nothing
-            stopLoading();
+            if (m_searchObject) {
+                  glm->getOnlineLevels(m_searchObject);
+            } else {
+                  stopLoading();
+            }
       }
 }
 
@@ -341,6 +428,7 @@ void RLLevelBrowserLayer::fetchLevelsForType(int type) {
             if (self->m_page >= self->m_totalPages) {
                   self->m_page = (self->m_totalPages > 0) ? (self->m_totalPages - 1) : 0;
             }
+            self->updatePageButton();
 
             std::string levelIDs;
             bool first = true;
@@ -371,6 +459,8 @@ void RLLevelBrowserLayer::fetchLevelsForType(int type) {
 }
 
 void RLLevelBrowserLayer::performSearchQuery(ParamList const& params) {
+      m_searchTask.cancel();
+      m_levelCache.clear();
       startLoading();
       Ref<RLLevelBrowserLayer> self = this;
       auto req = web::WebRequest();
@@ -415,6 +505,7 @@ void RLLevelBrowserLayer::performSearchQuery(ParamList const& params) {
             if (self->m_page >= self->m_totalPages) {
                   self->m_page = (self->m_totalPages > 0) ? (self->m_totalPages - 1) : 0;
             }
+            self->updatePageButton();
 
             std::string levelIDs;
             bool first = true;
@@ -429,8 +520,16 @@ void RLLevelBrowserLayer::performSearchQuery(ParamList const& params) {
                   }
             }
             if (!levelIDs.empty()) {
+                  // create a GJSearchObject and fetch the levels directly instead of calling refreshLevels
+                  // to avoid re-triggering performSearchQuery repeatedly when m_modeParams is present
                   self->m_searchObject = GJSearchObject::create(SearchType::Type19, levelIDs.c_str());
-                  self->refreshLevels(false);
+                  auto glm = GameLevelManager::get();
+                  if (glm) {
+                        glm->m_levelManagerDelegate = self;
+                        glm->getOnlineLevels(self->m_searchObject);
+                  } else {
+                        self->stopLoading();
+                  }
             } else {
                   Notification::create("No results returned", NotificationIcon::Warning)->show();
                   self->stopLoading();
@@ -541,6 +640,7 @@ void RLLevelBrowserLayer::populateFromArray(CCArray* levels) {
 
       if (contentLayer) contentLayer->updateLayout();
       if (m_scrollLayer) m_scrollLayer->scrollToTop();
+      this->updatePageButton();
 }
 
 void RLLevelBrowserLayer::onEnter() {
@@ -580,5 +680,12 @@ void RLLevelBrowserLayer::update(float dt) {
                   }
                   spr->setPositionX(x);
             }
+      }
+
+      if (m_pageButtonLabel) {
+            m_pageButtonLabel->setString(numToString(m_page + 1).c_str());
+      }
+      if (m_pageButton) {
+            m_pageButton->setVisible(m_totalPages > 1);
       }
 }
