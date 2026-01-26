@@ -1,4 +1,5 @@
 #include "RLSearchLayer.hpp"
+#include "RLLevelBrowserLayer.hpp"
 
 using namespace geode::prelude;
 
@@ -467,61 +468,26 @@ void RLSearchLayer::onSearchButton(CCObject* sender) {
       std::string queryParam = "";
       if (m_searchInput) queryParam = m_searchInput->getString();
 
-      auto req = web::WebRequest();
-      if (!queryParam.empty()) req.param("query", queryParam);
-      if (!difficultyParam.empty()) req.param("difficulty", difficultyParam);
-      if (m_platformerActive) req.param("platformer", "1");
-      if (m_classicActive) req.param("classic", "1");
-      if (m_featuredActive) req.param("featured", numToString(featuredParam));
-      if (m_epicActive) req.param("epic", numToString(epicParam));
-      if (m_awardedActive) req.param("awarded", numToString(awardedParam));
-      if (m_completedActive) req.param("completed", "1");
-      if (m_uncompletedActive) req.param("uncompleted", "1");
-      if (m_oldestActive) req.param("oldest", numToString(oldestParam));
-      if (m_usernameActive) req.param("user", numToString(usernameParam));
-      req.param("accountId", numToString(GJAccountManager::get()->m_accountID));
+      std::vector<std::pair<std::string, std::string>> params;
+      if (!queryParam.empty()) params.emplace_back("query", queryParam);
+      if (!difficultyParam.empty()) params.emplace_back("difficulty", difficultyParam);
+      if (m_platformerActive) params.emplace_back("platformer", "1");
+      if (m_classicActive) params.emplace_back("classic", "1");
+      if (m_featuredActive) params.emplace_back("featured", numToString(featuredParam));
+      if (m_epicActive) params.emplace_back("epic", numToString(epicParam));
+      if (m_awardedActive) params.emplace_back("awarded", numToString(awardedParam));
+      if (m_completedActive) params.emplace_back("completed", "1");
+      if (m_uncompletedActive) params.emplace_back("uncompleted", "1");
+      if (m_oldestActive) params.emplace_back("oldest", numToString(oldestParam));
+      if (m_usernameActive) params.emplace_back("user", numToString(usernameParam));
+      params.emplace_back("accountId", numToString(GJAccountManager::get()->m_accountID));
 
-      Ref<RLSearchLayer> self = this;
-      self->m_searchTask = req.get("https://gdrate.arcticwoof.xyz/search");
-      self->m_searchTask.listen([self, menuItem](web::WebResponse* res) {
-            if (!self) return;
-            if (!res || !res->ok()) {
-                  Notification::create("Search request failed", NotificationIcon::Error)->show();
-                  if (menuItem) menuItem->setEnabled(true);
-                  return;
-            }
-            auto jsonResult = res->json();
-            if (!jsonResult) {
-                  Notification::create("Failed to parse search response", NotificationIcon::Error)->show();
-                  if (menuItem) menuItem->setEnabled(true);
-                  return;
-            }
-            auto json = jsonResult.unwrap();
-            std::string levelIDs;
-            bool first = true;
-            if (json.contains("levelIds")) {
-                  auto arr = json["levelIds"];
-                  for (auto v : arr) {
-                        auto id = v.as<int>();
-                        if (!id) continue;
-                        if (!first) levelIDs += ",";
-                        levelIDs += numToString(id.unwrap());
-                        first = false;
-                  }
-            }
-            if (!levelIDs.empty()) {
-                  if (menuItem) menuItem->setEnabled(true);
-                  auto searchObject = GJSearchObject::create(SearchType::Type19, levelIDs);
-                  auto browserLayer = LevelBrowserLayer::create(searchObject);
-                  auto scene = CCScene::create();
-                  scene->addChild(browserLayer);
-                  auto transitionFade = CCTransitionFade::create(0.5f, scene);
-                  CCDirector::sharedDirector()->pushScene(transitionFade);
-            } else {
-                  Notification::create("No results returned", NotificationIcon::Warning)->show();
-                  menuItem->setEnabled(true);
-            }
-      });
+      if (menuItem) menuItem->setEnabled(true);
+      auto browserLayer = RLLevelBrowserLayer::create(RLLevelBrowserLayer::Mode::Search, params, "Layouts Search");
+      auto scene = CCScene::create();
+      scene->addChild(browserLayer);
+      auto transitionFade = CCTransitionFade::create(0.5f, scene);
+      CCDirector::sharedDirector()->pushScene(transitionFade);
 }
 
 void RLSearchLayer::onFeaturedToggle(CCObject* sender) {

@@ -36,7 +36,6 @@ class RLSearchLayer : public CCLayer {
       CCMenuItemSpriteExtra* m_classicItem = nullptr;
       CCMenuItemSpriteExtra* m_usernameItem = nullptr;
       CCMenuItemSpriteExtra* m_oldestItem = nullptr;
-      // Completed / Uncompleted toggles
       CCMenuItemSpriteExtra* m_completedItem = nullptr;
       CCMenuItemSpriteExtra* m_uncompletedItem = nullptr;
       bool m_platformerActive = false;

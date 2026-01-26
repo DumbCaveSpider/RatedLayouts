@@ -1,20 +1,21 @@
 # v0.3.7-beta.1
 
 - Ported to Geode v5.0.0
-- Remove Page API dependency
-- New Gauntlet Sprites!
-- Added **Customizable Background** in the Rated Layouts Creator Layer and Leaderboard Layer. *(Can be changed in the mod settings)*
+- Improved **Level Browser**! Now you can search more than **100 levels**!
+- New **Gauntlet Sprites**!
+- Added **Customizable Background** in the Rated Layouts Creator Layer and Leaderboard Layer. _(Can be changed in the mod settings)_
 - Added **Rated Layout Browser** button!
 - Added **Coins Verified** status for levels that has verified Blue Coins.
 - Added **Version Checker** to check if you are using the latest version of Rated Layouts mod.
 - Added **Completed** and **Uncompleted** filters in the Custom Search Layer.
 - Change the sprites to be in a spritesheet.
 - Clean-up the Mod Rate Popup code/UI.
+- Remove Page API dependency
 
 # v0.3.6-beta.1
 
 - **Added Blue Coins!** Thanks to [Darkore](user:3595559) for the Blue Coin texture design! You can now collect Blue Coins by collecting them in the Rated Layouts levels.
-- **NEW Featured and Epic Texture** Replaced the old texture to a new and clearer design. *Thanks to myself for the new design!!!!!*
+- **NEW Featured and Epic Texture** Replaced the old texture to a new and clearer design. _Thanks to myself for the new design!!!!!_
 
 _(Be sure to re-enter your previously beaten levels to collect Blue Coins if you have played Rated Layouts before this update!)_
 

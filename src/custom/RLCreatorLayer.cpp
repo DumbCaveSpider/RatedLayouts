@@ -14,6 +14,7 @@
 #include "RLGauntletSelectLayer.hpp"
 #include "RLLeaderboardLayer.hpp"
 #include "RLSearchLayer.hpp"
+#include "RLLevelBrowserLayer.hpp"
 
 using namespace geode::prelude;
 
@@ -528,60 +529,11 @@ void RLCreatorLayer::onBackButton(CCObject* sender) {
 }
 
 void RLCreatorLayer::onFeaturedLayouts(CCObject* sender) {
-      Ref<RLCreatorLayer> self = this;
-      web::WebRequest()
-          .param("type", 2)
-          .param("amount", 100)
-          .get("https://gdrate.arcticwoof.xyz/getLevels")
-          .listen([self](web::WebResponse* res) {
-                if (!self) return;
-                if (res && res->ok()) {
-                      auto jsonResult = res->json();
-
-                      if (jsonResult) {
-                            auto json = jsonResult.unwrap();
-                            std::string levelIDs;
-                            bool first = true;
-
-                            if (json.contains("levelIds")) {
-                                  auto levelsArr = json["levelIds"];
-
-                                  // iterate
-                                  for (auto levelIDValue : levelsArr) {
-                                        auto levelID = levelIDValue.as<int>();
-                                        if (levelID) {
-                                              if (!first)
-                                                    levelIDs += ",";
-                                              levelIDs += numToString(levelID.unwrap());
-                                              first = false;
-                                        }
-                                  }
-                            }
-
-                            if (!levelIDs.empty()) {
-                                  auto searchObject =
-                                      GJSearchObject::create(SearchType::Type19, levelIDs);
-                                  auto browserLayer = LevelBrowserLayer::create(searchObject);
-                                  auto scene = CCScene::create();
-                                  scene->addChild(browserLayer);
-                                  auto transitionFade = CCTransitionFade::create(0.5f, scene);
-                                  CCDirector::sharedDirector()->pushScene(transitionFade);
-                            } else {
-                                  log::warn("No levels found in response");
-                                  Notification::create("No featured levels found",
-                                                       NotificationIcon::Warning)
-                                      ->show();
-                            }
-                      } else {
-                            log::error("Failed to parse response JSON");
-                      }
-                } else {
-                      log::error("Failed to fetch levels from server");
-                      Notification::create("Failed to fetch levels from server",
-                                           NotificationIcon::Error)
-                          ->show();
-                }
-          });
+      auto browserLayer = RLLevelBrowserLayer::create(RLLevelBrowserLayer::Mode::Featured, RLLevelBrowserLayer::ParamList(), "Featured Layouts");
+      auto scene = CCScene::create();
+      scene->addChild(browserLayer);
+      auto transitionFade = CCTransitionFade::create(0.5f, scene);
+      CCDirector::sharedDirector()->pushScene(transitionFade);
 }
 
 void RLCreatorLayer::onSentLayouts(CCObject* sender) {
@@ -596,117 +548,25 @@ void RLCreatorLayer::onSentLayouts(CCObject* sender) {
                 [self](auto, bool yes) {
                       if (!self) return;
                       int type = yes ? 4 : 1;
-
-                      web::WebRequest()
-                          .param("type", type)
-                          .param("amount", 100)
-                          .get("https://gdrate.arcticwoof.xyz/getLevels")
-                          .listen([self](web::WebResponse* res) {
-                                if (!self) return;
-                                if (res && res->ok()) {
-                                      auto jsonResult = res->json();
-
-                                      if (jsonResult) {
-                                            auto json = jsonResult.unwrap();
-                                            std::string levelIDs;
-                                            bool first = true;
-                                            if (json.contains("levelIds")) {
-                                                  auto levelsArr = json["levelIds"];
-
-                                                  // iterate
-                                                  for (auto levelIDValue : levelsArr) {
-                                                        auto levelID = levelIDValue.as<int>();
-                                                        if (levelID) {
-                                                              if (!first)
-                                                                    levelIDs += ",";
-                                                              levelIDs += numToString(levelID.unwrap());
-                                                              first = false;
-                                                        }
-                                                  }
-                                            }
-
-                                            if (!levelIDs.empty()) {
-                                                  auto searchObject =
-                                                      GJSearchObject::create(SearchType::Type19, levelIDs);
-                                                  auto browserLayer = LevelBrowserLayer::create(searchObject);
-                                                  auto scene = CCScene::create();
-                                                  scene->addChild(browserLayer);
-                                                  auto transitionFade = CCTransitionFade::create(0.5f, scene);
-                                                  CCDirector::sharedDirector()->pushScene(transitionFade);
-                                            } else {
-                                                  log::warn("No levels found in response");
-                                                  Notification::create("No sent layouts found",
-                                                                       NotificationIcon::Warning)
-                                                      ->show();
-                                            }
-                                      } else {
-                                            log::error("Failed to parse response JSON");
-                                      }
-                                } else {
-                                      log::error("Failed to fetch levels from server");
-                                      Notification::create("Failed to fetch levels from server",
-                                                           NotificationIcon::Error)
-                                          ->show();
-                                }
-                          });
+                      RLLevelBrowserLayer::ParamList params;
+                      params.emplace_back("type", numToString(type));
+                      auto mode = (type == 4) ? RLLevelBrowserLayer::Mode::AdminSent : RLLevelBrowserLayer::Mode::Sent;
+                      auto browserLayer = RLLevelBrowserLayer::create(mode, params, "Sent Layouts");
+                      auto scene = CCScene::create();
+                      scene->addChild(browserLayer);
+                      auto transitionFade = CCTransitionFade::create(0.5f, scene);
+                      CCDirector::sharedDirector()->pushScene(transitionFade);
                 });
 
             return;
       }
-      // normal user, just show type 1
-      Ref<RLCreatorLayer> self = this;
-      web::WebRequest()
-          .param("type", 1)
-          .param("amount", 100)
-          .get("https://gdrate.arcticwoof.xyz/getLevels")
-          .listen([self](web::WebResponse* res) {
-                if (!self) return;
-                if (res && res->ok()) {
-                      auto jsonResult = res->json();
-
-                      if (jsonResult) {
-                            auto json = jsonResult.unwrap();
-                            std::string levelIDs;
-                            bool first = true;
-                            if (json.contains("levelIds")) {
-                                  auto levelsArr = json["levelIds"];
-
-                                  // iterate
-                                  for (auto levelIDValue : levelsArr) {
-                                        auto levelID = levelIDValue.as<int>();
-                                        if (levelID) {
-                                              if (!first)
-                                                    levelIDs += ",";
-                                              levelIDs += numToString(levelID.unwrap());
-                                              first = false;
-                                        }
-                                  }
-                            }
-
-                            if (!levelIDs.empty()) {
-                                  auto searchObject =
-                                      GJSearchObject::create(SearchType::Type19, levelIDs);
-                                  auto browserLayer = LevelBrowserLayer::create(searchObject);
-                                  auto scene = CCScene::create();
-                                  scene->addChild(browserLayer);
-                                  auto transitionFade = CCTransitionFade::create(0.5f, scene);
-                                  CCDirector::sharedDirector()->pushScene(transitionFade);
-                            } else {
-                                  log::warn("No levels found in response");
-                                  Notification::create("No sent layouts found",
-                                                       NotificationIcon::Warning)
-                                      ->show();
-                            }
-                      } else {
-                            log::error("Failed to parse response JSON");
-                      }
-                } else {
-                      log::error("Failed to fetch levels from server");
-                      Notification::create("Failed to fetch levels from server",
-                                           NotificationIcon::Error)
-                          ->show();
-                }
-          });
+      RLLevelBrowserLayer::ParamList params;
+      params.emplace_back("type", "1");
+      auto browserLayer = RLLevelBrowserLayer::create(RLLevelBrowserLayer::Mode::Sent, params, "Sent Layouts");
+      auto scene = CCScene::create();
+      scene->addChild(browserLayer);
+      auto transitionFade = CCTransitionFade::create(0.5f, scene);
+      CCDirector::sharedDirector()->pushScene(transitionFade);
 }
 
 void RLCreatorLayer::keyBackClicked() { this->onBackButton(nullptr); }
