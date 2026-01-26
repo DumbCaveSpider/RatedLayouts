@@ -369,16 +369,19 @@ void RLLeaderboardLayer::populateLeaderboard(
                   bgSprite = CCSprite::create();
                   bgSprite->setTextureRect(CCRectMake(0, 0, 356.f, 40.f));
                   bgSprite->setColor({255, 215, 0});
+                  bgSprite->setOpacity(175);
             } else if (rank == 2) {
                   // Silver for rank 2
                   bgSprite = CCSprite::create();
                   bgSprite->setTextureRect(CCRectMake(0, 0, 356.f, 40.f));
                   bgSprite->setColor({192, 192, 192});
+                  bgSprite->setOpacity(175);
             } else if (rank == 3) {
                   // Bronze for rank 3
                   bgSprite = CCSprite::create();
                   bgSprite->setTextureRect(CCRectMake(0, 0, 356.f, 40.f));
                   bgSprite->setColor({205, 127, 50});
+                  bgSprite->setOpacity(175);
             } else if (accountId == currentAccountID) {
                   bgSprite = CCSprite::create();
                   bgSprite->setTextureRect(CCRectMake(0, 0, 356.f, 40.f));
