@@ -11,6 +11,10 @@
 
 using namespace geode::prelude;
 
+extern const std::string epicPString;
+extern const std::string legendaryPString;
+extern const std::string mythicPString;
+
 // helper prototypes
 static std::string formatTime(long seconds);
 static int getDifficulty(int numerator);
@@ -397,9 +401,12 @@ bool RLEventLayouts::setup() {
                   // update classic difficulty sprite and featured coin
                   if (sec->diff) {
                         sec->diff->updateDifficultyFrame(getDifficulty(difficulty), GJDifficultyName::Short);
-                        if (featured == 1 || featured == 2) {
+                        if (featured >= 1 && featured <= 4) {
                               sec->featured = featured;
-                              const char* coinSprite = (featured == 1) ? "RL_featuredCoin.png"_spr : "RL_epicFeaturedCoin.png"_spr;
+                              const char* coinSprite = (featured == 1) ? "RL_featuredCoin.png"_spr
+                                                                    : (featured == 2) ? "RL_epicFeaturedCoin.png"_spr
+                                                                    : (featured == 3) ? "RL_legendaryFeaturedCoin.png"_spr
+                                                                                      : "RL_mythicFeaturedCoin.png"_spr;
                               if (sec->featuredIcon) {
                                     sec->featuredIcon->removeFromParent();
                                     sec->featuredIcon = nullptr;
@@ -410,6 +417,27 @@ bool RLEventLayouts::setup() {
                                     coinIcon->setZOrder(-1);
                                     sec->diff->addChild(coinIcon);
                                     sec->featuredIcon = coinIcon;
+
+                                    // add particle for epic/legendary/mythic rings
+                                    if (featured == 2 || featured == 3 || featured == 4) {
+                                          const std::string& pString = (featured == 2) ? epicPString : (featured == 3) ? legendaryPString : mythicPString;
+                                          if (!pString.empty()) {
+                                                if (auto existingP = coinIcon->getChildByID("rating-particles")) {
+                                                      existingP->removeFromParent();
+                                                }
+                                                ParticleStruct pStruct;
+                                                GameToolbox::particleStringToStruct(pString, pStruct);
+                                                CCParticleSystemQuad* particle = GameToolbox::particleFromStruct(pStruct, nullptr, false);
+                                                if (particle) {
+                                                      coinIcon->addChild(particle, 1);
+                                                      particle->resetSystem();
+                                                      particle->setPosition(coinIcon->getContentSize() / 2.f);
+                                                      particle->setID("rating-particles"_spr);
+                                                      particle->update(0.15f);
+                                                      particle->update(0.15f);
+                                                }
+                                          }
+                                    }
                               }
                         } else {
                               if (sec->featuredIcon) {
@@ -503,6 +531,27 @@ bool RLEventLayouts::setup() {
                                                 coinIconP->setZOrder(-1);
                                                 sec->platDiff->addChild(coinIconP);
                                                 sec->platFeaturedIcon = coinIconP;
+
+                                                // platformer particle
+                                                if (platFeatured == 2 || platFeatured == 3 || platFeatured == 4) {
+                                                      const std::string& pString = (platFeatured == 2) ? epicPString : (platFeatured == 3) ? legendaryPString : mythicPString;
+                                                      if (!pString.empty()) {
+                                                            if (auto existingP = coinIconP->getChildByID("rating-particles")) {
+                                                                  existingP->removeFromParent();
+                                                            }
+                                                            ParticleStruct pStruct;
+                                                            GameToolbox::particleStringToStruct(pString, pStruct);
+                                                            CCParticleSystemQuad* particle = GameToolbox::particleFromStruct(pStruct, nullptr, false);
+                                                            if (particle) {
+                                                                  coinIconP->addChild(particle, 1);
+                                                                  particle->resetSystem();
+                                                                  particle->setPosition(coinIconP->getContentSize() / 2.f);
+                                                                  particle->setID("rating-particles"_spr);
+                                                                  particle->update(0.15f);
+                                                                  particle->update(0.15f);
+                                                            }
+                                                      }
+                                                }
                                           }
                                     } else {
                                           if (sec->platFeaturedIcon) {
