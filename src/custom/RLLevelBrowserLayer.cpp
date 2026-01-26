@@ -10,7 +10,7 @@
 using namespace geode::prelude;
 
 static constexpr CCSize LIST_SIZE{358.f, 220.f};
-static constexpr int PAGE_SIZE = 10;
+static constexpr int PER_PAGE = 10;
 
 RLLevelBrowserLayer* RLLevelBrowserLayer::create(Mode mode, ParamList const& params, std::string const& title) {
       auto ret = new RLLevelBrowserLayer();
@@ -408,7 +408,7 @@ void RLLevelBrowserLayer::fetchLevelsForType(int type) {
       Ref<RLLevelBrowserLayer> self = this;
       auto req = web::WebRequest();
       req.param("type", numToString(type))
-          .param("amount", "10")
+          .param("amount", numToString(PER_PAGE))
           .param("page", numToString(self->m_page + 1));
       self->m_searchTask = req.get("https://gdrate.arcticwoof.xyz/getLevels");
       self->m_searchTask.listen([self](web::WebResponse* res) {
@@ -437,7 +437,7 @@ void RLLevelBrowserLayer::fetchLevelsForType(int type) {
             if (json.contains("total")) {
                   if (auto tp = json["total"].as<int>(); tp) {
                         self->m_totalLevels = tp.unwrap();
-                        self->m_totalPages = (self->m_totalLevels + PAGE_SIZE - 1) / PAGE_SIZE;
+                        self->m_totalPages = (self->m_totalLevels + PER_PAGE - 1) / PER_PAGE;
                   }
             }
 
@@ -486,7 +486,7 @@ void RLLevelBrowserLayer::performSearchQuery(ParamList const& params) {
       for (auto& p : params) req.param(p.first.c_str(), p.second);
       // ensure account id is present and include paging parameters
       req.param("accountId", numToString(GJAccountManager::get()->m_accountID))
-          .param("amount", numToString(PAGE_SIZE))
+          .param("amount", numToString(PER_PAGE))
           .param("page", numToString(self->m_page + 1));
       self->m_searchTask = req.get("https://gdrate.arcticwoof.xyz/search");
       self->m_searchTask.listen([self](web::WebResponse* res) {
@@ -515,7 +515,7 @@ void RLLevelBrowserLayer::performSearchQuery(ParamList const& params) {
             if (json.contains("total")) {
                   if (auto tp = json["total"].as<int>(); tp) {
                         self->m_totalLevels = tp.unwrap();
-                        self->m_totalPages = (self->m_totalLevels + PAGE_SIZE - 1) / PAGE_SIZE;
+                        self->m_totalPages = (self->m_totalLevels + PER_PAGE - 1) / PER_PAGE;
                   }
             }
 
@@ -649,8 +649,8 @@ void RLLevelBrowserLayer::populateFromArray(CCArray* levels) {
       }
 
       int returned = static_cast<int>(levels->count());
-      int first = m_page * PAGE_SIZE + 1;
-      int last = m_page * PAGE_SIZE + returned;
+      int first = m_page * PER_PAGE + 1;
+      int last = m_page * PER_PAGE + returned;
       if (returned == 0) {
             first = 0;
             last = 0;
