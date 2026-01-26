@@ -92,6 +92,7 @@ class RLLevelBrowserLayer : public CCLayer, public LevelManagerDelegate, public 
       void onSearchButton(CCObject* sender);
       void onClearButton(CCObject* sender);
       void onPageButton(CCObject* sender);
+      void onInfoButton(CCObject* sender);
 
       // SetIDPopup delegate
       void setIDPopupClosed(SetIDPopup* popup, int value) override;

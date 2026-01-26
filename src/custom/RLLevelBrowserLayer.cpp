@@ -12,7 +12,6 @@ using namespace geode::prelude;
 static constexpr CCSize LIST_SIZE{358.f, 220.f};
 static constexpr int PAGE_SIZE = 10;
 
-
 RLLevelBrowserLayer* RLLevelBrowserLayer::create(Mode mode, ParamList const& params, std::string const& title) {
       auto ret = new RLLevelBrowserLayer();
       ret->m_mode = mode;
@@ -96,14 +95,18 @@ bool RLLevelBrowserLayer::init(GJSearchObject* object) {
 
       const char* title = m_title.empty() ? "Rated Layouts" : m_title.c_str();
 
-      // back
-      auto backMenu = CCMenu::create();
-      backMenu->setPosition({0, 0});
+      auto uiMenu = CCMenu::create();
+      uiMenu->setPosition({0, 0});
+
       auto backSpr = CCSprite::createWithSpriteFrameName("GJ_arrow_01_001.png");
       auto backButton = CCMenuItemSpriteExtra::create(backSpr, this, menu_selector(RLLevelBrowserLayer::onBackButton));
       backButton->setPosition({25, winSize.height - 25});
-      backMenu->addChild(backButton);
-      this->addChild(backMenu);
+      uiMenu->addChild(backButton);
+
+      auto infoSpr = CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png");
+      auto infoButton = CCMenuItemSpriteExtra::create(infoSpr, this, menu_selector(RLLevelBrowserLayer::onInfoButton));
+      infoButton->setPosition({25, 25});
+      uiMenu->addChild(infoButton);
 
       m_listLayer = GJListLayer::create(nullptr, title, {191, 114, 62, 255}, LIST_SIZE.width, LIST_SIZE.height, 0);
       m_listLayer->setPosition({winSize / 2 - m_listLayer->getScaledContentSize() / 2 - 5});
@@ -131,6 +134,7 @@ bool RLLevelBrowserLayer::init(GJSearchObject* object) {
       }
 
       this->addChild(m_listLayer);
+      this->addChild(uiMenu, 10);
 
       m_levelsLabel = CCLabelBMFont::create("", "goldFont.fnt");
       m_levelsLabel->setPosition({winSize.width - 5, winSize.height - 5});
@@ -143,17 +147,28 @@ bool RLLevelBrowserLayer::init(GJSearchObject* object) {
       if (pageBtnSpr) {
             m_pageButton = CCMenuItemSpriteExtra::create(pageBtnSpr, this, menu_selector(RLLevelBrowserLayer::onPageButton));
             if (m_pageButton) {
-                  m_pageButton->setPosition({winSize.width - 20, winSize.height - 40});
                   auto pageMenu = CCMenu::create();
-                  pageMenu->setPosition({0, 0});
+                  pageMenu->setID("rl-page-menu");
+                  pageMenu->setContentSize({28, 110});
+                  pageMenu->setPosition({winSize.width - 7, winSize.height - 80});
+                  pageMenu->setAnchorPoint({1.f, 0.5f});
+                  pageMenu->setLayout(ColumnLayout::create()
+                                          ->setGap(5.f)
+                                          ->setAutoScale(true)
+                                          ->setGrowCrossAxis(true)
+                                          ->setCrossAxisOverflow(true)
+                                          ->setAxisReverse(true)
+                                          ->setAxisAlignment(AxisAlignment::End));
                   pageMenu->addChild(m_pageButton);
                   this->addChild(pageMenu, 10);
+                  pageMenu->updateLayout();
 
                   m_pageButtonLabel = CCLabelBMFont::create(numToString(m_page + 1).c_str(), "bigFont.fnt");
                   if (m_pageButtonLabel) {
                         auto size = m_pageButton->getContentSize();
                         m_pageButtonLabel->setPosition({size.width / 2.f, size.height / 2.f});
                         m_pageButtonLabel->setAnchorPoint({0.5f, 0.5f});
+                        m_pageButtonLabel->setID("rl-page-label");
                         m_pageButtonLabel->setScale(0.6f);
                         m_pageButton->addChild(m_pageButtonLabel, 1);
                   }
@@ -164,29 +179,20 @@ bool RLLevelBrowserLayer::init(GJSearchObject* object) {
       auto refreshSpr = CCSprite::createWithSpriteFrameName("GJ_updateBtn_001.png");
       m_refreshBtn = CCMenuItemSpriteExtra::create(refreshSpr, this, menu_selector(RLLevelBrowserLayer::onRefresh));
       m_refreshBtn->setPosition({winSize.width - 35, 35});
-      auto refreshMenu = CCMenu::create();
-      refreshMenu->setPosition({0, 0});
-      refreshMenu->addChild(m_refreshBtn);
-      this->addChild(refreshMenu);
+      uiMenu->addChild(m_refreshBtn);
 
       // page buttons
       auto prevSpr = CCSprite::createWithSpriteFrameName("GJ_arrow_03_001.png");
       m_prevButton = CCMenuItemSpriteExtra::create(prevSpr, this, menu_selector(RLLevelBrowserLayer::onPrevPage));
       m_prevButton->setPosition({20, winSize.height / 2});
-      auto prevMenu = CCMenu::create();
-      prevMenu->setPosition({0, 0});
-      prevMenu->addChild(m_prevButton);
-      this->addChild(prevMenu);
+      uiMenu->addChild(m_prevButton);
       if (m_prevButton) m_prevButton->setVisible(false);
 
       auto nextSpr = CCSprite::createWithSpriteFrameName("GJ_arrow_03_001.png");
       nextSpr->setFlipX(true);
       m_nextButton = CCMenuItemSpriteExtra::create(nextSpr, this, menu_selector(RLLevelBrowserLayer::onNextPage));
       m_nextButton->setPosition({winSize.width - 20, winSize.height / 2});
-      auto nextMenu = CCMenu::create();
-      nextMenu->setPosition({0, 0});
-      nextMenu->addChild(m_nextButton);
-      this->addChild(nextMenu);
+      uiMenu->addChild(m_nextButton);
       if (m_nextButton) m_nextButton->setVisible(false);
 
       m_circle = nullptr;
@@ -244,9 +250,12 @@ void RLLevelBrowserLayer::onPrevPage(CCObject* sender) {
             this->updatePageButton();
             if (m_mode == Mode::Featured || m_mode == Mode::Sent || m_mode == Mode::AdminSent) {
                   int type = 0;
-                  if (m_mode == Mode::Featured) type = 2;
-                  else if (m_mode == Mode::AdminSent) type = 4;
-                  else type = 1; // Sent
+                  if (m_mode == Mode::Featured)
+                        type = 2;
+                  else if (m_mode == Mode::AdminSent)
+                        type = 4;
+                  else
+                        type = 1;  // Sent
                   if (!m_modeParams.empty()) {
                         auto& val = m_modeParams.front().second;
                         int parsed = 0;
@@ -268,9 +277,12 @@ void RLLevelBrowserLayer::onNextPage(CCObject* sender) {
             this->updatePageButton();
             if (m_mode == Mode::Featured || m_mode == Mode::Sent || m_mode == Mode::AdminSent) {
                   int type = 0;
-                  if (m_mode == Mode::Featured) type = 2;
-                  else if (m_mode == Mode::AdminSent) type = 4;
-                  else type = 1; // Sent
+                  if (m_mode == Mode::Featured)
+                        type = 2;
+                  else if (m_mode == Mode::AdminSent)
+                        type = 4;
+                  else
+                        type = 1;  // Sent
                   if (!m_modeParams.empty()) {
                         auto& val = m_modeParams.front().second;
                         int parsed = 0;
@@ -309,9 +321,12 @@ void RLLevelBrowserLayer::setIDPopupClosed(SetIDPopup* popup, int value) {
       this->updatePageButton();
       if (m_mode == Mode::Featured || m_mode == Mode::Sent || m_mode == Mode::AdminSent) {
             int type = 0;
-            if (m_mode == Mode::Featured) type = 2;
-            else if (m_mode == Mode::AdminSent) type = 4;
-            else type = 1;
+            if (m_mode == Mode::Featured)
+                  type = 2;
+            else if (m_mode == Mode::AdminSent)
+                  type = 4;
+            else
+                  type = 1;
             if (!m_modeParams.empty()) {
                   auto& val = m_modeParams.front().second;
                   int parsed = 0;
@@ -352,9 +367,12 @@ void RLLevelBrowserLayer::refreshLevels(bool force) {
       if (m_mode == Mode::Featured || m_mode == Mode::Sent || m_mode == Mode::AdminSent) {
             if (force) m_page = 0;
             int type = 0;
-            if (m_mode == Mode::Featured) type = 2;
-            else if (m_mode == Mode::AdminSent) type = 4;
-            else type = 1;  // Sent
+            if (m_mode == Mode::Featured)
+                  type = 2;
+            else if (m_mode == Mode::AdminSent)
+                  type = 4;
+            else
+                  type = 1;  // Sent
             if (!m_modeParams.empty()) {
                   auto& val = m_modeParams.front().second;
                   int parsed = 0;
@@ -395,6 +413,7 @@ void RLLevelBrowserLayer::fetchLevelsForType(int type) {
       self->m_searchTask = req.get("https://gdrate.arcticwoof.xyz/getLevels");
       self->m_searchTask.listen([self](web::WebResponse* res) {
             if (!self) return;
+            if (!self->getParent() || !self->isRunning()) return;
             if (!res || !res->ok()) {
                   Notification::create("Failed to fetch levels", NotificationIcon::Error)->show();
                   self->stopLoading();
@@ -472,6 +491,7 @@ void RLLevelBrowserLayer::performSearchQuery(ParamList const& params) {
       self->m_searchTask = req.get("https://gdrate.arcticwoof.xyz/search");
       self->m_searchTask.listen([self](web::WebResponse* res) {
             if (!self) return;
+            if (!self->getParent() || !self->isRunning()) return;
             if (!res || !res->ok()) {
                   Notification::create("Search request failed", NotificationIcon::Error)->show();
                   self->stopLoading();
@@ -647,6 +667,10 @@ void RLLevelBrowserLayer::onEnter() {
       CCLayer::onEnter();
       this->setTouchEnabled(true);
       this->scheduleUpdate();
+}
+
+void RLLevelBrowserLayer::onInfoButton(CCObject* sender) {
+      FLAlertLayer::create("Layouts", "<cl>Layout</c> listed here rewards <cl>Spark</c> or <co>Planets</c> if is rated by <cf>ArcticWoof</c> or <cr>Layout Admins</c>. For sent layouts, each of the layouts here has at least <cg>one sent by Layout Mods</c> and can only be rated when it has at least <cb>3+ sends</c>.", "OK")->show();
 }
 
 void RLLevelBrowserLayer::update(float dt) {
