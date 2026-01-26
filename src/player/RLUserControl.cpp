@@ -15,7 +15,7 @@ RLUserControl* RLUserControl::create() {
             return ret;
       }
 
-      CC_SAFE_DELETE(ret);
+      delete ret;
       return nullptr;
 };
 
@@ -28,7 +28,7 @@ RLUserControl* RLUserControl::create(int accountId) {
             return ret;
       }
 
-      CC_SAFE_DELETE(ret);
+      delete ret;
       return nullptr;
 };
 

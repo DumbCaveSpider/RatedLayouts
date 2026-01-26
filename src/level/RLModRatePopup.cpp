@@ -1326,6 +1326,6 @@ RLModRatePopup* RLModRatePopup::create(RLModRatePopup::PopupRole role, std::stri
             return ret;
       };
 
-      CC_SAFE_DELETE(ret);
+      delete ret;
       return nullptr;
 };

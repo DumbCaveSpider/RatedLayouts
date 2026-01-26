@@ -769,6 +769,6 @@ RLSearchLayer* RLSearchLayer::create() {
             layer->autorelease();
             return layer;
       }
-      CC_SAFE_DELETE(layer);
+      delete layer;
       return nullptr;
 }

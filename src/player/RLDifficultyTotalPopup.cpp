@@ -144,7 +144,7 @@ RLDifficultyTotalPopup* RLDifficultyTotalPopup::create(int accountId, Mode mode)
             return ret;
       }
 
-      CC_SAFE_DELETE(ret);
+      delete ret;
       return nullptr;
 };
 

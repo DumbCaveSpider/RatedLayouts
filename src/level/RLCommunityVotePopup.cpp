@@ -14,7 +14,7 @@ RLCommunityVotePopup* RLCommunityVotePopup::create(int levelId) {
             popup->autorelease();
             return popup;
       }
-      CC_SAFE_DELETE(popup);
+      delete popup;
       return nullptr;
 }
 

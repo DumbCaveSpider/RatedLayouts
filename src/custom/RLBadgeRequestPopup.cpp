@@ -8,7 +8,7 @@ RLBadgeRequestPopup* RLBadgeRequestPopup::create() {
             ret->autorelease();
             return ret;
       }
-      CC_SAFE_DELETE(ret);
+      delete ret;
       return nullptr;
 }
 
