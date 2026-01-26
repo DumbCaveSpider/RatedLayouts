@@ -10,6 +10,10 @@ using namespace geode::prelude;
 
 const int DEV_ACCOUNTID = 7689052;
 
+extern const std::string legendaryPString = "30,2065,2,345,3,75,155,1,156,2,145,30a-1a2a0.3a23a90a40a10a0a15a15a0a0a0a0a0a0a5a3a0a0a1a0a0.533333a0a0.968627a0a1a0a3a1a0a0a1a0a0.4a0a0.313726a0a1a0a0.3a0a0.2a0a0a0a0a0a0a0a0a2a1a0a0a1a25a0a0a0a0a0a0a0a0a0a0a0a0a0a0";
+extern const std::string mythicPString = "30,2065,2,435,3,75,155,1,156,2,145,30a-1a2a0.3a36a90a40a12a0a15a15a0a0a0a0a0a0a5a3a0a0a0.85098a0a0.807843a0a0.0196078a0a1a0a3a1a0a0a0.988235a0a0.862745a0a0.592157a0a1a0a0.3a0a0.2a0a0a0a0a0a0a0a0a2a1a0a0a1a5a0a0a0a0a0a0a0a0a0a0a0a0a0a0";
+extern const std::string epicPString = "30,2065,2,435,3,75,155,1,156,2,145,30a-1a2a0.3a36a90a40a12a0a15a15a0a0a0a0a0a0a5a3a0a0a0.741176a0a0.74902a0a1a0a1a0a3a1a0a0a0.258824a0a0.87451a0a1a0a1a0a0.3a0a0.2a0a0a0a0a0a0a0a0a2a1a0a0a1a27a0a0a0a0a0a0a0a0a0a0a0a0a0a0";
+
 // helper functions all about caching level rating data
 // get the cache file path
 static std::string getCachePath() {
@@ -711,13 +715,18 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   }
             }
 
-            // Update featured coin visibility
+            // Update featured coin visibility (1=featured, 2=epic, 3=legendary, 4=mythic)
             if (difficultySprite2) {
                   auto featuredCoin = difficultySprite2->getChildByID("featured-coin");
                   auto epicFeaturedCoin = difficultySprite2->getChildByID("epic-featured-coin");
+                  auto legendaryFeaturedCoin = difficultySprite2->getChildByID("legendary-featured-coin");
+                  auto mythicFeaturedCoin = difficultySprite2->getChildByID("mythic-featured-coin");
+
                   if (featured == 1) {
-                        // ensure epic is removed
+                        // ensure other types removed
                         if (epicFeaturedCoin) epicFeaturedCoin->removeFromParent();
+                        if (legendaryFeaturedCoin) legendaryFeaturedCoin->removeFromParent();
+                        if (mythicFeaturedCoin) mythicFeaturedCoin->removeFromParent();
                         if (!featuredCoin) {
                               auto newFeaturedCoin = CCSprite::createWithSpriteFrameName("RL_featuredCoin.png"_spr);
                               newFeaturedCoin->setPosition({difficultySprite2->getContentSize().width / 2,
@@ -726,18 +735,175 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                               difficultySprite2->addChild(newFeaturedCoin, -1);
                         }
                   } else if (featured == 2) {
-                        // ensure standard is removed
+                        // ensure only epic present
                         if (featuredCoin) featuredCoin->removeFromParent();
+                        if (legendaryFeaturedCoin) legendaryFeaturedCoin->removeFromParent();
+                        if (mythicFeaturedCoin) mythicFeaturedCoin->removeFromParent();
                         if (!epicFeaturedCoin) {
                               auto newEpicCoin = CCSprite::createWithSpriteFrameName("RL_epicFeaturedCoin.png"_spr);
                               newEpicCoin->setPosition({difficultySprite2->getContentSize().width / 2,
                                                         difficultySprite2->getContentSize().height / 2});
                               newEpicCoin->setID("epic-featured-coin");
                               difficultySprite2->addChild(newEpicCoin, -1);
+
+                              // particle on epic
+                              const std::string& pString = epicPString;
+                              if (!pString.empty()) {
+                                    if (auto existingP = newEpicCoin->getChildByID("rating-particles")) {
+                                          existingP->removeFromParent();
+                                    }
+                                    ParticleStruct pStruct;
+                                    GameToolbox::particleStringToStruct(pString, pStruct);
+                                    CCParticleSystemQuad* particle = GameToolbox::particleFromStruct(pStruct, nullptr, false);
+                                    if (particle) {
+                                          newEpicCoin->addChild(particle, 1);
+                                          particle->resetSystem();
+                                          particle->setPosition(newEpicCoin->getContentSize() / 2.f);
+                                          particle->setID("rating-particles"_spr);
+                                          particle->update(0.15f);
+                                          particle->update(0.15f);
+                                          particle->update(0.15f);
+                                    }
+                              }
+                        }
+                  } else if (featured == 3) {
+                        if (featuredCoin) featuredCoin->removeFromParent();
+                        if (epicFeaturedCoin) epicFeaturedCoin->removeFromParent();
+                        if (mythicFeaturedCoin) mythicFeaturedCoin->removeFromParent();
+                        if (!legendaryFeaturedCoin) {
+                              auto newLegendaryCoin = CCSprite::createWithSpriteFrameName("RL_legendaryFeaturedCoin.png"_spr);
+                              newLegendaryCoin->setPosition({difficultySprite2->getContentSize().width / 2,
+                                                             difficultySprite2->getContentSize().height / 2});
+                              newLegendaryCoin->setID("legendary-featured-coin");
+                              difficultySprite2->addChild(newLegendaryCoin, -1);
+
+                              // particle on legendary ring
+                              const std::string& pString = legendaryPString;
+                              if (!pString.empty()) {
+                                    if (auto existingP = newLegendaryCoin->getChildByID("rating-particles")) {
+                                          existingP->removeFromParent();
+                                    }
+                                    ParticleStruct pStruct;
+                                    GameToolbox::particleStringToStruct(pString, pStruct);
+                                    CCParticleSystemQuad* particle = GameToolbox::particleFromStruct(pStruct, nullptr, false);
+                                    if (particle) {
+                                          newLegendaryCoin->addChild(particle, 1);
+                                          particle->resetSystem();
+                                          particle->setPosition(newLegendaryCoin->getContentSize() / 2.f);
+                                          particle->setID("rating-particles"_spr);
+                                          particle->update(0.15f);
+                                          particle->update(0.15f);
+                                          particle->update(0.15f);
+                                          particle->update(0.15f);
+                                          particle->update(0.15f);
+                                    }
+                              }
+                        }
+                  } else if (featured == 4) {
+                        if (featuredCoin) featuredCoin->removeFromParent();
+                        if (epicFeaturedCoin) epicFeaturedCoin->removeFromParent();
+                        if (legendaryFeaturedCoin) legendaryFeaturedCoin->removeFromParent();
+                        if (!mythicFeaturedCoin) {
+                              auto newMythicCoin = CCSprite::createWithSpriteFrameName("RL_mythicFeaturedCoin.png"_spr);
+                              newMythicCoin->setPosition({difficultySprite2->getContentSize().width / 2,
+                                                          difficultySprite2->getContentSize().height / 2});
+                              newMythicCoin->setID("mythic-featured-coin");
+                              difficultySprite2->addChild(newMythicCoin, -1);
+
+                              // add particle (if configured) on top of mythic ring
+                              const std::string& pString = mythicPString;
+                              if (!pString.empty()) {
+                                    if (auto existingP = newMythicCoin->getChildByID("rating-particles")) {
+                                          existingP->removeFromParent();
+                                    }
+                                    ParticleStruct pStruct;
+                                    GameToolbox::particleStringToStruct(pString, pStruct);
+                                    CCParticleSystemQuad* particle = GameToolbox::particleFromStruct(pStruct, nullptr, false);
+                                    if (particle) {
+                                          newMythicCoin->addChild(particle, 1);
+                                          particle->resetSystem();
+                                          particle->setPosition(newMythicCoin->getContentSize() / 2.f);
+                                          particle->setID("rating-particles"_spr);
+                                          particle->update(0.15f);
+                                          particle->update(0.15f);
+                                          particle->update(0.15f);
+                                          particle->update(0.15f);
+                                          particle->update(0.15f);
+                                    }
+                              }
                         }
                   } else {
                         if (featuredCoin) featuredCoin->removeFromParent();
                         if (epicFeaturedCoin) epicFeaturedCoin->removeFromParent();
+                        if (legendaryFeaturedCoin) legendaryFeaturedCoin->removeFromParent();
+                        if (mythicFeaturedCoin) mythicFeaturedCoin->removeFromParent();
+                  }
+
+                  // ensure particles exist for existing epic/legendary/mythic coins
+                  if (featured == 2) {
+                        if (epicFeaturedCoin) {
+                              if (!epicFeaturedCoin->getChildByID("rating-particles")) {
+                                    const std::string& pString = epicPString;
+                                    if (!pString.empty()) {
+                                          ParticleStruct pStruct;
+                                          GameToolbox::particleStringToStruct(pString, pStruct);
+                                          CCParticleSystemQuad* particle = GameToolbox::particleFromStruct(pStruct, nullptr, false);
+                                          if (particle) {
+                                                epicFeaturedCoin->addChild(particle, 1);
+                                                particle->resetSystem();
+                                                particle->setPosition(epicFeaturedCoin->getContentSize() / 2.f);
+                                                particle->setID("rating-particles"_spr);
+                                                particle->update(0.15f);
+                                                particle->update(0.15f);
+                                                particle->update(0.15f);
+                                          }
+                                    }
+                              }
+                        }
+                  } else if (featured == 3) {
+                        if (legendaryFeaturedCoin) {
+                              if (!legendaryFeaturedCoin->getChildByID("rating-particles")) {
+                                    const std::string& pString = legendaryPString;
+                                    if (!pString.empty()) {
+                                          ParticleStruct pStruct;
+                                          GameToolbox::particleStringToStruct(pString, pStruct);
+                                          CCParticleSystemQuad* particle = GameToolbox::particleFromStruct(pStruct, nullptr, false);
+                                          if (particle) {
+                                                legendaryFeaturedCoin->addChild(particle, 1);
+                                                particle->resetSystem();
+                                                particle->setPosition(legendaryFeaturedCoin->getContentSize() / 2.f);
+                                                particle->setID("rating-particles"_spr);
+                                                particle->update(0.15f);
+                                                particle->update(0.15f);
+                                                particle->update(0.15f);
+                                                particle->update(0.15f);
+                                                particle->update(0.15f);
+                                          }
+                                    }
+                              }
+                        }
+                  } else if (featured == 4) {
+                        if (mythicFeaturedCoin) {
+                              if (!mythicFeaturedCoin->getChildByID("rating-particles")) {
+                                    const std::string& pString = mythicPString;
+                                    if (!pString.empty()) {
+                                          ParticleStruct pStruct;
+                                          GameToolbox::particleStringToStruct(pString, pStruct);
+                                          CCParticleSystemQuad* particle = GameToolbox::particleFromStruct(pStruct, nullptr, false);
+                                          if (particle) {
+                                                mythicFeaturedCoin->addChild(particle, 1);
+                                                particle->resetSystem();
+                                                particle->setPosition(mythicFeaturedCoin->getContentSize() / 2.f);
+                                                particle->setID("rating-particles"_spr);
+                                                particle->update(0.15f);
+                                                particle->update(0.15f);
+                                                particle->update(0.15f);
+                                                particle->update(0.15f);
+                                                particle->update(0.15f);
+                                          }
+                                    }
+                              }
+                        }
                   }
             }
 
@@ -1081,14 +1247,14 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   // Update featured coin position
                   auto featureCoin = sprite->getChildByID("featured-coin");
                   auto epicFeatureCoin = sprite->getChildByID("epic-featured-coin");
-                  if (featureCoin) {
-                        featureCoin->setPosition({difficultySprite->getContentSize().width / 2,
-                                                  difficultySprite->getContentSize().height / 2});
-                  }
-                  if (epicFeatureCoin) {
-                        epicFeatureCoin->setPosition({difficultySprite->getContentSize().width / 2,
-                                                      difficultySprite->getContentSize().height / 2});
-                  }
+                  auto legendaryFeatureCoin = sprite->getChildByID("legendary-featured-coin");
+                  auto mythicFeatureCoin = sprite->getChildByID("mythic-featured-coin");
+                  float cx = difficultySprite->getContentSize().width / 2;
+                  float cy = difficultySprite->getContentSize().height / 2;
+                  if (featureCoin) featureCoin->setPosition({cx, cy});
+                  if (epicFeatureCoin) epicFeatureCoin->setPosition({cx, cy});
+                  if (legendaryFeatureCoin) legendaryFeatureCoin->setPosition({cx, cy});
+                  if (mythicFeatureCoin) mythicFeatureCoin->setPosition({cx, cy});
 
                   // delayed reposition for stars after frame update to ensure
                   // proper positioning
@@ -1309,11 +1475,15 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   auto starLabel = difficultySpriteNode->getChildByID("rl-star-label");
                   if (starLabel) starLabel->removeFromParent();
 
-                  // remove featured/epic coins if present
+                  // remove featured/epic/legendary/mythic coins if present
                   auto featuredCoin = difficultySpriteNode->getChildByID("featured-coin");
                   if (featuredCoin) featuredCoin->removeFromParent();
                   auto epicFeaturedCoin = difficultySpriteNode->getChildByID("epic-featured-coin");
                   if (epicFeaturedCoin) epicFeaturedCoin->removeFromParent();
+                  auto legendaryFeaturedCoin = difficultySpriteNode->getChildByID("legendary-featured-coin");
+                  if (legendaryFeaturedCoin) legendaryFeaturedCoin->removeFromParent();
+                  auto mythicFeaturedCoin = difficultySpriteNode->getChildByID("mythic-featured-coin");
+                  if (mythicFeaturedCoin) mythicFeaturedCoin->removeFromParent();
 
                   // reset difficulty frame and revert any applied offsets
                   auto sprite = static_cast<GJDifficultySprite*>(difficultySpriteNode);

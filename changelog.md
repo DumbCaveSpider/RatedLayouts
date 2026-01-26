@@ -3,6 +3,7 @@
 - Ported to Geode v5.0.0
 - Improved **Level Browser**! Now you can search more than **100 levels**!
 - New **Gauntlet Sprites**!
+- Added **Epic Layouts Particles** making epic layouts more standout.
 - Added **Customizable Background** in the Rated Layouts Creator Layer and Leaderboard Layer. _(Can be changed in the mod settings)_
 - Added **Rated Layout Browser** button!
 - Added **Coins Verified** status for levels that has verified Blue Coins.
@@ -11,6 +12,7 @@
 - Change the sprites to be in a spritesheet.
 - Clean-up the Mod Rate Popup code/UI.
 - Remove Page API dependency
+- Secret features... shh...
 
 # v0.3.6-beta.1
 

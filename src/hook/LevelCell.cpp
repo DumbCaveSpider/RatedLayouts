@@ -3,6 +3,10 @@
 
 using namespace geode::prelude;
 
+extern const std::string legendaryPString;
+extern const std::string mythicPString;
+extern const std::string epicPString;
+
 // get the cache file path
 static std::string getCachePath() {
       auto saveDir = dirs::getModsSaveDir();
@@ -277,12 +281,18 @@ class $modify(LevelCell) {
                         }
                   }
 
-                  // Update featured coin visibility
+                  // Update featured coin visibility (support featured types: 1=featured, 2=epic, 3=legendary, 4=mythic)
                   {
                         auto featuredCoin = difficultySprite->getChildByID("featured-coin");
                         auto epicFeaturedCoin = difficultySprite->getChildByID("epic-featured-coin");
+                        auto legendaryFeaturedCoin = difficultySprite->getChildByID("legendary-featured-coin");
+                        auto mythicFeaturedCoin = difficultySprite->getChildByID("mythic-featured-coin");
+
                         if (featured == 1) {
+                              // remove other types
                               if (epicFeaturedCoin) epicFeaturedCoin->removeFromParent();
+                              if (legendaryFeaturedCoin) legendaryFeaturedCoin->removeFromParent();
+                              if (mythicFeaturedCoin) mythicFeaturedCoin->removeFromParent();
                               if (!featuredCoin) {
                                     auto newFeaturedCoin = CCSprite::createWithSpriteFrameName("RL_featuredCoin.png"_spr);
                                     if (newFeaturedCoin) {
@@ -293,7 +303,10 @@ class $modify(LevelCell) {
                                     }
                               }
                         } else if (featured == 2) {
+                              // ensure only epic present
                               if (featuredCoin) featuredCoin->removeFromParent();
+                              if (legendaryFeaturedCoin) legendaryFeaturedCoin->removeFromParent();
+                              if (mythicFeaturedCoin) mythicFeaturedCoin->removeFromParent();
                               if (!epicFeaturedCoin) {
                                     auto newEpicCoin = CCSprite::createWithSpriteFrameName("RL_epicFeaturedCoin.png"_spr);
                                     if (newEpicCoin) {
@@ -301,118 +314,276 @@ class $modify(LevelCell) {
                                                                     difficultySprite->getContentSize().height / 2});
                                           newEpicCoin->setID("epic-featured-coin");
                                           difficultySprite->addChild(newEpicCoin, -1);
+
+                                          // add particle (if configured) on top of epic ring
+                                          const std::string& pString = epicPString;
+                                          if (!pString.empty()) {
+                                                if (auto existingP = newEpicCoin->getChildByID("rating-particles")) {
+                                                      existingP->removeFromParent();
+                                                }
+                                                ParticleStruct pStruct;
+                                                GameToolbox::particleStringToStruct(pString, pStruct);
+                                                CCParticleSystemQuad* particle = GameToolbox::particleFromStruct(pStruct, nullptr, false);
+                                                if (particle) {
+                                                      newEpicCoin->addChild(particle, 1);
+                                                      particle->resetSystem();
+                                                      particle->setPosition(newEpicCoin->getContentSize() / 2.f);
+                                                      particle->setID("rating-particles"_spr);
+                                                }
+                                          }
+                                    }
+                              }
+                        } else if (featured == 3) {
+                              // legendary
+                              if (featuredCoin) featuredCoin->removeFromParent();
+                              if (epicFeaturedCoin) epicFeaturedCoin->removeFromParent();
+                              if (mythicFeaturedCoin) mythicFeaturedCoin->removeFromParent();
+                              if (!legendaryFeaturedCoin) {
+                                    auto newLegendaryCoin = CCSprite::createWithSpriteFrameName("RL_legendaryFeaturedCoin.png"_spr);
+                                    if (newLegendaryCoin) {
+                                          newLegendaryCoin->setPosition({difficultySprite->getContentSize().width / 2,
+                                                                         difficultySprite->getContentSize().height / 2});
+                                          newLegendaryCoin->setID("legendary-featured-coin");
+                                          difficultySprite->addChild(newLegendaryCoin, -1);
+
+                                          // particle legendary ring
+                                          const std::string& pString = legendaryPString;
+                                          if (!pString.empty()) {
+                                                // remove any existing particles on this coin to avoid dupes
+                                                if (auto existingP = newLegendaryCoin->getChildByID("rating-particles")) {
+                                                      existingP->removeFromParent();
+                                                }
+                                                ParticleStruct pStruct;
+                                                GameToolbox::particleStringToStruct(pString, pStruct);
+                                                CCParticleSystemQuad* particle = GameToolbox::particleFromStruct(pStruct, nullptr, false);
+                                                if (particle) {
+                                                      newLegendaryCoin->addChild(particle, 1);
+                                                      particle->resetSystem();
+                                                      particle->setPosition(newLegendaryCoin->getContentSize() / 2.f);
+                                                      particle->setID("rating-particles"_spr);
+                                                      particle->update(0.15f);
+                                                      particle->update(0.15f);
+                                                      particle->update(0.15f);
+                                                      particle->update(0.15f);
+                                                      particle->update(0.15f);
+                                                }
+                                          }
+                                    }
+                              }
+                        } else if (featured == 4) {
+                              // mythic
+                              if (featuredCoin) featuredCoin->removeFromParent();
+                              if (epicFeaturedCoin) epicFeaturedCoin->removeFromParent();
+                              if (legendaryFeaturedCoin) legendaryFeaturedCoin->removeFromParent();
+                              if (!mythicFeaturedCoin) {
+                                    auto newMythicCoin = CCSprite::createWithSpriteFrameName("RL_mythicFeaturedCoin.png"_spr);
+                                    if (newMythicCoin) {
+                                          newMythicCoin->setPosition({difficultySprite->getContentSize().width / 2,
+                                                                      difficultySprite->getContentSize().height / 2});
+                                          newMythicCoin->setID("mythic-featured-coin");
+                                          difficultySprite->addChild(newMythicCoin, -1);
+
+                                          // particle mythic ring
+                                          const std::string& pString = mythicPString;
+                                          if (!pString.empty()) {
+                                                if (auto existingP = newMythicCoin->getChildByID("rating-particles")) {
+                                                      existingP->removeFromParent();
+                                                }
+                                                ParticleStruct pStruct;
+                                                GameToolbox::particleStringToStruct(pString, pStruct);
+                                                CCParticleSystemQuad* particle = GameToolbox::particleFromStruct(pStruct, nullptr, false);
+                                                if (particle) {
+                                                      newMythicCoin->addChild(particle, 1);
+                                                      particle->resetSystem();
+                                                      particle->setPosition(newMythicCoin->getContentSize() / 2.f);
+                                                      particle->setID("rating-particles"_spr);
+                                                      particle->update(0.15f);
+                                                      particle->update(0.15f);
+                                                      particle->update(0.15f);
+                                                      particle->update(0.15f);
+                                                      particle->update(0.15f);
+                                                }
+                                          }
                                     }
                               }
                         } else {
                               if (featuredCoin) featuredCoin->removeFromParent();
                               if (epicFeaturedCoin) epicFeaturedCoin->removeFromParent();
-                        }
-                  }
-
-                  // handle coin icons (if compact view, fetch coin nodes directly from m_mainLayer)
-                  auto coinContainer = m_mainLayer->getChildByID("difficulty-container");
-                  if (coinContainer) {
-                        CCNode* coinIcon1 = nullptr;
-                        CCNode* coinIcon2 = nullptr;
-                        CCNode* coinIcon3 = nullptr;
-
-                        if (!m_compactView) {
-                              coinIcon1 = coinContainer->getChildByID("coin-icon-1");
-                              coinIcon2 = coinContainer->getChildByID("coin-icon-2");
-                              coinIcon3 = coinContainer->getChildByID("coin-icon-3");
-                        } else {
-                              // compact view: coin icons live on the main layer
-                              coinIcon1 = m_mainLayer->getChildByID("coin-icon-1");
-                              coinIcon2 = m_mainLayer->getChildByID("coin-icon-2");
-                              coinIcon3 = m_mainLayer->getChildByID("coin-icon-3");
+                              if (legendaryFeaturedCoin) legendaryFeaturedCoin->removeFromParent();
+                              if (mythicFeaturedCoin) mythicFeaturedCoin->removeFromParent();
                         }
 
-                        // push difficulty sprite down if coins exist in non-compact view
-                        if ((coinIcon1 || coinIcon2 || coinIcon3) && !m_compactView) {
-                              difficultySprite->setPositionY(difficultySprite->getPositionY() + 10);
-                        }
-
-                        // Replace or darken coins when level is not suggested
-                        bool coinVerified = json["coinVerified"].asBool().unwrapOrDefault();
-                        if (coinVerified) {
-                              // try to obtain a GJGameLevel for coin keys
-                              GJGameLevel* levelPtr = this->m_level;
-                              if (!levelPtr) {
-                                    auto glm = GameLevelManager::sharedState();
-                                    auto stored = glm->getStoredOnlineLevels(fmt::format("{}", levelId).c_str());
-                                    if (stored && stored->count() > 0) {
-                                          levelPtr = static_cast<GJGameLevel*>(stored->objectAtIndex(0));
-                                    }
-                              }
-
-                              auto replaceCoinSprite = [levelPtr, this](CCNode* coinNode, int coinIndex) {
-                                    auto frame = CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName("RL_BlueCoinSmall.png"_spr);
-                                    CCTexture2D* blueCoinTexture = nullptr;
-                                    if (!frame) {
-                                          blueCoinTexture = CCTextureCache::sharedTextureCache()->addImage("RL_BlueCoinSmall.png"_spr, true);
-                                          if (blueCoinTexture) {
-                                                frame = CCSpriteFrame::createWithTexture(blueCoinTexture, {{0, 0}, blueCoinTexture->getContentSize()});
+                        // ensure particles exist for existing epic/legendary/mythic coins (if configured)
+                        if (featured == 2) {
+                              if (epicFeaturedCoin) {
+                                    if (!epicFeaturedCoin->getChildByID("rating-particles")) {
+                                          const std::string& pString = epicPString;
+                                          if (!pString.empty()) {
+                                                ParticleStruct pStruct;
+                                                GameToolbox::particleStringToStruct(pString, pStruct);
+                                                CCParticleSystemQuad* particle = GameToolbox::particleFromStruct(pStruct, nullptr, false);
+                                                if (particle) {
+                                                      epicFeaturedCoin->addChild(particle, 1);
+                                                      particle->resetSystem();
+                                                      particle->setPosition(epicFeaturedCoin->getContentSize() / 2.f);
+                                                      particle->setID("rating-particles"_spr);
+                                                      particle->update(0.15f);
+                                                      particle->update(0.15f);
+                                                      particle->update(0.15f);
+                                                }
                                           }
-                                    } else {
-                                          blueCoinTexture = frame->getTexture();
                                     }
-
-                                    if (!frame || !blueCoinTexture) {
-                                          log::warn("failed to load blue coin frame/texture");
-                                          return;
+                              }
+                        } else if (featured == 3) {
+                              if (legendaryFeaturedCoin) {
+                                    if (!legendaryFeaturedCoin->getChildByID("rating-particles")) {
+                                          const std::string& pString = legendaryPString;
+                                          if (!pString.empty()) {
+                                                ParticleStruct pStruct;
+                                                GameToolbox::particleStringToStruct(pString, pStruct);
+                                                CCParticleSystemQuad* particle = GameToolbox::particleFromStruct(pStruct, nullptr, false);
+                                                if (particle) {
+                                                      legendaryFeaturedCoin->addChild(particle, 1);
+                                                      particle->resetSystem();
+                                                      particle->setPosition(legendaryFeaturedCoin->getContentSize() / 2.f);
+                                                      particle->setID("rating-particles"_spr);
+                                                      particle->update(0.15f);
+                                                      particle->update(0.15f);
+                                                      particle->update(0.15f);
+                                                      particle->update(0.15f);
+                                                      particle->update(0.15f);
+                                                }
+                                          }
                                     }
-                                    if (!coinNode) return;
-                                    auto coinSprite = typeinfo_cast<CCSprite*>(coinNode);
-                                    if (!coinSprite) return;
-
-                                    bool coinCollected = false;
-                                    if (levelPtr) {
-                                          std::string coinKey = levelPtr->getCoinKey(coinIndex);
-                                          log::debug("LevelCell: checking coin {} key={}", coinIndex, coinKey);
-                                          coinCollected = GameStatsManager::sharedState()->hasPendingUserCoin(coinKey.c_str());
+                              }
+                        } else if (featured == 4) {
+                              if (mythicFeaturedCoin) {
+                                    if (!mythicFeaturedCoin->getChildByID("rating-particles")) {
+                                          const std::string& pString = mythicPString;
+                                          if (!pString.empty()) {
+                                                ParticleStruct pStruct;
+                                                GameToolbox::particleStringToStruct(pString, pStruct);
+                                                CCParticleSystemQuad* particle = GameToolbox::particleFromStruct(pStruct, nullptr, false);
+                                                if (particle) {
+                                                      mythicFeaturedCoin->addChild(particle, 1);
+                                                      particle->resetSystem();
+                                                      particle->setPosition(mythicFeaturedCoin->getContentSize() / 2.f);
+                                                      particle->setID("rating-particles"_spr);
+                                                      particle->update(0.15f);
+                                                      particle->update(0.15f);
+                                                      particle->update(0.15f);
+                                                      particle->update(0.15f);
+                                                      particle->update(0.15f);
+                                                }
+                                          }
                                     }
-
-                                    if (coinCollected) {
-                                          coinSprite->setDisplayFrame(frame);
-                                          coinSprite->setColor({255, 255, 255});
-                                          coinSprite->setOpacity(255);
-                                          coinSprite->setScale(0.6f);
-                                          log::debug("LevelCell: replaced coin {} with blue sprite", coinIndex);
-                                    } else {
-                                          coinSprite->setDisplayFrame(frame);
-                                          coinSprite->setColor({120, 120, 120});
-                                          coinSprite->setScale(0.6f);
-                                          log::debug("LevelCell: darkened coin {} (not present)", coinIndex);
-                                    }
-
-                                    if (m_compactView) {
-                                          coinSprite->setScale(0.4f);
-                                    }
-                              };
-
-                              replaceCoinSprite(coinIcon1, 1);
-                              replaceCoinSprite(coinIcon2, 2);
-                              replaceCoinSprite(coinIcon3, 3);
+                              }
                         }
 
-                        // doing the dumb coin move
-                        if (!m_compactView) {
-                              if (coinIcon1) {
-                                    coinIcon1->setPositionY(coinIcon1->getPositionY() - 5);
+                        // handle coin icons (if compact view, fetch coin nodes directly from m_mainLayer)
+                        auto coinContainer = m_mainLayer->getChildByID("difficulty-container");
+                        if (coinContainer) {
+                              CCNode* coinIcon1 = nullptr;
+                              CCNode* coinIcon2 = nullptr;
+                              CCNode* coinIcon3 = nullptr;
+
+                              if (!m_compactView) {
+                                    coinIcon1 = coinContainer->getChildByID("coin-icon-1");
+                                    coinIcon2 = coinContainer->getChildByID("coin-icon-2");
+                                    coinIcon3 = coinContainer->getChildByID("coin-icon-3");
+                              } else {
+                                    // compact view: coin icons live on the main layer
+                                    coinIcon1 = m_mainLayer->getChildByID("coin-icon-1");
+                                    coinIcon2 = m_mainLayer->getChildByID("coin-icon-2");
+                                    coinIcon3 = m_mainLayer->getChildByID("coin-icon-3");
                               }
-                              if (coinIcon2) {
-                                    coinIcon2->setPositionY(coinIcon2->getPositionY() - 5);
+
+                              // push difficulty sprite down if coins exist in non-compact view
+                              if ((coinIcon1 || coinIcon2 || coinIcon3) && !m_compactView) {
+                                    difficultySprite->setPositionY(difficultySprite->getPositionY() + 10);
                               }
-                              if (coinIcon3) {
-                                    coinIcon3->setPositionY(coinIcon3->getPositionY() - 5);
+
+                              // Replace or darken coins when level is not suggested
+                              bool coinVerified = json["coinVerified"].asBool().unwrapOrDefault();
+                              if (coinVerified) {
+                                    // try to obtain a GJGameLevel for coin keys
+                                    GJGameLevel* levelPtr = this->m_level;
+                                    if (!levelPtr) {
+                                          auto glm = GameLevelManager::sharedState();
+                                          auto stored = glm->getStoredOnlineLevels(fmt::format("{}", levelId).c_str());
+                                          if (stored && stored->count() > 0) {
+                                                levelPtr = static_cast<GJGameLevel*>(stored->objectAtIndex(0));
+                                          }
+                                    }
+
+                                    auto replaceCoinSprite = [levelPtr, this](CCNode* coinNode, int coinIndex) {
+                                          auto frame = CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName("RL_BlueCoinSmall.png"_spr);
+                                          CCTexture2D* blueCoinTexture = nullptr;
+                                          if (!frame) {
+                                                blueCoinTexture = CCTextureCache::sharedTextureCache()->addImage("RL_BlueCoinSmall.png"_spr, true);
+                                                if (blueCoinTexture) {
+                                                      frame = CCSpriteFrame::createWithTexture(blueCoinTexture, {{0, 0}, blueCoinTexture->getContentSize()});
+                                                }
+                                          } else {
+                                                blueCoinTexture = frame->getTexture();
+                                          }
+
+                                          if (!frame || !blueCoinTexture) {
+                                                log::warn("failed to load blue coin frame/texture");
+                                                return;
+                                          }
+                                          if (!coinNode) return;
+                                          auto coinSprite = typeinfo_cast<CCSprite*>(coinNode);
+                                          if (!coinSprite) return;
+
+                                          bool coinCollected = false;
+                                          if (levelPtr) {
+                                                std::string coinKey = levelPtr->getCoinKey(coinIndex);
+                                                log::debug("LevelCell: checking coin {} key={}", coinIndex, coinKey);
+                                                coinCollected = GameStatsManager::sharedState()->hasPendingUserCoin(coinKey.c_str());
+                                          }
+
+                                          if (coinCollected) {
+                                                coinSprite->setDisplayFrame(frame);
+                                                coinSprite->setColor({255, 255, 255});
+                                                coinSprite->setOpacity(255);
+                                                coinSprite->setScale(0.6f);
+                                                log::debug("LevelCell: replaced coin {} with blue sprite", coinIndex);
+                                          } else {
+                                                coinSprite->setDisplayFrame(frame);
+                                                coinSprite->setColor({120, 120, 120});
+                                                coinSprite->setScale(0.6f);
+                                                log::debug("LevelCell: darkened coin {} (not present)", coinIndex);
+                                          }
+
+                                          if (m_compactView) {
+                                                coinSprite->setScale(0.4f);
+                                          }
+                                    };
+
+                                    replaceCoinSprite(coinIcon1, 1);
+                                    replaceCoinSprite(coinIcon2, 2);
+                                    replaceCoinSprite(coinIcon3, 3);
+                              }
+
+                              // doing the dumb coin move
+                              if (!m_compactView) {
+                                    if (coinIcon1) {
+                                          coinIcon1->setPositionY(coinIcon1->getPositionY() - 5);
+                                    }
+                                    if (coinIcon2) {
+                                          coinIcon2->setPositionY(coinIcon2->getPositionY() - 5);
+                                    }
+                                    if (coinIcon3) {
+                                          coinIcon3->setPositionY(coinIcon3->getPositionY() - 5);
+                                    }
                               }
                         }
                   }
             }
       }
 
-      void
-      loadFromLevel(GJGameLevel* level) {
+      void loadFromLevel(GJGameLevel* level) {
             LevelCell::loadFromLevel(level);
 
             // no local levels
