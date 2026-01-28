@@ -9,7 +9,8 @@ namespace RLAchievements {
         Sparks,
         Planets,
         Coins,
-        Points
+        Points,
+        Misc
     };
 
     struct Achievement {
@@ -24,7 +25,10 @@ namespace RLAchievements {
     void init();
     void onUpdated(Collectable type, int oldVal, int newVal); // call when an Eru value is updated
     void checkAll(Collectable type, int currentVal); // check current totals and award any missing achievements
-    void onReward(std::string const& id, std::string const& name, std::string const& desc, std::string const& sprite); // reward a misc achievement once
+    void onReward(std::string const& id); // reward a misc achievement once by id (looks up name/desc/sprite)
     std::vector<Achievement> getAll(); // get all achievements
     bool isAchieved(std::string const& id); // check if achievement is achieved
+
+    cocos2d::CCDictionary* getAllAsDictionary();
+    cocos2d::CCDictionary* getAchievementDictionary(std::string const& id); // individual achievement dictionary
 } // namespace RLAchievements

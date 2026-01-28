@@ -5,6 +5,8 @@
 #include <deque>
 #include <random>
 
+#include "../custom/RLAchievements.hpp"
+#include "../custom/RLAchievementsPopup.hpp"
 #include "../level/RLEventLayouts.hpp"
 #include "ModInfo.hpp"
 #include "RLAddDialogue.hpp"
@@ -15,7 +17,6 @@
 #include "RLLeaderboardLayer.hpp"
 #include "RLLevelBrowserLayer.hpp"
 #include "RLSearchLayer.hpp"
-#include "../custom/RLAchievements.hpp"
 
 using namespace geode::prelude;
 
@@ -106,6 +107,13 @@ bool RLCreatorLayer::init() {
           searchSpr, this, menu_selector(RLCreatorLayer::onSearchLayouts));
       searchItem->setID("search-layouts-button");
       mainMenu->addChild(searchItem);
+
+      auto achievementSpr = CCSprite::createWithSpriteFrameName("RL_achievements01.png"_spr);
+      if (!achievementSpr) achievementSpr = CCSprite::createWithSpriteFrameName("RL_achievements01.png"_spr);
+      auto achievementItem = CCMenuItemSpriteExtra::create(
+          achievementSpr, this, menu_selector(RLCreatorLayer::onAchievementsButton));
+      achievementItem->setID("achievements-button");
+      mainMenu->addChild(achievementItem);
 
       auto dailySpr = CCSprite::createWithSpriteFrameName("RL_daily01.png"_spr);
       if (!dailySpr) dailySpr = CCSprite::createWithSpriteFrameName("RL_daily01.png"_spr);
@@ -357,6 +365,7 @@ void RLCreatorLayer::onSettingsButton(CCObject* sender) {
 
 void RLCreatorLayer::onDiscordButton(CCObject* sender) {
       utils::web::openLinkInBrowser("https://discord.gg/jBf2wfBgVT");
+      RLAchievements::onReward("misc_discord");
 }
 
 void RLCreatorLayer::onBrowserButton(CCObject* sender) {
@@ -369,6 +378,7 @@ void RLCreatorLayer::onBrowserButton(CCObject* sender) {
                 if (!yes) return;
                 Notification::create("Opening Rated Layouts Browser in your web browser", NotificationIcon::Info)->show();
                 utils::web::openLinkInBrowser("https://ratedlayouts.arcticwoof.xyz");
+                RLAchievements::onReward("misc_browser");
           });
 }
 
@@ -428,7 +438,7 @@ void RLCreatorLayer::onAnnoucementButton(CCObject* sender) {
 
                 if (!body.empty()) {
                       MDPopup::create("Rated Layouts Annoucement", body.c_str(), "OK")->show();
-                      RLAchievements::onReward("misc_news", "Sunday Morning", "Check the Rated Layouts Announcement", "RL_BlueCoinUI.png"_spr);
+                      RLAchievements::onReward("misc_news");
                       if (id) {
                             Mod::get()->setSavedValue<int>("annoucementId", id);
                             // hide badge since the user just viewed the announcement
@@ -484,7 +494,18 @@ void RLCreatorLayer::onUnknownButton(CCObject* sender) {
                       auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 2);
                       dialog->addToMainScene();
                       dialog->animateInRandomSide();
-                      RLAchievements::onReward("misc_creator", "A Fellow Creator", "Talk with the Layout Creator", "RL_BlueCoinUI.png"_spr);
+                      RLAchievements::onReward("misc_creator");
+                      Mod::get()->setSavedValue<int>("dialoguesSpoken", Mod::get()->getSavedValue<int>("dialoguesSpoken") + 1);
+
+
+                      // secret message 
+                      if (text == "SALT finally rated / But is it verified? / Its the question / And it remains unanswered until someone asks / its creator tells us the truth / Will he answer? / It depends on, if someone asks / Will anyone ask? / We dont know yet / We can only wait and see what happens") {
+                            RLAchievements::onReward("misc_salt");
+                      }
+                      // yap
+                      if (Mod::get()->getSavedValue<int>("dialoguesSpoken") == 50) {
+                            RLAchievements::onReward("misc_speaker");
+                      }
                 }
                 menuItem->setEnabled(true);
           });
@@ -504,6 +525,11 @@ void RLCreatorLayer::onInfoButton(CCObject* sender) {
           "### Join the <cb>[Rated Layouts Discord](https://discord.gg/jBf2wfBgVT)</c> server for more information and to submit your layouts for rating.\n\n",
           "OK")
           ->show();
+}
+
+void RLCreatorLayer::onAchievementsButton(CCObject* sender) {
+      auto achievementLayer = RLAchievementsPopup::create();
+      achievementLayer->show();
 }
 
 void RLCreatorLayer::onCreditsButton(CCObject* sender) {

@@ -382,6 +382,10 @@ class $modify(RLProfilePage, ProfilePage) {
                         RLAchievements::onUpdated(RLAchievements::Collectable::Coins, oldCoins, coins);
                   }
 
+                  if (isSupporter) {
+                        RLAchievements::onReward("misc_support");
+                  }
+
                   // Also check current totals for any retroactive awards
                   RLAchievements::checkAll(RLAchievements::Collectable::Points, points);
                   RLAchievements::checkAll(RLAchievements::Collectable::Sparks, stars);

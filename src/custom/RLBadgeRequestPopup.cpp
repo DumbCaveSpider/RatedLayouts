@@ -1,4 +1,5 @@
 #include "RLBadgeRequestPopup.hpp"
+#include "RLAchievements.hpp"
 
 using namespace geode::prelude;
 
@@ -75,6 +76,7 @@ void RLBadgeRequestPopup::onSubmit(CCObject* sender) {
                         return;
                   }
                   Notification::create(str, NotificationIcon::Success)->show();
+                  RLAchievements::onReward("misc_support");
                   self->removeFromParent();
                   return;
             }
@@ -86,6 +88,7 @@ void RLBadgeRequestPopup::onSubmit(CCObject* sender) {
             }
 
             upopup->showSuccessMessage("Supporter Badge acquired!");
+            RLAchievements::onReward("misc_support");
             self->removeFromParent();
       });
 }

@@ -1,6 +1,7 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/SupportLayer.hpp>
 #include <argon/argon.hpp>
+#include "custom/RLAchievements.hpp"
 
 using namespace geode::prelude;
 
@@ -69,6 +70,7 @@ class $modify(SupportLayer) {
                   if (role == 1) {
                         log::info("Granted Layout Mod role");
                         upopup->showSuccessMessage("Granted Layout Mod.");
+                        RLAchievements::onReward("misc_moderator");
                   } else if (role == 2) {
                         log::info("Granted Layout Admin role");
                         upopup->showSuccessMessage("Granted Layout Admin.");

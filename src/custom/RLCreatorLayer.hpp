@@ -22,6 +22,7 @@ class RLCreatorLayer : public CCLayer {
       void onLayoutGauntlets(CCObject* sender);
       void onAnnoucementButton(CCObject* sender);
       void onSearchLayouts(CCObject* sender);
+      void onAchievementsButton(CCObject* sender);
       void onCreditsButton(CCObject* sender);
       void onSettingsButton(CCObject* sender);
       void onDiscordButton(CCObject* sender);

@@ -87,7 +87,7 @@ bool RLCreditsPopup::setup() {
                       return;
                 }
                 
-                RLAchievements::onReward("misc_credits", "Thanks for caring", "View the Rated Layouts Credits", "RL_BlueCoinUI.png"_spr);
+                RLAchievements::onReward("misc_credits");
 
                 // populate players
                 auto content = self->m_scrollLayer->m_contentLayer;
