@@ -796,8 +796,7 @@ void RLLevelBrowserLayer::populateFromArray(CCArray* levels) {
       int total = (m_totalLevels > 0) ? m_totalLevels : returned;
       m_levelsLabel->setString(fmt::format("{} to {} of {}", first, last, total).c_str());
 
-      if (contentLayer) contentLayer->updateLayout();
-      if (m_scrollLayer) m_scrollLayer->scrollToTop();
+      m_needsLayout = true;
       this->updatePageButton();
 }
 
@@ -812,6 +811,18 @@ void RLLevelBrowserLayer::onInfoButton(CCObject* sender) {
 }
 
 void RLLevelBrowserLayer::update(float dt) {
+      // Deferred layout if requested
+      if (m_needsLayout) {
+            if (m_scrollLayer && m_scrollLayer->m_contentLayer) {
+                  auto contentLayer = m_scrollLayer->m_contentLayer;
+                  if (contentLayer->getChildren() && contentLayer->getChildren()->count() > 0) {
+                        contentLayer->updateLayout();
+                        if (m_scrollLayer) m_scrollLayer->scrollToTop();
+                  }
+            }
+            m_needsLayout = false;
+      }
+
       // background tiles
       if (!m_bgTiles.empty()) {
             float move = m_bgSpeed * dt;

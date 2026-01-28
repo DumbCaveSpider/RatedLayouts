@@ -39,7 +39,8 @@ class RLLevelBrowserLayer : public CCLayer, public LevelManagerDelegate, public 
 
       GJListLayer* m_listLayer;
       ScrollLayer* m_scrollLayer;
-      bool m_loading{false};
+      bool m_loading = false;
+      bool m_needsLayout = false;
 
       CCLabelBMFont* m_levelsLabel;
       LoadingSpinner* m_circle;
@@ -49,10 +50,10 @@ class RLLevelBrowserLayer : public CCLayer, public LevelManagerDelegate, public 
 
       std::unordered_map<long long, GJGameLevel*> m_levelCache;
 
-      int m_page{0};
-      int m_totalPages{1};
+      int m_page = 0;
+      int m_totalPages = 1;
 
-      Mode m_mode{Mode::Featured};
+      Mode m_mode = Mode::Featured;
       ParamList m_modeParams;
       utils::web::WebTask m_searchTask;
       ~RLLevelBrowserLayer() { m_searchTask.cancel(); }
