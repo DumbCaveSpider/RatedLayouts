@@ -31,11 +31,12 @@ void RLAchievements::init() {
                 {"spark_100", "Lots of Sparky", "Collected 100 Sparks", RLAchievements::Collectable::Sparks, 100, "RL_starBig.png"_spr},
                 {"spark_250", "250 Sta- I mean SPARKS!", "Collected 250 Sparks", RLAchievements::Collectable::Sparks, 250, "RL_starBig.png"_spr},
                 {"spark_500", "Many Shiny Sparkles", "Collected 500 Sparks", RLAchievements::Collectable::Sparks, 500, "RL_starBig.png"_spr},
-                {"spark_1000", "High Voltage.", "Collected 1000 Sparks", RLAchievements::Collectable::Sparks, 1000, "RL_starBig.png"_spr},
+                {"spark_1000", "Sparkles Sparkles SPARKLES", "Collected 1000 Sparks", RLAchievements::Collectable::Sparks, 1000, "RL_starBig.png"_spr},
                 {"spark_5000", "ExefMn would be proud", "Collected 5000 Sparks", RLAchievements::Collectable::Sparks, 5000, "RL_starBig.png"_spr},
-                {"spark_10000", "Superconductor", "Collected 10000 Sparks", RLAchievements::Collectable::Sparks, 10000, "RL_starBig.png"_spr},
-                {"spark_25000", "Full Capacity", "Collected 25000 Sparks", RLAchievements::Collectable::Sparks, 25000, "RL_starBig.png"_spr},
-                {"spark_50000", "Tesla's Legacy", "Collected 50000 Sparks", RLAchievements::Collectable::Sparks, 50000, "RL_starBig.png"_spr},
+                {"spark_10000", "Too good for this!", "Collected 10000 Sparks", RLAchievements::Collectable::Sparks, 10000, "RL_starBig.png"_spr},
+                {"spark_25000", "Cooking these layouts", "Collected 25000 Sparks", RLAchievements::Collectable::Sparks, 25000, "RL_starBig.png"_spr},
+                {"spark_50000", "Can I get more sparks?", "Collected 50000 Sparks", RLAchievements::Collectable::Sparks, 50000, "RL_starBig.png"_spr},
+                {"spark_100000", "God Of Layouts", "Collected 100000 Sparks", RLAchievements::Collectable::Sparks, 100000, "RL_starBig.png"_spr},
 
                 // Planets achievements
                 {"planet_1", "This is not Moon!", "Collect your First Planet", RLAchievements::Collectable::Planets, 1, "RL_planetBig.png"_spr},
@@ -68,13 +69,17 @@ void RLAchievements::init() {
                 // misc achievements
                 {"misc_news", "Layouts Out Loud", "Check the Rated Layouts Announcement", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
                 {"misc_credits", "The Team Behind It All", "View the Rated Layouts Credits", RLAchievements::Collectable::Misc, 1, "RL_creditsIcon.png"_spr},
-                {"misc_creator", "A Fellow Creator", "Talk with the Layout Creator", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
-                {"misc_speaker", "Nosey Creator", "Speak to the Layout Creator 50 times", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
+                {"misc_custom_bg", "Personal Stylist", "Set a Custom Background or Ground", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
+                {"misc_creator_1", "A Fellow Creator", "Talk to the Layout Creator for the first time", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
+                {"misc_creator_25", "Layout entrepreneur", "Talk to the Layout Creator 25 times", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
+                {"misc_creator_50", "Nosey Creator", "Talk to the Layout Creator 50 times", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
+                {"misc_creator_100", "Business Layout Creator", "Talk to the Layout Creator 100 times", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
                 {"misc_discord", "Layout-Cord", "Join the Rated Layouts Discord", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
                 {"misc_browser", "www.ratedlayouts.com", "Browse the Rated Layouts Website", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
                 {"misc_salt", "SALT finally rated", "but is it verified?", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
                 {"misc_moderator", "GD Mod Simulator", "Become a Layout Moderator", RLAchievements::Collectable::Misc, 1, "RL_badgeMod01.png"_spr},
                 {"misc_support", "#1 Layout Supporter", "Support Rated Layouts on Ko-Fi", RLAchievements::Collectable::Misc, 1, "RL_badgeSupporter.png"_spr},
+                {"misc_report", "Vigilant Citizen", "Report a Layouts", RLAchievements::Collectable::Misc, 10, "RL_bob.png"_spr},
             };
             s_achievementsDict = CCDictionary::create();
             s_achievementsDict->retain();

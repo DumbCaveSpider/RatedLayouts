@@ -24,6 +24,11 @@ bool RLCreatorLayer::init() {
       if (!CCLayer::init())
             return false;
 
+            // quick achievements for custom bg
+            if (Mod::get()->getSettingValue<int>("backgroundType") != 1 || Mod::get()->getSettingValue<int>("floorType") != 1) {
+                  RLAchievements::onReward("misc_custom_bg");
+            }
+
       auto winSize = CCDirector::sharedDirector()->getWinSize();
 
       // create if moving bg disabled
@@ -494,7 +499,7 @@ void RLCreatorLayer::onUnknownButton(CCObject* sender) {
                       auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 2);
                       dialog->addToMainScene();
                       dialog->animateInRandomSide();
-                      RLAchievements::onReward("misc_creator");
+                      RLAchievements::onReward("misc_creator_1"); // first time dialogue
                       Mod::get()->setSavedValue<int>("dialoguesSpoken", Mod::get()->getSavedValue<int>("dialoguesSpoken") + 1);
 
 
@@ -503,8 +508,14 @@ void RLCreatorLayer::onUnknownButton(CCObject* sender) {
                             RLAchievements::onReward("misc_salt");
                       }
                       // yap
+                      if (Mod::get()->getSavedValue<int>("dialoguesSpoken") == 25) {
+                            RLAchievements::onReward("misc_creator_25");
+                      }
                       if (Mod::get()->getSavedValue<int>("dialoguesSpoken") == 50) {
-                            RLAchievements::onReward("misc_speaker");
+                            RLAchievements::onReward("misc_creator_50");
+                      }
+                      if (Mod::get()->getSavedValue<int>("dialoguesSpoken") == 100) {
+                            RLAchievements::onReward("misc_creator_100");
                       }
                 }
                 menuItem->setEnabled(true);

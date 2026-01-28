@@ -1,4 +1,5 @@
 #include "RLReportPopup.hpp"
+#include "../custom/RLAchievements.hpp"
 
 RLReportPopup* RLReportPopup::create(int levelId) {
       RLReportPopup* popup = new RLReportPopup();
@@ -211,6 +212,7 @@ void RLReportPopup::onSubmit(CCObject* sender) {
                       bool success = json["success"].asBool().unwrapOrDefault();
                       if (success) {
                             uploadPopup->showSuccessMessage("Report submitted!");
+                            RLAchievements::onReward("misc_report"); // first time report
                             self->removeFromParent();
                             // disable inputs
                             if (self->m_reasonInput) {

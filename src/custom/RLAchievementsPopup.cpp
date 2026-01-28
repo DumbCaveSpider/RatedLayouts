@@ -60,6 +60,7 @@ void RLAchievementsPopup::populate(int tabIndex) {
       content->removeAllChildrenWithCleanup(true);
 
       auto all = RLAchievements::getAll();
+      int displayIndex = 0;
       for (auto const& ach : all) {
             if (tabIndex != 0) {
                   auto type = tabIndexToType(tabIndex);
@@ -67,7 +68,19 @@ void RLAchievementsPopup::populate(int tabIndex) {
             }
             bool unlocked = RLAchievements::isAchieved(ach.id);
             auto cell = RLAchievementCell(ach, unlocked);
-            if (cell) content->addChild(cell);
+            if (!cell) continue;
+
+            if (displayIndex % 2 != 1) {
+                  auto bg = CCLayerColor::create({161, 88, 44, 255}, cell->getContentSize().width, cell->getContentSize().height);
+                  if (bg) {
+                        bg->setPosition({0.f, 0.f});
+                        bg->setAnchorPoint({0.f, 0.f});
+                        cell->addChild(bg, -1);
+                  }
+            }
+
+            content->addChild(cell);
+            displayIndex++;
       }
 
       content->updateLayout();
