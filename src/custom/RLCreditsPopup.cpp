@@ -1,4 +1,5 @@
 #include "RLCreditsPopup.hpp"
+#include "../custom/RLAchievements.hpp"
 
 #include <Geode/modify/ProfilePage.hpp>
 
@@ -85,6 +86,8 @@ bool RLCreditsPopup::setup() {
                       }
                       return;
                 }
+                
+                RLAchievements::onReward("misc_credits", "Thanks for caring", "View the Rated Layouts Credits", "RL_BlueCoinUI.png"_spr);
 
                 // populate players
                 auto content = self->m_scrollLayer->m_contentLayer;

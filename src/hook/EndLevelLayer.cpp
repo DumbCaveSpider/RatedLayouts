@@ -1,5 +1,6 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/EndLevelLayer.hpp>
+#include "../custom/RLAchievements.hpp"
 
 using namespace geode::prelude;
 
@@ -238,14 +239,40 @@ class $modify(EndLevelLayer) {
                         int responseStars =
                             submitJson["stars"].asInt().unwrapOrDefault();
                         int responsePlanets = submitJson["planets"].asInt().unwrapOrDefault();
+                        int responseCoins = submitJson["coins"].asInt().unwrapOrDefault();
 
                         log::info("submitComplete success: {}, response stars: {}",
                                   success, responseStars);
 
                         if (success) {
-                              // choose medium icon and rewards text depending on whether the level is a platformer
+                              // check for coins increases
+                              int oldCoins = Mod::get()->getSavedValue<int>("coins", 0);
+                              if (responseCoins > oldCoins) {
+                                    RLAchievements::onUpdated(RLAchievements::Collectable::Coins, oldCoins, responseCoins);
+                              }
+                              Mod::get()->setSavedValue<int>("coins", responseCoins);
                               std::string rewards = isPlat ? "Planets" : "Sparks";
                               std::string medSprite = isPlat ? "RL_planetMed.png"_spr : "RL_starMed.png"_spr;
+
+                              // achievements for Sparks/Planets increment
+                              int oldStars = Mod::get()->getSavedValue<int>("stars", 0);
+                              int oldPlanets = Mod::get()->getSavedValue<int>("planets", 0);
+
+                              int responseAmount = isPlat ? responsePlanets : responseStars;
+                              int delta = responseAmount - (isPlat ? oldPlanets : oldStars);
+                              int newAmount = (isPlat ? oldPlanets : oldStars) + delta;
+
+                              if (delta > 0) {
+                                    if (isPlat) {
+                                          RLAchievements::onUpdated(RLAchievements::Collectable::Planets, oldPlanets, newAmount);
+                                    } else {
+                                          RLAchievements::onUpdated(RLAchievements::Collectable::Sparks, oldStars, newAmount);
+                                    }
+                              }
+
+                              // Also check current totals for retroactive awards
+                              RLAchievements::checkAll(RLAchievements::Collectable::Sparks, responseStars);
+                              RLAchievements::checkAll(RLAchievements::Collectable::Planets, responsePlanets);
 
                               if (responseStars == 0 && responsePlanets == 0) {
                                     log::warn("No stars or planets rewarded, possibly already rewarded before");

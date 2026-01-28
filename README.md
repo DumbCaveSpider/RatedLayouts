@@ -27,11 +27,10 @@ This gives the <cy>Layout/Gameplay creators</c> a platform to get their levels r
 - **<cc>Community Voting System</c>**: Players can vote on suggested/rated layouts based on originality, difficulty, and gameplay.
 - **<cj>Layout Gauntlets</c>**: Special gauntlets featuring themed classic rated layout levels created by Layout/Gameplay creators through Creator Contest.
 - **<cr>Report System</c>**: Report rated layouts that violates the Rated Layouts guidelines. Help us maintain the quality of rated layouts!
+- **<cg>Custom Achievements</c>**: Custom Achievements for completing rated layout levels and achieving milestones and other special interactions.
 - **<cs>QOL Features!</c>**: Various quality of life improvements for both players and creators.
 
 ## Up-coming Features
-
-- **<cg>Custom Achievements</c>**: Custom Achievements for completing rated layout levels and achieving milestones.
 - **<cr>Rated Layouts Demonlist</c>**: A dedicated demonlist for rated layout demons. Grind hardest rated layout demons curated by the Rated Layouts Mod Team!
 
 <co>**Note:** This is currently in beta and expected to have some bugs and unfinished features. Please report any issues you encounter!</c>

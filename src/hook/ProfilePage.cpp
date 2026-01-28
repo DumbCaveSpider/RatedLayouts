@@ -6,6 +6,7 @@
 #include "../player/RLDifficultyTotalPopup.hpp"
 #include "../player/RLUserControl.hpp"
 #include "../custom/RLLevelBrowserLayer.hpp"
+#include "../custom/RLAchievements.hpp"
 
 using namespace geode::prelude;
 
@@ -429,6 +430,38 @@ class $modify(RLProfilePage, ProfilePage) {
                         }
 
                         rlStatsMenu->updateLayout();
+                  }
+
+                  // check and award any unclaimed achievements
+                  if (page->m_ownProfile) {
+                        int oldPoints = Mod::get()->getSavedValue<int>("points", 0);
+                        int oldStars = Mod::get()->getSavedValue<int>("stars", 0);
+                        int oldPlanets = Mod::get()->getSavedValue<int>("planets", 0);
+                        int oldCoins = Mod::get()->getSavedValue<int>("coins", 0);
+                        log::debug("getUserInfoFinished (owner): points={} (old={}), stars={} (old={}), planets={} (old={}), coins={} (old={})", points, oldPoints, stars, oldStars, planets, oldPlanets, coins, oldCoins);
+
+                        if (points > oldPoints) {
+                              RLAchievements::onUpdated(RLAchievements::Collectable::Points, oldPoints, points);
+                        }
+                        if (stars > oldStars) {
+                              RLAchievements::onUpdated(RLAchievements::Collectable::Sparks, oldStars, stars);
+                        }
+                        if (planets > oldPlanets) {
+                              RLAchievements::onUpdated(RLAchievements::Collectable::Planets, oldPlanets, planets);
+                        }
+                        if (coins > oldCoins) {
+                              RLAchievements::onUpdated(RLAchievements::Collectable::Coins, oldCoins, coins);
+                        }
+
+                        RLAchievements::checkAll(RLAchievements::Collectable::Points, points);
+                        RLAchievements::checkAll(RLAchievements::Collectable::Sparks, stars);
+                        RLAchievements::checkAll(RLAchievements::Collectable::Planets, planets);
+                        RLAchievements::checkAll(RLAchievements::Collectable::Coins, coins);
+
+                        Mod::get()->setSavedValue<int>("points", points);
+                        Mod::get()->setSavedValue<int>("stars", stars);
+                        Mod::get()->setSavedValue<int>("planets", planets);
+                        Mod::get()->setSavedValue<int>("coins", coins);
                   }
 
                   page->loadBadgeFromUserInfo();

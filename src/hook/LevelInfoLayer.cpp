@@ -5,6 +5,7 @@
 
 #include "../level/RLCommunityVotePopup.hpp"
 #include "../level/RLModRatePopup.hpp"
+#include "../custom/RLAchievements.hpp"
 
 using namespace geode::prelude;
 
@@ -485,6 +486,26 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                               if (layerRef && layerRef->m_level) isPlat = layerRef->m_level->isPlatformer();
                               log::info("submitComplete values - stars: {}, planets: {}", responseStars, responsePlanets);
                               int displayReward = (isPlat ? (responsePlanets - difficulty) : (responseStars - difficulty));
+
+                              // Check previous totals and trigger achievements if increased
+                              int oldStars = Mod::get()->getSavedValue<int>("stars", 0);
+                              int oldPlanets = Mod::get()->getSavedValue<int>("planets", 0);
+                              int responseAmount = isPlat ? responsePlanets : responseStars;
+                              int delta = responseAmount - (isPlat ? oldPlanets : oldStars);
+                              int newAmount = (isPlat ? oldPlanets : oldStars) + delta;
+
+                              if (delta > 0) {
+                                    log::info("submitComplete awarded {} {} (old={}, new={})", delta, (isPlat ? "planets" : "spark(s)"), (isPlat ? oldPlanets : oldStars), responseAmount);
+                                    if (isPlat) {
+                                          RLAchievements::onUpdated(RLAchievements::Collectable::Planets, oldPlanets, responsePlanets);
+                                    } else {
+                                          RLAchievements::onUpdated(RLAchievements::Collectable::Sparks, oldStars, responseStars);
+                                    }
+                              }
+
+                              // Also check current totals for retroactive awards
+                              RLAchievements::checkAll(RLAchievements::Collectable::Sparks, responseStars);
+                              RLAchievements::checkAll(RLAchievements::Collectable::Planets, responsePlanets);
 
                               // persist returned totals
                               if (isPlat) {

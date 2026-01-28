@@ -15,6 +15,7 @@
 #include "RLLeaderboardLayer.hpp"
 #include "RLLevelBrowserLayer.hpp"
 #include "RLSearchLayer.hpp"
+#include "../custom/RLAchievements.hpp"
 
 using namespace geode::prelude;
 
@@ -23,13 +24,6 @@ bool RLCreatorLayer::init() {
             return false;
 
       auto winSize = CCDirector::sharedDirector()->getWinSize();
-
-      // test achievements
-      AchievementNotifier::sharedState()->notifyAchievement(
-          "Certified GLC",
-          "Collected 5 Blueprint Points",
-          "RL_blueprintPoint01.png"_spr,
-          true);
 
       // create if moving bg disabled
       if (Mod::get()->getSettingValue<bool>("disableBackground") == true) {
@@ -230,7 +224,7 @@ bool RLCreatorLayer::init() {
 
       // button
       if (Mod::get()->getSavedValue<int>("role") >= 1) {
-            auto addDiagloueBtnSpr = CCSprite::createWithSpriteFrameName("GJ_secretLock4_small_001.png");
+            auto addDiagloueBtnSpr = CCSprite::createWithSpriteFrameName("RL_bob.png"_spr);
             addDiagloueBtnSpr->setOpacity(100);
             auto addDialogueBtn = CCMenuItemSpriteExtra::create(
                 addDiagloueBtnSpr, this, menu_selector(RLCreatorLayer::onSecretDialogueButton));
@@ -434,6 +428,7 @@ void RLCreatorLayer::onAnnoucementButton(CCObject* sender) {
 
                 if (!body.empty()) {
                       MDPopup::create("Rated Layouts Annoucement", body.c_str(), "OK")->show();
+                      RLAchievements::onReward("misc_news", "Sunday Morning", "Check the Rated Layouts Announcement", "RL_BlueCoinUI.png"_spr);
                       if (id) {
                             Mod::get()->setSavedValue<int>("annoucementId", id);
                             // hide badge since the user just viewed the announcement
@@ -489,6 +484,7 @@ void RLCreatorLayer::onUnknownButton(CCObject* sender) {
                       auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 2);
                       dialog->addToMainScene();
                       dialog->animateInRandomSide();
+                      RLAchievements::onReward("misc_creator", "A Fellow Creator", "Talk with the Layout Creator", "RL_BlueCoinUI.png"_spr);
                 }
                 menuItem->setEnabled(true);
           });

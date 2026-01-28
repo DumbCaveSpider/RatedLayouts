@@ -11,6 +11,7 @@
 - Added **Version Checker** to check if you are using the latest version of Rated Layouts mod.
 - Added **Completed** and **Uncompleted** filters in the Custom Search Layer.
 - Added **Coin Rank** in the Difficulty Stats Popup.
+- Added **Custom Achievements**! Collect achievements by completing certain milestones and special interactions.
 - Added Indicators for Top 3 players in the Leaderboard Layer.
 - Change the sprites to be in a spritesheet.
 - Clean-up the Mod Rate Popup code/UI.

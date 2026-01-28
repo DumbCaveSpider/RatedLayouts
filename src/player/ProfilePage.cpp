@@ -7,6 +7,7 @@
 #include "RLDifficultyTotalPopup.hpp"
 #include "RLUserControl.hpp"
 #include "../custom/RLLevelBrowserLayer.hpp"
+#include "../custom/RLAchievements.hpp"
 
 using namespace geode::prelude;
 
@@ -63,7 +64,7 @@ static std::string getUserRoleCachePath_ProfilePage() {
       return geode::utils::string::pathToString(saveDir / "user_role_cache.json");
 }
 
-static void cacheUserProfile_ProfilePage(int accountId, int role, int stars, int planets) {
+static void cacheUserProfile_ProfilePage(int accountId, int role, int stars, int planets, int coins) {
       auto saveDir = dirs::getModsSaveDir();
       auto createDirResult = utils::file::createDirectory(saveDir);
       if (!createDirResult) {
@@ -85,6 +86,7 @@ static void cacheUserProfile_ProfilePage(int accountId, int role, int stars, int
       obj["role"] = role;
       obj["stars"] = stars;
       obj["planets"] = planets;
+      obj["coins"] = coins;
       root[fmt::format("{}", accountId)] = obj;
 
       auto jsonString = root.dump();
@@ -103,6 +105,7 @@ class $modify(RLProfilePage, ProfilePage) {
             int m_points = 0;
             int m_planets = 0;
             int m_stars = 0;
+            int m_coins = 0;
       };
 
       CCMenu* createStatEntry(
@@ -350,12 +353,52 @@ class $modify(RLProfilePage, ProfilePage) {
             int points = json["points"].asInt().unwrapOrDefault();
             int stars = json["stars"].asInt().unwrapOrDefault();
             int role = json["role"].asInt().unwrapOrDefault();
+            int coins = json["coins"].asInt().unwrapOrDefault();
             int planets = json["planets"].asInt().unwrapOrDefault();
             bool isSupporter = json["isSupporter"].asBool().unwrapOrDefault();
+
+            if (m_ownProfile) {
+                  // save current totals for comparison
+                  int newPoints = points;
+                  int newStars = stars;
+                  int newPlanets = planets;
+                  int newCoins = coins;
+
+                  int oldPoints = Mod::get()->getSavedValue<int>("points", 0);
+                  int oldStars = Mod::get()->getSavedValue<int>("stars", 0);
+                  int oldPlanets = Mod::get()->getSavedValue<int>("planets", 0);
+                  int oldCoins = Mod::get()->getSavedValue<int>("coins", 0);
+
+                  if (points > oldPoints) {
+                        RLAchievements::onUpdated(RLAchievements::Collectable::Points, oldPoints, points);
+                  }
+                  if (stars > oldStars) {
+                        RLAchievements::onUpdated(RLAchievements::Collectable::Sparks, oldStars, stars);
+                  }
+                  if (planets > oldPlanets) {
+                        RLAchievements::onUpdated(RLAchievements::Collectable::Planets, oldPlanets, planets);
+                  }
+                  if (coins > oldCoins) {
+                        RLAchievements::onUpdated(RLAchievements::Collectable::Coins, oldCoins, coins);
+                  }
+
+                  // Also check current totals for any retroactive awards
+                  RLAchievements::checkAll(RLAchievements::Collectable::Points, points);
+                  RLAchievements::checkAll(RLAchievements::Collectable::Sparks, stars);
+                  RLAchievements::checkAll(RLAchievements::Collectable::Planets, planets);
+                  RLAchievements::checkAll(RLAchievements::Collectable::Coins, coins);
+
+                  // Persist the new totals so future fetches are compared correctly
+                  Mod::get()->setSavedValue<int>("points", points);
+                  Mod::get()->setSavedValue<int>("stars", stars);
+                  Mod::get()->setSavedValue<int>("planets", planets);
+                  Mod::get()->setSavedValue<int>("coins", coins);
+            }
 
             m_fields->m_stars = stars;
             m_fields->m_planets = planets;
             m_fields->m_points = points;
+            m_fields->m_coins = coins;
 
             m_fields->role = role;
             m_fields->isSupporter = isSupporter;
@@ -385,7 +428,7 @@ class $modify(RLProfilePage, ProfilePage) {
 
             log::info("Profile data - points: {}, stars: {}, planets: {}, supporter: {}", points, stars, planets, isSupporter);
 
-            cacheUserProfile_ProfilePage(m_fields->accountId, role, stars, planets);
+            cacheUserProfile_ProfilePage(m_fields->accountId, role, stars, planets, coins);
 
             if (m_ownProfile) {
                   Mod::get()->setSavedValue("role", m_fields->role);
@@ -528,6 +571,7 @@ class $modify(RLProfilePage, ProfilePage) {
             auto json = jsonRes.unwrap();
             int points = json["points"].asInt().unwrapOrDefault();
             int stars = json["stars"].asInt().unwrapOrDefault();
+            int coins = json["coins"].asInt().unwrapOrDefault();
             int role = json["role"].asInt().unwrapOrDefault();
             int planets = json["planets"].asInt().unwrapOrDefault();
             bool isSupporter = json["isSupporter"].asBool().unwrapOrDefault();
@@ -535,11 +579,12 @@ class $modify(RLProfilePage, ProfilePage) {
             m_fields->m_stars = stars;
             m_fields->m_planets = planets;
             m_fields->m_points = points;
+            m_fields->m_coins = coins;
 
             pageRef->m_fields->role = role;
             pageRef->m_fields->isSupporter = isSupporter;
 
-            cacheUserProfile_ProfilePage(pageRef->m_fields->accountId, role, stars, planets);
+            cacheUserProfile_ProfilePage(pageRef->m_fields->accountId, role, stars, planets, coins);
 
             if (pageRef->m_ownProfile) {
                 Mod::get()->setSavedValue("role", pageRef->m_fields->role);
