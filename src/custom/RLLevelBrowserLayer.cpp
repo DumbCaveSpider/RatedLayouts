@@ -121,8 +121,9 @@ bool RLLevelBrowserLayer::init(GJSearchObject* object) {
             auto layout = ColumnLayout::create();
             contentLayer->setLayout(layout);
             layout->setGap(0.f);
-            layout->setAutoGrowAxis(0.f);
+            layout->setAutoGrowAxis(220.f);
             layout->setAxisReverse(true);
+            layout->setAxisAlignment(AxisAlignment::End);
             auto spinner = LoadingSpinner::create(64.f);
             if (spinner) {
                   spinner->setID("rl-spinner");
@@ -231,6 +232,15 @@ bool RLLevelBrowserLayer::init(GJSearchObject* object) {
             this->fetchLevelsForType(type);
       } else if (m_mode == Mode::Search) {
             if (!m_modeParams.empty()) this->performSearchQuery(m_modeParams);
+      } else if (m_mode == Mode::Account) {
+            int accountId = GJAccountManager::get()->m_accountID;
+            if (!m_modeParams.empty()) {
+                  auto& val = m_modeParams.front().second;
+                  int parsed = 0;
+                  auto res = std::from_chars(val.data(), val.data() + val.size(), parsed);
+                  if (res.ec == std::errc()) accountId = parsed;
+            }
+            this->fetchAccountLevels(accountId);
       }
 
       return true;
@@ -263,6 +273,15 @@ void RLLevelBrowserLayer::onPrevPage(CCObject* sender) {
                         if (res.ec == std::errc()) type = parsed;
                   }
                   this->fetchLevelsForType(type);
+            } else if (m_mode == Mode::Account) {
+                  int accountId = GJAccountManager::get()->m_accountID;
+                  if (!m_modeParams.empty()) {
+                        auto& val = m_modeParams.front().second;
+                        int parsed = 0;
+                        auto res = std::from_chars(val.data(), val.data() + val.size(), parsed);
+                        if (res.ec == std::errc()) accountId = parsed;
+                  }
+                  this->fetchAccountLevels(accountId);
             } else if (m_mode == Mode::Search) {
                   this->performSearchQuery(m_modeParams);
             }
@@ -290,6 +309,15 @@ void RLLevelBrowserLayer::onNextPage(CCObject* sender) {
                         if (res.ec == std::errc()) type = parsed;
                   }
                   this->fetchLevelsForType(type);
+            } else if (m_mode == Mode::Account) {
+                  int accountId = GJAccountManager::get()->m_accountID;
+                  if (!m_modeParams.empty()) {
+                        auto& val = m_modeParams.front().second;
+                        int parsed = 0;
+                        auto res = std::from_chars(val.data(), val.data() + val.size(), parsed);
+                        if (res.ec == std::errc()) accountId = parsed;
+                  }
+                  this->fetchAccountLevels(accountId);
             } else if (m_mode == Mode::Search) {
                   this->performSearchQuery(m_modeParams);
             }
@@ -334,6 +362,15 @@ void RLLevelBrowserLayer::setIDPopupClosed(SetIDPopup* popup, int value) {
                   if (res.ec == std::errc()) type = parsed;
             }
             this->fetchLevelsForType(type);
+      } else if (m_mode == Mode::Account) {
+            int accountId = GJAccountManager::get()->m_accountID;
+            if (!m_modeParams.empty()) {
+                  auto& val = m_modeParams.front().second;
+                  int parsed = 0;
+                  auto res = std::from_chars(val.data(), val.data() + val.size(), parsed);
+                  if (res.ec == std::errc()) accountId = parsed;
+            }
+            this->fetchAccountLevels(accountId);
       } else if (m_mode == Mode::Search) {
             this->performSearchQuery(m_modeParams);
       }
@@ -380,6 +417,19 @@ void RLLevelBrowserLayer::refreshLevels(bool force) {
                   if (res.ec == std::errc()) type = parsed;
             }
             this->fetchLevelsForType(type);
+            return;
+      }
+
+      if (m_mode == Mode::Account) {
+            if (force) m_page = 0;
+            int accountId = GJAccountManager::get()->m_accountID;
+            if (!m_modeParams.empty()) {
+                  auto& val = m_modeParams.front().second;
+                  int parsed = 0;
+                  auto res = std::from_chars(val.data(), val.data() + val.size(), parsed);
+                  if (res.ec == std::errc()) accountId = parsed;
+            }
+            this->fetchAccountLevels(accountId);
             return;
       }
 
@@ -461,6 +511,94 @@ void RLLevelBrowserLayer::fetchLevelsForType(int type) {
                         first = false;
                   }
             }
+            if (!levelIDs.empty()) {
+                  self->m_searchObject = GJSearchObject::create(SearchType::Type19, levelIDs.c_str());
+                  auto glm = GameLevelManager::get();
+                  if (glm) {
+                        glm->m_levelManagerDelegate = self;
+                        glm->getOnlineLevels(self->m_searchObject);
+                  } else {
+                        self->stopLoading();
+                  }
+            } else {
+                  Notification::create("No levels found", NotificationIcon::Warning)->show();
+                  self->stopLoading();
+            }
+      });
+}
+
+// fetch layout ids for a specific account
+void RLLevelBrowserLayer::fetchAccountLevels(int accountId) {
+      m_searchTask.cancel();
+      m_levelCache.clear();
+
+      startLoading();
+      Ref<RLLevelBrowserLayer> self = this;
+      auto req = web::WebRequest();
+      req.param("accountId", numToString(accountId))
+          .param("amount", numToString(PER_PAGE))
+          .param("page", numToString(self->m_page + 1));
+      self->m_searchTask = req.get("https://gdrate.arcticwoof.xyz/getAccountLevels");
+      self->m_searchTask.listen([self](web::WebResponse* res) {
+            if (!self) return;
+            if (!self->getParent() || !self->isRunning()) return;
+            if (!res || !res->ok()) {
+                  Notification::create("Failed to fetch levels", NotificationIcon::Error)->show();
+                  self->stopLoading();
+                  return;
+            }
+            auto jsonRes = res->json();
+            if (!jsonRes) {
+                  Notification::create("Invalid response", NotificationIcon::Error)->show();
+                  self->stopLoading();
+                  return;
+            }
+            auto json = jsonRes.unwrap();
+
+            if (json.contains("page")) {
+                  if (auto p = json["page"].as<int>(); p) {
+                        int srvPage = p.unwrap();
+                        self->m_page = std::max(0, srvPage - 1);
+                  }
+            }
+
+            if (json.contains("total")) {
+                  if (auto tp = json["total"].as<int>(); tp) {
+                        self->m_totalLevels = tp.unwrap();
+                        self->m_totalPages = (self->m_totalLevels + PER_PAGE - 1) / PER_PAGE;
+                  }
+            }
+
+            if (self->m_totalPages < 1) self->m_totalPages = 1;
+
+            if (self->m_page < 0) self->m_page = 0;
+            if (self->m_page >= self->m_totalPages) {
+                  self->m_page = (self->m_totalPages > 0) ? (self->m_totalPages - 1) : 0;
+            }
+            self->updatePageButton();
+
+            std::string levelIDs;
+            bool first = true;
+            if (json.contains("levels")) {
+                  auto arr = json["levels"];
+                  for (auto v : arr) {
+                        auto id = v.as<int>();
+                        if (!id) continue;
+                        if (!first) levelIDs += ",";
+                        levelIDs += numToString(id.unwrap());
+                        first = false;
+                  }
+            } else if (json.contains("levelIds")) {
+                  auto arr = json["levelIds"];
+                  for (auto v : arr) {
+                        auto id = v.as<int>();
+                        if (!id) continue;
+                        if (!first) levelIDs += ",";
+                        levelIDs += numToString(id.unwrap());
+                        first = false;
+                  }
+            }
+
             if (!levelIDs.empty()) {
                   self->m_searchObject = GJSearchObject::create(SearchType::Type19, levelIDs.c_str());
                   auto glm = GameLevelManager::get();

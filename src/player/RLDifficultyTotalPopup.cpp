@@ -182,6 +182,13 @@ bool RLDifficultyTotalPopup::setup() {
       m_rankLabel->setPosition({contentSize.width - 10.f, 15.f});
       m_mainLayer->addChild(m_rankLabel);
 
+      m_coinRankLabel = CCLabelBMFont::create("-", "goldFont.fnt");
+      m_coinRankLabel->setScale(0.4f);
+      m_coinRankLabel->setAnchorPoint({1.f, .5f});
+      m_coinRankLabel->setPosition({contentSize.width - 10.f, 35.f});
+      m_coinRankLabel->setVisible(false);
+      m_mainLayer->addChild(m_coinRankLabel);
+
       if (m_mode == Mode::Planets) {
             setTitle("Rated Layouts Platformer: -");
       } else {
@@ -242,6 +249,7 @@ bool RLDifficultyTotalPopup::setup() {
             }
             // player's rank
             int position = json["position"].asInt().unwrapOrDefault();
+            int coinRank = json["coinRank"].asInt().unwrapOrDefault();
             std::string titlePrefix = self->m_mode == RLDifficultyTotalPopup::Mode::Planets ? "Rated Layouts Platformer: " : "Rated Layouts Classic: ";
             self->setTitle((titlePrefix + numToString(GameToolbox::pointsToString(totalCount))).c_str());
             if (self->m_rankLabel) {
@@ -252,9 +260,14 @@ bool RLDifficultyTotalPopup::setup() {
                         self->m_rankLabel->setVisible(false);
                   }
             }
-            if (self->m_resultsLabel) {
-                  self->m_resultsLabel->removeFromParent();
-                  self->m_resultsLabel = nullptr;
+            // coin rank
+            if (self->m_coinRankLabel) {
+                  if (coinRank > 0) {
+                        self->m_coinRankLabel->setString((std::string("Coin Rank: ") + numToString(coinRank)).c_str());
+                        self->m_coinRankLabel->setVisible(true);
+                  } else {
+                        self->m_coinRankLabel->setVisible(false);
+                  }
             }
             // build UI
             self->buildDifficultyUI(self->m_counts);

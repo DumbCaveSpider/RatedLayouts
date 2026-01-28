@@ -578,6 +578,41 @@ class $modify(LevelCell) {
                                           coinIcon3->setPositionY(coinIcon3->getPositionY() - 5);
                                     }
                               }
+
+                              // Handle pulsing level name for legendary/mythic featured
+                              {
+                                    CCNode* nameNode = nullptr;
+                                    if (m_mainLayer) {
+                                          nameNode = m_mainLayer->getChildByID("level-name");
+                                          if (!nameNode) nameNode = m_mainLayer->getChildByID("level-name-label");
+                                          if (!nameNode) nameNode = m_mainLayer->getChildByID("level-label");
+                                    }
+
+                                    auto nameLabel = typeinfo_cast<CCLabelBMFont*>(nameNode);
+                                    if (featured == 3) {
+                                          if (nameLabel) {
+                                                nameLabel->stopActionByTag(0xF00D);
+                                                auto tintUp = CCTintTo::create(1.f, 150, 220, 255);
+                                                auto tintDown = CCTintTo::create(1.f, 200, 200, 255);
+                                                auto seq = CCSequence::create(tintUp, tintDown, nullptr);
+                                                auto repeat = CCRepeatForever::create(seq);
+                                                repeat->setTag(0xF00D);
+                                                nameLabel->runAction(repeat);
+                                          }
+                                    } else if (featured == 4) {
+                                          if (nameLabel) {
+                                                nameLabel->stopActionByTag(0xF00D);
+                                                auto tintUp = CCTintTo::create(1.f, 255, 220, 150);
+                                                auto tintDown = CCTintTo::create(1.f, 255, 255, 200);
+                                                auto seq = CCSequence::create(tintUp, tintDown, nullptr);
+                                                auto repeat = CCRepeatForever::create(seq);
+                                                repeat->setTag(0xF00D);
+                                                nameLabel->runAction(repeat);
+                                          }
+                                    } else {
+                                          if (nameLabel) nameLabel->stopActionByTag(0xF00D);
+                                    }
+                              }
                         }
                   }
             }
@@ -617,4 +652,67 @@ class $modify(LevelCell) {
                   loadCustomLevelCell(this->m_level->m_levelID);
             }
       }
+
+      // lightweight UI-only update to apply compact view changes without network requests
+      void updateCompactViewInternal() {
+            if (!this->m_mainLayer) return;
+
+            auto difficultyContainer = this->m_mainLayer->getChildByID("difficulty-container");
+            if (!difficultyContainer) return;
+
+            auto difficultySprite = difficultyContainer->getChildByID("difficulty-sprite");
+            if (!difficultySprite) return;
+
+            // coin nodes depending on compact view
+            CCNode* coinIcon1 = nullptr;
+            CCNode* coinIcon2 = nullptr;
+            CCNode* coinIcon3 = nullptr;
+
+            if (!this->m_compactView) {
+                  coinIcon1 = difficultyContainer->getChildByID("coin-icon-1");
+                  coinIcon2 = difficultyContainer->getChildByID("coin-icon-2");
+                  coinIcon3 = difficultyContainer->getChildByID("coin-icon-3");
+            } else {
+                  coinIcon1 = this->m_mainLayer->getChildByID("coin-icon-1");
+                  coinIcon2 = this->m_mainLayer->getChildByID("coin-icon-2");
+                  coinIcon3 = this->m_mainLayer->getChildByID("coin-icon-3");
+            }
+
+            // Adjust difficulty sprite vertical offset when coins are present in non-compact view
+            if ((coinIcon1 || coinIcon2 || coinIcon3) && !this->m_compactView) {
+                  difficultySprite->setPositionY(difficultySprite->getPositionY() + 10);
+            } else {
+                  // try to restore to base position
+                  difficultySprite->setPositionY(5);
+            }
+
+            auto adjustCoin = [this](CCNode* coinNode) {
+                  if (!coinNode) return;
+                  auto coinSprite = typeinfo_cast<CCSprite*>(coinNode);
+                  if (!coinSprite) return;
+
+                  // scale based on compact view
+                  if (this->m_compactView) {
+                        coinSprite->setScale(0.4f);
+                  } else {
+                        coinSprite->setScale(0.6f);
+                  }
+
+                  // adjust Y offset for non-compact view
+                  if (!this->m_compactView) {
+                        coinSprite->setPositionY(coinSprite->getPositionY() - 5);
+                  }
+            };
+
+            adjustCoin(coinIcon1);
+            adjustCoin(coinIcon2);
+            adjustCoin(coinIcon3);
+
+            // re-layout main layer elements if available
+            if (auto ml = this->m_mainLayer) {
+                  ml->updateLayout();
+            }
+      }
 };
+
+

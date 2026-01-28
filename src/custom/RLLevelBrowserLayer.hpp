@@ -12,6 +12,7 @@ class RLLevelBrowserLayer : public CCLayer, public LevelManagerDelegate, public 
             Sent = 2,
             AdminSent = 3,
             Search = 4,
+            Account = 5,
       };
 
       using ParamList = std::vector<std::pair<std::string, std::string>>;
@@ -80,6 +81,7 @@ class RLLevelBrowserLayer : public CCLayer, public LevelManagerDelegate, public 
       // helpers
       void populateFromArray(CCArray* levels);
       void fetchLevelsForType(int type);
+      void fetchAccountLevels(int accountId);
       void updatePageButton();
 
       // UI handlers

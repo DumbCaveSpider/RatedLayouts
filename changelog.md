@@ -3,12 +3,14 @@
 - Ported to Geode v5.0.0
 - Improved **Level Browser**! Now you can search more than **100 levels**!
 - New **Gauntlet Sprites**!
+- Added **Legendary Rated Layouts**. Layouts that are rated Legendary will have a special title animation and particle effects.
 - Added **Epic Layouts Particles** making epic layouts more standout.
 - Added **Customizable Background** in the Rated Layouts Creator Layer and Leaderboard Layer. _(Can be changed in the mod settings)_
 - Added **Rated Layout Browser** button!
 - Added **Coins Verified** status for levels that has verified Blue Coins.
 - Added **Version Checker** to check if you are using the latest version of Rated Layouts mod.
 - Added **Completed** and **Uncompleted** filters in the Custom Search Layer.
+- Added **Coin Rank** in the Difficulty Stats Popup.
 - Added Indicators for Top 3 players in the Leaderboard Layer.
 - Change the sprites to be in a spritesheet.
 - Clean-up the Mod Rate Popup code/UI.

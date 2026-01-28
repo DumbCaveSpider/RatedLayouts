@@ -6,6 +6,7 @@
 #include "BadgesAPI.hpp"
 #include "RLDifficultyTotalPopup.hpp"
 #include "RLUserControl.hpp"
+#include "../custom/RLLevelBrowserLayer.hpp"
 
 using namespace geode::prelude;
 
@@ -566,73 +567,18 @@ class $modify(RLProfilePage, ProfilePage) {
       }
 
       void onLayoutPointsClicked(CCObject* sender) {
-            // disable button when clicked
-            auto menuItem = typeinfo_cast<CCMenuItemSpriteExtra*>(sender);
-            if (menuItem)
-                  menuItem->setEnabled(false);
-
             int accountId = m_fields->accountId;
-            log::info("Fetching account levels for account ID: {}", accountId);
+            auto username = GameLevelManager::sharedState()->tryGetUsername(accountId);
+            if (username.empty()) username = "User";
+            std::string title = fmt::format("{}'s Layouts", username);
 
-            auto task = web::WebRequest()
-                            .param("accountId", accountId)
-                            .get("https://gdrate.arcticwoof.xyz/getAccountLevels");
-
-            Ref<RLProfilePage> pageRef = this;
-
-            task.listen([pageRef, menuItem](web::WebResponse* res) {
-            if (!pageRef) return;
-            if (!res || !res->ok()) {
-                Notification::create("Failed to fetch account levels", NotificationIcon::Error)->show();
-                if (menuItem) menuItem->setEnabled(true);
-                return;
-            }
-
-            auto jsonRes = res->json();
-            if (!jsonRes) {
-                Notification::create("Invalid server response", NotificationIcon::Error)->show();
-                if (menuItem) menuItem->setEnabled(true);
-                return;
-            }
-
-            auto json = jsonRes.unwrap();
-            std::string levelIDs;
-            bool first = true;
-
-            if (json.contains("levels") && json["levels"].isArray()) {
-                log::info("getAccountLevels: using 'levels' array");
-                auto arr = json["levels"].asArray().unwrap();
-                for (auto v : arr) {
-                    auto id = v.as<int>();
-                    if (!id) continue;
-                    if (!first) levelIDs += ",";
-                    levelIDs += numToString(id.unwrap());
-                    first = false;
-                }
-            } else if (json.contains("levelIds") && json["levelIds"].isArray()) {
-                log::info("getAccountLevels: using 'levelIds' array");
-                auto arr = json["levelIds"].asArray().unwrap();
-                for (auto v : arr) {
-                    auto id = v.as<int>();
-                    if (!id) continue;
-                    if (!first) levelIDs += ",";
-                    levelIDs += numToString(id.unwrap());
-                    first = false;
-                }
-            }
-
-            if (!levelIDs.empty()) {
-                if (menuItem) menuItem->setEnabled(true);
-                auto searchObject = GJSearchObject::create(SearchType::Type19, levelIDs);
-                auto browserLayer = LevelBrowserLayer::create(searchObject);
-                auto scene = CCScene::create();
-                scene->addChild(browserLayer);
-                auto transitionFade = CCTransitionFade::create(0.5f, scene);
-                CCDirector::sharedDirector()->pushScene(transitionFade);
-            } else {
-                Notification::create("No levels found for this account", NotificationIcon::Warning)->show();
-                if (menuItem) menuItem->setEnabled(true);
-            } });
+            RLLevelBrowserLayer::ParamList params;
+            params.emplace_back("accountId", numToString(accountId));
+            auto browserLayer = RLLevelBrowserLayer::create(RLLevelBrowserLayer::Mode::Account, params, title);
+            auto scene = CCScene::create();
+            scene->addChild(browserLayer);
+            auto transitionFade = CCTransitionFade::create(0.5f, scene);
+            CCDirector::sharedDirector()->pushScene(transitionFade);
       }
 
       void onBlueprintStars(CCObject* sender) {

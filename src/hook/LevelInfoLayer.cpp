@@ -10,9 +10,12 @@ using namespace geode::prelude;
 
 const int DEV_ACCOUNTID = 7689052;
 
-extern const std::string legendaryPString = "30,2065,2,345,3,75,155,1,156,2,145,30a-1a2a0.3a23a90a40a10a0a15a15a0a0a0a0a0a0a5a3a0a0a1a0a0.533333a0a0.968627a0a1a0a3a1a0a0a1a0a0.4a0a0.313726a0a1a0a0.3a0a0.2a0a0a0a0a0a0a0a0a2a1a0a0a1a25a0a0a0a0a0a0a0a0a0a0a0a0a0a0";
+extern const std::string legendaryPString = "30,2065,2,345,3,75,155,1,156,2,145,30a-1a2a0.3a13a90a40a10a0a15a15a0a0a0a0a0a0a6a3a0a0a0.313726a0a0.615686a0a1a0a1a0a2a1a0a0a0.882353a0a0.878431a0a1a0a1a0a0.3a0a0.2a0a0a0a0a0a0a0a0a2a1a0a0a1a138a0a0a0a0a0a0a0a0a0a0a0a0a0a0";
 extern const std::string mythicPString = "30,2065,2,435,3,75,155,1,156,2,145,30a-1a2a0.3a36a90a40a12a0a15a15a0a0a0a0a0a0a5a3a0a0a0.85098a0a0.807843a0a0.0196078a0a1a0a3a1a0a0a0.988235a0a0.862745a0a0.592157a0a1a0a0.3a0a0.2a0a0a0a0a0a0a0a0a2a1a0a0a1a5a0a0a0a0a0a0a0a0a0a0a0a0a0a0";
 extern const std::string epicPString = "30,2065,2,435,3,75,155,1,156,2,145,30a-1a2a0.3a36a90a40a12a0a15a15a0a0a0a0a0a0a5a3a0a0a0.741176a0a0.74902a0a1a0a1a0a3a1a0a0a0.258824a0a0.87451a0a1a0a1a0a0.3a0a0.2a0a0a0a0a0a0a0a0a2a1a0a0a1a27a0a0a0a0a0a0a0a0a0a0a0a0a0a0";
+
+const std::string legendaryTitlePString = "30,2065,2,345,3,75,155,1,156,2,145,40a-1a1a0.3a-1a90a180a8a0a100a10a0a0a0a0a0a0a20a10a0a0a0.313726a0a0.615686a0a1a0a1a0a10a5a0a0a0.882353a0a0.878431a0a1a0a1a0a0.3a0a0.2a0a0a0a0a0a0a0a0a2a1a0a0a1a25a0a0a0a0a0a0a0a0a0a0a0a0a0a0,211,1";
+const std::string mythicTitlePString = "30,2065,2,345,3,75,155,1,156,2,145,60a-1a1a0.3a-1a90a180a10a0a100a10a0a0a0a0a0a0a10a10a0a0a1a0a0.862745a0a0.588235a0a1a0a1a5a0a0a1a0a1a0a0.784314a0a1a0a0.3a0a0.2a0a0a0a0a0a0a0a0a2a1a0a0a1a173a0a0a0a0a0a0a0a0a0a0a0a0a0a0,211,1";
 
 // helper functions all about caching level rating data
 // get the cache file path
@@ -810,7 +813,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                               newMythicCoin->setID("mythic-featured-coin");
                               difficultySprite2->addChild(newMythicCoin, -1);
 
-                              // add particle (if configured) on top of mythic ring
+                              // add particle on top of mythic ring
                               const std::string& pString = mythicPString;
                               if (!pString.empty()) {
                                     if (auto existingP = newMythicCoin->getChildByID("rating-particles")) {
@@ -839,7 +842,86 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                         if (mythicFeaturedCoin) mythicFeaturedCoin->removeFromParent();
                   }
 
-                  // ensure particles exist for existing epic/legendary/mythic coins
+                  {
+                        CCNode* titleNode = nullptr;
+                        if (layerRef) titleNode = layerRef->getChildByID("title-label");
+                        if (!titleNode && difficultySprite2) titleNode = difficultySprite2->getChildByID("title-label");
+                        auto titleLabel = typeinfo_cast<CCLabelBMFont*>(titleNode);
+                        if (featured == 3) {
+                              if (titleLabel) {
+                                    // stop any existing pulse action
+                                    titleLabel->stopActionByTag(0xF00D);  // food yum
+                                    auto tintUp = CCTintTo::create(1.f, 150, 220, 255);
+                                    auto tintDown = CCTintTo::create(1.f, 200, 200, 255);
+                                    auto seq = CCSequence::create(tintUp, tintDown, nullptr);
+                                    auto repeat = CCRepeatForever::create(seq);
+                                    repeat->setTag(0xF00D);
+                                    titleLabel->runAction(repeat);
+
+                                    if (!Mod::get()->getSettingValue<bool>("disableParticles")) {
+                                          if (layerRef) {
+                                                if (auto existing = layerRef->getChildByID("title-particles")) {
+                                                      existing->removeFromParent();
+                                                }
+
+                                                const std::string& pString = legendaryTitlePString;
+                                                if (!pString.empty()) {
+                                                      ParticleStruct pStruct;
+                                                      GameToolbox::particleStringToStruct(pString, pStruct);
+                                                      CCParticleSystemQuad* particle = GameToolbox::particleFromStruct(pStruct, nullptr, false);
+                                                      if (particle) {
+                                                            particle->setID("title-particles"_spr);
+                                                            particle->setPosition(titleLabel->getPosition());
+                                                            layerRef->addChild(particle, 10);
+                                                            particle->resetSystem();
+                                                            particle->update(0.15f);
+                                                            particle->update(0.15f);
+                                                            particle->update(0.15f);
+                                                      }
+                                                }
+                                          }
+                                    }
+                              }
+                        } else if (featured == 4) {
+                              if (titleLabel) {
+                                    titleLabel->stopActionByTag(0xF00D);
+                                    auto tintUp = CCTintTo::create(1.f, 255, 220, 150);
+                                    auto tintDown = CCTintTo::create(1.f, 255, 255, 200);
+                                    auto seq = CCSequence::create(tintUp, tintDown, nullptr);
+                                    auto repeat = CCRepeatForever::create(seq);
+                                    repeat->setTag(0xF00D);
+                                    titleLabel->runAction(repeat);
+
+                                    if (!Mod::get()->getSettingValue<bool>("disableParticles")) {
+                                          if (layerRef) {
+                                                if (auto existing = layerRef->getChildByID("title-particles")) {
+                                                      existing->removeFromParent();
+                                                }
+
+                                                const std::string& pString = mythicTitlePString;
+                                                if (!pString.empty()) {
+                                                      ParticleStruct pStruct;
+                                                      GameToolbox::particleStringToStruct(pString, pStruct);
+                                                      CCParticleSystemQuad* particle = GameToolbox::particleFromStruct(pStruct, nullptr, false);
+                                                      if (particle) {
+                                                            particle->setID("title-particles"_spr);
+                                                            particle->setPosition(titleLabel->getPosition());
+                                                            layerRef->addChild(particle, 10);
+                                                            particle->resetSystem();
+                                                            particle->update(0.15f);
+                                                            particle->update(0.15f);
+                                                            particle->update(0.15f);
+                                                      }
+                                                }
+                                          }
+                                    }
+                              }
+                        } else {
+                              if (titleLabel) titleLabel->stopActionByTag(0xF00D);
+                              if (layerRef && layerRef->getChildByID("title-particles")) layerRef->getChildByID("title-particles")->removeFromParent();
+                        }
+                  }
+
                   if (featured == 2) {
                         if (epicFeaturedCoin) {
                               if (!epicFeaturedCoin->getChildByID("rating-particles")) {
@@ -967,10 +1049,9 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             log::debug("repositionRLStars callback scheduled");
       }
 
-      void processLevelUpdateWithDifficulty(const matjson::Value& json,
-                                            Ref<RLLevelInfoLayer> layerRef,
-                                            bool forceShow = false) {
+      void processLevelUpdateWithDifficulty(const matjson::Value& json, Ref<RLLevelInfoLayer> layerRef, bool forceShow = false) {
             int difficulty = json["difficulty"].asInt().unwrapOrDefault();
+            int featured = json["featured"].asInt().unwrapOrDefault();
 
             // handle community vote button visibility when level updates are fetched
             bool showCommunity = forceShow;
@@ -1255,6 +1336,87 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   if (epicFeatureCoin) epicFeatureCoin->setPosition({cx, cy});
                   if (legendaryFeatureCoin) legendaryFeatureCoin->setPosition({cx, cy});
                   if (mythicFeatureCoin) mythicFeatureCoin->setPosition({cx, cy});
+
+                  // Handle pulsing title for legendary featured
+                  {
+                        CCNode* titleNode = nullptr;
+                        if (layerRef) titleNode = layerRef->getChildByID("title-label");
+                        if (!titleNode && difficultySprite) titleNode = difficultySprite->getChildByID("title-label");
+                        auto titleLabel = typeinfo_cast<CCLabelBMFont*>(titleNode);
+                        if (featured == 3) {
+                              if (titleLabel) {
+                                    titleLabel->stopActionByTag(0xF00D);
+                                    auto tintUp = CCTintTo::create(1.0f, 150, 220, 255);
+                                    auto tintDown = CCTintTo::create(1.0f, 200, 200, 255);
+                                    auto seq = CCSequence::create(tintUp, tintDown, nullptr);
+                                    auto repeat = CCRepeatForever::create(seq);
+                                    repeat->setTag(0xF00D);
+                                    titleLabel->runAction(repeat);
+
+                                    if (!Mod::get()->getSettingValue<bool>("disableParticles")) {
+                                          // particle effect to the title label position
+                                          if (layerRef) {
+                                                if (auto existing = layerRef->getChildByID("title-particles")) {
+                                                      existing->removeFromParent();
+                                                }
+
+                                                const std::string& pString = legendaryTitlePString;
+                                                if (!pString.empty()) {
+                                                      ParticleStruct pStruct;
+                                                      GameToolbox::particleStringToStruct(pString, pStruct);
+                                                      CCParticleSystemQuad* particle = GameToolbox::particleFromStruct(pStruct, nullptr, false);
+                                                      if (particle) {
+                                                            particle->setID("title-particles"_spr);
+                                                            particle->setPosition(titleLabel->getPosition());
+                                                            layerRef->addChild(particle, 10);
+                                                            particle->resetSystem();
+                                                            particle->update(0.15f);
+                                                            particle->update(0.15f);
+                                                            particle->update(0.15f);
+                                                      }
+                                                }
+                                          }
+                                    }
+                              }
+                        } else if (featured == 4) {
+                              if (titleLabel) {
+                                    titleLabel->stopActionByTag(0xF00D);
+                                    auto tintUp = CCTintTo::create(1.0f, 255, 220, 150);
+                                    auto tintDown = CCTintTo::create(1.0f, 255, 255, 200);
+                                    auto seq = CCSequence::create(tintUp, tintDown, nullptr);
+                                    auto repeat = CCRepeatForever::create(seq);
+                                    repeat->setTag(0xF00D);
+                                    titleLabel->runAction(repeat);
+
+                                    if (!Mod::get()->getSettingValue<bool>("disableParticles")) {
+                                          if (layerRef) {
+                                                if (auto existing = layerRef->getChildByID("title-particles")) {
+                                                      existing->removeFromParent();
+                                                }
+
+                                                const std::string& pString = mythicTitlePString;
+                                                if (!pString.empty()) {
+                                                      ParticleStruct pStruct;
+                                                      GameToolbox::particleStringToStruct(pString, pStruct);
+                                                      CCParticleSystemQuad* particle = GameToolbox::particleFromStruct(pStruct, nullptr, false);
+                                                      if (particle) {
+                                                            particle->setID("title-particles"_spr);
+                                                            particle->setPosition(titleLabel->getPosition());
+                                                            layerRef->addChild(particle, 10);
+                                                            particle->resetSystem();
+                                                            particle->update(0.15f);
+                                                            particle->update(0.15f);
+                                                            particle->update(0.15f);
+                                                      }
+                                                }
+                                          }
+                                    }
+                              }
+                        } else {
+                              if (titleLabel) titleLabel->stopActionByTag(0xF00D);
+                              if (layerRef && layerRef->getChildByID("title-particles")) layerRef->getChildByID("title-particles")->removeFromParent();
+                        }
+                  }
 
                   // delayed reposition for stars after frame update to ensure
                   // proper positioning

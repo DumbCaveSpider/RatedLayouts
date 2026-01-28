@@ -13,8 +13,8 @@
 #include "RLDonationPopup.hpp"
 #include "RLGauntletSelectLayer.hpp"
 #include "RLLeaderboardLayer.hpp"
-#include "RLSearchLayer.hpp"
 #include "RLLevelBrowserLayer.hpp"
+#include "RLSearchLayer.hpp"
 
 using namespace geode::prelude;
 
@@ -23,6 +23,13 @@ bool RLCreatorLayer::init() {
             return false;
 
       auto winSize = CCDirector::sharedDirector()->getWinSize();
+
+      // test achievements
+      AchievementNotifier::sharedState()->notifyAchievement(
+          "Certified GLC",
+          "Collected 5 Blueprint Points",
+          "RL_blueprintPoint01.png"_spr,
+          true);
 
       // create if moving bg disabled
       if (Mod::get()->getSettingValue<bool>("disableBackground") == true) {

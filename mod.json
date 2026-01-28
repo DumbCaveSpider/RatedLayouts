@@ -145,6 +145,12 @@
 			"default": false,
 			"description": "Disables the mod info shown in the Rated Layouts Creator Layer."
 		},
+		"disableParticles": {
+			"name": "Disable Title Particles",
+			"type": "bool",
+			"default": false,
+			"description": "Disables particle effects in Legendary+ Rated Layouts Level Name Title. <cy>Enable this setting if you experience performance issues.</cy>"
+		},
 		"titleAdvanced": {
 			"type": "title",
 			"name": "Advanced Settings"
