@@ -652,67 +652,6 @@ class $modify(LevelCell) {
                   loadCustomLevelCell(this->m_level->m_levelID);
             }
       }
-
-      // lightweight UI-only update to apply compact view changes without network requests
-      void updateCompactViewInternal() {
-            if (!this->m_mainLayer) return;
-
-            auto difficultyContainer = this->m_mainLayer->getChildByID("difficulty-container");
-            if (!difficultyContainer) return;
-
-            auto difficultySprite = difficultyContainer->getChildByID("difficulty-sprite");
-            if (!difficultySprite) return;
-
-            // coin nodes depending on compact view
-            CCNode* coinIcon1 = nullptr;
-            CCNode* coinIcon2 = nullptr;
-            CCNode* coinIcon3 = nullptr;
-
-            if (!this->m_compactView) {
-                  coinIcon1 = difficultyContainer->getChildByID("coin-icon-1");
-                  coinIcon2 = difficultyContainer->getChildByID("coin-icon-2");
-                  coinIcon3 = difficultyContainer->getChildByID("coin-icon-3");
-            } else {
-                  coinIcon1 = this->m_mainLayer->getChildByID("coin-icon-1");
-                  coinIcon2 = this->m_mainLayer->getChildByID("coin-icon-2");
-                  coinIcon3 = this->m_mainLayer->getChildByID("coin-icon-3");
-            }
-
-            // Adjust difficulty sprite vertical offset when coins are present in non-compact view
-            if ((coinIcon1 || coinIcon2 || coinIcon3) && !this->m_compactView) {
-                  difficultySprite->setPositionY(difficultySprite->getPositionY() + 10);
-            } else {
-                  // try to restore to base position
-                  difficultySprite->setPositionY(5);
-            }
-
-            auto adjustCoin = [this](CCNode* coinNode) {
-                  if (!coinNode) return;
-                  auto coinSprite = typeinfo_cast<CCSprite*>(coinNode);
-                  if (!coinSprite) return;
-
-                  // scale based on compact view
-                  if (this->m_compactView) {
-                        coinSprite->setScale(0.4f);
-                  } else {
-                        coinSprite->setScale(0.6f);
-                  }
-
-                  // adjust Y offset for non-compact view
-                  if (!this->m_compactView) {
-                        coinSprite->setPositionY(coinSprite->getPositionY() - 5);
-                  }
-            };
-
-            adjustCoin(coinIcon1);
-            adjustCoin(coinIcon2);
-            adjustCoin(coinIcon3);
-
-            // re-layout main layer elements if available
-            if (auto ml = this->m_mainLayer) {
-                  ml->updateLayout();
-            }
-      }
 };
 
 
