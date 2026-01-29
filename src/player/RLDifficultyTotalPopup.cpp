@@ -1,4 +1,5 @@
 #include "RLDifficultyTotalPopup.hpp"
+#include "../custom/RLAchievements.hpp"
 
 #include <unordered_map>
 using namespace geode::prelude;
@@ -268,6 +269,11 @@ bool RLDifficultyTotalPopup::setup() {
                   } else {
                         self->m_coinRankLabel->setVisible(false);
                   }
+            }
+
+            // if extreme demon completed, award achievement
+            if (counts.find(30) != counts.end() && counts[30] > 0) {
+                  RLAchievements::onReward("misc_extreme");
             }
             // build UI
             self->buildDifficultyUI(self->m_counts);

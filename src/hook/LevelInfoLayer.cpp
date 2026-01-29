@@ -482,6 +482,11 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                                     log::warn("No stars or planets rewarded, possibly already rewarded before");
                                     return;
                               }
+
+                              if (responseStars == 30 || responsePlanets == 30) {
+                                    RLAchievements::onReward("misc_extreme");
+                              }
+                              
                               bool isPlat = false;
                               if (layerRef && layerRef->m_level) isPlat = layerRef->m_level->isPlatformer();
                               log::info("submitComplete values - stars: {}, planets: {}", responseStars, responsePlanets);

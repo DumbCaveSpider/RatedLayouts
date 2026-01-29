@@ -152,6 +152,10 @@ class $modify(EndLevelLayer) {
                   int starReward = std::max(0, difficulty);
                   log::debug("Star reward amount: {}", starReward);
 
+                  if (starReward == 30) {
+                        RLAchievements::onReward("misc_extreme");
+                  }
+
                   int accountId = GJAccountManager::get()->m_accountID;
                   std::string argonToken =
                       Mod::get()->getSavedValue<std::string>("argon_token");

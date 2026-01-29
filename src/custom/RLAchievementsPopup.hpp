@@ -19,6 +19,7 @@ private:
     GJCommentListLayer* m_commentList = nullptr;
     ScrollLayer* m_scrollLayer = nullptr;
     CCMenu* m_tabMenu = nullptr;
+    CCLabelBMFont* m_statusLabel = nullptr;
     int m_selectedTab = 0;
     std::vector<std::string> m_tabNames = {"All", "Sparks", "Planets", "Coins", "Blueprints", "Misc"};
 };

@@ -203,7 +203,7 @@ void RLLeaderboardLayer::onInfoButton(CCObject* sender) {
           "- <cb>Blue Coins</c> are earned by collecting them while playing in Rated Layouts levels.\n"
           "- <cf>Blueprint Points</c> are earned based on the how many rated layouts levels you have in your account and users who are excluded won't be affected from this leaderboard.\n\n"
           "Getting a <cs>Normal Rated Layout</c> earn you 1 point, <cg>Featured Rated Layouts</c> level earns you 2 points, <cp>Epic Rated Layout</c> levels earn you 3 points and <cd>Legendary Rated Layout</c> levels earn you 4 points\n\n"
-          "<cd>Legendary</c> layouts are only awarded by <cf>**ArcticWoof**</c> himself, <cr>Layout Admins can not set new Legendary or Mythic Layouts</c>.\n\n"
+          "<cd>Legendary</c> layouts are only awarded by <cf>**ArcticWoof**</c> himself, <cr>Layout Admins can not set new Legendary Layouts</c>.\n\n"
           "### Any <cr>unfair</c> means of obtaining these stars <cy>(eg. instant complete, noclipping, secret way)</c> will result in an <cr>exclusion from the leaderboard and there will be NO APPEALS!</c> Each completion are <co>publicly logged</c> for this purpose.\n\n",
           "OK")
           ->show();

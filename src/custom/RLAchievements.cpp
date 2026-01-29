@@ -85,6 +85,7 @@ void RLAchievements::init() {
                 {"misc_support", "#1 Layout Supporter", "Support Rated Layouts on Ko-Fi", RLAchievements::Collectable::Misc, 1, "RL_badgeSupporter.png"_spr},
                 {"misc_report", "Vigilant Citizen", "Make a valid Report on a Layout", RLAchievements::Collectable::Misc, 10, "RL_bob.png"_spr},
                 {"misc_arcticwoof", "Look it's Fake RobTop!", "Find the Rated Layouts Owner", RLAchievements::Collectable::Misc, 1, "RL_arcticwoof.png"_spr},
+                {"misc_extreme", "TOP ONE LAYOUT LIST!", "Complete an Extreme Demon Rated Layout", RLAchievements::Collectable::Misc, 1, "diffIcon_10_btn_001.png"},
             };
             s_achievementsDict = CCDictionary::create();
             s_achievementsDict->retain();

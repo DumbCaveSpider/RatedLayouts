@@ -61,6 +61,19 @@ void RLAchievementsPopup::populate(int tabIndex) {
 
       auto all = RLAchievements::getAll();
       int displayIndex = 0;
+
+      // compute totals for this tab/category
+      int totalCount = 0;
+      int unlockedCount = 0;
+      for (auto const& ach : all) {
+            if (tabIndex != 0) {
+                  auto type = tabIndexToType(tabIndex);
+                  if (ach.type != type) continue;
+            }
+            totalCount++;
+            if (RLAchievements::isAchieved(ach.id)) unlockedCount++;
+      }
+
       for (auto const& ach : all) {
             if (tabIndex != 0) {
                   auto type = tabIndexToType(tabIndex);
@@ -84,6 +97,14 @@ void RLAchievementsPopup::populate(int tabIndex) {
       }
 
       content->updateLayout();
+
+      // update status label
+      if (m_statusLabel) {
+            int pct = totalCount ? (unlockedCount * 100 / totalCount) : 0;
+            std::string status = std::string("Completed: ") + numToString(unlockedCount) + " / " + numToString(totalCount) + " (" + numToString(pct) + "%)";
+            m_statusLabel->setString(status.c_str());
+      }
+
       if (m_scrollLayer) m_scrollLayer->scrollToTop();
 }
 
@@ -131,6 +152,13 @@ bool RLAchievementsPopup::setup() {
             layout->setAutoGrowAxis(200.f);
             layout->setAxisReverse(true);
             contentLayer->setLayout(layout);
+      }
+
+      m_statusLabel = CCLabelBMFont::create("", "goldFont.fnt");
+      if (m_statusLabel) {
+            m_statusLabel->setPosition({m_mainLayer->getContentSize().width / 2.f, 10.f});
+            m_statusLabel->setScale(0.3f);
+            m_mainLayer->addChild(m_statusLabel, 2);
       }
 
       populate(0);  // All
