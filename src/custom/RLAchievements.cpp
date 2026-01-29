@@ -40,17 +40,17 @@ void RLAchievements::init() {
 
                 // Planets achievements
                 {"planet_1", "This isn't moons!", "Collect your First Planet", RLAchievements::Collectable::Planets, 1, "RL_planetBig.png"_spr},
-                {"planet_10", "Explorer", "Collected 10 Planets", RLAchievements::Collectable::Planets, 10, "RL_planetBig.png"_spr},
-                {"planet_50", "Planet Hopper", "Collected 50 Planets", RLAchievements::Collectable::Planets, 50, "RL_planetBig.png"_spr},
-                {"planet_100", "Solar System", "Collected 100 Planets", RLAchievements::Collectable::Planets, 100, "RL_planetBig.png"_spr},
-                {"planet_250", "Outer Space", "Collected 250 Planets", RLAchievements::Collectable::Planets, 250, "RL_planetBig.png"_spr},
+                {"planet_10", "Is this the Moon?... wait no", "Collected 10 Planets", RLAchievements::Collectable::Planets, 10, "RL_planetBig.png"_spr},
+                {"planet_50", "Definitely not Moons", "Collected 50 Planets", RLAchievements::Collectable::Planets, 50, "RL_planetBig.png"_spr},
+                {"planet_100", "This planet is flat", "Collected 100 Planets", RLAchievements::Collectable::Planets, 100, "RL_planetBig.png"_spr},
+                {"planet_250", "MORE ROOMS LEVELS!", "Collected 250 Planets", RLAchievements::Collectable::Planets, 250, "RL_planetBig.png"_spr},
                 {"planet_500", "Saturn Cows", "Collected 500 Planets", RLAchievements::Collectable::Planets, 500, "RL_planetBig.png"_spr},
-                {"planet_750", "Exoplanet", "Collected 750 Planets", RLAchievements::Collectable::Planets, 750, "RL_planetBig.png"_spr},
-                {"planet_1000", "Planetary Pro", "Collected 1000 Planets", RLAchievements::Collectable::Planets, 1000, "RL_planetBig.png"_spr},
-                {"planet_2500", "Interstellar", "Collected 2500 Planets", RLAchievements::Collectable::Planets, 2500, "RL_planetBig.png"_spr},
-                {"planet_5000", "Event Horizon", "Collected 5000 Planets", RLAchievements::Collectable::Planets, 5000, "RL_planetBig.png"_spr},
-                {"planet_10000", "Supernova", "Collected 10000 Planets", RLAchievements::Collectable::Planets, 10000, "RL_planetBig.png"_spr},
-                {"planet_20000", "Milky Way", "Collected 20000 Planets", RLAchievements::Collectable::Planets, 20000, "RL_planetBig.png"_spr},
+                {"planet_750", "Opposite of Moons", "Collected 750 Planets", RLAchievements::Collectable::Planets, 750, "RL_planetBig.png"_spr},
+                {"planet_1000", "Dragonix's Grindset", "Collected 1000 Planets", RLAchievements::Collectable::Planets, 1000, "RL_planetBig.png"_spr},
+                {"planet_2500", "Need more platformers...", "Collected 2500 Planets", RLAchievements::Collectable::Planets, 2500, "RL_planetBig.png"_spr},
+                {"planet_5000", "31 Jolly Planets", "Collected 5000 Planets", RLAchievements::Collectable::Planets, 5000, "RL_planetBig.png"_spr},
+                {"planet_10000", "Found my Dad!", "Collected 10000 Planets", RLAchievements::Collectable::Planets, 10000, "RL_planetBig.png"_spr},
+                {"planet_20000", "Layback Planet", "Collected 20000 Planets", RLAchievements::Collectable::Planets, 20000, "RL_planetBig.png"_spr},
 
                 // Coins achievements
                 {"coin_5", "Did they just paint it blue?!", "Collected 5 Blue Coin", RLAchievements::Collectable::Coins, 5, "RL_BlueCoinUI.png"_spr},
@@ -72,6 +72,7 @@ void RLAchievements::init() {
                 // misc achievements
                 {"misc_news", "Layouts Out Loud", "Check the Rated Layouts Announcement", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
                 {"misc_credits", "The Team Behind It All", "View the Rated Layouts Credits", RLAchievements::Collectable::Misc, 1, "RL_creditsIcon.png"_spr},
+                {"misc_event", "Eventful Layouts", "Play the current Event Layouts", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
                 {"misc_custom_bg", "Personal Stylist", "Set a Custom Background or Ground", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
                 {"misc_creator_1", "A Fellow Creator", "Talk to the Layout Creator for the first time", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
                 {"misc_creator_25", "Layout entrepreneur", "Talk to the Layout Creator 25 times", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
@@ -82,7 +83,8 @@ void RLAchievements::init() {
                 {"misc_salt", "SALT finally rated", "but is it verified?", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
                 {"misc_moderator", "GD Mod Simulator", "Become a Layout Moderator", RLAchievements::Collectable::Misc, 1, "RL_badgeMod01.png"_spr},
                 {"misc_support", "#1 Layout Supporter", "Support Rated Layouts on Ko-Fi", RLAchievements::Collectable::Misc, 1, "RL_badgeSupporter.png"_spr},
-                {"misc_report", "Vigilant Citizen", "Report a Layouts", RLAchievements::Collectable::Misc, 10, "RL_bob.png"_spr},
+                {"misc_report", "Vigilant Citizen", "Make a valid Report on a Layout", RLAchievements::Collectable::Misc, 10, "RL_bob.png"_spr},
+                {"misc_arcticwoof", "Look it's Fake RobTop!", "Find the Rated Layouts Owner", RLAchievements::Collectable::Misc, 1, "RL_arcticwoof.png"_spr},
             };
             s_achievementsDict = CCDictionary::create();
             s_achievementsDict->retain();

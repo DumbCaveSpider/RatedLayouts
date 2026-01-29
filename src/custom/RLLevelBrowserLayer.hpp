@@ -29,6 +29,7 @@ class RLLevelBrowserLayer : public CCLayer, public LevelManagerDelegate, public 
       void stopLoading();
 
       virtual void onEnter() override;
+      virtual void onExit() override;
       virtual void update(float dt) override;
 
       void performSearchQuery(ParamList const& params);
@@ -57,7 +58,13 @@ class RLLevelBrowserLayer : public CCLayer, public LevelManagerDelegate, public 
       Mode m_mode = Mode::Featured;
       ParamList m_modeParams;
       utils::web::WebTask m_searchTask;
-      ~RLLevelBrowserLayer() { m_searchTask.cancel(); }
+      ~RLLevelBrowserLayer() { 
+            m_searchTask.cancel();
+            auto glm = GameLevelManager::get();
+            if (glm && glm->m_levelManagerDelegate == this) {
+                  glm->m_levelManagerDelegate = nullptr;
+            }
+      }
 
       // UI: tabs and search input
       TabButton* m_featuredTab;

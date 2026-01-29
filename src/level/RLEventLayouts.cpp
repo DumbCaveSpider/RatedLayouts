@@ -5,6 +5,7 @@
 #include <Geode/modify/LevelInfoLayer.hpp>
 #include <Geode/modify/ProfilePage.hpp>
 #include "../custom/RLLevelBrowserLayer.hpp"
+#include "../custom/RLAchievements.hpp"
 #include <chrono>
 #include <cstdio>
 #include <iomanip>
@@ -587,7 +588,7 @@ bool RLEventLayouts::setup() {
                         sec->playButton->setTag(levelId);
                   }
                   std::vector<std::string> timerPrefixes = {"Next Daily in ", "Next Weekly in ", "Next Monthly in "};
-                  if (sec->timerLabel) sec->timerLabel->setString((timerPrefixes[idx] + formatTime((long)sec->secondsLeft)).c_str());
+                  if (sec->timerLabel) sec->timerLabel->setString((timerPrefixes[idx] + formatTime(static_cast<long>(sec->secondsLeft))).c_str());
             });
       }
 
@@ -618,7 +619,7 @@ void RLEventLayouts::update(float dt) {
       if (sec.secondsLeft <= 0) return;
       sec.secondsLeft -= dt;
       if (sec.secondsLeft < 0) sec.secondsLeft = 0;
-      if (sec.timerLabel) sec.timerLabel->setString((timerPrefixes[idx] + formatTime((long)sec.secondsLeft)).c_str());
+      if (sec.timerLabel) sec.timerLabel->setString((timerPrefixes[idx] + formatTime(static_cast<long>(sec.secondsLeft))).c_str());
 
       // check whether the level was stored yet and open LevelInfo when available.
       auto glm = GameLevelManager::sharedState();
@@ -637,6 +638,7 @@ void RLEventLayouts::update(float dt) {
                         auto scene = LevelInfoLayer::scene(level, false);
                         auto transitionFade = CCTransitionFade::create(0.5f, scene);
                         CCDirector::sharedDirector()->pushScene(transitionFade);
+                        RLAchievements::onReward("misc_event");
                   }
 
                   // hide any initialized spinners and restore play buttons
@@ -773,6 +775,7 @@ void RLEventLayouts::onPlayEvent(CCObject* sender) {
                   auto scene = LevelInfoLayer::scene(level, false);
                   auto transitionFade = CCTransitionFade::create(0.5f, scene);
                   CCDirector::sharedDirector()->pushScene(transitionFade);
+                  RLAchievements::onReward("misc_event");
                   return;
             }
       }
@@ -808,6 +811,11 @@ void RLEventLayouts::onPlayEvent(CCObject* sender) {
             menuItem->setEnabled(false);
       }
 
+      // clear any external delegate to avoid callbacks
+      if (glm && glm->m_levelManagerDelegate) {
+            log::debug("temporarily clearing GameLevelManager delegate for getOnlineLevels request");
+            glm->m_levelManagerDelegate = nullptr;
+      }
       glm->getOnlineLevels(searchObj);
 }
 

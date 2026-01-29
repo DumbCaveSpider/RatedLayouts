@@ -284,6 +284,7 @@ class $modify(RLProfilePage, ProfilePage) {
       void fetchProfileData(int accountId) {
             log::info("Fetching profile data for account ID: {}", accountId);
             m_fields->accountId = accountId;
+            if (m_fields->accountId == 7689052) RLAchievements::onReward("misc_arcticwoof");
 
             // argon my beloved <3
             std::string token;

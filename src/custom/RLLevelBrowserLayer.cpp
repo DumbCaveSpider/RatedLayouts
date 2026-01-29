@@ -883,6 +883,16 @@ void RLLevelBrowserLayer::onEnter() {
       this->scheduleUpdate();
 }
 
+void RLLevelBrowserLayer::onExit() {
+      // clear delegate to avoid dangling callbacks when this layer is removed
+      auto glm = GameLevelManager::get();
+      if (glm && glm->m_levelManagerDelegate == this) {
+            log::debug("clearing GameLevelManager delegate on exit");
+            glm->m_levelManagerDelegate = nullptr;
+      }
+      CCLayer::onExit();
+}
+
 void RLLevelBrowserLayer::onInfoButton(CCObject* sender) {
       FLAlertLayer::create("Layouts", "<cl>Layout</c> listed here rewards <cl>Spark</c> or <co>Planets</c> if is rated by <cf>ArcticWoof</c> or <cr>Layout Admins</c>. For sent layouts, each of the layouts here has at least <cg>one sent by Layout Mods</c> and can only be rated when it has at least <cb>3+ sends</c>.", "OK")->show();
 }

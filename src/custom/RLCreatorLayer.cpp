@@ -186,7 +186,7 @@ bool RLCreatorLayer::init() {
             // position top-right of the icon
             auto size = annouceSpr->getContentSize();
             badgeSpr->setScale(0.5f);
-            badgeSpr->setPosition({size.width - 15, size.height - 15});
+            badgeSpr->setPosition({size.width - 25, size.height - 25});
             badgeSpr->setVisible(false);
             annouceBtn->addChild(badgeSpr, 10);
             m_newsBadge = badgeSpr;
@@ -470,10 +470,15 @@ void RLCreatorLayer::onUnknownButton(CCObject* sender) {
           .listen([self, menuItem](web::WebResponse* res) {
                 if (!self) return;
                 std::string text = "...";  // default text
+                int id = 0;
                 if (res && res->ok()) {
                       auto jsonRes = res->json();
                       if (jsonRes) {
                             auto json = jsonRes.unwrap();
+                            if (json.contains("id")) {
+                                  if (auto i = json["id"].as<int>(); i) id = i.unwrap();
+                            }
+                            log::info("Fetched dialogue id: {}", id);
                             if (auto diag = json["dialogue"].asString(); diag) {
                                   text = diag.unwrap();
                             }
@@ -501,7 +506,7 @@ void RLCreatorLayer::onUnknownButton(CCObject* sender) {
                       Mod::get()->setSavedValue<int>("dialoguesSpoken", Mod::get()->getSavedValue<int>("dialoguesSpoken") + 1);
 
                       // secret message
-                      if (text == "SALT finally rated / But is it verified? / Its the question / And it remains unanswered until someone asks / its creator tells us the truth / Will he answer? / It depends on, if someone asks / Will anyone ask? / We dont know yet / We can only wait and see what happens") {
+                      if (id == 169) {
                             RLAchievements::onReward("misc_salt");
                       }
                       // yap

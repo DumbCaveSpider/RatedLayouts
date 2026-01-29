@@ -197,12 +197,13 @@ void RLLeaderboardLayer::onInfoButton(CCObject* sender) {
       MDPopup::create(
           "Rated Layouts Leaderboard",
           "The leaderboard shows the top players in <cb>Rated Layouts</c> based "
-          "on <cl>Sparks</c>, <co>Planets</c> or <cf>Creator Points</c>. You can view each category by selecting the tabs.\n\n"
-          "- <cl>Sparks</c> are earned by completing a <cb>Classic Rated Layouts</c> level and are only counted when beaten legitimately.\n\n"
-          "- <co>Planets</c> are earned by completing a <cb>Platformer Rated Layouts</c> level and are only counted when beaten legitimately.\n\n"
-          "- <cf>Blueprint Creator Points</c> are earned based on the how many rated layouts levels you have in your account and users who are excluded won't be affected from this leaderboard.\n\n"
-          "Getting a <cs>Normal Rated Layout</c> earn you 1 point, <cg>Featured Rated Layouts</c> level earns you 2 points, <cp>Epic Rated Layout</c> levels earn you 3 points, <cd>Legendary Rated Layout</c> levels earn you 4 points, and <cf>Mythic Rated Layout</c> levels earn you 5 points.\n\n"
-          "<cd>Legendary</c> and <cf>Mythic</c> layouts are only awarded by <cf>**ArcticWoof**</c> himself, <cr>Layout Admins can not set new Legendary or Mythic Layouts</c>.\n\n"
+          "on <cl>Sparks</c>, <co>Planets</c>, <cb>Blue Coins</c> or <cf>Blueprint Points</c>. You can view each category by selecting the tabs.\n\n"
+          "- <cl>Sparks</c> are earned by completing a <cb>Classic Rated Layouts</c> level and are only counted when beaten legitimately.\n"
+          "- <co>Planets</c> are earned by completing a <cb>Platformer Rated Layouts</c> level and are only counted when beaten legitimately.\n"
+          "- <cb>Blue Coins</c> are earned by collecting them while playing in Rated Layouts levels.\n"
+          "- <cf>Blueprint Points</c> are earned based on the how many rated layouts levels you have in your account and users who are excluded won't be affected from this leaderboard.\n\n"
+          "Getting a <cs>Normal Rated Layout</c> earn you 1 point, <cg>Featured Rated Layouts</c> level earns you 2 points, <cp>Epic Rated Layout</c> levels earn you 3 points and <cd>Legendary Rated Layout</c> levels earn you 4 points\n\n"
+          "<cd>Legendary</c> layouts are only awarded by <cf>**ArcticWoof**</c> himself, <cr>Layout Admins can not set new Legendary or Mythic Layouts</c>.\n\n"
           "### Any <cr>unfair</c> means of obtaining these stars <cy>(eg. instant complete, noclipping, secret way)</c> will result in an <cr>exclusion from the leaderboard and there will be NO APPEALS!</c> Each completion are <co>publicly logged</c> for this purpose.\n\n",
           "OK")
           ->show();
