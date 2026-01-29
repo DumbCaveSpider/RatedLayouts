@@ -15,11 +15,12 @@ private:
 
     void populate(int tabIndex);
     void onTab(CCObject* sender);
+    void onInfo(CCObject* sender);
 
     GJCommentListLayer* m_commentList = nullptr;
     ScrollLayer* m_scrollLayer = nullptr;
     CCMenu* m_tabMenu = nullptr;
     CCLabelBMFont* m_statusLabel = nullptr;
     int m_selectedTab = 0;
-    std::vector<std::string> m_tabNames = {"All", "Sparks", "Planets", "Coins", "Blueprints", "Misc"};
+    std::vector<std::string> m_tabNames = {"All", "Sparks", "Planets", "Coins", "Blueprints", "Votes", "Misc"};
 };

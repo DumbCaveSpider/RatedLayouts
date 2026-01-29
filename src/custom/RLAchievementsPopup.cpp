@@ -27,6 +27,8 @@ static RLAchievements::Collectable tabIndexToType(int idx) {
             case 4:
                   return RLAchievements::Collectable::Points;
             case 5:
+                  return RLAchievements::Collectable::Votes;
+            case 6:
                   return RLAchievements::Collectable::Misc;
             default:
                   return RLAchievements::Collectable::Sparks;  // unused for All
@@ -111,20 +113,29 @@ void RLAchievementsPopup::populate(int tabIndex) {
 bool RLAchievementsPopup::setup() {
 
       setTitle("Rated Layouts Achievements");
-      addSideArt(m_mainLayer, SideArt::All, SideArtStyle::PopupGold, false);
 
       m_tabMenu = CCMenu::create();
-      m_tabMenu->setPosition({m_mainLayer->getContentSize().width / 2, m_mainLayer->getContentSize().height - 50.f});
-      m_tabMenu->setContentSize({m_mainLayer->getContentSize().width - 50, 25});
-      m_tabMenu->setLayout(RowLayout::create()
-                               ->setGap(5.f)
+      m_tabMenu->setPosition({m_mainLayer->getContentSize().width - 60, m_mainLayer->getContentSize().height / 2 - 10});
+      m_tabMenu->setContentSize({100, 225});
+      m_tabMenu->setLayout(ColumnLayout::create()
+                               ->setGap(10.f)
                                ->setGrowCrossAxis(true)
-                               ->setCrossAxisOverflow(false));
+                               ->setCrossAxisOverflow(false)
+                               ->setAxisReverse(true));
       m_mainLayer->addChild(m_tabMenu, 1);
+
+      auto infoSpr = CCSprite::createWithSpriteFrameName("RL_info01.png"_spr);
+      infoSpr->setScale(0.75f);
+      auto infoBtn = CCMenuItemSpriteExtra::create(
+          infoSpr,
+          this,
+          menu_selector(RLAchievementsPopup::onInfo));
+      infoBtn->setPosition({m_mainLayer->getContentSize().width, m_mainLayer->getContentSize().height - 3});
+      m_buttonMenu->addChild(infoBtn);
 
       for (unsigned i = 0; i < m_tabNames.size(); ++i) {
             auto name = m_tabNames[i];
-            auto spr = ButtonSprite::create(name.c_str(), "goldFont.fnt", "GJ_button_01.png");
+            auto spr = ButtonSprite::create(name.c_str(), 90, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
             auto item = CCMenuItemSpriteExtra::create(spr, this, menu_selector(RLAchievementsPopup::onTab));
             item->setTag(static_cast<int>(i));
             m_tabMenu->addChild(item);
@@ -137,12 +148,12 @@ bool RLAchievementsPopup::setup() {
             if (initial) onTab(initial);
       }
 
-      auto commentLayer = GJCommentListLayer::create(nullptr, "Rated Layouts Achievements", {191, 114, 62, 255}, 340.f, 200.f, true);
-      commentLayer->setPosition({65.f, 15.f});
+      auto commentLayer = GJCommentListLayer::create(nullptr, "Rated Layouts Achievements", {191, 114, 62, 255}, 340.f, 235.f, true);
+      commentLayer->setPosition({15.f, 15.f});
       m_mainLayer->addChild(commentLayer);
       m_commentList = commentLayer;
 
-      m_scrollLayer = ScrollLayer::create({345.f, 200.f});
+      m_scrollLayer = ScrollLayer::create({340.f, 235.f});
       m_scrollLayer->setPosition({0, 0});
       commentLayer->addChild(m_scrollLayer);
       if (m_scrollLayer && m_scrollLayer->m_contentLayer) {
@@ -151,6 +162,7 @@ bool RLAchievementsPopup::setup() {
             layout->setGap(0.f);
             layout->setAutoGrowAxis(200.f);
             layout->setAxisReverse(true);
+            layout->setAxisAlignment(AxisAlignment::End);
             contentLayer->setLayout(layout);
       }
 
@@ -164,4 +176,13 @@ bool RLAchievementsPopup::setup() {
       populate(0);  // All
 
       return true;
+}
+
+void RLAchievementsPopup::onInfo(CCObject* sender) {
+      FLAlertLayer::create(
+            "Achievements",
+            "Earn achievements by <cg>completing various tasks</c> in <cl>Rated Layouts</c>!\n"
+            "You can view your progress in the <co>Achievements menu</c> and track how close you are to <cb>completing each category.</c>\n",
+            "OK")
+            ->show();
 }

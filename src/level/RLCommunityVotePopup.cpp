@@ -1,4 +1,5 @@
 #include "RLCommunityVotePopup.hpp"
+#include "../custom/RLAchievements.hpp"
 
 using namespace geode::prelude;
 #include <algorithm>
@@ -98,10 +99,22 @@ void RLCommunityVotePopup::onSubmit(CCObject*) {
                             if (success) {
                                   if (!self->m_mainLayer || !self->getParent()) {
                                         Notification::create("Vote submitted!", NotificationIcon::Success)->show();
+                                        // increment community vote achievements progress and notify achievements system
+                                        int oldVotes = Mod::get()->getSavedValue<int>("community_votes");
+                                        int votes = oldVotes + 1;
+                                        Mod::get()->setSavedValue<int>("community_votes", votes);
+                                        log::info("Community votes total submitted: {}", votes);
+                                        RLAchievements::onUpdated(RLAchievements::Collectable::Votes, oldVotes, votes);
                                         return;
                                   }
 
                                   Notification::create("Vote submitted!", NotificationIcon::Success)->show();
+                                  // increment community vote achievements progress and notify achievements system
+                                  int oldVotes = Mod::get()->getSavedValue<int>("community_votes");
+                                  int votes = oldVotes + 1;
+                                  Mod::get()->setSavedValue<int>("community_votes", votes);
+                                  log::info("Community votes total submitted: {}", votes);
+                                  RLAchievements::onUpdated(RLAchievements::Collectable::Votes, oldVotes, votes);
 
                                   // Optimistically mark inputs as VOTED and disable
                                   if (self->m_gameplayInput && gameplayVote > 0) {

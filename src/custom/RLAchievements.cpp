@@ -39,7 +39,7 @@ void RLAchievements::init() {
                 {"spark_100000", "God Of Layouts", "Collected 100000 Sparks", RLAchievements::Collectable::Sparks, 100000, "RL_starBig.png"_spr},
 
                 // Planets achievements
-                {"planet_1", "This isn't moons!", "Collect your First Planet", RLAchievements::Collectable::Planets, 1, "RL_planetBig.png"_spr},
+                {"planet_1", "That's no Moon", "Collect your First Planet", RLAchievements::Collectable::Planets, 1, "RL_planetBig.png"_spr},
                 {"planet_10", "Is this the Moon?... wait no", "Collected 10 Planets", RLAchievements::Collectable::Planets, 10, "RL_planetBig.png"_spr},
                 {"planet_50", "Definitely not Moons", "Collected 50 Planets", RLAchievements::Collectable::Planets, 50, "RL_planetBig.png"_spr},
                 {"planet_100", "This planet is flat", "Collected 100 Planets", RLAchievements::Collectable::Planets, 100, "RL_planetBig.png"_spr},
@@ -73,6 +73,7 @@ void RLAchievements::init() {
                 {"misc_news", "Layouts Out Loud", "Check the Rated Layouts Announcement", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
                 {"misc_credits", "The Team Behind It All", "View the Rated Layouts Credits", RLAchievements::Collectable::Misc, 1, "RL_creditsIcon.png"_spr},
                 {"misc_event", "Eventful Layouts", "Play the current Event Layouts", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
+                {"misc_leaderboard", "Best of the Best", "Be on the Leaderboard", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
                 {"misc_custom_bg", "Personal Stylist", "Set a Custom Background or Ground", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
                 {"misc_creator_1", "A Fellow Creator", "Talk to the Layout Creator for the first time", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
                 {"misc_creator_25", "Layout entrepreneur", "Talk to the Layout Creator 25 times", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
@@ -84,8 +85,17 @@ void RLAchievements::init() {
                 {"misc_moderator", "GD Mod Simulator", "Become a Layout Moderator", RLAchievements::Collectable::Misc, 1, "RL_badgeMod01.png"_spr},
                 {"misc_support", "#1 Layout Supporter", "Support Rated Layouts on Ko-Fi", RLAchievements::Collectable::Misc, 1, "RL_badgeSupporter.png"_spr},
                 {"misc_report", "Vigilant Citizen", "Make a valid Report on a Layout", RLAchievements::Collectable::Misc, 10, "RL_bob.png"_spr},
-                {"misc_arcticwoof", "Look it's Fake RobTop!", "Find the Rated Layouts Owner", RLAchievements::Collectable::Misc, 1, "RL_arcticwoof.png"_spr},
+                {"misc_arcticwoof", "Find the Woof", "Find the Rated Layouts Owner", RLAchievements::Collectable::Misc, 1, "RL_arcticwoof.png"_spr},
                 {"misc_extreme", "TOP ONE LAYOUT LIST!", "Complete an Extreme Demon Rated Layout", RLAchievements::Collectable::Misc, 1, "diffIcon_10_btn_001.png"},
+
+                // community vote achievements
+                {"vote_1", "Civic Layout Duty", "Submit your first vote on a Layout", RLAchievements::Collectable::Votes, 1, "RL_commVote01.png"_spr},
+                {"vote_10", "Democracy in Layouts", "Submit 10 votes on Layouts", RLAchievements::Collectable::Votes, 10, "RL_commVote01.png"_spr},
+                {"vote_50", "Layout Pollster", "Submit 50 votes on Layouts", RLAchievements::Collectable::Votes, 50, "RL_commVote01.png"_spr},
+                {"vote_100", "Holding an Election", "Submit 100 votes on Layouts", RLAchievements::Collectable::Votes, 100, "RL_commVote01.png"_spr},
+                {"vote_250", "Helping out the Poor", "Submit 250 votes on Layouts", RLAchievements::Collectable::Votes, 250, "RL_commVote01.png"_spr},
+                {"vote_500", "You should be a Mod!", "Submit 500 votes on Layouts", RLAchievements::Collectable::Votes, 500, "RL_commVote01.png"_spr},
+                {"vote_1000", "Can I NOW rate layouts?", "Submit 1000 votes on Layouts", RLAchievements::Collectable::Votes, 1000, "RL_commVote01.png"_spr},
             };
             s_achievementsDict = CCDictionary::create();
             s_achievementsDict->retain();

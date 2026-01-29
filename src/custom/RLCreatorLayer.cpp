@@ -233,13 +233,21 @@ bool RLCreatorLayer::init() {
       supportButton->setPosition({creditButton->getPositionX(), creditButton->getPositionY() + 40});
       infoMenu->addChild(supportButton);
 
+      // demonlist
+      auto demonListSpr = CCSpriteGrayscale::createWithSpriteFrameName("RL_demonList01.png"_spr);
+      demonListSpr->setScale(0.7f);
+      auto demonListBtn = CCMenuItemSpriteExtra::create(
+          demonListSpr, this, menu_selector(RLCreatorLayer::onDemonListButton));
+      demonListBtn->setPosition({creditButton->getPositionX(), creditButton->getPositionY() + 80});
+      infoMenu->addChild(demonListBtn);
+
       // button bob
       if (Mod::get()->getSavedValue<int>("role") >= 1) {
             auto addDiagloueBtnSpr = CCSprite::createWithSpriteFrameName("RL_bobBtn01.png"_spr);
             addDiagloueBtnSpr->setScale(0.7f);
             auto addDialogueBtn = CCMenuItemSpriteExtra::create(
                 addDiagloueBtnSpr, this, menu_selector(RLCreatorLayer::onSecretDialogueButton));
-            addDialogueBtn->setPosition({creditButton->getPositionX(), creditButton->getPositionY() + 80});
+            addDialogueBtn->setPosition({creditButton->getPositionX(), creditButton->getPositionY() + 120});
             infoMenu->addChild(addDialogueBtn);
       }
 
@@ -383,6 +391,21 @@ void RLCreatorLayer::onBrowserButton(CCObject* sender) {
                 utils::web::openLinkInBrowser("https://ratedlayouts.arcticwoof.xyz");
                 RLAchievements::onReward("misc_browser");
           });
+}
+
+void RLCreatorLayer::onDemonListButton(CCObject* sender) {
+      DialogObject* dialogObj = DialogObject::create(
+          "Layout Creator",
+          "The <co>Rated Layouts Demonlist</c> isn't done yet...",
+          28,
+          1.f,
+          false,
+          ccWHITE);
+      if (dialogObj) {
+            auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 2);
+            dialog->addToMainScene();
+            dialog->animateInRandomSide();
+      }
 }
 
 void RLCreatorLayer::onLayoutGauntlets(CCObject* sender) {

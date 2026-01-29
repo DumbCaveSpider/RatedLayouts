@@ -589,6 +589,10 @@ class $modify(RLProfilePage, ProfilePage) {
             pageRef->m_fields->role = role;
             pageRef->m_fields->isSupporter = isSupporter;
 
+            if (isSupporter && pageRef->m_ownProfile) {
+                RLAchievements::onReward("misc_support");
+            }
+
             cacheUserProfile_ProfilePage(pageRef->m_fields->accountId, role, stars, planets, coins);
 
             if (pageRef->m_ownProfile) {

@@ -10,6 +10,7 @@ namespace RLAchievements {
         Planets,
         Coins,
         Points,
+        Votes,
         Misc
     };
 
