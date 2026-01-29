@@ -271,9 +271,11 @@ bool RLDifficultyTotalPopup::setup() {
                   }
             }
 
-            // if extreme demon completed, award achievement
-            if (counts.find(30) != counts.end() && counts[30] > 0) {
-                  RLAchievements::onReward("misc_extreme");
+            // icheck for extreme demon achievement
+            if (self->m_accountId == GJAccountManager::get()->m_accountID) {
+                  if (counts.find(30) != counts.end() && counts[30] > 0) {
+                        RLAchievements::onReward("misc_extreme");
+                  }
             }
             // build UI
             self->buildDifficultyUI(self->m_counts);
