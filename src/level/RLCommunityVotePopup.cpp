@@ -242,7 +242,8 @@ bool RLCommunityVotePopup::setup() {
       m_mainLayer->addChild(m_totalVotesLabel, 3);
 
       // info button
-      auto infoSpr = CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png");
+      auto infoSpr = CCSprite::createWithSpriteFrameName("RL_info01.png"_spr);
+      infoSpr->setScale(0.7f);
       auto infoBtn = CCMenuItemSpriteExtra::create(infoSpr, this, menu_selector(RLCommunityVotePopup::onInfo));
       infoBtn->setPosition({25.f, 25.f});
       m_buttonMenu->addChild(infoBtn, 3);

@@ -1,9 +1,9 @@
-#include "RLAnnoucementPopup.hpp"
+#include "RLAnnouncementPopup.hpp"
 
 using namespace geode::prelude;
 
-RLAnnoucementPopup* RLAnnoucementPopup::create() {
-      auto popup = new RLAnnoucementPopup();
+RLAnnouncementPopup* RLAnnouncementPopup::create() {
+      auto popup = new RLAnnouncementPopup();
       if (popup && popup->initAnchored(400.f, 225.f, "GJ_square07.png")) {
             popup->autorelease();
             return popup;
@@ -12,7 +12,7 @@ RLAnnoucementPopup* RLAnnoucementPopup::create() {
       return nullptr;
 }
 
-bool RLAnnoucementPopup::setup() {
+bool RLAnnouncementPopup::setup() {
       auto imageSpr = LazySprite::create({m_mainLayer->getScaledContentSize()}, true);
       imageSpr->loadFromUrl("https://gdrate.arcticwoof.xyz/cdn/gauntletBanner.png", CCImage::kFmtPng, true);
       imageSpr->setAutoResize(true);
@@ -35,7 +35,7 @@ bool RLAnnoucementPopup::setup() {
 
       // button
       auto buttonSpr = ButtonSprite::create("Learn More", "goldFont.fnt", "GJ_button_01.png");
-      auto buttonItem = CCMenuItemSpriteExtra::create(buttonSpr, this, menu_selector(RLAnnoucementPopup::onClick));
+      auto buttonItem = CCMenuItemSpriteExtra::create(buttonSpr, this, menu_selector(RLAnnouncementPopup::onClick));
       buttonItem->setPosition({m_mainLayer->getScaledContentSize().width / 2.f, 0});
       m_buttonMenu->addChild(buttonItem);
 
@@ -43,7 +43,7 @@ bool RLAnnoucementPopup::setup() {
       return true;
 }
 
-void RLAnnoucementPopup::onClick(CCObject* sender) {
+void RLAnnouncementPopup::onClick(CCObject* sender) {
       Notification::create("Opening a new link to the browser", NotificationIcon::Info)->show();
       utils::web::openLinkInBrowser("https://gdrate.arcticwoof.xyz/getRedirectURL");
 }

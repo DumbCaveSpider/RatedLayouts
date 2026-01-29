@@ -86,7 +86,8 @@ bool RLGauntletLevelsLayer::init(matjson::Value const& gauntletData) {
       this->addChild(dragText, 10);
 
       // info
-      auto infoButtonSpr = CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png");
+      auto infoButtonSpr = CCSprite::createWithSpriteFrameName("RL_info01.png"_spr);
+      infoButtonSpr->setScale(0.7f);
       CCMenuItemSpriteExtra* infoButton = CCMenuItemSpriteExtra::create(
           infoButtonSpr, this, menu_selector(RLGauntletLevelsLayer::onGauntletInfo));
       infoButton->setPosition({winSize.width - 25, winSize.height - 25});
@@ -431,32 +432,6 @@ void RLGauntletLevelsLayer::ccTouchesBegan(CCSet* touches, CCEvent* event) {
 void RLGauntletLevelsLayer::ccTouchesMoved(CCSet* touches, CCEvent* event) {
       if (!m_levelsMenu) return;
 
-      // pinch handling
-      if (m_multiTouch && touches->count() >= 2) {
-            auto itr = touches->begin();
-            CCTouch* t1 = (CCTouch*)(*itr);
-            ++itr;
-            CCTouch* t2 = (CCTouch*)(*itr);
-            auto p1 = t1->getLocation();
-            auto p2 = t2->getLocation();
-            float currentDist = ccpDistance(p1, p2);
-            if (m_startPinchDist > 1e-3f) {
-                  float factor = currentDist / m_startPinchDist;
-                  float newScale = m_startScale * factor;
-                  newScale = std::max(m_minScale, std::min(m_maxScale, newScale));
-
-                  // keep midpoint stable
-                  auto mid = ccpMult(ccpAdd(p1, p2), 0.5f);
-                  CCPoint localBefore = m_levelsMenu->convertToNodeSpace(mid);
-                  float oldScale = m_levelsMenu->getScale();
-                  m_levelsMenu->setScale(newScale);
-                  CCPoint postWorld = m_levelsMenu->convertToWorldSpace(localBefore);
-                  CCPoint delta = ccpSub(mid, postWorld);
-                  m_levelsMenu->setPosition(ccpAdd(m_levelsMenu->getPosition(), delta));
-                  updateBackgroundParallax(m_levelsMenu->getPosition());
-            }
-            return;
-      }
 
       // single touch dragging
       if (m_dragging) {

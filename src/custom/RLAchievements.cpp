@@ -39,7 +39,10 @@ void RLAchievements::init() {
                 {"spark_100000", "God Of Layouts", "Collected 100000 Sparks", RLAchievements::Collectable::Sparks, 100000, "RL_starBig.png"_spr},
 
                 // Planets achievements
-                {"planet_1", "This is not Moon!", "Collect your First Planet", RLAchievements::Collectable::Planets, 1, "RL_planetBig.png"_spr},
+                {"planet_1", "This isn't moons!", "Collect your First Planet", RLAchievements::Collectable::Planets, 1, "RL_planetBig.png"_spr},
+                {"planet_10", "Explorer", "Collected 10 Planets", RLAchievements::Collectable::Planets, 10, "RL_planetBig.png"_spr},
+                {"planet_50", "Planet Hopper", "Collected 50 Planets", RLAchievements::Collectable::Planets, 50, "RL_planetBig.png"_spr},
+                {"planet_100", "Solar System", "Collected 100 Planets", RLAchievements::Collectable::Planets, 100, "RL_planetBig.png"_spr},
                 {"planet_250", "Outer Space", "Collected 250 Planets", RLAchievements::Collectable::Planets, 250, "RL_planetBig.png"_spr},
                 {"planet_500", "Saturn Cows", "Collected 500 Planets", RLAchievements::Collectable::Planets, 500, "RL_planetBig.png"_spr},
                 {"planet_750", "Exoplanet", "Collected 750 Planets", RLAchievements::Collectable::Planets, 750, "RL_planetBig.png"_spr},

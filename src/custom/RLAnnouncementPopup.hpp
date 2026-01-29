@@ -2,9 +2,9 @@
 
 using namespace geode::prelude;
 
-class RLAnnoucementPopup : public geode::Popup<> {
+class RLAnnouncementPopup : public geode::Popup<> {
      public:
-      static RLAnnoucementPopup* create();
+      static RLAnnouncementPopup* create();
 
      private:
       bool setup() override;

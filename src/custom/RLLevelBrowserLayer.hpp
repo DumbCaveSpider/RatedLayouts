@@ -13,6 +13,7 @@ class RLLevelBrowserLayer : public CCLayer, public LevelManagerDelegate, public 
             AdminSent = 3,
             Search = 4,
             Account = 5,
+            EventSafe = 6,
       };
 
       using ParamList = std::vector<std::pair<std::string, std::string>>;

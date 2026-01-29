@@ -324,7 +324,15 @@ bool RLSearchLayer::init() {
       optionsMenuBg->setPosition(optionsMenu->getPosition());
       optionsMenuBg->setOpacity(100);
       this->addChild(optionsMenuBg, -1);
-
+      
+      // awarded button toggle
+      auto awardedSpr = ButtonSprite::create("Awarded", "goldFont.fnt", "GJ_button_01.png");
+      auto awardedItem = CCMenuItemSpriteExtra::create(awardedSpr, this, menu_selector(RLSearchLayer::onAwardedToggle));
+      awardedItem->setScale(1.0f);
+      awardedItem->setID("awarded-toggle");
+      m_awardedItem = awardedItem;
+      optionsMenu->addChild(awardedItem);
+      
       // featured button toggle
       auto featuredSpr = ButtonSprite::create("Featured", "goldFont.fnt", "GJ_button_01.png");  // Use a single sprite button as a menu item instead of a toggler
       auto featuredItem = CCMenuItemSpriteExtra::create(featuredSpr, this, menu_selector(RLSearchLayer::onFeaturedToggle));
@@ -333,13 +341,6 @@ bool RLSearchLayer::init() {
       m_featuredItem = featuredItem;
       optionsMenu->addChild(featuredItem);
 
-      // awarded button toggle
-      auto awardedSpr = ButtonSprite::create("Awarded", "goldFont.fnt", "GJ_button_01.png");
-      auto awardedItem = CCMenuItemSpriteExtra::create(awardedSpr, this, menu_selector(RLSearchLayer::onAwardedToggle));
-      awardedItem->setScale(1.0f);
-      awardedItem->setID("awarded-toggle");
-      m_awardedItem = awardedItem;
-      optionsMenu->addChild(awardedItem);
 
       // epic button toggle
       auto epicSpr = ButtonSprite::create("Epic", "goldFont.fnt", "GJ_button_01.png");
@@ -348,7 +349,13 @@ bool RLSearchLayer::init() {
       epicItem->setID("epic-toggle");
       m_epicItem = epicItem;
       optionsMenu->addChild(epicItem);
-
+      // legendary button toggle
+      auto legendarySpr = ButtonSprite::create("Legendary", "goldFont.fnt", "GJ_button_01.png");
+      auto legendaryItem = CCMenuItemSpriteExtra::create(legendarySpr, this, menu_selector(RLSearchLayer::onLegendaryToggle));
+      legendaryItem->setScale(1.0f);
+      legendaryItem->setID("legendary-toggle");
+      m_legendaryItem = legendaryItem;
+      optionsMenu->addChild(legendaryItem);
       // platformer toggle
       auto platformerSpr = ButtonSprite::create("Platformer", "goldFont.fnt", "GJ_button_01.png");
       auto platformerItem = CCMenuItemSpriteExtra::create(platformerSpr, this, menu_selector(RLSearchLayer::onPlatformerToggle));
@@ -403,7 +410,8 @@ bool RLSearchLayer::init() {
       auto infoMenu = CCMenu::create();
       infoMenu->setPosition({0, 0});
       auto infoButtonSpr =
-          CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png");
+          CCSprite::createWithSpriteFrameName("RL_info01.png"_spr);
+      infoButtonSpr->setScale(0.7f);
       auto infoButton = CCMenuItemSpriteExtra::create(
           infoButtonSpr, this, menu_selector(RLSearchLayer::onInfoButton));
       infoButton->setPosition({25, 25});
@@ -463,6 +471,7 @@ void RLSearchLayer::onSearchButton(CCObject* sender) {
       int featuredParam = m_featuredActive ? 1 : 0;
       int awardedParam = m_awardedActive ? 1 : 0;
       int epicParam = m_epicActive ? 1 : 0;
+      int legendaryParam = m_legendaryActive ? 1 : 0;
       int oldestParam = m_oldestActive ? 1 : 0;
       int usernameParam = m_usernameActive ? 1 : 0;
       std::string queryParam = "";
@@ -475,6 +484,7 @@ void RLSearchLayer::onSearchButton(CCObject* sender) {
       if (m_classicActive) params.emplace_back("classic", "1");
       if (m_featuredActive) params.emplace_back("featured", numToString(featuredParam));
       if (m_epicActive) params.emplace_back("epic", numToString(epicParam));
+      if (m_legendaryActive) params.emplace_back("legendary", numToString(legendaryParam));
       if (m_awardedActive) params.emplace_back("awarded", numToString(awardedParam));
       if (m_completedActive) params.emplace_back("completed", "1");
       if (m_uncompletedActive) params.emplace_back("uncompleted", "1");
@@ -520,6 +530,17 @@ void RLSearchLayer::onEpicToggle(CCObject* sender) {
       auto btn = static_cast<ButtonSprite*>(normalNode);
       if (btn) {
             btn->updateBGImage(m_epicActive ? "GJ_button_02.png" : "GJ_button_01.png");
+      }
+}
+
+void RLSearchLayer::onLegendaryToggle(CCObject* sender) {
+      auto item = static_cast<CCMenuItemSpriteExtra*>(sender);
+      if (!item) return;
+      m_legendaryActive = !m_legendaryActive;
+      auto normalNode = item->getNormalImage();
+      auto btn = static_cast<ButtonSprite*>(normalNode);
+      if (btn) {
+            btn->updateBGImage(m_legendaryActive ? "GJ_button_02.png" : "GJ_button_01.png");
       }
 }
 

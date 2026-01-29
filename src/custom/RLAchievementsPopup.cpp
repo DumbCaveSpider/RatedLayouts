@@ -7,7 +7,7 @@ using namespace geode::prelude;
 RLAchievementsPopup* RLAchievementsPopup::create() {
       auto ret = new RLAchievementsPopup();
 
-      if (ret && ret->initAnchored(380.f, 260.f, "GJ_square02.png")) {
+      if (ret && ret->initAnchored(470.f, 290.f, "GJ_square02.png")) {
             ret->autorelease();
             return ret;
       }
@@ -88,9 +88,13 @@ void RLAchievementsPopup::populate(int tabIndex) {
 }
 
 bool RLAchievementsPopup::setup() {
+
+      setTitle("Rated Layouts Achievements");
+      addSideArt(m_mainLayer, SideArt::All, SideArtStyle::PopupGold, false);
+
       m_tabMenu = CCMenu::create();
-      m_tabMenu->setPosition({m_mainLayer->getContentSize().width / 2, m_mainLayer->getContentSize().height - 30.f});
-      m_tabMenu->setContentSize({m_mainLayer->getContentSize().width - 10, 50});
+      m_tabMenu->setPosition({m_mainLayer->getContentSize().width / 2, m_mainLayer->getContentSize().height - 50.f});
+      m_tabMenu->setContentSize({m_mainLayer->getContentSize().width - 50, 25});
       m_tabMenu->setLayout(RowLayout::create()
                                ->setGap(5.f)
                                ->setGrowCrossAxis(true)
@@ -112,19 +116,19 @@ bool RLAchievementsPopup::setup() {
             if (initial) onTab(initial);
       }
 
-      auto commentLayer = GJCommentListLayer::create(nullptr, "Rated Layouts Achievements", {191, 114, 62, 255}, 340.f, 185.f, true);
-      commentLayer->setPosition({20.f, 15.f});
+      auto commentLayer = GJCommentListLayer::create(nullptr, "Rated Layouts Achievements", {191, 114, 62, 255}, 340.f, 200.f, true);
+      commentLayer->setPosition({65.f, 15.f});
       m_mainLayer->addChild(commentLayer);
       m_commentList = commentLayer;
 
-      m_scrollLayer = ScrollLayer::create({340.f, 185.f});
+      m_scrollLayer = ScrollLayer::create({345.f, 200.f});
       m_scrollLayer->setPosition({0, 0});
       commentLayer->addChild(m_scrollLayer);
       if (m_scrollLayer && m_scrollLayer->m_contentLayer) {
             auto contentLayer = m_scrollLayer->m_contentLayer;
             auto layout = ColumnLayout::create();
             layout->setGap(0.f);
-            layout->setAutoGrowAxis(185.f);
+            layout->setAutoGrowAxis(200.f);
             layout->setAxisReverse(true);
             contentLayer->setLayout(layout);
       }

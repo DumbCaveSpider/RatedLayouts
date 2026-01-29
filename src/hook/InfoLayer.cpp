@@ -43,9 +43,10 @@ class $modify(RLLInfoLayer, InfoLayer) {
                               }
 
                               auto reportButtonSpr = CircleButtonSprite::create(
-                                  CCSprite::createWithSpriteFrameName("exMark_001.png"),
-                                  CircleBaseColor::Blue,
-                                  CircleBaseSize::Medium);
+                                    // @geode-ignore(unknown-resource)
+                                    CCSprite::createWithSpriteFrameName("geode.loader/exclamation-red.png"),
+                                    CircleBaseColor::Blue,
+                                    CircleBaseSize::Medium);
 
                               auto reportButton = CCMenuItemSpriteExtra::create(
                                   reportButtonSpr, layerRef, menu_selector(RLLInfoLayer::onReportButton));

@@ -153,7 +153,8 @@ bool RLModRatePopup::setup(std::string title, GJGameLevel* level) {
       }
 
       // info button
-      auto infoSpr = CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png");
+      auto infoSpr = CCSprite::createWithSpriteFrameName("RL_info01.png"_spr);
+      infoSpr->setScale(0.7f);
       auto infoButton = CCMenuItemSpriteExtra::create(infoSpr, this,
                                                       menu_selector(RLModRatePopup::onInfoButton));
       if (infoButton) {

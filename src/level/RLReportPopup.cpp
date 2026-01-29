@@ -32,7 +32,8 @@ bool RLReportPopup::setup() {
       reportButton->setPosition({m_mainLayer->getScaledContentSize().width / 2.f, 25.f});
 
       // info button
-      auto infoSpr = CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png");
+      auto infoSpr = CCSprite::createWithSpriteFrameName("RL_info01.png"_spr);
+      infoSpr->setScale(0.7f);
       auto infoBtn = CCMenuItemSpriteExtra::create(infoSpr, this, menu_selector(RLReportPopup::onInfo));
       infoBtn->setPosition({m_mainLayer->getScaledContentSize().width - 25, m_mainLayer->getScaledContentSize().height - 25});
       m_buttonMenu->addChild(infoBtn);

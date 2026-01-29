@@ -8,13 +8,12 @@ TableViewCell* RLAchievementCell(RLAchievements::Achievement const& ach, bool un
       auto cellBase = TableViewCell::create();
       auto cell = static_cast<TableViewCell*>(cellBase);
       if (!cell) return nullptr;
-      cell->setContentSize({340.f, 64.f});
+      cell->setContentSize({345.f, 64.f});
 
       // left icon
       cocos2d::CCSprite* icon = nullptr;
       if (!ach.sprite.empty()) {
-            icon = CCSprite::createWithSpriteFrameName(ach.sprite.c_str());
-            if (!icon) icon = CCSprite::create(ach.sprite.c_str());
+            icon = unlocked ? CCSprite::createWithSpriteFrameName(ach.sprite.c_str()) : CCSpriteGrayscale::createWithSpriteFrameName(ach.sprite.c_str());
       }
       if (icon) {
             icon->setPosition({30.f, 32.f});

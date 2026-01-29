@@ -32,6 +32,7 @@ class RLSearchLayer : public CCLayer {
       CCMenuItemSpriteExtra* m_featuredItem = nullptr;
       CCMenuItemSpriteExtra* m_awardedItem = nullptr;
       CCMenuItemSpriteExtra* m_epicItem = nullptr;
+      CCMenuItemSpriteExtra* m_legendaryItem = nullptr;
       CCMenuItemSpriteExtra* m_platformerItem = nullptr;
       CCMenuItemSpriteExtra* m_classicItem = nullptr;
       CCMenuItemSpriteExtra* m_usernameItem = nullptr;
@@ -59,6 +60,8 @@ class RLSearchLayer : public CCLayer {
       bool m_featuredActive = false;
       bool m_awardedActive = false;
       bool m_epicActive = false;
+      bool m_legendaryActive = false;
+      void onLegendaryToggle(CCObject* sender);
       void onEpicToggle(CCObject* sender);
       void onClassicToggle(CCObject* sender);
       bool m_oldestActive = false;

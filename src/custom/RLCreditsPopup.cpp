@@ -27,11 +27,13 @@ bool RLCreditsPopup::setup() {
       m_scrollLayer = scrollLayer;
 
       // info button
+      auto infoSpr = CCSprite::createWithSpriteFrameName("RL_info01.png"_spr);
+      infoSpr->setScale(0.75f);
       auto infoBtn = CCMenuItemSpriteExtra::create(
-          CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"),
+          infoSpr,
           this,
           menu_selector(RLCreditsPopup::onInfo));
-      infoBtn->setPosition({m_mainLayer->getContentSize().width - 25.f, m_mainLayer->getContentSize().height - 25.f});
+      infoBtn->setPosition({m_mainLayer->getContentSize().width, m_mainLayer->getContentSize().height - 3});
       m_buttonMenu->addChild(infoBtn);
 
       // create spinner

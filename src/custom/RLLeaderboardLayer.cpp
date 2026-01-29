@@ -179,7 +179,8 @@ bool RLLeaderboardLayer::init() {
       auto infoMenu = CCMenu::create();
       infoMenu->setPosition({0, 0});
       auto infoButtonSpr =
-          CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png");
+          CCSprite::createWithSpriteFrameName("RL_info01.png"_spr);
+      infoButtonSpr->setScale(0.7f);
       auto infoButton = CCMenuItemSpriteExtra::create(
           infoButtonSpr, this, menu_selector(RLLeaderboardLayer::onInfoButton));
       infoButton->setPosition({25, 25});

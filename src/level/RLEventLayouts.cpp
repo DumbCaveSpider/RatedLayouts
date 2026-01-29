@@ -4,6 +4,7 @@
 #include <Geode/modify/LevelBrowserLayer.hpp>
 #include <Geode/modify/LevelInfoLayer.hpp>
 #include <Geode/modify/ProfilePage.hpp>
+#include "../custom/RLLevelBrowserLayer.hpp"
 #include <chrono>
 #include <cstdio>
 #include <iomanip>
@@ -46,8 +47,10 @@ bool RLEventLayouts::setup() {
       float rowSpacing = 90.f;
 
       // info button on main layer
+      auto infoSpr = CCSprite::createWithSpriteFrameName("RL_info01.png"_spr);
+      infoSpr->setScale(0.7f);
       auto infoBtn = CCMenuItemSpriteExtra::create(
-          CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"),
+          infoSpr,
           this,
           menu_selector(RLEventLayouts::onInfo));
       infoBtn->setPosition({contentSize.width - 25.f, contentSize.height - 25.f});
@@ -809,45 +812,16 @@ void RLEventLayouts::onPlayEvent(CCObject* sender) {
 }
 
 void RLEventLayouts::onSafeButton(CCObject* sender) {
-      // safe list depending on event type
       int idx = static_cast<int>(this->m_eventType);
       const char* types[] = {"daily", "weekly", "monthly"};
       const char* typeStr = (idx >= 0 && idx < 3) ? types[idx] : "daily";
-      std::string url = std::string("https://gdrate.arcticwoof.xyz/getEvent?safe=") + typeStr;
 
-      Ref<RLEventLayouts> self = this;
-      self->m_safeListTask = web::WebRequest().get(url);
-      self->m_safeListTask.listen([self](web::WebResponse* res) {
-            if (!self) return;
-            if (!res || !res->ok()) {
-                  Notification::create("Failed to fetch safe list", NotificationIcon::Error)->show();
-                  return;
-            }
-            auto jsonRes = res->json();
-            if (!jsonRes) {
-                  Notification::create("Invalid safe list response", NotificationIcon::Warning)->show();
-                  return;
-            }
-            auto json = jsonRes.unwrap();
-            // Expecting an array of level IDs
-            std::string levelIDs;
-            bool first = true;
-            for (auto v : json) {
-                  auto idVal = v.as<int>();
-                  if (!idVal) continue;
-                  if (!first) levelIDs += ",";
-                  levelIDs += numToString(idVal.unwrap());
-                  first = false;
-            }
-            if (levelIDs.empty()) {
-                  Notification::create("No levels returned", NotificationIcon::Warning)->show();
-                  return;
-            }
-            auto searchObj = GJSearchObject::create(SearchType::Type19, levelIDs);
-            auto browserLayer = LevelBrowserLayer::create(searchObj);
-            auto scene = CCScene::create();
-            scene->addChild(browserLayer);
-            auto transitionFade = CCTransitionFade::create(0.5f, scene);
-            CCDirector::sharedDirector()->pushScene(transitionFade);
-      });
+      RLLevelBrowserLayer::ParamList params;
+      params.emplace_back("safe", std::string(typeStr));
+      std::string title = std::string(typeStr) + std::string(" Event Safe");
+      auto browserLayer = RLLevelBrowserLayer::create(RLLevelBrowserLayer::Mode::EventSafe, params, title);
+      auto scene = CCScene::create();
+      scene->addChild(browserLayer);
+      auto transitionFade = CCTransitionFade::create(0.5f, scene);
+      CCDirector::sharedDirector()->pushScene(transitionFade);
 }

@@ -10,7 +10,7 @@
 #include "../level/RLEventLayouts.hpp"
 #include "ModInfo.hpp"
 #include "RLAddDialogue.hpp"
-#include "RLAnnoucementPopup.hpp"
+#include "RLAnnouncementPopup.hpp"
 #include "RLCreditsPopup.hpp"
 #include "RLDonationPopup.hpp"
 #include "RLGauntletSelectLayer.hpp"
@@ -24,10 +24,10 @@ bool RLCreatorLayer::init() {
       if (!CCLayer::init())
             return false;
 
-            // quick achievements for custom bg
-            if (Mod::get()->getSettingValue<int>("backgroundType") != 1 || Mod::get()->getSettingValue<int>("floorType") != 1) {
-                  RLAchievements::onReward("misc_custom_bg");
-            }
+      // quick achievements for custom bg
+      if (Mod::get()->getSettingValue<int>("backgroundType") != 1 || Mod::get()->getSettingValue<int>("floorType") != 1) {
+            RLAchievements::onReward("misc_custom_bg");
+      }
 
       auto winSize = CCDirector::sharedDirector()->getWinSize();
 
@@ -53,7 +53,7 @@ bool RLCreatorLayer::init() {
           // @geode-ignore(unknown-resource)
           "geode.loader/settings.png",
           1.f,
-          CircleBaseColor::Green,
+          CircleBaseColor::Blue,
           CircleBaseSize::Medium);
       modSettingsBtnSprite->setScale(0.75f);
       auto settingsButton = CCMenuItemSpriteExtra::create(
@@ -78,14 +78,12 @@ bool RLCreatorLayer::init() {
       this->addChild(title);
 
       auto featuredSpr = CCSprite::createWithSpriteFrameName("RL_featured01.png"_spr);
-      if (!featuredSpr) featuredSpr = CCSprite::createWithSpriteFrameName("RL_featured01.png"_spr);
       auto featuredItem = CCMenuItemSpriteExtra::create(
           featuredSpr, this, menu_selector(RLCreatorLayer::onFeaturedLayouts));
       featuredItem->setID("featured-button");
       mainMenu->addChild(featuredItem);
 
       auto leaderboardSpr = CCSprite::createWithSpriteFrameName("RL_leaderboard01.png"_spr);
-      if (!leaderboardSpr) leaderboardSpr = CCSprite::createWithSpriteFrameName("RL_leaderboard01.png"_spr);
       auto leaderboardItem = CCMenuItemSpriteExtra::create(
           leaderboardSpr, this, menu_selector(RLCreatorLayer::onLeaderboard));
       leaderboardItem->setID("leaderboard-button");
@@ -93,57 +91,42 @@ bool RLCreatorLayer::init() {
 
       // gauntlet coming soon
       auto gauntletSpr = CCSprite::createWithSpriteFrameName("RL_gauntlets01.png"_spr);
-      if (!gauntletSpr) gauntletSpr = CCSprite::createWithSpriteFrameName("RL_gauntlets01.png"_spr);
       auto gauntletItem = CCMenuItemSpriteExtra::create(
           gauntletSpr, this, menu_selector(RLCreatorLayer::onLayoutGauntlets));
       gauntletItem->setID("gauntlet-button");
       mainMenu->addChild(gauntletItem);
 
       auto sentSpr = CCSprite::createWithSpriteFrameName("RL_sent01.png"_spr);
-      if (!sentSpr) sentSpr = CCSprite::createWithSpriteFrameName("RL_sent01.png"_spr);
       auto sentItem = CCMenuItemSpriteExtra::create(
           sentSpr, this, menu_selector(RLCreatorLayer::onSentLayouts));
       sentItem->setID("sent-layouts-button");
       mainMenu->addChild(sentItem);
 
       auto searchSpr = CCSprite::createWithSpriteFrameName("RL_search01.png"_spr);
-      if (!searchSpr) searchSpr = CCSprite::createWithSpriteFrameName("RL_search01.png"_spr);
       auto searchItem = CCMenuItemSpriteExtra::create(
           searchSpr, this, menu_selector(RLCreatorLayer::onSearchLayouts));
       searchItem->setID("search-layouts-button");
       mainMenu->addChild(searchItem);
 
-      auto achievementSpr = CCSprite::createWithSpriteFrameName("RL_achievements01.png"_spr);
-      if (!achievementSpr) achievementSpr = CCSprite::createWithSpriteFrameName("RL_achievements01.png"_spr);
-      auto achievementItem = CCMenuItemSpriteExtra::create(
-          achievementSpr, this, menu_selector(RLCreatorLayer::onAchievementsButton));
-      achievementItem->setID("achievements-button");
-      mainMenu->addChild(achievementItem);
-
       auto dailySpr = CCSprite::createWithSpriteFrameName("RL_daily01.png"_spr);
-      if (!dailySpr) dailySpr = CCSprite::createWithSpriteFrameName("RL_daily01.png"_spr);
       auto dailyItem = CCMenuItemSpriteExtra::create(
           dailySpr, this, menu_selector(RLCreatorLayer::onDailyLayouts));
       dailyItem->setID("daily-layouts-button");
       mainMenu->addChild(dailyItem);
 
       auto weeklySpr = CCSprite::createWithSpriteFrameName("RL_weekly01.png"_spr);
-      if (!weeklySpr) weeklySpr = CCSprite::createWithSpriteFrameName("RL_weekly01.png"_spr);
       auto weeklyItem = CCMenuItemSpriteExtra::create(
           weeklySpr, this, menu_selector(RLCreatorLayer::onWeeklyLayouts));
       weeklyItem->setID("weekly-layouts-button");
       mainMenu->addChild(weeklyItem);
 
       auto monthlySpr = CCSprite::createWithSpriteFrameName("RL_monthly01.png"_spr);
-      if (!monthlySpr) monthlySpr = CCSprite::createWithSpriteFrameName("RL_monthly01.png"_spr);
       auto monthlyItem = CCMenuItemSpriteExtra::create(
           monthlySpr, this, menu_selector(RLCreatorLayer::onMonthlyLayouts));
       monthlyItem->setID("monthly-layouts-button");
       mainMenu->addChild(monthlyItem);
 
-      // Try to use a grayscale sprite where available, but fallback to a regular sprite
-      cocos2d::CCSprite* unknownSpr = CCSpriteGrayscale::createWithSpriteFrameName("RL_unknownBtn.png"_spr);
-      if (!unknownSpr) unknownSpr = CCSpriteGrayscale::createWithSpriteFrameName("RL_unknownBtn.png"_spr);
+      CCSprite* unknownSpr = CCSpriteGrayscale::createWithSpriteFrameName("RL_unknownBtn.png"_spr);
       auto unknownItem = CCMenuItemSpriteExtra::create(
           unknownSpr, this, menu_selector(RLCreatorLayer::onUnknownButton));
       unknownItem->setID("unknown-button");
@@ -151,35 +134,49 @@ bool RLCreatorLayer::init() {
 
       mainMenu->updateLayout();
 
-      // info button at the bottom left
+      // button menu
       auto infoMenu = CCMenu::create();
       infoMenu->setPosition({0, 0});
+
+      // info button
       auto infoButtonSpr =
-          CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png");
+          CCSprite::createWithSpriteFrameName("RL_info01.png"_spr);
+      infoButtonSpr->setScale(0.7f);
       auto infoButton = CCMenuItemSpriteExtra::create(
           infoButtonSpr, this, menu_selector(RLCreatorLayer::onInfoButton));
       infoButton->setPosition({25, 25});
       infoMenu->addChild(infoButton);
+
       // discord thingy
-      auto discordIconSpr = CCSprite::createWithSpriteFrameName("gj_discordIcon_001.png");
+      auto discordIconSpr = CCSprite::createWithSpriteFrameName("RL_discord01.png"_spr);
+      discordIconSpr->setScale(0.7f);
       auto discordIconBtn = CCMenuItemSpriteExtra::create(discordIconSpr, this, menu_selector(RLCreatorLayer::onDiscordButton));
       discordIconBtn->setPosition({infoButton->getPositionX(), infoButton->getPositionY() + 40});
       infoMenu->addChild(discordIconBtn);
 
       // news button above discord
       // @geode-ignore(unknown-resource)
-      auto annouceSpr = AccountButtonSprite::createWithSpriteFrameName("geode.loader/news.png", 1.f, AccountBaseColor::Gray, AccountBaseSize::Normal);
+      auto annouceSpr = CCSprite::createWithSpriteFrameName("RL_news01.png"_spr);
       annouceSpr->setScale(0.7f);
       auto annouceBtn = CCMenuItemSpriteExtra::create(annouceSpr, this, menu_selector(RLCreatorLayer::onAnnoucementButton));
       annouceBtn->setPosition({infoButton->getPositionX(), infoButton->getPositionY() + 80});
       infoMenu->addChild(annouceBtn);
       m_newsIconBtn = annouceBtn;
 
+      auto achievementSpr = CCSprite::createWithSpriteFrameName("RL_achievements01.png"_spr);
+      achievementSpr->setScale(0.7f);
+      auto achievementItem = CCMenuItemSpriteExtra::create(
+          achievementSpr, this, menu_selector(RLCreatorLayer::onAchievementsButton));
+      achievementItem->setID("achievements-button");
+      achievementItem->setPosition({infoButton->getPositionX(), infoButton->getPositionY() + 120});
+      infoMenu->addChild(achievementItem);
+
       // news button above discord
       // @geode-ignore(unknown-resource)
-      auto browserSpr = CCSprite::createWithSpriteFrameName("geode.loader/homepage.png");
+      auto browserSpr = CCSprite::createWithSpriteFrameName("RL_browser01.png"_spr);
+      browserSpr->setScale(0.7f);
       auto browserBtn = CCMenuItemSpriteExtra::create(browserSpr, this, menu_selector(RLCreatorLayer::onBrowserButton));
-      browserBtn->setPosition({infoButton->getPositionX(), infoButton->getPositionY() + 120});
+      browserBtn->setPosition({infoButton->getPositionX(), infoButton->getPositionY() + 160});
       infoMenu->addChild(browserBtn);
       m_newsIconBtn = browserBtn;
 
@@ -218,27 +215,28 @@ bool RLCreatorLayer::init() {
           });
 
       this->addChild(infoMenu);
+
       // credits button at the bottom right
       auto creditButtonSpr =
-          CCSprite::createWithSpriteFrameName("RL_badgeMod01.png"_spr);
-      creditButtonSpr->setScale(1.5f);
+          CCSprite::createWithSpriteFrameName("RL_credits01.png"_spr);
+      creditButtonSpr->setScale(0.7f);
       auto creditButton = CCMenuItemSpriteExtra::create(
           creditButtonSpr, this, menu_selector(RLCreatorLayer::onCreditsButton));
       creditButton->setPosition({winSize.width - 25, 25});
       infoMenu->addChild(creditButton);
 
       // supporter button left side of the credits
-      auto supportButtonSpr = CCSprite::createWithSpriteFrameName("RL_badgeSupporter.png"_spr);
-      supportButtonSpr->setScale(1.5f);
+      auto supportButtonSpr = CCSprite::createWithSpriteFrameName("RL_support01.png"_spr);
+      supportButtonSpr->setScale(0.7f);
       auto supportButton = CCMenuItemSpriteExtra::create(
           supportButtonSpr, this, menu_selector(RLCreatorLayer::onSupporterButton));
       supportButton->setPosition({creditButton->getPositionX(), creditButton->getPositionY() + 40});
       infoMenu->addChild(supportButton);
 
-      // button
+      // button bob
       if (Mod::get()->getSavedValue<int>("role") >= 1) {
-            auto addDiagloueBtnSpr = CCSprite::createWithSpriteFrameName("RL_bob.png"_spr);
-            addDiagloueBtnSpr->setOpacity(100);
+            auto addDiagloueBtnSpr = CCSprite::createWithSpriteFrameName("RL_bobBtn01.png"_spr);
+            addDiagloueBtnSpr->setScale(0.7f);
             auto addDialogueBtn = CCMenuItemSpriteExtra::create(
                 addDiagloueBtnSpr, this, menu_selector(RLCreatorLayer::onSecretDialogueButton));
             addDialogueBtn->setPosition({creditButton->getPositionX(), creditButton->getPositionY() + 80});
@@ -499,11 +497,10 @@ void RLCreatorLayer::onUnknownButton(CCObject* sender) {
                       auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 2);
                       dialog->addToMainScene();
                       dialog->animateInRandomSide();
-                      RLAchievements::onReward("misc_creator_1"); // first time dialogue
+                      RLAchievements::onReward("misc_creator_1");  // first time dialogue
                       Mod::get()->setSavedValue<int>("dialoguesSpoken", Mod::get()->getSavedValue<int>("dialoguesSpoken") + 1);
 
-
-                      // secret message 
+                      // secret message
                       if (text == "SALT finally rated / But is it verified? / Its the question / And it remains unanswered until someone asks / its creator tells us the truth / Will he answer? / It depends on, if someone asks / Will anyone ask? / We dont know yet / We can only wait and see what happens") {
                             RLAchievements::onReward("misc_salt");
                       }

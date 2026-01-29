@@ -2,7 +2,7 @@
 
 #include <Geode/Geode.hpp>
 
-#include "RLAnnoucementPopup.hpp"
+#include "RLAnnouncementPopup.hpp"
 #include "RLGauntletLevelsLayer.hpp"
 
 using namespace geode::prelude;
@@ -61,18 +61,17 @@ bool RLGauntletSelectLayer::init() {
       this->addChild(m_loadingCircle);
 
       // @geode-ignore(unknown-resource)
-      auto annouceSpr = AccountButtonSprite::createWithSpriteFrameName("geode.loader/news.png", 1.f, AccountBaseColor::Purple, AccountBaseSize::Normal);
-      annouceSpr->setScale(0.7f);
-      auto annouceBtn = CCMenuItemSpriteExtra::create(annouceSpr, this, menu_selector(RLGauntletSelectLayer::onInfoButton));
-      annouceBtn->setPosition({25, 25});
-      backMenu->addChild(annouceBtn);
-
+      auto announceSpr = CCSprite::createWithSpriteFrameName("RL_gauntletBtn01.png"_spr);
+      announceSpr->setScale(0.7f);
+      auto announceBtn = CCMenuItemSpriteExtra::create(announceSpr, this, menu_selector(RLGauntletSelectLayer::onInfoButton));
+      announceBtn->setPosition({25, 25});
+      backMenu->addChild(announceBtn);
       fetchGauntlets();
       return true;
 }
 
 void RLGauntletSelectLayer::onInfoButton(CCObject* sender) {
-      auto announcement = RLAnnoucementPopup::create();
+      auto announcement = RLAnnouncementPopup::create();
       announcement->show();
 }
 
