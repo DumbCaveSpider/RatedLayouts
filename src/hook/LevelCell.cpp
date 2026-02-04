@@ -1,5 +1,6 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/LevelCell.hpp>
+#include <Geode/utils/async.hpp>
 
 using namespace geode::prelude;
 
@@ -66,10 +67,8 @@ static void cacheLevelData(int levelId, const matjson::Value& data) {
 
 class $modify(LevelCell) {
       struct Fields {
-            async::TaskHolder<web::WebResponse> m_fetchTask;
             std::optional<matjson::Value> m_pendingJson;
             int m_pendingLevelId = 0;
-            ~Fields() { m_fetchTask.cancel(); }
       };
 
       void loadCustomLevelCell(int levelId) {
@@ -95,12 +94,12 @@ class $modify(LevelCell) {
 
             log::debug("Fetching rating data for level cell ID: {}", levelId);
 
-            auto getReq = web::WebRequest();
             Ref<LevelCell> cellRef = this;
+            auto url = fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId);
+            async::spawn([cellRef, this, levelId, url]() -> arc::Future<> {
+                  auto req = web::WebRequest();
+                  auto response = co_await req.get(url);
 
-            m_fields->m_fetchTask.spawn(
-                  getReq.get(fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId)),
-                  [cellRef, levelId, this](web::WebResponse response) {
                   log::debug("Received rating response from server for level cell ID: {}",
                              levelId);
 
@@ -110,26 +109,26 @@ class $modify(LevelCell) {
                             "LevelCell missing or has no level, skipping update for level "
                             "ID: {}",
                             levelId);
-                        return;
+                        co_return;
                   }
 
                   if (cellRef->m_level->m_levelID != levelId) {
                         log::warn(
                             "LevelCell level ID mismatch (current: {}, response: {}), skipping",
                             cellRef->m_level->m_levelID, levelId);
-                        return;
+                        co_return;
                   }
 
                   if (!response.ok()) {
                         log::warn("Server returned non-ok status: {} for level ID: {}",
                                   response.code(), levelId);
-                        return;
+                        co_return;
                   }
 
                   auto jsonRes = response.json();
                   if (!jsonRes) {
                         log::warn("Failed to parse JSON response");
-                        return;
+                        co_return;
                   }
 
                   auto json = jsonRes.unwrap();
@@ -138,6 +137,7 @@ class $modify(LevelCell) {
                   cacheLevelData(levelId, json);
 
                   this->applyRatingToCell(json, levelId);
+                  co_return;
             });
       }
 
@@ -640,8 +640,6 @@ class $modify(LevelCell) {
       }
 
       void onExit() {
-            // Make sure any pending web task callback won't run after we've exited
-            m_fields->m_fetchTask.cancel();
             LevelCell::onExit();
       }
 

@@ -1,6 +1,7 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/GameLevelManager.hpp>
 #include <Geode/modify/LevelInfoLayer.hpp>
+#include <Geode/utils/async.hpp>
 #include <argon/argon.hpp>
 
 #include "../level/RLCommunityVotePopup.hpp"
@@ -110,12 +111,10 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             float m_originalCoin1Y = 0.0f;
             float m_originalCoin2Y = 0.0f;
             float m_originalCoin3Y = 0.0f;
-            async::TaskHolder<web::WebResponse> m_fetchTask;
             async::TaskHolder<web::WebResponse> m_submitTask;
             async::TaskHolder<web::WebResponse> m_accessTask;
             async::TaskHolder<Result<std::string>> m_authTask;
             ~Fields() {
-                  m_fetchTask.cancel();
                   m_submitTask.cancel();
                   m_accessTask.cancel();
                   m_authTask.cancel();
@@ -208,33 +207,38 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             Ref<RLLevelInfoLayer> layerRef = this;
             auto difficultySprite = layerRef->getChildByID("difficulty-sprite");
 
-            m_fields->m_fetchTask.spawn(
-                  getReq.get(fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId)),
-                  [layerRef, difficultySprite](web::WebResponse response) {
+            auto url = fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId);
+            async::spawn([layerRef, difficultySprite, url]() -> arc::Future<> {
+                  auto req = web::WebRequest();
+                  auto response = co_await req.get(url);
+
                   log::info("Received rating response from server");
 
                   if (!layerRef) {
                         log::warn("LevelInfoLayer has been destroyed");
-                        return;
+                        co_return;
                   }
 
                   if (!response.ok()) {
                         log::warn("Server returned non-ok status: {}", response.code());
-                        return;
+                        co_return;
                   }
 
                   auto jsonRes = response.json();
                   if (!jsonRes) {
                         log::warn("Failed to parse JSON response");
-                        return;
+                        co_return;
                   }
 
                   auto json = jsonRes.unwrap();
 
                   // Cache the response
-                  cacheLevelData(layerRef->m_level->m_levelID, json);
+                  if (layerRef && layerRef->m_level)
+                        cacheLevelData(layerRef->m_level->m_levelID, json);
 
-                  layerRef->processLevelRating(json, layerRef, difficultySprite, true);
+                  if (layerRef)
+                        layerRef->processLevelRating(json, layerRef, difficultySprite, true);
+                  co_return;
             });
       }
       void processLevelRating(const matjson::Value& json,
@@ -1712,7 +1716,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   auto getReq = web::WebRequest();
                   Ref<RLLevelInfoLayer> layerRef = this;
 
-                  m_fields->m_fetchTask.spawn(
+                  async::spawn(
                       getReq.get(fmt::format(
                       "https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId)),
                       [layerRef, levelId](web::WebResponse response) {

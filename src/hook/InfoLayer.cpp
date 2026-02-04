@@ -1,12 +1,13 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/InfoLayer.hpp>
+#include <Geode/utils/async.hpp>
 
 #include "../level/RLReportPopup.hpp"
 
 using namespace geode::prelude;
 
 class $modify(RLLInfoLayer, InfoLayer) {
-      struct Fields { async::TaskHolder<web::WebResponse> m_fetchTask; ~Fields() { m_fetchTask.cancel(); } };
+      struct Fields { };
       bool init(GJGameLevel* level, GJUserScore* score, GJLevelList* list) {
             if (!InfoLayer::init(level, score, list))
                   return false;
@@ -15,24 +16,24 @@ class $modify(RLLInfoLayer, InfoLayer) {
             if (level && level->m_levelID != 0) {
                   int levelId = level->m_levelID;
 
-                  auto getReq = web::WebRequest();
                   Ref<RLLInfoLayer> layerRef = this;
+                  auto url = fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId);
+                  async::spawn([layerRef, url]() -> arc::Future<> {
+                        auto req = web::WebRequest();
+                        auto response = co_await req.get(url);
 
-                  m_fields->m_fetchTask.spawn(
-                        getReq.get(fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId)),
-                        [layerRef](web::WebResponse response) {
                         log::info("Received /fetch response for level ID: {}",
                                   layerRef && layerRef->m_level ? layerRef->m_level->m_levelID : 0);
 
                         if (!layerRef) {
                               log::warn("InfoLayer destroyed before /fetch completed");
-                              return;
+                              co_return;
                         }
 
                         if (response.ok()) {
                               if (!response.json()) {
                                     log::warn("Failed to parse /fetch JSON response");
-                                    return;
+                                    co_return;
                               }
 
                               auto json = response.json().unwrap();
@@ -40,7 +41,7 @@ class $modify(RLLInfoLayer, InfoLayer) {
                               bool suggested = json["isSuggested"].asBool().unwrapOrDefault();
                               if (suggested) {
                                     log::info("Level is suggested");
-                                    return;
+                                    co_return;
                               }
 
                               auto reportButtonSpr = CircleButtonSprite::create(
@@ -63,6 +64,7 @@ class $modify(RLLInfoLayer, InfoLayer) {
                         } else {
                               log::warn("failed to fetch level");
                         }
+                        co_return;
                   });
             }
 
