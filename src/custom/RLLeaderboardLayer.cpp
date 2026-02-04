@@ -295,21 +295,22 @@ void RLLeaderboardLayer::onLeaderboardTypeButton(CCObject* sender) {
 
 void RLLeaderboardLayer::fetchLeaderboard(int type, int amount) {
       Ref<RLLeaderboardLayer> self = this;
-      web::WebRequest()
-          .param("type", type)
-          .param("amount", amount)
-          .get("https://gdrate.arcticwoof.xyz/getScore")
-          .listen([self](web::WebResponse* response) {
+      m_fetchTask.spawn(
+          web::WebRequest()
+              .param("type", type)
+              .param("amount", amount)
+              .get("https://gdrate.arcticwoof.xyz/getScore"),
+          [self](web::WebResponse const& response) {
                 if (!self) return;
-                if (!response->ok()) {
-                      log::warn("Server returned non-ok status: {}", response->code());
+                if (!response.ok()) {
+                      log::warn("Server returned non-ok status: {}", response.code());
                       Notification::create("Failed to fetch leaderboard",
                                            NotificationIcon::Error)
                           ->show();
                       return;
                 }
 
-                auto jsonRes = response->json();
+                auto jsonRes = response.json();
                 if (!jsonRes) {
                       log::warn("Failed to parse JSON response");
                       Notification::create("Invalid server response",

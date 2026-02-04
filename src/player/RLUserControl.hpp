@@ -1,12 +1,13 @@
 #pragma once
 
 #include <Geode/Geode.hpp>
+#include <Geode/utils/async.hpp>
 #include <argon/argon.hpp>
 #include <unordered_map>
 
 using namespace geode::prelude;
 
-class RLUserControl : public geode::Popup<> {
+class RLUserControl : public geode::Popup {
      public:
       static RLUserControl* create();
       static RLUserControl* create(int accountId);
@@ -34,10 +35,10 @@ class RLUserControl : public geode::Popup<> {
       CCMenuItemSpriteExtra* m_wipeButton = nullptr;
       bool m_isInitializing = false;
       LoadingSpinner* m_spinner = nullptr;
-      utils::web::WebTask m_profileTask;
-      utils::web::WebTask m_setUserTask;
-      utils::web::WebTask m_deleteUserTask;
-      utils::web::WebTask m_promoteUserTask;
+      async::TaskHolder<web::WebResponse> m_profileTask;
+      async::TaskHolder<web::WebResponse> m_setUserTask;
+      async::TaskHolder<web::WebResponse> m_deleteUserTask;
+      async::TaskHolder<web::WebResponse> m_promoteUserTask;
       CCMenuItemSpriteExtra* m_promoteModButton = nullptr;
       CCMenuItemSpriteExtra* m_promoteAdminButton = nullptr;
       CCMenuItemSpriteExtra* m_demoteButton = nullptr;
@@ -51,5 +52,5 @@ class RLUserControl : public geode::Popup<> {
       void setOptionEnabled(const std::string& key, bool enabled);
       void setAllOptionsEnabled(bool enabled);
 
-      bool setup() override;
+      bool init();
 };

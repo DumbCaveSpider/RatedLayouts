@@ -1,20 +1,21 @@
 #pragma once
 
 #include <Geode/Geode.hpp>
+#include <Geode/utils/async.hpp>
 
 using namespace geode::prelude;
 
-class RLBadgeRequestPopup : public geode::Popup<> {
+class RLBadgeRequestPopup : public geode::Popup {
      public:
       static RLBadgeRequestPopup* create();
 
      private:
-      bool setup() override;
+      bool init();
 
       void onSubmit(CCObject* sender);
 
       TextInput* m_discordInput = nullptr;
-      utils::web::WebTask m_getSupporterTask;
+      async::TaskHolder<web::WebResponse> m_getSupporterTask;
       ~RLBadgeRequestPopup() {
             m_getSupporterTask.cancel();
       }

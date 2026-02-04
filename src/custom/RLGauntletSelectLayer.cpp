@@ -56,7 +56,7 @@ bool RLGauntletSelectLayer::init() {
 
       this->setKeypadEnabled(true);
 
-      m_loadingCircle = LoadingSpinner::create({100.f});
+      m_loadingCircle = LoadingSpinner::create(100.f);
       m_loadingCircle->setPosition(winSize / 2);
       this->addChild(m_loadingCircle);
 
@@ -98,22 +98,23 @@ void RLGauntletSelectLayer::onGauntletButtonClick(CCObject* sender) {
 
 void RLGauntletSelectLayer::fetchGauntlets() {
       web::WebRequest request;
-      m_gauntletsListener = [this](web::WebResponse* response) {
-            if (response->ok()) {
-                  auto jsonRes = response->json();
-                  if (jsonRes.isOk()) {
-                        this->onGauntletsFetched(jsonRes.unwrap());
+      m_gauntletsTask.spawn(
+            request.get("https://gdrate.arcticwoof.xyz/getGauntlets"),
+            [this](web::WebResponse const& response) {
+                  if (response.ok()) {
+                        auto jsonRes = response.json();
+                        if (jsonRes.isOk()) {
+                              this->onGauntletsFetched(jsonRes.unwrap());
+                        } else {
+                              log::error("Failed to parse JSON: {}", jsonRes.unwrapErr());
+                              Notification::create("Failed to parse gauntlets data", NotificationIcon::Error)->show();
+                        }
                   } else {
-                        log::error("Failed to parse JSON: {}", jsonRes.unwrapErr());
-                        Notification::create("Failed to parse gauntlets data", NotificationIcon::Error)->show();
+                        log::error("Failed to fetch gauntlets: {}", response.string().unwrapOr("Unknown error"));
+                        Notification::create("Failed to fetch gauntlets", NotificationIcon::Error)->show();
                   }
-            } else {
-                  log::error("Failed to fetch gauntlets: {}", response->string().unwrapOr("Unknown error"));
-                  Notification::create("Failed to fetch gauntlets", NotificationIcon::Error)->show();
             }
-      };
-      m_gauntletsTask = request.get("https://gdrate.arcticwoof.xyz/getGauntlets");
-      m_gauntletsTask.listen(m_gauntletsListener);
+      );
 }
 
 void RLGauntletSelectLayer::onGauntletsFetched(matjson::Value const& json) {

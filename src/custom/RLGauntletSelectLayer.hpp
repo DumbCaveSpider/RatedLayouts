@@ -1,4 +1,5 @@
 #include <Geode/Geode.hpp>
+#include <Geode/utils/async.hpp>
 
 using namespace geode::prelude;
 
@@ -33,6 +34,6 @@ class RLGauntletSelectLayer : public CCLayer {
       CCMenuItemSpriteExtra* m_nextPageBtn = nullptr;
       CCLabelBMFont* m_pageLabel = nullptr;
       std::function<void(web::WebResponse*)> m_gauntletsListener;
-      utils::web::WebTask m_gauntletsTask;
+      async::TaskHolder<web::WebResponse> m_gauntletsTask;
       ~RLGauntletSelectLayer() { m_gauntletsTask.cancel(); }
 };

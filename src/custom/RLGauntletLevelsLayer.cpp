@@ -75,7 +75,7 @@ bool RLGauntletLevelsLayer::init(matjson::Value const& gauntletData) {
 
       this->setKeypadEnabled(true);
 
-      m_loadingCircle = LoadingSpinner::create({100.f});
+      m_loadingCircle = LoadingSpinner::create(100.f);
       m_loadingCircle->setPosition(winSize / 2);
       this->addChild(m_loadingCircle);
 
@@ -105,12 +105,13 @@ void RLGauntletLevelsLayer::fetchLevelDetails(int gauntletId) {
       postData["id"] = gauntletId;
 
       request.bodyJSON(postData);
-      m_getLevelsTask = request.post("https://gdrate.arcticwoof.xyz/getLevelsGauntlets");
       Ref<RLGauntletLevelsLayer> self = this;
-      m_getLevelsTask.listen([self](web::WebResponse* response) {
+      m_getLevelsTask.spawn(
+          request.post("https://gdrate.arcticwoof.xyz/getLevelsGauntlets"),
+          [self](web::WebResponse const& response) {
             if (!self) return;
-            if (response->ok()) {
-                  auto jsonRes = response->json();
+            if (response.ok()) {
+                  auto jsonRes = response.json();
                   if (jsonRes.isOk()) {
                         self->onLevelDetailsFetched(jsonRes.unwrap());
                   } else {
@@ -121,7 +122,7 @@ void RLGauntletLevelsLayer::fetchLevelDetails(int gauntletId) {
                         }
                   }
             } else {
-                  log::error("Failed to fetch level details: {}", response->string().unwrapOr("Unknown error"));
+                  log::error("Failed to fetch level details: {}", response.string().unwrapOr("Unknown error"));
                   Notification::create("Failed to fetch level details", NotificationIcon::Error)->show();
                   if (self->m_loadingCircle) {
                         self->m_loadingCircle->setVisible(false);

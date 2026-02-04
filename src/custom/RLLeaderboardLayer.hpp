@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Geode/Geode.hpp>
+#include <Geode/utils/async.hpp>
 
 using namespace geode::prelude;
 
@@ -31,6 +32,7 @@ class RLLeaderboardLayer : public CCLayer {
       std::vector<CCSprite*> m_floorTiles;
       float m_bgSpeed = 40.f;       // pixels per second
       float m_groundSpeed = 150.f;  // pixels per second
+      geode::async::TaskHolder<geode::utils::web::WebResponse> m_fetchTask;
       void update(float dt) override;
 
      public:

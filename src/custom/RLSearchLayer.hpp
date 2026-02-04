@@ -77,6 +77,6 @@ class RLSearchLayer : public CCLayer {
       void onDemonDifficultyButton(CCObject* sender);
       void onDifficultyButton(CCObject* sender);
 
-      utils::web::WebTask m_searchTask;
+      async::TaskHolder<web::WebResponse> m_searchTask;
       ~RLSearchLayer() { m_searchTask.cancel(); }
 };

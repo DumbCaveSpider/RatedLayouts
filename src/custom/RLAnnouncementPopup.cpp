@@ -4,7 +4,7 @@ using namespace geode::prelude;
 
 RLAnnouncementPopup* RLAnnouncementPopup::create() {
       auto popup = new RLAnnouncementPopup();
-      if (popup && popup->initAnchored(400.f, 225.f, "GJ_square07.png")) {
+      if (popup && popup->init()) {
             popup->autorelease();
             return popup;
       }
@@ -12,7 +12,10 @@ RLAnnouncementPopup* RLAnnouncementPopup::create() {
       return nullptr;
 }
 
-bool RLAnnouncementPopup::setup() {
+bool RLAnnouncementPopup::init() {
+      if (!Popup::init(400.f, 225.f))
+            return false;
+
       auto imageSpr = LazySprite::create({m_mainLayer->getScaledContentSize()}, true);
       imageSpr->loadFromUrl("https://gdrate.arcticwoof.xyz/cdn/gauntletBanner.png", CCImage::kFmtPng, true);
       imageSpr->setAutoResize(true);

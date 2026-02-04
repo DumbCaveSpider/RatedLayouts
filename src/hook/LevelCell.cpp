@@ -66,7 +66,7 @@ static void cacheLevelData(int levelId, const matjson::Value& data) {
 
 class $modify(LevelCell) {
       struct Fields {
-            utils::web::WebTask m_fetchTask;
+            async::TaskHolder<web::WebResponse> m_fetchTask;
             std::optional<matjson::Value> m_pendingJson;
             int m_pendingLevelId = 0;
             ~Fields() { m_fetchTask.cancel(); }
@@ -96,12 +96,11 @@ class $modify(LevelCell) {
             log::debug("Fetching rating data for level cell ID: {}", levelId);
 
             auto getReq = web::WebRequest();
-            m_fields->m_fetchTask = getReq.get(
-                fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId));
-
             Ref<LevelCell> cellRef = this;
 
-            m_fields->m_fetchTask.listen([cellRef, levelId, this](web::WebResponse* response) {
+            m_fields->m_fetchTask.spawn(
+                  getReq.get(fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId)),
+                  [cellRef, levelId, this](web::WebResponse response) {
                   log::debug("Received rating response from server for level cell ID: {}",
                              levelId);
 
@@ -121,13 +120,13 @@ class $modify(LevelCell) {
                         return;
                   }
 
-                  if (!response->ok()) {
+                  if (!response.ok()) {
                         log::warn("Server returned non-ok status: {} for level ID: {}",
-                                  response->code(), levelId);
+                                  response.code(), levelId);
                         return;
                   }
 
-                  auto jsonRes = response->json();
+                  auto jsonRes = response.json();
                   if (!jsonRes) {
                         log::warn("Failed to parse JSON response");
                         return;

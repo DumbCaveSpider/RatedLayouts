@@ -1,148 +1,165 @@
-#include <capeling.garage-stats-menu/include/StatsDisplayAPI.h>
+// #include <capeling.garage-stats-menu/include/StatsDisplayAPI.h>
 
-#include <Geode/Geode.hpp>
-#include <Geode/modify/GJGarageLayer.hpp>
-#include <argon/argon.hpp>
+// #include <Geode/Geode.hpp>
+// #include <Geode/modify/GJGarageLayer.hpp>
+// #include <argon/argon.hpp>
 
-using namespace geode::prelude;
+// using namespace geode::prelude;
 
-class $modify(GJGarageLayer) {
-      struct Fields {
-            CCNode* myStatItem = nullptr;
-            CCNode* statMenu = nullptr;
+// class $modify(GJGarageLayer) {
+//       struct Fields {
+//             CCNode* myStatItem = nullptr;
+//             CCNode* statMenu = nullptr;
 
-            CCNode* starsValue = nullptr;
-            CCNode* planetsValue = nullptr;
-            CCNode* coinsValue = nullptr;
-            int storedStars = 0;
-            int storedPlanets = 0;
-            int storedCoins = 0;
-            utils::web::WebTask profileTask;
-            ~Fields() {
-                  profileTask.cancel();
-            }
-      };
+//             CCNode* starsValue = nullptr;
+//             CCNode* planetsValue = nullptr;
+//             CCNode* coinsValue = nullptr;
+//             int storedStars = 0;
+//             int storedPlanets = 0;
+//             int storedCoins = 0;
+//             utils::web::WebTask profileTask;
+//             ~Fields() {
+//                   profileTask.cancel();
+//             }
+//       };
 
-      bool init() {
-            if (!GJGarageLayer::init())
-                  return false;
+//       bool init() {
+//             if (!GJGarageLayer::init())
+//                   return false;
 
-            // keep a reference to the stat menu; we'll populate it once we have profile data
-            m_fields->statMenu = this->getChildByID("capeling.garage-stats-menu/stats-menu");
+//             // from capeling.garage-stats-menu
+//             this->getChildByID("moons-icon")->setVisible(false);
+//             this->getChildByID("stars-icon")->setVisible(false);
+//             this->getChildByID("coins-icon")->setVisible(false);
+//             this->getChildByID("user-coins-icon")->setVisible(false);
+//             this->getChildByID("orbs-icon")->setVisible(false);
+//             this->getChildByID("diamonds-icon")->setVisible(false);
+//             this->getChildByID("diamond-shards-icon")->setVisible(false);
+//             this->getChildByID("moons-label")->setVisible(false);
+//             this->getChildByID("stars-label")->setVisible(false);
+//             this->getChildByID("coins-label")->setVisible(false);
+//             this->getChildByID("user-coins-label")->setVisible(false);
+//             this->getChildByID("orbs-label")->setVisible(false);
+//             this->getChildByID("diamonds-label")->setVisible(false);
+//             this->getChildByID("diamond-shards-label")->setVisible(false);
 
-            // start fetching profile data; we'll create the stat item in the callback
-            fetchProfileData(GJAccountManager::get()->m_accountID);
+//             m_fields->statMenu = this->getChildByID("stats-menu");
 
-            return true;
-      }
+//             // start fetching profile data
+//             fetchProfileData(GJAccountManager::get()->m_accountID);
 
-      void fetchProfileData(int accountId) {
-            log::info("Fetching profile data for account ID: {}", accountId);
-            // argon my beloved <3
-            std::string token;
-            auto res = argon::startAuth(
-                [](Result<std::string> res) {
-                      if (!res) {
-                            log::warn("Auth failed: {}", res.unwrapErr());
-                            return;
-                      }
-                      auto token = std::move(res).unwrap();
-                      log::debug("token obtained: {}", token);
-                      Mod::get()->setSavedValue("argon_token", token);
-                },
-                [](argon::AuthProgress progress) {
-                      log::debug("auth progress: {}",
-                                 argon::authProgressToString(progress));
-                });
-            if (!res) {
-                  log::warn("Failed to start auth attempt: {}", res.unwrapErr());
-                  return;
-            }
+//             return true;
+//       }
 
-            matjson::Value jsonBody = matjson::Value::object();
-            jsonBody["argonToken"] =
-                Mod::get()->getSavedValue<std::string>("argon_token");
-            jsonBody["accountId"] = accountId;
+//       void fetchProfileData(int accountId) {
+//             log::info("Fetching profile data for account ID: {}", accountId);
+//             // argon my beloved <3
+//             std::string token;
+//             auto res = argon::startAuth(
+//                 [](Result<std::string> res) {
+//                       if (!res) {
+//                             log::warn("Auth failed: {}", res.unwrapErr());
+//                             return;
+//                       }
+//                       auto token = std::move(res).unwrap();
+//                       log::debug("token obtained: {}", token);
+//                       Mod::get()->setSavedValue("argon_token", token);
+//                 },
+//                 [](argon::AuthProgress progress) {
+//                       log::debug("auth progress: {}",
+//                                  argon::authProgressToString(progress));
+//                 });
+//             if (!res) {
+//                   log::warn("Failed to start auth attempt: {}", res.unwrapErr());
+//                   return;
+//             }
 
-            // web request
-            auto postReq = web::WebRequest();
-            postReq.bodyJSON(jsonBody);
-            m_fields->profileTask = postReq.post("https://gdrate.arcticwoof.xyz/profile");
+//             matjson::Value jsonBody = matjson::Value::object();
+//             jsonBody["argonToken"] =
+//                 Mod::get()->getSavedValue<std::string>("argon_token");
+//             jsonBody["accountId"] = accountId;
 
-            // Handle the response
-            m_fields->profileTask.listen([this](web::WebResponse* response) {
-                  log::info("Received response from server");
+//             // web request
+//             auto postReq = web::WebRequest();
+//             postReq.bodyJSON(jsonBody);
+//             m_fields->profileTask = postReq.post("https://gdrate.arcticwoof.xyz/profile");
 
-                  if (!response->ok()) {
-                        log::warn("Server returned non-ok status: {}", response->code());
-                        return;
-                  }
+//             // Handle the response
+//             m_fields->profileTask.listen([this](web::WebResponse* response) {
+//                   log::info("Received response from server");
 
-                  auto jsonRes = response->json();
-                  if (!jsonRes) {
-                        log::warn("Failed to parse JSON response");
-                        return;
-                  }
+//                   if (!response->ok()) {
+//                         log::warn("Server returned non-ok status: {}", response->code());
+//                         return;
+//                   }
 
-                  auto json = jsonRes.unwrap();
+//                   auto jsonRes = response->json();
+//                   if (!jsonRes) {
+//                         log::warn("Failed to parse JSON response");
+//                         return;
+//                   }
 
-                  int points = json["points"].asInt().unwrapOrDefault();
-                  int planets = json["planets"].asInt().unwrapOrDefault();
-                  int stars = json["stars"].asInt().unwrapOrDefault();
-                  int coins = json["coins"].asInt().unwrapOrDefault();
+//                   auto json = jsonRes.unwrap();
 
-                  log::info("Profile data - points: {}, stars: {}", points, stars);
-                  m_fields->storedStars = stars;
+//                   int points = json["points"].asInt().unwrapOrDefault();
+//                   int planets = json["planets"].asInt().unwrapOrDefault();
+//                   int stars = json["stars"].asInt().unwrapOrDefault();
+//                   int coins = json["coins"].asInt().unwrapOrDefault();
 
-                  // create/update the stat item now that we have the value
-                  log::debug("Updating stat item with {} stars", stars);
-                  if (m_fields->statMenu) {
-                        // if an existing stat item exists, remove it first
-                        if (m_fields->starsValue) {
-                              m_fields->starsValue->removeFromParent();
-                              m_fields->starsValue = nullptr;
-                        }
-                        if (m_fields->planetsValue) {
-                              m_fields->planetsValue->removeFromParent();
-                              m_fields->planetsValue = nullptr;
-                        }
-                        if (m_fields->coinsValue) {
-                              m_fields->coinsValue->removeFromParent();
-                              m_fields->coinsValue = nullptr;
-                        }
+//                   log::info("Profile data - points: {}, stars: {}", points, stars);
+//                   m_fields->storedStars = stars;
 
-                        auto starSprite = CCSprite::createWithSpriteFrameName("RL_starMed.png"_spr);
-                        auto starsValue = StatsDisplayAPI::getNewItem(
-                            "blueprint-stars"_spr, starSprite,
-                            m_fields->storedStars, 0.54f);
+//                   // create/update the stat item now that we have the value
+//                   log::debug("Updating stat item with {} stars", stars);
+//                   if (m_fields->statMenu) {
+//                         // if an existing stat item exists, remove it first
+//                         if (m_fields->starsValue) {
+//                               m_fields->starsValue->removeFromParent();
+//                               m_fields->starsValue = nullptr;
+//                         }
+//                         if (m_fields->planetsValue) {
+//                               m_fields->planetsValue->removeFromParent();
+//                               m_fields->planetsValue = nullptr;
+//                         }
+//                         if (m_fields->coinsValue) {
+//                               m_fields->coinsValue->removeFromParent();
+//                               m_fields->coinsValue = nullptr;
+//                         }
 
-                        m_fields->starsValue = starsValue;
-                        starsValue->setID("rl-stars-value");
-                        m_fields->statMenu->addChild(starsValue);
+//                         auto starSprite = CCSprite::createWithSpriteFrameName("RL_starMed.png"_spr);
+//                         auto starsValue = StatsDisplayAPI::getNewItem(
+//                             "blueprint-stars"_spr, starSprite,
+//                             m_fields->storedStars, 0.54f);
 
-                        auto planetSprite = CCSprite::createWithSpriteFrameName("RL_planetMed.png"_spr);
-                        auto planetsValue = StatsDisplayAPI::getNewItem(
-                            "planets-collected"_spr, planetSprite,
-                            planets, 0.54f);
-                        m_fields->planetsValue = planetsValue;
-                        planetsValue->setID("rl-planets-value");
-                        m_fields->statMenu->addChild(planetsValue);
+//                         m_fields->starsValue = starsValue;
+//                         starsValue->setID("rl-stars-value");
+//                         m_fields->statMenu->addChild(starsValue);
 
-                        auto coinsSprite = CCSprite::createWithSpriteFrameName("RL_BlueCoinSmall.png"_spr);
-                        auto coinsValue = StatsDisplayAPI::getNewItem(
-                            "coins-collected"_spr, coinsSprite,
-                            coins, 0.54f);
-                        m_fields->coinsValue = coinsValue;
-                        coinsValue->setID("rl-coins-value");
-                        m_fields->statMenu->addChild(coinsValue);
+//                         auto planetSprite = CCSprite::createWithSpriteFrameName("RL_planetMed.png"_spr);
+//                         auto planetsValue = StatsDisplayAPI::getNewItem(
+//                             "planets-collected"_spr, planetSprite,
+//                             planets, 0.54f);
+//                         m_fields->planetsValue = planetsValue;
+//                         planetsValue->setID("rl-planets-value");
+//                         m_fields->statMenu->addChild(planetsValue);
 
-                        // call updateLayout if available
-                        if (auto menu = typeinfo_cast<CCMenu*>(m_fields->statMenu)) {
-                              menu->updateLayout();
-                        }
-                  } else {
-                        log::warn("Stat menu not found; cannot display blueprint-stars stat");
-                  }
-            });
-      }
-};
+//                         auto coinsSprite = CCSprite::createWithSpriteFrameName("RL_BlueCoinSmall.png"_spr);
+//                         auto coinsValue = StatsDisplayAPI::getNewItem(
+//                             "coins-collected"_spr, coinsSprite,
+//                             coins, 0.54f);
+//                         m_fields->coinsValue = coinsValue;
+//                         coinsValue->setID("rl-coins-value");
+//                         m_fields->statMenu->addChild(coinsValue);
+
+//                         // call updateLayout if available
+//                         if (auto menu = typeinfo_cast<CCMenu*>(m_fields->statMenu)) {
+//                               menu->updateLayout();
+//                         }
+//                   } else {
+//                         log::warn("Stat menu not found; cannot display blueprint-stars stat");
+//                   }
+//             });
+//       }
+// };
+
+// will deal with this later

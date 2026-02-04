@@ -25,7 +25,7 @@ RLEventLayouts* RLEventLayouts::create(EventType type) {
       auto ret = new RLEventLayouts();
       ret->m_eventType = type;
 
-      if (ret && ret->initAnchored(420.f, 280.f, "GJ_square01.png")) {
+      if (ret && ret->init()) {
             ret->autorelease();
             return ret;
       }
@@ -34,7 +34,9 @@ RLEventLayouts* RLEventLayouts::create(EventType type) {
       return nullptr;
 };
 
-bool RLEventLayouts::setup() {
+bool RLEventLayouts::init() {
+      if (!Popup::init(420.f, 280.f))
+            return false;
       // register instance
       addSideArt(m_mainLayer, SideArt::All, SideArtStyle::PopupGold, false);
 
@@ -309,19 +311,20 @@ bool RLEventLayouts::setup() {
       // Fetch event info from server
       {
             Ref<RLEventLayouts> self = this;
-            self->m_eventTask = web::WebRequest().get("https://gdrate.arcticwoof.xyz/getEvent");
-            self->m_eventTask.listen([self](web::WebResponse* res) {
-                  if (!self) return;
-                  if (!res || !res->ok()) {
-                        Notification::create("Failed to fetch event info", NotificationIcon::Error)->show();
-                        return;
-                  }
-                  auto jsonResult = res->json();
-                  if (!jsonResult) {
-                        Notification::create("Invalid event JSON", NotificationIcon::Warning)->show();
-                        return;
-                  }
-                  auto json = jsonResult.unwrap();
+            self->m_eventTask.spawn(
+                web::WebRequest().get("https://gdrate.arcticwoof.xyz/getEvent"),
+                [self](web::WebResponse res) {
+                      if (!self) return;
+                      if (!res.ok()) {
+                            Notification::create("Failed to fetch event info", NotificationIcon::Error)->show();
+                            return;
+                      }
+                      auto jsonResult = res.json();
+                      if (!jsonResult) {
+                            Notification::create("Invalid event JSON", NotificationIcon::Warning)->show();
+                            return;
+                      }
+                      auto json = jsonResult.unwrap();
 
                   std::vector<std::string> keys = {"daily", "weekly", "monthly"};
                   int idx = static_cast<int>(self->m_eventType);

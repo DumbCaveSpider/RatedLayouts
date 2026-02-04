@@ -8,7 +8,7 @@ using namespace geode::prelude;
 RLCreditsPopup* RLCreditsPopup::create() {
       auto ret = new RLCreditsPopup();
 
-      if (ret && ret->initAnchored(380.f, 250.f, "GJ_square01.png")) {
+      if (ret && ret->init()) {
             ret->autorelease();
             return ret;
       }
@@ -17,7 +17,9 @@ RLCreditsPopup* RLCreditsPopup::create() {
       return nullptr;
 };
 
-bool RLCreditsPopup::setup() {
+bool RLCreditsPopup::init() {
+      if (!Popup::init(380.f, 250.f))
+            return false;
       setTitle("Rated Layouts Credits");
 
       auto scrollLayer = ScrollLayer::create({340.f, 195.f});
@@ -53,12 +55,14 @@ bool RLCreditsPopup::setup() {
 
       // Fetch mod players
       Ref<RLCreditsPopup> self = this;
-      web::WebRequest()
-          .get("https://gdrate.arcticwoof.xyz/getCredits")
-          .listen([self](web::WebResponse* response) {
+      web::WebRequest req;
+      self->m_spinner = nullptr; // keep consistent
+      async::spawn(
+          req.get("https://gdrate.arcticwoof.xyz/getCredits"),
+          [self](web::WebResponse res) {
                 if (!self) return;
-                if (!response || !response->ok()) {
-                      log::warn("getCredits returned non-ok status: {}", response ? response->code() : -1);
+                if (!res.ok()) {
+                      log::warn("getCredits returned non-ok status: {}", res.code());
                       if (self->m_spinner) {
                             self->m_spinner->removeFromParent();
                             self->m_spinner = nullptr;
@@ -67,7 +71,7 @@ bool RLCreditsPopup::setup() {
                       return;
                 }
 
-                auto jsonRes = response->json();
+                auto jsonRes = res.json();
                 if (!jsonRes) {
                       log::warn("Failed to parse mod players JSON");
                       if (self->m_spinner) {

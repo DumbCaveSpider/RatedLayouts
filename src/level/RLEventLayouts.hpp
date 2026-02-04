@@ -4,7 +4,7 @@
 
 using namespace geode::prelude;
 
-class RLEventLayouts : public geode::Popup<> {
+class RLEventLayouts : public geode::Popup {
      public:
       enum class EventType {
             Daily = 0,
@@ -15,7 +15,7 @@ class RLEventLayouts : public geode::Popup<> {
       static RLEventLayouts* create(EventType type);
 
      private:
-      bool setup() override;
+      bool init();
       void update(float dt) override;
       void onPlayEvent(CCObject* sender);
       void onCreatorClicked(CCObject* sender);
@@ -67,8 +67,8 @@ class RLEventLayouts : public geode::Popup<> {
       EventType m_eventType = EventType::Daily;
       CCLayer* m_eventMenu = nullptr;
       bool m_setupFinished = false;
-      utils::web::WebTask m_eventTask;
-      utils::web::WebTask m_safeListTask;
+      async::TaskHolder<web::WebResponse> m_eventTask;
+      async::TaskHolder<web::WebResponse> m_safeListTask;
       ~RLEventLayouts() {
             m_eventTask.cancel();
             m_safeListTask.cancel();

@@ -461,16 +461,17 @@ void RLLevelBrowserLayer::fetchLevelsForType(int type) {
       req.param("type", numToString(type))
           .param("amount", numToString(PER_PAGE))
           .param("page", numToString(self->m_page + 1));
-      self->m_searchTask = req.get("https://gdrate.arcticwoof.xyz/getLevels");
-      self->m_searchTask.listen([self](web::WebResponse* res) {
+      self->m_searchTask.spawn(
+            req.get("https://gdrate.arcticwoof.xyz/getLevels"),
+            [self](web::WebResponse res) {
             if (!self) return;
             if (!self->getParent() || !self->isRunning()) return;
-            if (!res || !res->ok()) {
+            if (!res.ok()) {
                   Notification::create("Failed to fetch levels", NotificationIcon::Error)->show();
                   self->stopLoading();
                   return;
             }
-            auto jsonRes = res->json();
+            auto jsonRes = res.json();
             if (!jsonRes) {
                   Notification::create("Invalid response", NotificationIcon::Error)->show();
                   self->stopLoading();
@@ -539,16 +540,17 @@ void RLLevelBrowserLayer::fetchAccountLevels(int accountId) {
       req.param("accountId", numToString(accountId))
           .param("amount", numToString(PER_PAGE))
           .param("page", numToString(self->m_page + 1));
-      self->m_searchTask = req.get("https://gdrate.arcticwoof.xyz/getAccountLevels");
-      self->m_searchTask.listen([self](web::WebResponse* res) {
+      self->m_searchTask.spawn(
+          req.get("https://gdrate.arcticwoof.xyz/getAccountLevels"),
+          [self](web::WebResponse const& res) {
             if (!self) return;
             if (!self->getParent() || !self->isRunning()) return;
-            if (!res || !res->ok()) {
+            if (!res.ok()) {
                   Notification::create("Failed to fetch levels", NotificationIcon::Error)->show();
                   self->stopLoading();
                   return;
             }
-            auto jsonRes = res->json();
+            auto jsonRes = res.json();
             if (!jsonRes) {
                   Notification::create("Invalid response", NotificationIcon::Error)->show();
                   self->stopLoading();
@@ -626,16 +628,17 @@ void RLLevelBrowserLayer::performSearchQuery(ParamList const& params) {
       for (auto const& p : params) {
             if (p.first == "safe") {
                   std::string url = std::string("https://gdrate.arcticwoof.xyz/getEvent?safe=") + p.second + std::string("&amount=") + numToString(PER_PAGE) + std::string("&page=") + numToString(self->m_page + 1);
-                  self->m_searchTask = web::WebRequest().get(url);
-                  self->m_searchTask.listen([self](web::WebResponse* res) {
+                  self->m_searchTask.spawn(
+                      web::WebRequest().get(url),
+                      [self](web::WebResponse const& res) {
                         if (!self) return;
                         if (!self->getParent() || !self->isRunning()) return;
-                        if (!res || !res->ok()) {
+                        if (!res.ok()) {
                               Notification::create("Failed to fetch event safe list", NotificationIcon::Error)->show();
                               self->stopLoading();
                               return;
                         }
-                        auto jsonRes = res->json();
+                        auto jsonRes = res.json();
                         if (!jsonRes) {
                               Notification::create("Invalid event response", NotificationIcon::Warning)->show();
                               self->stopLoading();
@@ -705,16 +708,17 @@ void RLLevelBrowserLayer::performSearchQuery(ParamList const& params) {
       req.param("accountId", numToString(GJAccountManager::get()->m_accountID))
           .param("amount", numToString(PER_PAGE))
           .param("page", numToString(self->m_page + 1));
-      self->m_searchTask = req.get("https://gdrate.arcticwoof.xyz/search");
-      self->m_searchTask.listen([self](web::WebResponse* res) {
+      self->m_searchTask.spawn(
+        req.get("https://gdrate.arcticwoof.xyz/search"),
+        [self](web::WebResponse const& res) {
             if (!self) return;
             if (!self->getParent() || !self->isRunning()) return;
-            if (!res || !res->ok()) {
+            if (!res.ok()) {
                   Notification::create("Search request failed", NotificationIcon::Error)->show();
                   self->stopLoading();
                   return;
             }
-            auto jsonRes = res->json();
+            auto jsonRes = res.json();
             if (!jsonRes) {
                   Notification::create("Failed to parse search response", NotificationIcon::Error)->show();
                   self->stopLoading();

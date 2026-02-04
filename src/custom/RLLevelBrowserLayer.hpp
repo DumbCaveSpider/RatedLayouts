@@ -57,7 +57,7 @@ class RLLevelBrowserLayer : public CCLayer, public LevelManagerDelegate, public 
 
       Mode m_mode = Mode::Featured;
       ParamList m_modeParams;
-      utils::web::WebTask m_searchTask;
+      async::TaskHolder<web::WebResponse> m_searchTask;
       ~RLLevelBrowserLayer() { 
             m_searchTask.cancel();
             auto glm = GameLevelManager::get();

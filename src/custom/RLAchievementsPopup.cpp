@@ -7,7 +7,7 @@ using namespace geode::prelude;
 RLAchievementsPopup* RLAchievementsPopup::create() {
       auto ret = new RLAchievementsPopup();
 
-      if (ret && ret->initAnchored(470.f, 290.f, "GJ_square02.png")) {
+      if (ret && ret->init()) {
             ret->autorelease();
             return ret;
       }
@@ -110,7 +110,9 @@ void RLAchievementsPopup::populate(int tabIndex) {
       if (m_scrollLayer) m_scrollLayer->scrollToTop();
 }
 
-bool RLAchievementsPopup::setup() {
+bool RLAchievementsPopup::init() {
+      if (!Popup::init(470.f, 290.f))
+            return false;
 
       setTitle("Rated Layouts Achievements");
 

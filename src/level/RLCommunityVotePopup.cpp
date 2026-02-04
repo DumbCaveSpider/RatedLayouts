@@ -11,7 +11,7 @@ RLCommunityVotePopup* RLCommunityVotePopup::create() {
 RLCommunityVotePopup* RLCommunityVotePopup::create(int levelId) {
       auto popup = new RLCommunityVotePopup();
       popup->m_levelId = levelId;
-      if (popup && popup->initAnchored(420.f, 240.f, "GJ_square02.png")) {
+      if (popup && popup->init()) {
             popup->autorelease();
             return popup;
       }
@@ -82,65 +82,68 @@ void RLCommunityVotePopup::onSubmit(CCObject*) {
                       auto req = web::WebRequest();
                       req.bodyJSON(body);
                       Ref<RLCommunityVotePopup> self = this;
-                      self->m_submitVoteTask = req.post("https://gdrate.arcticwoof.xyz/setSuggestScore");
-                      self->m_submitVoteTask.listen([self, gameplayVote, originalityVote, difficultyVote](web::WebResponse* res) {
-                            if (!self) return;
-                            if (!res || !res->ok()) {
-                                  Notification::create("Failed to submit vote", NotificationIcon::Error)->show();
-                                  return;
-                            }
-                            auto j = res->json();
-                            if (!j) {
-                                  Notification::create("Invalid submit response", NotificationIcon::Warning)->show();
-                                  return;
-                            }
-                            auto json = j.unwrap();
-                            bool success = json["success"].asBool().unwrapOrDefault();
-                            if (success) {
-                                  if (!self->m_mainLayer || !self->getParent()) {
-                                        Notification::create("Vote submitted!", NotificationIcon::Success)->show();
-                                        // increment community vote achievements progress and notify achievements system
-                                        int oldVotes = Mod::get()->getSavedValue<int>("community_votes");
-                                        int votes = oldVotes + 1;
-                                        Mod::get()->setSavedValue<int>("community_votes", votes);
-                                        log::info("Community votes total submitted: {}", votes);
-                                        RLAchievements::onUpdated(RLAchievements::Collectable::Votes, oldVotes, votes);
-                                        return;
-                                  }
+                      self->m_submitVoteTask.spawn(
+                          req.post("https://gdrate.arcticwoof.xyz/setSuggestScore"),
+                          [self, gameplayVote, originalityVote, difficultyVote](web::WebResponse res) {
+                                if (!self) return;
+                                if (!res.ok()) {
+                                      Notification::create("Failed to submit vote", NotificationIcon::Error)->show();
+                                      return;
+                                }
+                                auto j = res.json();
+                                if (!j) {
+                                      Notification::create("Invalid submit response", NotificationIcon::Warning)->show();
+                                      return;
+                                }
+                                auto json = j.unwrap();
+                                bool success = json["success"].asBool().unwrapOrDefault();
+                                if (success) {
+                                      if (!self->m_mainLayer || !self->getParent()) {
+                                            Notification::create("Vote submitted!", NotificationIcon::Success)->show();
+                                            // increment community vote achievements progress and notify achievements system
+                                            int oldVotes = Mod::get()->getSavedValue<int>("community_votes");
+                                            int votes = oldVotes + 1;
+                                            Mod::get()->setSavedValue<int>("community_votes", votes);
+                                            log::info("Community votes total submitted: {}", votes);
+                                            RLAchievements::onUpdated(RLAchievements::Collectable::Votes, oldVotes, votes);
+                                            return;
+                                      }
 
-                                  Notification::create("Vote submitted!", NotificationIcon::Success)->show();
-                                  // increment community vote achievements progress and notify achievements system
-                                  int oldVotes = Mod::get()->getSavedValue<int>("community_votes");
-                                  int votes = oldVotes + 1;
-                                  Mod::get()->setSavedValue<int>("community_votes", votes);
-                                  log::info("Community votes total submitted: {}", votes);
-                                  RLAchievements::onUpdated(RLAchievements::Collectable::Votes, oldVotes, votes);
+                                      Notification::create("Vote submitted!", NotificationIcon::Success)->show();
+                                      // increment community vote achievements progress and notify achievements system
+                                      int oldVotes = Mod::get()->getSavedValue<int>("community_votes");
+                                      int votes = oldVotes + 1;
+                                      Mod::get()->setSavedValue<int>("community_votes", votes);
+                                      log::info("Community votes total submitted: {}", votes);
+                                      RLAchievements::onUpdated(RLAchievements::Collectable::Votes, oldVotes, votes);
 
-                                  // Optimistically mark inputs as VOTED and disable
-                                  if (self->m_gameplayInput && gameplayVote > 0) {
-                                        self->m_gameplayInput->setString("VOTED");
-                                        self->m_gameplayInput->setEnabled(false);
-                                  }
-                                  if (self->m_originalityInput && originalityVote > 0) {
-                                        self->m_originalityInput->setString("VOTED");
-                                        self->m_originalityInput->setEnabled(false);
-                                  }
-                                  if (self->m_difficultyInput && difficultyVote > 0) {
-                                        self->m_difficultyInput->setString("VOTED");
-                                        self->m_difficultyInput->setEnabled(false);
-                                  }
+                                      // Optimistically mark inputs as VOTED and disable
+                                      if (self->m_gameplayInput && gameplayVote > 0) {
+                                            self->m_gameplayInput->setString("VOTED");
+                                            self->m_gameplayInput->setEnabled(false);
+                                      }
+                                      if (self->m_originalityInput && originalityVote > 0) {
+                                            self->m_originalityInput->setString("VOTED");
+                                            self->m_originalityInput->setEnabled(false);
+                                      }
+                                      if (self->m_difficultyInput && difficultyVote > 0) {
+                                            self->m_difficultyInput->setString("VOTED");
+                                            self->m_difficultyInput->setEnabled(false);
+                                      }
 
-                                  // Refresh UI by re-fetching data
-                                  self->refreshFromServer();
-                            } else {
-                                  Notification::create("Vote submission failed", NotificationIcon::Error)->show();
-                            }
-                      });
+                                      // Refresh UI by re-fetching data
+                                      self->refreshFromServer();
+                                } else {
+                                      Notification::create("Vote submission failed", NotificationIcon::Error)->show();
+                                }
+                          });
                 }
           });
 }
 
-bool RLCommunityVotePopup::setup() {
+bool RLCommunityVotePopup::init() {
+      if (!Popup::init(420.f, 240.f))
+            return false;
       setTitle("Rated Layouts Community Vote");
       addSideArt(m_mainLayer, SideArt::All, SideArtStyle::PopupBlue, false);
       // Use taller vertical rows so label, score and input stack vertically
@@ -301,15 +304,16 @@ void RLCommunityVotePopup::refreshFromServer() {
 
       web::WebRequest voteReq;
       voteReq.bodyJSON(voteBody);
-      self->m_getVoteTask = voteReq.post("https://gdrate.arcticwoof.xyz/getVote");
-      self->m_getVoteTask.listen([self](web::WebResponse* vres) {
-            if (!self) return;
-            if (!vres || !vres->ok()) {
-                  return;
-            }
-            auto vj = vres->json();
-            if (!vj) return;
-            auto vjson = vj.unwrap();
+      self->m_getVoteTask.spawn(
+          voteReq.post("https://gdrate.arcticwoof.xyz/getVote"),
+          [self](web::WebResponse vres) {
+                if (!self) return;
+                if (!vres.ok()) {
+                      return;
+                }
+                auto vj = vres.json();
+                if (!vj) return;
+                auto vjson = vj.unwrap();
 
             if (!self->m_mainLayer || !self->getParent()) {
                   return;

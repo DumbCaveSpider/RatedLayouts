@@ -31,6 +31,15 @@ static void removeUITint(Ref<EndLevelLayer> layer) {
 }
 
 class $modify(EndLevelLayer) {
+      struct Fields {
+            async::TaskHolder<web::WebResponse> m_getTask;
+            async::TaskHolder<web::WebResponse> m_submitTask;
+            ~Fields() {
+                  m_getTask.cancel();
+                  m_submitTask.cancel();
+            }
+      };
+
       void customSetup() override {
             EndLevelLayer::customSetup();  // call original method cuz if not then
                                            // it breaks lol
@@ -60,13 +69,13 @@ class $modify(EndLevelLayer) {
                       levelId);
 
             auto getReq = web::WebRequest();
-            auto getTask = getReq.get(fmt::format(
-                "https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId));
 
             // capture EndLevelLayer as Ref
             Ref<EndLevelLayer> endLayerRef = this;
 
-            getTask.listen([endLayerRef, levelId, level](web::WebResponse* response) {
+            m_fields->m_getTask.spawn(
+                getReq.get(fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId)),
+                [this, endLayerRef, levelId, level](web::WebResponse response) {
                   log::info("Received rating response for completed level ID: {}",
                             levelId);
 
@@ -76,13 +85,13 @@ class $modify(EndLevelLayer) {
                         return;
                   }
 
-                  if (!response->ok()) {
+                  if (!response.ok()) {
                         log::warn("Server returned non-ok status: {} for level ID: {}",
-                                  response->code(), levelId);
+                                  response.code(), levelId);
                         return;
                   }
 
-                  auto jsonRes = response->json();
+                  auto jsonRes = response.json();
                   if (!jsonRes) {
                         log::warn("Failed to parse JSON response");
                         return;
@@ -215,9 +224,10 @@ class $modify(EndLevelLayer) {
 
                   auto submitReq = web::WebRequest();
                   submitReq.bodyJSON(jsonBody);
-                  auto submitTask =
-                      submitReq.post("https://gdrate.arcticwoof.xyz/submitComplete");
-                  submitTask.listen([endLayerRef, starReward, levelId, isPlat](web::WebResponse* submitResponse) {
+                  
+                  m_fields->m_submitTask.spawn(
+                      submitReq.post("https://gdrate.arcticwoof.xyz/submitComplete"),
+                      [endLayerRef, starReward, levelId, isPlat](web::WebResponse submitResponse) {
                         log::info("Received submitComplete response for level ID: {}",
                                   levelId);
 
@@ -226,13 +236,13 @@ class $modify(EndLevelLayer) {
                               return;
                         }
 
-                        if (!submitResponse->ok()) {
+                        if (!submitResponse.ok()) {
                               log::warn("submitComplete returned non-ok status: {}",
-                                        submitResponse->code());
+                                        submitResponse.code());
                               return;
                         }
 
-                        auto submitJsonRes = submitResponse->json();
+                        auto submitJsonRes = submitResponse.json();
                         if (!submitJsonRes) {
                               log::warn("Failed to parse submitComplete JSON response");
                               return;

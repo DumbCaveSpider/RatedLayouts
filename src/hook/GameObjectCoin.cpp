@@ -10,7 +10,7 @@ const ccColor3B BRONZE_COLOR = ccColor3B{255, 175, 75};
 // Replace coin visuals when GameObjects are set up
 class $modify(EffectGameObject) {
       struct Fields {
-            utils::web::WebTask m_fetchTask;
+            async::TaskHolder<web::WebResponse> m_fetchTask;
             bool m_isSuggested = false;
             ~Fields() { m_fetchTask.cancel(); }
       };
@@ -32,17 +32,18 @@ class $modify(EffectGameObject) {
 
             auto url = fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId);
             Ref<EffectGameObject> selfRef = this;
-            m_fields->m_fetchTask = web::WebRequest().get(url);
             auto fields = m_fields;
-            m_fields->m_fetchTask.listen([selfRef, fields, levelId](web::WebResponse* res) {
+            m_fields->m_fetchTask.spawn(
+                  web::WebRequest().get(url),
+                  [selfRef, fields, levelId](web::WebResponse res) {
                   if (!selfRef) return;
 
-                  if (!res || !res->ok()) {
+                  if (!res.ok()) {
                         log::debug("GameObjectCoin: fetch failed or non-ok for level {}", levelId);
                         return;  // don't apply blue coin if server does not respond OK
                   }
 
-                  auto jsonRes = res->json();
+                  auto jsonRes = res.json();
                   if (!jsonRes) {
                         log::debug("GameObjectCoin: invalid JSON response for level {}", levelId);
                         return;

@@ -194,12 +194,12 @@ bool RLCreatorLayer::init() {
 
       // check server announcement id and set badge visibility
       Ref<RLCreatorLayer> self = this;
-      web::WebRequest()
-          .get("https://gdrate.arcticwoof.xyz/getAnnoucement")
-          .listen([self](web::WebResponse* res) {
+      m_announcementTask.spawn(
+          web::WebRequest().get("https://gdrate.arcticwoof.xyz/getAnnoucement"),
+          [self](web::WebResponse const& res) {
                 if (!self) return;
-                if (!res || !res->ok()) return;
-                auto jsonRes = res->json();
+                if (!res.ok()) return;
+                auto jsonRes = res.json();
                 if (!jsonRes) return;
                 auto json = jsonRes.unwrap();
                 int id = 0;
@@ -435,17 +435,17 @@ void RLCreatorLayer::onAnnoucementButton(CCObject* sender) {
       if (menuItem) menuItem->setEnabled(false);
 
       Ref<RLCreatorLayer> self = this;
-      web::WebRequest()
-          .get("https://gdrate.arcticwoof.xyz/getAnnoucement")
-          .listen([self, menuItem](web::WebResponse* res) {
+      m_announcementTask.spawn(
+          web::WebRequest().get("https://gdrate.arcticwoof.xyz/getAnnoucement"),
+          [self, menuItem](web::WebResponse const& res) {
                 if (!self) return;
-                if (!res || !res->ok()) {
+                if (!res.ok()) {
                       Notification::create("Failed to fetch announcement", NotificationIcon::Error)->show();
                       if (menuItem) menuItem->setEnabled(true);
                       return;
                 }
 
-                auto jsonRes = res->json();
+                auto jsonRes = res.json();
                 if (!jsonRes) {
                       Notification::create("Invalid announcement response", NotificationIcon::Error)->show();
                       if (menuItem) menuItem->setEnabled(true);
@@ -488,14 +488,14 @@ void RLCreatorLayer::onUnknownButton(CCObject* sender) {
       menuItem->setEnabled(false);
       // fetch dialogue from server and show it in a dialog
       Ref<RLCreatorLayer> self = this;
-      web::WebRequest()
-          .get("https://gdrate.arcticwoof.xyz/getDialogue")
-          .listen([self, menuItem](web::WebResponse* res) {
+      m_dialogueTask.spawn(
+          web::WebRequest().get("https://gdrate.arcticwoof.xyz/getDialogue"),
+          [self, menuItem](web::WebResponse const& res) {
                 if (!self) return;
                 std::string text = "...";  // default text
                 int id = 0;
-                if (res && res->ok()) {
-                      auto jsonRes = res->json();
+                if (res.ok()) {
+                      auto jsonRes = res.json();
                       if (jsonRes) {
                             auto json = jsonRes.unwrap();
                             if (json.contains("id")) {

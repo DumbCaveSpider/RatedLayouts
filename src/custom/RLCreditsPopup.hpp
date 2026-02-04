@@ -3,12 +3,12 @@
 
 using namespace geode::prelude;
 
-class RLCreditsPopup : public geode::Popup<> {
+class RLCreditsPopup : public geode::Popup {
      public:
       static RLCreditsPopup* create();
 
      private:
-      bool setup() override;
+      bool init();
       void onAccountClicked(CCObject* sender);
       void onInfo(CCObject* sender);
       ScrollLayer* m_scrollLayer = nullptr;

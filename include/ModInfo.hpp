@@ -2,7 +2,7 @@
 
 #include <string>
 #include <optional>
-#include <functional>
+#include <Geode/Geode.hpp>
 
 struct ModInfo {
     std::string message;
@@ -11,4 +11,4 @@ struct ModInfo {
     std::string modVersion;
 };
 
-void fetchModInfo(std::function<void(std::optional<ModInfo>)> cb);
+void fetchModInfo(geode::Function<void(std::optional<ModInfo>)> cb);

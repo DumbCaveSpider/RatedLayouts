@@ -110,13 +110,15 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             float m_originalCoin1Y = 0.0f;
             float m_originalCoin2Y = 0.0f;
             float m_originalCoin3Y = 0.0f;
-            utils::web::WebTask m_fetchTask;
-            utils::web::WebTask m_submitTask;
-            utils::web::WebTask m_accessTask;
+            async::TaskHolder<web::WebResponse> m_fetchTask;
+            async::TaskHolder<web::WebResponse> m_submitTask;
+            async::TaskHolder<web::WebResponse> m_accessTask;
+            async::TaskHolder<Result<std::string>> m_authTask;
             ~Fields() {
                   m_fetchTask.cancel();
                   m_submitTask.cancel();
                   m_accessTask.cancel();
+                  m_authTask.cancel();
             }
       };
 
@@ -203,13 +205,12 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             }
 
             auto getReq = web::WebRequest();
-            m_fields->m_fetchTask = getReq.get(
-                fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId));
-
             Ref<RLLevelInfoLayer> layerRef = this;
             auto difficultySprite = layerRef->getChildByID("difficulty-sprite");
 
-            m_fields->m_fetchTask.listen([layerRef, difficultySprite](web::WebResponse* response) {
+            m_fields->m_fetchTask.spawn(
+                  getReq.get(fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId)),
+                  [layerRef, difficultySprite](web::WebResponse response) {
                   log::info("Received rating response from server");
 
                   if (!layerRef) {
@@ -217,12 +218,12 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                         return;
                   }
 
-                  if (!response->ok()) {
-                        log::warn("Server returned non-ok status: {}", response->code());
+                  if (!response.ok()) {
+                        log::warn("Server returned non-ok status: {}", response.code());
                         return;
                   }
 
-                  auto jsonRes = response->json();
+                  auto jsonRes = response.json();
                   if (!jsonRes) {
                         log::warn("Failed to parse JSON response");
                         return;
@@ -446,11 +447,10 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
 
                   auto submitReq = web::WebRequest();
                   submitReq.bodyJSON(jsonBody);
-                  m_fields->m_submitTask =
-                      submitReq.post("https://gdrate.arcticwoof.xyz/submitComplete");
-
-                  m_fields->m_submitTask.listen([layerRef, difficulty, levelId,
-                                                 difficultySprite](web::WebResponse* submitResponse) {
+                  
+                  m_fields->m_submitTask.spawn(
+                      submitReq.post("https://gdrate.arcticwoof.xyz/submitComplete"),
+                      [layerRef, difficulty, levelId, difficultySprite](web::WebResponse submitResponse) {
                         log::info("Received submitComplete response for level ID: {}", levelId);
 
                         if (!layerRef) {
@@ -458,13 +458,13 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                               return;
                         }
 
-                        if (!submitResponse->ok()) {
+                        if (!submitResponse.ok()) {
                               log::warn("submitComplete returned non-ok status: {}",
-                                        submitResponse->code());
+                                        submitResponse.code());
                               return;
                         }
 
-                        auto submitJsonRes = submitResponse->json();
+                        auto submitJsonRes = submitResponse.json();
                         if (!submitJsonRes) {
                               log::warn("Failed to parse submitComplete JSON response");
                               return;
@@ -1560,87 +1560,86 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
       void requestStatus(int accountId) {
             // argon my beloved <3
             std::string token;
-            auto res = argon::startAuth(
-                [](Result<std::string> res) {
-                      if (!res) {
-                            log::warn("Auth failed: {}", res.unwrapErr());
-                            Notification::create(res.unwrapErr(), NotificationIcon::Error)
-                                ->show();
-                      }
-                      auto token = std::move(res).unwrap();
-                      log::debug("token obtained: {}", token);
-                      Mod::get()->setSavedValue("argon_token", token);
-                },
-                [](argon::AuthProgress progress) {
-                      log::debug("auth progress: {}",
-                                 argon::authProgressToString(progress));
-                });
-            if (!res) {
-                  log::warn("Failed to start auth attempt: {}", res.unwrapErr());
-                  Notification::create(res.unwrapErr(), NotificationIcon::Error)->show();
-            }
+            argon::AuthOptions options;
+            options.progress = [](argon::AuthProgress progress) {
+                  log::debug("auth progress: {}", argon::authProgressToString(progress));
+            };
 
-            // json boody crap
-            matjson::Value jsonBody = matjson::Value::object();
-            jsonBody["argonToken"] =
-                Mod::get()->getSavedValue<std::string>("argon_token");
-            jsonBody["accountId"] = accountId;
-
-            // verify the user's role
-            auto postReq = web::WebRequest();
-            postReq.bodyJSON(jsonBody);
-            m_fields->m_accessTask = postReq.post("https://gdrate.arcticwoof.xyz/access");
-
-            Ref<RLLevelInfoLayer> layerRef = this;
-
-            // handle the response
-            m_fields->m_accessTask.listen([layerRef](web::WebResponse* response) {
-                  log::info("Received response from server");
-
-                  if (!layerRef) {
-                        log::warn("LevelInfoLayer has been destroyed, skipping role update");
-                        return;
-                  }
-
-                  if (!response->ok()) {
-                        log::warn("Server returned non-ok status: {}", response->code());
-                        return;
-                  }
-
-                  auto jsonRes = response->json();
-                  if (!jsonRes) {
-                        log::warn("Failed to parse JSON response");
-                        return;
-                  }
-
-                  auto json = jsonRes.unwrap();
-                  int role = json["role"].asInt().unwrapOrDefault();
-
-                  // role check lol
-                  if (role == 1) {
-                        log::info("User has mod role");
-                        Mod::get()->setSavedValue<int>("role", role);
-                  } else if (role == 2) {
-                        log::info("User has admin role. Enable featured layouts");
-                        Mod::get()->setSavedValue<int>("role", role);
-                  } else {
-                        Mod::get()->setSavedValue<int>("role", 0);
-                  }
-
-                  // Refresh the community vote button immediately so role overrides take effect
-                  auto cached = getCachedLevel(layerRef->m_level->m_levelID);
-                  if (cached) {
-                        auto rightMenuNode = layerRef->getChildByID("right-side-menu");
-                        if (rightMenuNode && typeinfo_cast<CCMenu*>(rightMenuNode)) {
-                              auto existing = static_cast<CCMenu*>(rightMenuNode)->getChildByID("rl-community-vote");
-                              if (existing) existing->removeFromParent();
-                              static_cast<CCMenu*>(rightMenuNode)->updateLayout();
+            m_fields->m_authTask.spawn(
+                  argon::startAuth(std::move(options)),
+                  [this, accountId](Result<std::string> res) {
+                        if (!res) {
+                              log::warn("Auth failed: {}", res.unwrapErr());
+                              Notification::create(res.unwrapErr(), NotificationIcon::Error)->show();
+                              return;
                         }
+                        auto token = std::move(res).unwrap();
+                        log::debug("token obtained: {}", token);
+                        Mod::get()->setSavedValue("argon_token", token);
 
-                        // Re-run processing with cached data to recreate the button with the correct state
-                        layerRef->processLevelRating(cached.value(), layerRef, layerRef->getChildByID("difficulty-sprite"));
+                        // json boody crap
+                        matjson::Value jsonBody = matjson::Value::object();
+                        jsonBody["argonToken"] = token;
+                        jsonBody["accountId"] = accountId;
+
+                        // verify the user's role
+                        auto postReq = web::WebRequest();
+                        postReq.bodyJSON(jsonBody);
+                        
+                        Ref<RLLevelInfoLayer> layerRef = this;
+                        
+                        m_fields->m_accessTask.spawn(
+                              postReq.post("https://gdrate.arcticwoof.xyz/access"),
+                              [layerRef](web::WebResponse response) {
+                                    log::info("Received response from server");
+
+                                    if (!layerRef) {
+                                          log::warn("LevelInfoLayer has been destroyed, skipping role update");
+                                          return;
+                                    }
+
+                                    if (!response.ok()) {
+                                          log::warn("Server returned non-ok status: {}", response.code());
+                                          return;
+                                    }
+
+                                    auto jsonRes = response.json();
+                                    if (!jsonRes) {
+                                          log::warn("Failed to parse JSON response");
+                                          return;
+                                    }
+
+                                    auto json = jsonRes.unwrap();
+                                    int role = json["role"].asInt().unwrapOrDefault();
+
+                                    // role check lol
+                                    if (role == 1) {
+                                          log::info("User has mod role");
+                                          Mod::get()->setSavedValue<int>("role", role);
+                                    } else if (role == 2) {
+                                          log::info("User has admin role. Enable featured layouts");
+                                          Mod::get()->setSavedValue<int>("role", role);
+                                    } else {
+                                          Mod::get()->setSavedValue<int>("role", 0);
+                                    }
+
+                                    // Refresh the community vote button immediately so role overrides take effect
+                                    auto cached = getCachedLevel(layerRef->m_level->m_levelID);
+                                    if (cached) {
+                                          auto rightMenuNode = layerRef->getChildByID("right-side-menu");
+                                          if (rightMenuNode && typeinfo_cast<CCMenu*>(rightMenuNode)) {
+                                                auto existing = static_cast<CCMenu*>(rightMenuNode)->getChildByID("rl-community-vote");
+                                                if (existing) existing->removeFromParent();
+                                                static_cast<CCMenu*>(rightMenuNode)->updateLayout();
+                                          }
+
+                                          // Re-run processing with cached data to recreate the button with the correct state
+                                          layerRef->processLevelRating(cached.value(), layerRef, layerRef->getChildByID("difficulty-sprite"));
+                                    }
+                              }
+                        );
                   }
-            });
+            );
       }
 
       void likedItem(LikeItemType type, int id, bool liked) override {
@@ -1711,12 +1710,12 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   deleteLevelFromCache(levelId);  // clear cache to force fresh fetch
 
                   auto getReq = web::WebRequest();
-                  m_fields->m_fetchTask = getReq.get(fmt::format(
-                      "https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId));
-
                   Ref<RLLevelInfoLayer> layerRef = this;
 
-                  m_fields->m_fetchTask.listen([layerRef, levelId](web::WebResponse* response) {
+                  m_fields->m_fetchTask.spawn(
+                      getReq.get(fmt::format(
+                      "https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId)),
+                      [layerRef, levelId](web::WebResponse response) {
                         log::info("Received updated rating data from server for level ID: {}",
                                   levelId);
 
@@ -1726,8 +1725,8 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                         }
 
                         // If server returned non-ok, its okay, just remove existing data... sob
-                        if (!response->ok()) {
-                              if (response->code() == 404) {
+                        if (!response.ok()) {
+                              if (response.code() == 404) {
                                     auto difficultySprite = layerRef->getChildByID("difficulty-sprite");
                                     if (difficultySprite) {
                                           auto starIcon = difficultySprite->getChildByID("rl-star-icon");
@@ -1739,11 +1738,11 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                               return;
                         }
 
-                        if (!response->json()) {
+                        if (!response.json()) {
                               return;
                         }
 
-                        auto json = response->json().unwrap();
+                        auto json = response.json().unwrap();
 
                         int difficulty = json["difficulty"].asInt().unwrapOrDefault();
                         if (difficulty == 0) {

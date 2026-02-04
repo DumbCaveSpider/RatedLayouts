@@ -106,6 +106,16 @@ class $modify(RLProfilePage, ProfilePage) {
             int m_planets = 0;
             int m_stars = 0;
             int m_coins = 0;
+
+            async::TaskHolder<web::WebResponse> m_profileTask;
+            async::TaskHolder<Result<std::string>> m_authTask;
+            bool m_profileInFlight = false;
+            int m_profileForAccount = -1;
+
+            ~Fields() {
+                  m_profileTask.cancel();
+                  m_authTask.cancel();
+            }
       };
 
       CCMenu* createStatEntry(
@@ -311,27 +321,22 @@ class $modify(RLProfilePage, ProfilePage) {
             log::info("Fetching profile data for account ID: {}", accountId);
             m_fields->accountId = accountId;
 
-            std::string token;
-            auto res = argon::startAuth(
-                [](Result<std::string> res) {
-                      if (!res) {
-                            log::warn("Auth failed: {}", res.unwrapErr());
-                            return;
-                      }
-                      auto token = std::move(res).unwrap();
-                      log::debug("token obtained: {}", token);
-                      Mod::get()->setSavedValue("argon_token", token);
-                },
-                [](argon::AuthProgress progress) {
-                      log::debug("auth progress: {}", argon::authProgressToString(progress));
-                });
+            argon::AuthOptions options;
+            options.progress = [](argon::AuthProgress progress) {
+                  log::debug("auth progress: {}", argon::authProgressToString(progress));
+            };
+
+            auto res = co_await argon::startAuth(std::move(options));
             if (!res) {
-                  log::warn("Failed to start auth attempt: {}", res.unwrapErr());
+                  log::warn("Auth failed: {}", res.unwrapErr());
                   co_return;
             }
+            auto token = res.unwrap();
+            log::debug("token obtained: {}", token);
+            Mod::get()->setSavedValue("argon_token", token);
 
             matjson::Value jsonBody = matjson::Value::object();
-            jsonBody["argonToken"] = Mod::get()->getSavedValue<std::string>("argon_token");
+            jsonBody["argonToken"] = token;
             jsonBody["accountId"] = accountId;
 
             auto req = web::WebRequest();
@@ -525,9 +530,14 @@ class $modify(RLProfilePage, ProfilePage) {
             if (m_fields->accountId == 7689052) RLAchievements::onReward("misc_arcticwoof");
 
             // argon my beloved <3
-            std::string token;
-            auto res = argon::startAuth(
-                [](Result<std::string> res) {
+            argon::AuthOptions options;
+            options.progress = [](argon::AuthProgress progress) {
+                  log::debug("auth progress: {}", argon::authProgressToString(progress));
+            };
+
+            m_fields->m_authTask.spawn(
+                argon::startAuth(std::move(options)),
+                [this, accountId](Result<std::string> res) {
                       if (!res) {
                             log::warn("Auth failed: {}", res.unwrapErr());
                             return;
@@ -535,39 +545,49 @@ class $modify(RLProfilePage, ProfilePage) {
                       auto token = std::move(res).unwrap();
                       log::debug("token obtained: {}", token);
                       Mod::get()->setSavedValue("argon_token", token);
-                },
-                [](argon::AuthProgress progress) {
-                      log::debug("auth progress: {}", argon::authProgressToString(progress));
+
+                    this->continueProfileFetch(accountId);
                 });
-            if (!res) {
-                  log::warn("Failed to start auth attempt: {}", res.unwrapErr());
-                  return;
-            }
+            
+      }
+
+      void continueProfileFetch(int accountId) {
+            std::string token = Mod::get()->getSavedValue<std::string>("argon_token");
 
             matjson::Value jsonBody = matjson::Value::object();
-            jsonBody["argonToken"] = Mod::get()->getSavedValue<std::string>("argon_token");
+            jsonBody["argonToken"] = token;
             jsonBody["accountId"] = accountId;
 
             auto postReq = web::WebRequest();
             postReq.bodyJSON(jsonBody);
 
-            auto postTask = postReq.post("https://gdrate.arcticwoof.xyz/profile");
+            if (m_fields->m_profileInFlight && m_fields->m_profileForAccount == accountId) {
+                log::debug("Profile request already in-flight for account {}", accountId);
+                return;
+            }
+
+            m_fields->m_profileTask.cancel();
+            m_fields->m_profileInFlight = true;
+            m_fields->m_profileForAccount = accountId;
+
             Ref<RLProfilePage> pageRef = this;
+            m_fields->m_profileTask.spawn(
+                postReq.post("https://gdrate.arcticwoof.xyz/profile"),
+                [pageRef, accountId](web::WebResponse response) {
+                if (pageRef) {
+                    pageRef->m_fields->m_profileInFlight = false;
+                } else {
+                    return;
+                }
 
-            postTask.listen([pageRef, this](web::WebResponse* response) {
-            log::info("Received response from server");
+                log::info("Received response from server");
 
-            if (!pageRef || !pageRef->m_mainLayer) {
-                log::warn("ProfilePage has been destroyed, skipping profile data update");
-                return;
-            }
+                if (!response.ok()) {
+                      log::warn("Server returned non-ok status: {}", response.code());
+                      return;
+                }
 
-            if (!response->ok()) {
-                log::warn("Server returned non-ok status: {}", response->code());
-                return;
-            }
-
-            auto jsonRes = response->json();
+                auto jsonRes = response.json();
             if (!jsonRes) {
                 log::warn("Failed to parse JSON response");
                 return;
@@ -581,10 +601,10 @@ class $modify(RLProfilePage, ProfilePage) {
             int planets = json["planets"].asInt().unwrapOrDefault();
             bool isSupporter = json["isSupporter"].asBool().unwrapOrDefault();
 
-            m_fields->m_stars = stars;
-            m_fields->m_planets = planets;
-            m_fields->m_points = points;
-            m_fields->m_coins = coins;
+            pageRef->m_fields->m_stars = stars;
+            pageRef->m_fields->m_planets = planets;
+            pageRef->m_fields->m_points = points;
+            pageRef->m_fields->m_coins = coins;
 
             pageRef->m_fields->role = role;
             pageRef->m_fields->isSupporter = isSupporter;
@@ -599,10 +619,10 @@ class $modify(RLProfilePage, ProfilePage) {
                 Mod::get()->setSavedValue("role", pageRef->m_fields->role);
             }
 
-            updateStatLabel("rl-stars-label", GameToolbox::pointsToString(m_fields->m_stars));
-            updateStatLabel("rl-planets-label", GameToolbox::pointsToString(m_fields->m_planets));
+            pageRef->updateStatLabel("rl-stars-label", GameToolbox::pointsToString(pageRef->m_fields->m_stars));
+            pageRef->updateStatLabel("rl-planets-label", GameToolbox::pointsToString(pageRef->m_fields->m_planets));
 
-            if (auto rlStatsMenu = getChildByIDRecursive("rl-stats-menu")) {
+            if (auto rlStatsMenu = pageRef->getChildByIDRecursive("rl-stats-menu")) {
                 rlStatsMenu->updateLayout();
             } });
       }

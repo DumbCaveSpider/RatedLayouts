@@ -5,7 +5,7 @@ using namespace geode::prelude;
 
 RLBadgeRequestPopup* RLBadgeRequestPopup::create() {
       auto ret = new RLBadgeRequestPopup();
-      if (ret && ret->initAnchored(420.f, 200.f, "GJ_square04.png")) {
+      if (ret && ret->init()) {
             ret->autorelease();
             return ret;
       }
@@ -13,7 +13,10 @@ RLBadgeRequestPopup* RLBadgeRequestPopup::create() {
       return nullptr;
 }
 
-bool RLBadgeRequestPopup::setup() {
+bool RLBadgeRequestPopup::init() {
+      if (!Popup::init(420.f, 200.f))
+            return false;
+
       setTitle("Claim Layout Supporter Badge");
 
       auto cs = m_mainLayer->getContentSize();
@@ -61,34 +64,35 @@ void RLBadgeRequestPopup::onSubmit(CCObject* sender) {
       auto req = web::WebRequest();
       req.bodyJSON(body);
       Ref<RLBadgeRequestPopup> self = this;
-      self->m_getSupporterTask = req.post("https://gdrate.arcticwoof.xyz/getSupporter");
-      self->m_getSupporterTask.listen([self, upopup](web::WebResponse* res) {
-            if (!self) return;
-            if (!res) {
-                  upopup->showFailMessage("Discord Username doesn't exists.");
-                  return;
-            }
+      self->m_getSupporterTask.spawn(
+          req.post("https://gdrate.arcticwoof.xyz/getSupporter"),
+          [self, upopup](web::WebResponse res) {
+                if (!self) return;
+                if (!res.ok()) {
+                      upopup->showFailMessage("Discord Username doesn't exists.");
+                      return;
+                }
 
-            auto str = res->string().unwrapOrDefault();
-            if (!str.empty()) {
-                  if (!res->ok()) {
-                        upopup->showFailMessage(str);
-                        return;
-                  }
-                  Notification::create(str, NotificationIcon::Success)->show();
-                  RLAchievements::onReward("misc_support");
-                  self->removeFromParent();
-                  return;
-            }
+                auto str = res.string().unwrapOrDefault();
+                if (!str.empty()) {
+                      if (!res.ok()) {
+                            upopup->showFailMessage(str);
+                            return;
+                      }
+                      Notification::create(str, NotificationIcon::Success)->show();
+                      RLAchievements::onReward("misc_support");
+                      self->removeFromParent();
+                      return;
+                }
 
-            if (!res->ok()) {
-                  // show status code
-                  upopup->showFailMessage(fmt::format("Failed to submit request (code {})", res->code()));
-                  return;
-            }
+                if (!res.ok()) {
+                      // show status code
+                      upopup->showFailMessage(fmt::format("Failed to submit request (code {})", res.code()));
+                      return;
+                }
 
-            upopup->showSuccessMessage("Supporter Badge acquired!");
-            RLAchievements::onReward("misc_support");
-            self->removeFromParent();
-      });
+                upopup->showSuccessMessage("Supporter Badge acquired!");
+                RLAchievements::onReward("misc_support");
+                self->removeFromParent();
+          });
 }

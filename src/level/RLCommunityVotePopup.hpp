@@ -2,13 +2,13 @@
 
 using namespace geode::prelude;
 
-class RLCommunityVotePopup : public geode::Popup<> {
+class RLCommunityVotePopup : public geode::Popup {
      public:
       static RLCommunityVotePopup* create();
       static RLCommunityVotePopup* create(int levelId);
 
      private:
-      bool setup() override;
+      bool init();
 
       // handlers
       void onSubmit(CCObject*);
@@ -36,8 +36,8 @@ class RLCommunityVotePopup : public geode::Popup<> {
       void onToggleAll(CCObject* sender);
       void refreshFromServer();
 
-      utils::web::WebTask m_getVoteTask;
-      utils::web::WebTask m_submitVoteTask;
+      async::TaskHolder<web::WebResponse> m_getVoteTask;
+      async::TaskHolder<web::WebResponse> m_submitVoteTask;
       ~RLCommunityVotePopup() {
             m_getVoteTask.cancel();
             m_submitVoteTask.cancel();

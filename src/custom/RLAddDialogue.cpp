@@ -4,7 +4,7 @@ using namespace geode::prelude;
 
 RLAddDialogue* RLAddDialogue::create() {
       auto popup = new RLAddDialogue();
-      if (popup && popup->initAnchored(400.f, 90.f, "GJ_square05.png")) {
+      if (popup && popup->init()) {
             popup->autorelease();
             return popup;
       }
@@ -12,7 +12,9 @@ RLAddDialogue* RLAddDialogue::create() {
       return nullptr;
 }
 
-bool RLAddDialogue::setup() {
+bool RLAddDialogue::init() {
+      if (!Popup::init(400.f, 90.f))
+            return false;
       setTitle("Add Custom Dialogue");
 
       m_dialogueInput = TextInput::create(360.f, "Dialogue...", "chatFont.fnt");
@@ -74,13 +76,14 @@ void RLAddDialogue::onSubmit(CCObject* sender) {
       auto req = web::WebRequest();
       req.bodyJSON(body);
       Ref<RLAddDialogue> self = this;
-      self->m_setDialogueTask = req.post("https://gdrate.arcticwoof.xyz/setDialogue");
-      self->m_setDialogueTask.listen([self, upopup](web::WebResponse* res) {
-            if (!self) return;
-            if (!res || !res->ok()) {
-                  upopup->showFailMessage("Failed to submit dialogue!");
-                  return;
-            }
-            upopup->showSuccessMessage("Dialogue submitted successfully!");
-      });
+      self->m_setDialogueTask.spawn(
+          req.post("https://gdrate.arcticwoof.xyz/setDialogue"),
+          [self, upopup](web::WebResponse res) {
+                if (!self) return;
+                if (!res.ok()) {
+                      upopup->showFailMessage("Failed to submit dialogue!");
+                      return;
+                }
+                upopup->showSuccessMessage("Dialogue submitted successfully!");
+          });
 }

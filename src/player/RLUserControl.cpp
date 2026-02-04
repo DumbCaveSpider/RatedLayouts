@@ -10,7 +10,7 @@ const int DEV_ACCOUNT_ID = 7689052;
 RLUserControl* RLUserControl::create() {
       auto ret = new RLUserControl();
 
-      if (ret && ret->initAnchored(380.f, 240.f, "GJ_square02.png")) {
+      if (ret && ret->init()) {
             ret->autorelease();
             return ret;
       }
@@ -23,7 +23,7 @@ RLUserControl* RLUserControl::create(int accountId) {
       auto ret = new RLUserControl();
       ret->m_targetAccountId = accountId;
 
-      if (ret && ret->initAnchored(380.f, 240.f, "GJ_square04.png")) {
+      if (ret && ret->init()) {
             ret->autorelease();
             return ret;
       }
@@ -32,7 +32,9 @@ RLUserControl* RLUserControl::create(int accountId) {
       return nullptr;
 };
 
-bool RLUserControl::setup() {
+bool RLUserControl::init() {
+      if (!Popup::init(380.f, 240.f))
+            return false;
       setTitle("Rated Layouts User Mod Panel");
       addSideArt(m_mainLayer, SideArt::All, SideArtStyle::PopupGold, false);
 
@@ -140,10 +142,10 @@ bool RLUserControl::setup() {
 
             auto postReq = web::WebRequest();
             postReq.bodyJSON(jsonBody);
-            m_profileTask = postReq.post("https://gdrate.arcticwoof.xyz/profile");
-
             Ref<RLUserControl> self = this;
-            m_profileTask.listen([self](web::WebResponse* response) {
+            m_profileTask.spawn(
+                postReq.post("https://gdrate.arcticwoof.xyz/profile"),
+                [self](web::WebResponse response) {
                   if (!self) return;  // popup destroyed or otherwise invalid
 
                   // default values if any part of the fetch fails
@@ -151,10 +153,10 @@ bool RLUserControl::setup() {
                   bool isBlacklisted = false;
                   int fetchedRole = 0;
 
-                  if (!response->ok()) {
-                        log::warn("Profile fetch returned non-ok status: {}", response->code());
+                  if (!response.ok()) {
+                        log::warn("Profile fetch returned non-ok status: {}", response.code());
                   } else {
-                        auto jsonRes = response->json();
+                        auto jsonRes = response.json();
                         if (!jsonRes) {
                               log::warn("Failed to parse JSON response for profile");
                         } else {
@@ -342,41 +344,41 @@ void RLUserControl::onWipeAction(CCObject* sender) {
 
                 auto postReq = web::WebRequest();
                 postReq.bodyJSON(jsonBody);
-                this->m_deleteUserTask = postReq.post("https://gdrate.arcticwoof.xyz/deleteUser");
-
                 Ref<RLUserControl> self = this;
-                self->m_deleteUserTask.listen([self, upopup](web::WebResponse* response) {
-                      if (!self || !upopup) return;
+                self->m_deleteUserTask.spawn(
+                    postReq.post("https://gdrate.arcticwoof.xyz/deleteUser"),
+                    [self, upopup](web::WebResponse response) {
+                          if (!self || !upopup) return;
 
-                      // re-enable UI
-                      self->setAllOptionsEnabled(true);
-                      if (self->m_wipeButton) self->m_wipeButton->setEnabled(true);
+                          // re-enable UI
+                          self->setAllOptionsEnabled(true);
+                          if (self->m_wipeButton) self->m_wipeButton->setEnabled(true);
 
-                      if (!response->ok()) {
-                            log::warn("deleteUser returned non-ok status: {}", response->code());
-                            upopup->showFailMessage("Failed to delete user");
-                            if (self->m_spinner) self->m_spinner->setVisible(false);
-                            return;
-                      }
+                          if (!response.ok()) {
+                                log::warn("deleteUser returned non-ok status: {}", response.code());
+                                upopup->showFailMessage("Failed to delete user");
+                                if (self->m_spinner) self->m_spinner->setVisible(false);
+                                return;
+                          }
 
-                      auto jsonRes = response->json();
-                      if (!jsonRes) {
-                            log::warn("Failed to parse deleteUser response");
-                            upopup->showFailMessage("Invalid server response");
-                            if (self->m_spinner) self->m_spinner->setVisible(false);
-                            return;
-                      }
+                          auto jsonRes = response.json();
+                          if (!jsonRes) {
+                                log::warn("Failed to parse deleteUser response");
+                                upopup->showFailMessage("Invalid server response");
+                                if (self->m_spinner) self->m_spinner->setVisible(false);
+                                return;
+                          }
 
-                      auto json = jsonRes.unwrap();
-                      bool success = json["success"].asBool().unwrapOrDefault();
-                      if (success) {
-                            if (self->m_spinner) self->m_spinner->setVisible(false);
-                            upopup->showSuccessMessage("User data wiped!");
-                      } else {
-                            upopup->showFailMessage("Failed to delete user");
-                            if (self->m_spinner) self->m_spinner->setVisible(false);
-                      }
-                });
+                          auto json = jsonRes.unwrap();
+                          bool success = json["success"].asBool().unwrapOrDefault();
+                          if (success) {
+                                if (self->m_spinner) self->m_spinner->setVisible(false);
+                                upopup->showSuccessMessage("User data wiped!");
+                          } else {
+                                upopup->showFailMessage("Failed to delete user");
+                                if (self->m_spinner) self->m_spinner->setVisible(false);
+                          }
+                    });
           });
 }
 
@@ -453,49 +455,49 @@ void RLUserControl::onPromoteAction(CCObject* sender) {
 
                 auto postReq = web::WebRequest();
                 postReq.bodyJSON(jsonBody);
-                this->m_promoteUserTask = postReq.post("https://gdrate.arcticwoof.xyz/promoteUser");
-
                 Ref<RLUserControl> self = this;
-                self->m_promoteUserTask.listen([self, upopup, role](web::WebResponse* response) {
-                      if (!self || !upopup) return;
+                self->m_promoteUserTask.spawn(
+                    postReq.post("https://gdrate.arcticwoof.xyz/promoteUser"),
+                    [self, upopup, role](web::WebResponse response) {
+                          if (!self || !upopup) return;
 
-                      // re-enable UI
-                      self->setAllOptionsEnabled(true);
-                      if (self->m_promoteModButton) self->m_promoteModButton->setEnabled(true);
-                      if (self->m_promoteAdminButton) self->m_promoteAdminButton->setEnabled(true);
-                      if (self->m_demoteButton) self->m_demoteButton->setEnabled(true);
-                      if (self->m_wipeButton) self->m_wipeButton->setEnabled(true);
+                          // re-enable UI
+                          self->setAllOptionsEnabled(true);
+                          if (self->m_promoteModButton) self->m_promoteModButton->setEnabled(true);
+                          if (self->m_promoteAdminButton) self->m_promoteAdminButton->setEnabled(true);
+                          if (self->m_demoteButton) self->m_demoteButton->setEnabled(true);
+                          if (self->m_wipeButton) self->m_wipeButton->setEnabled(true);
 
-                      if (!response->ok()) {
-                            log::warn("promoteUser returned non-ok status: {}", response->code());
-                            upopup->showFailMessage("Failed to update user role");
-                            if (self->m_spinner) self->m_spinner->setVisible(false);
-                            return;
-                      }
+                          if (!response.ok()) {
+                                log::warn("promoteUser returned non-ok status: {}", response.code());
+                                upopup->showFailMessage("Failed to update user role");
+                                if (self->m_spinner) self->m_spinner->setVisible(false);
+                                return;
+                          }
 
-                      auto jsonRes = response->json();
-                      if (!jsonRes) {
-                            log::warn("Failed to parse promoteUser response");
-                            upopup->showFailMessage("Invalid server response");
-                            if (self->m_spinner) self->m_spinner->setVisible(false);
-                            return;
-                      }
+                          auto jsonRes = response.json();
+                          if (!jsonRes) {
+                                log::warn("Failed to parse promoteUser response");
+                                upopup->showFailMessage("Invalid server response");
+                                if (self->m_spinner) self->m_spinner->setVisible(false);
+                                return;
+                          }
 
-                      auto json = jsonRes.unwrap();
-                      bool success = json["success"].asBool().unwrapOrDefault();
-                      if (success) {
-                            if (self->m_spinner) self->m_spinner->setVisible(false);
-                            if (role == 1)
-                                  upopup->showSuccessMessage("User promoted to Mod!");
-                            else if (role == 2)
-                                  upopup->showSuccessMessage("User promoted to Admin!");
-                            else
-                                  upopup->showSuccessMessage("User demoted!");
-                      } else {
-                            upopup->showFailMessage("Failed to update user role");
-                            if (self->m_spinner) self->m_spinner->setVisible(false);
-                      }
-                });
+                          auto json = jsonRes.unwrap();
+                          bool success = json["success"].asBool().unwrapOrDefault();
+                          if (success) {
+                                if (self->m_spinner) self->m_spinner->setVisible(false);
+                                if (role == 1)
+                                      upopup->showSuccessMessage("User promoted to Mod!");
+                                else if (role == 2)
+                                      upopup->showSuccessMessage("User promoted to Admin!");
+                                else
+                                      upopup->showSuccessMessage("User demoted!");
+                          } else {
+                                upopup->showFailMessage("Failed to update user role");
+                                if (self->m_spinner) self->m_spinner->setVisible(false);
+                          }
+                    });
           });
 }
 
@@ -607,68 +609,68 @@ void RLUserControl::applySingleOption(const std::string& key, bool value) {
 
       auto postReq = web::WebRequest();
       postReq.bodyJSON(jsonBody);
-      m_setUserTask = postReq.post("https://gdrate.arcticwoof.xyz/setUser");
-
       Ref<RLUserControl> self = this;
-      m_setUserTask.listen([self, key, value, upopup](web::WebResponse* response) {
-            if (!self || !upopup) return;
-            // re-enable buttons
-            self->setOptionEnabled(key, true);
+      m_setUserTask.spawn(
+          postReq.post("https://gdrate.arcticwoof.xyz/setUser"),
+          [self, key, value, upopup](web::WebResponse response) {
+                if (!self || !upopup) return;
+                // re-enable buttons
+                self->setOptionEnabled(key, true);
 
-            if (!response->ok()) {
-                  log::warn("setUser returned non-ok status: {}", response->code());
-                  upopup->showFailMessage("Failed to update user");
-                  // revert visual to persisted
-                  auto currentOpt = self->getOptionByKey(key);
-                  if (currentOpt) {
-                        self->m_isInitializing = true;
-                        self->setOptionState(key, currentOpt->persisted, true);
-                        self->m_isInitializing = false;
-                  }
-                  if (self->m_spinner) self->m_spinner->setVisible(false);
-                  self->setOptionEnabled(key, true);
-                  return;
-            }
+                if (!response.ok()) {
+                      log::warn("setUser returned non-ok status: {}", response.code());
+                      upopup->showFailMessage("Failed to update user");
+                      // revert visual to persisted
+                      auto currentOpt = self->getOptionByKey(key);
+                      if (currentOpt) {
+                            self->m_isInitializing = true;
+                            self->setOptionState(key, currentOpt->persisted, true);
+                            self->m_isInitializing = false;
+                      }
+                      if (self->m_spinner) self->m_spinner->setVisible(false);
+                      self->setOptionEnabled(key, true);
+                      return;
+                }
 
-            auto jsonRes = response->json();
-            if (!jsonRes) {
-                  log::warn("Failed to parse setUser response");
-                  upopup->showFailMessage("Invalid server response");
-                  auto currentOpt = self->getOptionByKey(key);
-                  if (currentOpt) {
-                        self->m_isInitializing = true;
-                        self->setOptionState(key, currentOpt->persisted, true);
-                        self->m_isInitializing = false;
-                  }
-                  if (self->m_spinner) self->m_spinner->setVisible(false);
-                  self->setOptionEnabled(key, true);
-                  return;
-            }
+                auto jsonRes = response.json();
+                if (!jsonRes) {
+                      log::warn("Failed to parse setUser response");
+                      upopup->showFailMessage("Invalid server response");
+                      auto currentOpt = self->getOptionByKey(key);
+                      if (currentOpt) {
+                            self->m_isInitializing = true;
+                            self->setOptionState(key, currentOpt->persisted, true);
+                            self->m_isInitializing = false;
+                      }
+                      if (self->m_spinner) self->m_spinner->setVisible(false);
+                      self->setOptionEnabled(key, true);
+                      return;
+                }
 
-            auto json = jsonRes.unwrap();
-            bool success = json["success"].asBool().unwrapOrDefault();
-            if (success) {
-                  auto currentOpt = self->getOptionByKey(key);
-                  if (currentOpt) {
-                        currentOpt->persisted = value;
-                        currentOpt->desired = value;
-                        self->m_isInitializing = true;
-                        self->setOptionState(key, value, true);
-                        self->m_isInitializing = false;
-                  }
-                  if (self->m_spinner) self->m_spinner->setVisible(false);
-                  self->setOptionEnabled(key, true);
-                  upopup->showSuccessMessage("User has been updated!");
-            } else {
-                  upopup->showFailMessage("Failed to update user");
-                  auto currentOpt = self->getOptionByKey(key);
-                  if (currentOpt) {
-                        self->m_isInitializing = true;
-                        self->setOptionState(key, currentOpt->persisted, true);
-                        self->m_isInitializing = false;
-                  }
-                  if (self->m_spinner) self->m_spinner->setVisible(false);
-                  self->setOptionEnabled(key, true);
-            }
-      });
+                auto json = jsonRes.unwrap();
+                bool success = json["success"].asBool().unwrapOrDefault();
+                if (success) {
+                      auto currentOpt = self->getOptionByKey(key);
+                      if (currentOpt) {
+                            currentOpt->persisted = value;
+                            currentOpt->desired = value;
+                            self->m_isInitializing = true;
+                            self->setOptionState(key, value, true);
+                            self->m_isInitializing = false;
+                      }
+                      if (self->m_spinner) self->m_spinner->setVisible(false);
+                      self->setOptionEnabled(key, true);
+                      upopup->showSuccessMessage("User has been updated!");
+                } else {
+                      upopup->showFailMessage("Failed to update user");
+                      auto currentOpt = self->getOptionByKey(key);
+                      if (currentOpt) {
+                            self->m_isInitializing = true;
+                            self->setOptionState(key, currentOpt->persisted, true);
+                            self->m_isInitializing = false;
+                      }
+                      if (self->m_spinner) self->m_spinner->setVisible(false);
+                      self->setOptionEnabled(key, true);
+                }
+          });
 }

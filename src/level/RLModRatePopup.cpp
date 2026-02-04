@@ -17,9 +17,9 @@ static void setTogglerGrayscale(CCMenuItemToggler* toggler, const char* spriteNa
       }
 }
 
-bool RLModRatePopup::setup(std::string title, GJGameLevel* level) {
-      m_title = title;
-      m_level = level;
+bool RLModRatePopup::init() {
+      if (!Popup::init(380.f, 180.f)) return false;
+      
       m_difficultySprite = nullptr;
       m_isDemonMode = false;
       m_isFeatured = false;
@@ -33,15 +33,9 @@ bool RLModRatePopup::setup(std::string title, GJGameLevel* level) {
       m_verifiedToggleItem = nullptr;
 
       // get the level ID ya
-      if (level) {
-            m_levelId = level->m_levelID;
-            m_accountId = level->m_accountID;
-      }
-
-      // ensure main layer was initialized by base before using it
-      if (!m_mainLayer) {
-            log::error("RLModRatePopup::setup - m_mainLayer is null");
-            return false;
+      if (m_level) {
+            m_levelId = m_level->m_levelID;
+            m_accountId = m_level->m_accountID;
       }
 
       // title
@@ -354,22 +348,23 @@ void RLModRatePopup::onInfoButton(CCObject* sender) {
 
       auto postReq = web::WebRequest();
       postReq.bodyJSON(jsonBody);
-      m_getModLevelTask = postReq.post("https://gdrate.arcticwoof.xyz/getModLevel");
 
       Ref<RLModRatePopup> self = this;
-      m_getModLevelTask.listen([self, sender](web::WebResponse* response) {
+      m_getModLevelTask.spawn(
+          postReq.post("https://gdrate.arcticwoof.xyz/getModLevel"),
+          [self, sender](web::WebResponse response) {
             if (!self) return;
             log::info("Received response from server");
 
-            if (!response->ok()) {
-                  log::warn("Server returned non-ok status: {}", response->code());
+            if (!response.ok()) {
+                  log::warn("Server returned non-ok status: {}", response.code());
                   Notification::create("Failed to fetch level info",
                                        NotificationIcon::Error)
                       ->show();
                   return;
             }
 
-            auto jsonRes = response->json();
+            auto jsonRes = response.json();
             if (!jsonRes) {
                   log::warn("Failed to parse JSON response");
                   Notification::create("Invalid server response", NotificationIcon::Error)
@@ -436,21 +431,22 @@ void RLModRatePopup::onDeleteSendsButton(CCObject* sender) {
 
                 auto postReq = web::WebRequest();
                 postReq.bodyJSON(jsonBody);
-                auto postTask = m_deleteSendsTask = postReq.post("https://gdrate.arcticwoof.xyz/deleteSends");
-
+                
                 Ref<RLModRatePopup> self = this;
                 Ref<UploadActionPopup> upopup = popup;
-                postTask.listen([self, upopup](web::WebResponse* response) {
+                m_deleteSendsTask.spawn(
+                      postReq.post("https://gdrate.arcticwoof.xyz/deleteSends"),
+                      [self, upopup](web::WebResponse response) {
                       if (!self || !upopup) return;
                       log::info("Received response from server");
 
-                      if (!response->ok()) {
-                            log::warn("Server returned non-ok status: {}", response->code());
+                      if (!response.ok()) {
+                            log::warn("Server returned non-ok status: {}", response.code());
                             upopup->showFailMessage("Failed! Try again later.");
                             return;
                       }
 
-                      auto jsonRes = response->json();
+                      auto jsonRes = response.json();
                       if (!jsonRes) {
                             log::warn("Failed to parse JSON response");
                             upopup->showFailMessage("Invalid server response.");
@@ -489,18 +485,19 @@ void RLModRatePopup::onUnsendButton(CCObject* sender) {
       log::info("Sending request: {}", jsonBody.dump());
       auto postReq = web::WebRequest();
       postReq.bodyJSON(jsonBody);
-      auto postTask = m_unsendTask = postReq.post("https://gdrate.arcticwoof.xyz/setUnsend");
       Ref<RLModRatePopup> self = this;
       Ref<UploadActionPopup> upopup = popup;
-      postTask.listen([self, upopup](web::WebResponse* response) {
+      m_unsendTask.spawn(
+            postReq.post("https://gdrate.arcticwoof.xyz/setUnsend"),
+            [self, upopup](web::WebResponse response) {
             if (!self || !upopup) return;
             log::info("Received response from server");
-            if (!response->ok()) {
-                  log::warn("Server returned non-ok status: {}", response->code());
+            if (!response.ok()) {
+                  log::warn("Server returned non-ok status: {}", response.code());
                   upopup->showFailMessage("Failed! Try again later.");
                   return;
             }
-            auto jsonRes = response->json();
+            auto jsonRes = response.json();
             if (!jsonRes) {
                   log::warn("Failed to parse JSON response");
                   upopup->showFailMessage("Invalid server response.");
@@ -611,21 +608,22 @@ void RLModRatePopup::onSubmitButton(CCObject* sender) {
 
       auto postReq = web::WebRequest();
       postReq.bodyJSON(jsonBody);
-      auto postTask = m_setRateTask = postReq.post("https://gdrate.arcticwoof.xyz/setRate");
-
+      
       Ref<RLModRatePopup> self = this;
       Ref<UploadActionPopup> upopup = popup;
-      postTask.listen([self, upopup](web::WebResponse* response) {
+      m_setRateTask.spawn(
+            postReq.post("https://gdrate.arcticwoof.xyz/setRate"),
+            [self, upopup](web::WebResponse response) {
             if (!self || !upopup) return;
             log::info("Received response from server");
 
-            if (!response->ok()) {
-                  log::warn("Server returned non-ok status: {}", response->code());
+            if (!response.ok()) {
+                  log::warn("Server returned non-ok status: {}", response.code());
                   upopup->showFailMessage("Failed! Try again later.");
                   return;
             }
 
-            auto jsonRes = response->json();
+            auto jsonRes = response.json();
             if (!jsonRes) {
                   log::warn("Failed to parse JSON response");
                   upopup->showFailMessage("Invalid server response.");
@@ -724,21 +722,22 @@ void RLModRatePopup::onUnrateButton(CCObject* sender) {
 
                 auto postReq = web::WebRequest();
                 postReq.bodyJSON(jsonBody);
-                m_setUnrateTask = postReq.post("https://gdrate.arcticwoof.xyz/setUnrate");
-
+                
                 Ref<RLModRatePopup> self = this;
                 Ref<UploadActionPopup> upopup = popup;
-                m_setUnrateTask.listen([self, upopup](web::WebResponse* response) {
+                m_setUnrateTask.spawn(
+                      postReq.post("https://gdrate.arcticwoof.xyz/setUnrate"),
+                      [self, upopup](web::WebResponse response) {
                       if (!self || !upopup) return;
                       log::info("Received response from server");
 
-                      if (!response->ok()) {
-                            log::warn("Server returned non-ok status: {}", response->code());
+                      if (!response.ok()) {
+                            log::warn("Server returned non-ok status: {}", response.code());
                             upopup->showFailMessage("Failed! Try again later.");
                             return;
                       }
 
-                      auto jsonRes = response->json();
+                      auto jsonRes = response.json();
                       if (!jsonRes) {
                             log::warn("Failed to parse JSON response");
                             upopup->showFailMessage("Invalid server response.");
@@ -897,21 +896,22 @@ void RLModRatePopup::onSuggestButton(CCObject* sender) {
 
       auto postReq = web::WebRequest();
       postReq.bodyJSON(jsonBody);
-      m_setRateTask = postReq.post("https://gdrate.arcticwoof.xyz/setRate");
 
       Ref<RLModRatePopup> self = this;
       Ref<UploadActionPopup> upopup = popup;
-      m_setRateTask.listen([self, upopup](web::WebResponse* response) {
+      m_setRateTask.spawn(
+            postReq.post("https://gdrate.arcticwoof.xyz/setRate"),
+            [self, upopup](web::WebResponse response) {
             if (!self || !upopup) return;
             log::info("Received response from server");
 
-            if (!response->ok()) {
-                  log::warn("Server returned non-ok status: {}", response->code());
+            if (!response.ok()) {
+                  log::warn("Server returned non-ok status: {}", response.code());
                   upopup->showFailMessage("Failed! Try again later.");
                   return;
             }
 
-            auto jsonRes = response->json();
+            auto jsonRes = response.json();
             if (!jsonRes) {
                   log::warn("Failed to parse JSON response");
                   upopup->showFailMessage("Invalid server response.");
@@ -1287,20 +1287,21 @@ void RLModRatePopup::onSetEventButton(CCObject* sender) {
                 log::info("Sending setEvent request: {}", jsonBody.dump());
                 auto postReq = web::WebRequest();
                 postReq.bodyJSON(jsonBody);
-                Ref<RLModRatePopup> popupRef = this;
-                auto postTask = popupRef->m_setEventTask = postReq.post("https://gdrate.arcticwoof.xyz/setEvent");
-
+                
                 Ref<RLModRatePopup> self = this;
                 Ref<UploadActionPopup> upopup = popup;
-                postTask.listen([self, type, upopup](web::WebResponse* response) {
+
+                self->m_setEventTask.spawn(
+                      postReq.post("https://gdrate.arcticwoof.xyz/setEvent"),
+                      [self, type, upopup](web::WebResponse response) {
                       if (!self || !upopup) return;
                       log::info("Received setEvent response for type: {}", type);
-                      if (!response->ok()) {
-                            log::warn("Server returned non-ok status: {}", response->code());
+                      if (!response.ok()) {
+                            log::warn("Server returned non-ok status: {}", response.code());
                             upopup->showFailMessage("Failed! Try again later.");
                             return;
                       }
-                      auto jsonRes = response->json();
+                      auto jsonRes = response.json();
                       if (!jsonRes) {
                             log::warn("Failed to parse setEvent JSON response");
                             upopup->showFailMessage("Invalid server response.");
@@ -1321,8 +1322,10 @@ void RLModRatePopup::onSetEventButton(CCObject* sender) {
 RLModRatePopup* RLModRatePopup::create(RLModRatePopup::PopupRole role, std::string title, GJGameLevel* level) {
       auto ret = new RLModRatePopup();
       ret->m_role = role;
+      ret->m_title = title;
+      ret->m_level = level;
 
-      if (ret && ret->initAnchored(380.f, 180.f, title, level, "GJ_square02.png")) {
+      if (ret && ret->init()) {
             ret->autorelease();
             return ret;
       };

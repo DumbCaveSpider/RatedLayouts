@@ -4,7 +4,7 @@
 
 using namespace geode::prelude;
 
-class RLDifficultyTotalPopup : public geode::Popup<> {
+class RLDifficultyTotalPopup : public geode::Popup {
      public:
       enum class Mode {
             Stars = 0,
@@ -14,7 +14,7 @@ class RLDifficultyTotalPopup : public geode::Popup<> {
       static RLDifficultyTotalPopup* create(int accountId, Mode mode = Mode::Stars);
 
      private:
-      bool setup() override;
+      bool init();
       int m_accountId = 0;
       Mode m_mode = Mode::Stars;
       CCLabelBMFont* m_resultsLabel = nullptr;
@@ -27,7 +27,7 @@ class RLDifficultyTotalPopup : public geode::Popup<> {
       std::vector<GJDifficultySprite*> m_difficultySprites;
 
       bool m_demonModeActive = false;
-      utils::web::WebTask m_difficultyTask;
+      async::TaskHolder<web::WebResponse> m_difficultyTask;
       void buildDifficultyUI(const std::unordered_map<int, int>& counts);
       void onDemonToggle(CCObject* sender);
       std::unordered_map<int, int> m_counts;

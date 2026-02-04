@@ -4,7 +4,7 @@
 RLReportPopup* RLReportPopup::create(int levelId) {
       RLReportPopup* popup = new RLReportPopup();
       // @geode-ignore(unknown-resource)
-      if (popup && popup->initAnchored(440.f, 280.f, "geode.loader/GE_square01.png")) {
+      if (popup && popup->init()) {
             popup->m_levelId = levelId;
             popup->autorelease();
             return popup;
@@ -13,7 +13,9 @@ RLReportPopup* RLReportPopup::create(int levelId) {
       return nullptr;
 }
 
-bool RLReportPopup::setup() {
+bool RLReportPopup::init() {
+      if (!Popup::init(440.f, 280.f))
+            return false;
       setTitle("Rated Layouts Report Level");
       addSideArt(m_mainLayer, SideArt::All, SideArtStyle::PopupBlue, false);
 
@@ -197,27 +199,28 @@ void RLReportPopup::onSubmit(CCObject* sender) {
                 auto req = web::WebRequest();
                 req.bodyJSON(body);
                 Ref<RLReportPopup> self = this;
-                self->m_reportTask = req.post("https://gdrate.arcticwoof.xyz/setReport");
-                self->m_reportTask.listen([self, uploadPopup](web::WebResponse* res) {
-                      if (!self) return;
-                      if (!res || !res->ok()) {
-                            uploadPopup->showFailMessage("Failed to submit report");
-                            return;
-                      }
-                      auto j = res->json();
-                      if (!j) {
-                            uploadPopup->showFailMessage("Invalid server response");
-                            return;
-                      }
-                      auto json = j.unwrap();
-                      bool success = json["success"].asBool().unwrapOrDefault();
-                      if (success) {
-                            uploadPopup->showSuccessMessage("Report submitted!");
-                            RLAchievements::onReward("misc_report"); // first time report
-                            self->removeFromParent();
-                            // disable inputs
-                            if (self->m_reasonInput) {
-                                  self->m_reasonInput->setString("");
+                self->m_reportTask.spawn(
+                    req.post("https://gdrate.arcticwoof.xyz/setReport"),
+                    [self, uploadPopup](web::WebResponse res) {
+                          if (!self) return;
+                          if (!res.ok()) {
+                                uploadPopup->showFailMessage("Failed to submit report");
+                                return;
+                          }
+                          auto j = res.json();
+                          if (!j) {
+                                uploadPopup->showFailMessage("Invalid server response");
+                                return;
+                          }
+                          auto json = j.unwrap();
+                          bool success = json["success"].asBool().unwrapOrDefault();
+                          if (success) {
+                                uploadPopup->showSuccessMessage("Report submitted!");
+                                RLAchievements::onReward("misc_report"); // first time report
+                                self->removeFromParent();
+                                // disable inputs
+                                if (self->m_reasonInput) {
+                                      self->m_reasonInput->setString("");
                                   self->m_reasonInput->setEnabled(false);
                             }
                             if (self->m_plagiarismToggle) self->m_plagiarismToggle->setEnabled(false);

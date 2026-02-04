@@ -6,12 +6,12 @@
 
 using namespace geode::prelude;
 
-class RLAchievementsPopup : public geode::Popup<> {
+class RLAchievementsPopup : public geode::Popup {
 public:
     static RLAchievementsPopup* create();
 
 private:
-    bool setup() override;
+    bool init();
 
     void populate(int tabIndex);
     void onTab(CCObject* sender);

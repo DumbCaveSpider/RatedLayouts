@@ -83,6 +83,6 @@ class RLGauntletLevelsLayer : public CCLayer {
 
       // Center points of placed buttons
       std::vector<CCPoint> m_buttonCenters;
-      utils::web::WebTask m_getLevelsTask;
+      async::TaskHolder<web::WebResponse> m_getLevelsTask;
       ~RLGauntletLevelsLayer() { m_getLevelsTask.cancel(); }
 };

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Geode/Geode.hpp>
+#include <Geode/utils/async.hpp>
 
 using namespace geode::prelude;
 
@@ -53,6 +54,9 @@ class RLCreatorLayer : public CCLayer {
       // labels for mod info
       CCLabelBMFont* m_modStatusLabel = nullptr;
       CCLabelBMFont* m_modVersionLabel = nullptr;
+
+      geode::async::TaskHolder<geode::utils::web::WebResponse> m_announcementTask;
+      geode::async::TaskHolder<geode::utils::web::WebResponse> m_dialogueTask;
 
      public:
       void onEnter() override;

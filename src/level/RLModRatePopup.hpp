@@ -5,7 +5,7 @@
 
 using namespace geode::prelude;
 
-class RLModRatePopup : public geode::Popup<std::string, GJGameLevel*> {
+class RLModRatePopup : public geode::Popup {
      public:
       enum class PopupRole {
             Mod,
@@ -47,13 +47,13 @@ class RLModRatePopup : public geode::Popup<std::string, GJGameLevel*> {
       bool m_isRejected;
       int m_levelId;
       int m_accountId;
-      utils::web::WebTask m_getModLevelTask;
-      utils::web::WebTask m_setRateTask;
-      utils::web::WebTask m_setUnrateTask;
-      utils::web::WebTask m_setEventTask;
-      utils::web::WebTask m_deleteSendsTask;
-      utils::web::WebTask m_unsendTask;
-      bool setup(std::string title, GJGameLevel* level) override;
+      async::TaskHolder<web::WebResponse> m_getModLevelTask;
+      async::TaskHolder<web::WebResponse> m_setRateTask;
+      async::TaskHolder<web::WebResponse> m_setUnrateTask;
+      async::TaskHolder<web::WebResponse> m_setEventTask;
+      async::TaskHolder<web::WebResponse> m_deleteSendsTask;
+      async::TaskHolder<web::WebResponse> m_unsendTask;
+      bool init();
       void onSubmitButton(CCObject* sender);
       void onUnrateButton(CCObject* sender);
       void onSuggestButton(CCObject* sender);

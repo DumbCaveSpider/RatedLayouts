@@ -140,7 +140,7 @@ RLDifficultyTotalPopup* RLDifficultyTotalPopup::create(int accountId, Mode mode)
       ret->m_accountId = accountId;
       ret->m_mode = mode;
 
-      if (ret && ret->initAnchored(380.f, 210.f, "GJ_square02.png")) {
+      if (ret && ret->init()) {
             ret->autorelease();
             return ret;
       }
@@ -149,7 +149,9 @@ RLDifficultyTotalPopup* RLDifficultyTotalPopup::create(int accountId, Mode mode)
       return nullptr;
 };
 
-bool RLDifficultyTotalPopup::setup() {
+bool RLDifficultyTotalPopup::init() {
+      if (!Popup::init(380.f, 210.f))
+            return false;
       setTitle("Rated Layouts Classic: -");
       auto contentSize = m_mainLayer->getContentSize();
       m_noElasticity = true;
@@ -212,52 +214,53 @@ bool RLDifficultyTotalPopup::setup() {
             req.param("isPlat", "1");
       }
       Ref<RLDifficultyTotalPopup> self = this;
-      m_difficultyTask = req.get("https://gdrate.arcticwoof.xyz/getDifficulty");
-      m_difficultyTask.listen([self](web::WebResponse* res) {
-            if (!self) return;
-            if (!res || !res->ok()) {
-                  if (self->m_spinner) {
-                        self->m_spinner->removeFromParent();
-                        self->m_spinner = nullptr;
-                  }
-                  Notification::create("Failed to fetch difficulty", NotificationIcon::Error)->show();
-                  return;
-            }
-            auto jsonRes = res->json();
-            if (!jsonRes) {
-                  Notification::create("Failed to parse difficulty response", NotificationIcon::Error)->show();
-                  if (self->m_spinner) {
-                        self->m_spinner->removeFromParent();
-                        self->m_spinner = nullptr;
-                  }
-                  return;
-            }
-            auto json = jsonRes.unwrap();
-            if (self->m_spinner) {
-                  self->m_spinner->removeFromParent();
-                  self->m_spinner = nullptr;
-            }
-            std::unordered_map<int, int> counts;
-            auto difficultyObj = json["difficulty"];
-            std::vector<int> keys = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25, 30};
-            for (int k : keys) {
-                  counts[k] = difficultyObj[numToString(k)].asInt().unwrapOrDefault();
-            }
-            self->m_counts = counts;
-            int totalCount = 0;
-            for (auto const& kv : counts) {
-                  totalCount += kv.second;
-            }
-            // player's rank
-            int position = json["position"].asInt().unwrapOrDefault();
-            int coinRank = json["coinRank"].asInt().unwrapOrDefault();
-            std::string titlePrefix = self->m_mode == RLDifficultyTotalPopup::Mode::Planets ? "Rated Layouts Platformer: " : "Rated Layouts Classic: ";
-            self->setTitle((titlePrefix + numToString(GameToolbox::pointsToString(totalCount))).c_str());
-            if (self->m_rankLabel) {
-                  if (position > 0) {
-                        self->m_rankLabel->setString((std::string("Global Rank: ") + numToString(position)).c_str());
-                        self->m_rankLabel->setVisible(true);
-                  } else {
+      m_difficultyTask.spawn(
+          req.get("https://gdrate.arcticwoof.xyz/getDifficulty"),
+          [self](web::WebResponse res) {
+                if (!self) return;
+                if (!res.ok()) {
+                      if (self->m_spinner) {
+                            self->m_spinner->removeFromParent();
+                            self->m_spinner = nullptr;
+                      }
+                      Notification::create("Failed to fetch difficulty", NotificationIcon::Error)->show();
+                      return;
+                }
+                auto jsonRes = res.json();
+                if (!jsonRes) {
+                      Notification::create("Failed to parse difficulty response", NotificationIcon::Error)->show();
+                      if (self->m_spinner) {
+                            self->m_spinner->removeFromParent();
+                            self->m_spinner = nullptr;
+                      }
+                      return;
+                }
+                auto json = jsonRes.unwrap();
+                if (self->m_spinner) {
+                      self->m_spinner->removeFromParent();
+                      self->m_spinner = nullptr;
+                }
+                std::unordered_map<int, int> counts;
+                auto difficultyObj = json["difficulty"];
+                std::vector<int> keys = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25, 30};
+                for (int k : keys) {
+                      counts[k] = difficultyObj[numToString(k)].asInt().unwrapOrDefault();
+                }
+                self->m_counts = counts;
+                int totalCount = 0;
+                for (auto const& kv : counts) {
+                      totalCount += kv.second;
+                }
+                // player's rank
+                int position = json["position"].asInt().unwrapOrDefault();
+                int coinRank = json["coinRank"].asInt().unwrapOrDefault();
+                std::string titlePrefix = self->m_mode == RLDifficultyTotalPopup::Mode::Planets ? "Rated Layouts Platformer: " : "Rated Layouts Classic: ";
+                self->setTitle((titlePrefix + numToString(GameToolbox::pointsToString(totalCount))).c_str());
+                if (self->m_rankLabel) {
+                      if (position > 0) {
+                            self->m_rankLabel->setString((std::string("Global Rank: ") + numToString(position)).c_str());
+                            self->m_rankLabel->setVisible(true);
+                      } else {
                         self->m_rankLabel->setVisible(false);
                   }
             }

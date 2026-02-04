@@ -3,12 +3,12 @@
 
 using namespace geode::prelude;
 
-class RLReportPopup : public geode::Popup<> {
+class RLReportPopup : public geode::Popup {
      public:
       static RLReportPopup* create(int levelId);
 
      private:
-      bool setup() override;
+      bool init();
       void onSubmit(CCObject* sender);
       void onInfo(CCObject* sender);
       int m_levelId = 0;
@@ -25,7 +25,7 @@ class RLReportPopup : public geode::Popup<> {
 
       CCMenu* m_toggleMenu = nullptr;
       geode::TextInput* m_reasonInput = nullptr;
-      utils::web::WebTask m_reportTask;
+      async::TaskHolder<web::WebResponse> m_reportTask;
       ~RLReportPopup() {
             m_reportTask.cancel();
       }

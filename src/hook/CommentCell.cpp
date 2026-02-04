@@ -162,6 +162,8 @@ class $modify(RLCommentCell, CommentCell) {
             int stars = 0;
             int planets = 0;
             bool supporter = false;
+            async::TaskHolder<web::WebResponse> m_fetchTask;
+            ~Fields() { m_fetchTask.cancel(); }
       };
 
       void loadFromComment(GJComment* comment) {
@@ -283,7 +285,7 @@ class $modify(RLCommentCell, CommentCell) {
 
             Ref<RLCommentCell> cellRef = this;  // commentcell ref
 
-            postTask.listen([cellRef, accountId](web::WebResponse* response) {
+            m_fields->m_fetchTask.spawn(std::move(postTask), [cellRef, accountId](web::WebResponse response) {
                   log::debug("Received role response from server for comment");
 
                   // did this so it doesnt crash if the cell is deleted before
@@ -293,10 +295,10 @@ class $modify(RLCommentCell, CommentCell) {
                         return;
                   }
 
-                  if (!response->ok()) {
-                        log::warn("Server returned non-ok status: {}", response->code());
+                  if (!response.ok()) {
+                        log::warn("Server returned non-ok status: {}", response.code());
                         // If server says the profile doesn't exist (404), remove cached entry
-                        if (response->code() == 404) {
+                        if (response.code() == 404) {
                               log::debug("Profile not found on server, removing cached entry for {}", accountId);
                               removeCachedUserProfile(accountId);
                               if (!cellRef)
@@ -324,7 +326,7 @@ class $modify(RLCommentCell, CommentCell) {
                         return;
                   }
 
-                  auto jsonRes = response->json();
+                  auto jsonRes = response.json();
                   if (!jsonRes) {
                         log::warn("Failed to parse JSON response");
                         return;

@@ -2,11 +2,11 @@
 
 using namespace geode::prelude;
 
-class RLAnnouncementPopup : public geode::Popup<> {
+class RLAnnouncementPopup : public geode::Popup {
      public:
       static RLAnnouncementPopup* create();
 
      private:
-      bool setup() override;
+      bool init();
       void onClick(CCObject* sender);
 };

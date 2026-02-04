@@ -9,7 +9,7 @@ using namespace geode::prelude;
 RLDonationPopup* RLDonationPopup::create() {
       auto ret = new RLDonationPopup();
 
-      if (ret && ret->initAnchored(460.f, 270.f, "GJ_square07.png")) {
+      if (ret && ret->init()) {
             ret->autorelease();
             return ret;
       }
@@ -18,7 +18,9 @@ RLDonationPopup* RLDonationPopup::create() {
       return nullptr;
 };
 
-bool RLDonationPopup::setup() {
+bool RLDonationPopup::init() {
+      if (!Popup::init(460.f, 270.f))
+            return false;
       // clipping node for rounded corners
       auto sStencil = CCScale9Sprite::create("GJ_square06.png");
       if (sStencil) {
