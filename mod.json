@@ -148,10 +148,6 @@
 			"type": "bool",
 			"default": false,
 			"description": "Disables all <cy>/fetch</cy> requests to get level rating data and level comments. <cf>This is useful for mod developers that is having issues with the web request being clogged up... sorry andy</c>. <co>Ratings will not be shown on the Level cell unless you open the level on the Level Info Layer or have cached the ratings already or if the comment has been fetched.</co>"
-		},
-		"clearCache": {
-			"type": "custom:rated-layouts-clear-cache",
-			"name": ""
 		}
 	}
 }

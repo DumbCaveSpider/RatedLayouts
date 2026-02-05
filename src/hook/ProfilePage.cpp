@@ -5,9 +5,9 @@
 
 #include "../custom/RLAchievements.hpp"
 #include "../custom/RLLevelBrowserLayer.hpp"
+#include "../player/RLDifficultyTotalPopup.hpp"
+#include "../player/RLUserControl.hpp"
 #include "BadgesAPI.hpp"
-#include "RLDifficultyTotalPopup.hpp"
-#include "RLUserControl.hpp"
 
 using namespace geode::prelude;
 
@@ -62,46 +62,6 @@ $execute {
       [](const Badge &badge, const UserInfo &user) {
         g_pendingBadges[user.accountID].push_back(badge);
       });
-}
-
-static std::string getUserRoleCachePath_ProfilePage() {
-  auto saveDir = dirs::getModsSaveDir();
-  return geode::utils::string::pathToString(saveDir / "user_role_cache.json");
-}
-
-static void cacheUserProfile_ProfilePage(int accountId, int role, int stars,
-                                         int planets, int coins) {
-  auto saveDir = dirs::getModsSaveDir();
-  auto createDirResult = utils::file::createDirectory(saveDir);
-  if (!createDirResult) {
-    log::warn("Failed to create save directory for user role cache");
-    return;
-  }
-
-  auto cachePath = getUserRoleCachePath_ProfilePage();
-
-  matjson::Value root = matjson::Value::object();
-  auto existingData = utils::file::readString(cachePath);
-  if (existingData) {
-    auto parsed = matjson::parse(existingData.unwrap());
-    if (parsed)
-      root = parsed.unwrap();
-  }
-
-  matjson::Value obj = matjson::Value::object();
-  obj["role"] = role;
-  obj["stars"] = stars;
-  obj["planets"] = planets;
-  obj["coins"] = coins;
-  root[fmt::format("{}", accountId)] = obj;
-
-  auto jsonString = root.dump();
-  auto writeResult = utils::file::writeString(
-      geode::utils::string::pathToString(cachePath), jsonString);
-  if (writeResult) {
-    log::debug("Cached user role {} for account ID: {} (from ProfilePage)",
-               role, accountId);
-  }
 }
 
 class $modify(RLProfilePage, ProfilePage) {
@@ -496,9 +456,6 @@ class $modify(RLProfilePage, ProfilePage) {
           if (isSupporter && pageRef->m_ownProfile) {
             RLAchievements::onReward("misc_support");
           }
-
-          cacheUserProfile_ProfilePage(pageRef->m_fields->accountId, role,
-                                       stars, planets, coins);
 
           if (pageRef->m_ownProfile) {
             Mod::get()->setSavedValue("role", pageRef->m_fields->role);
