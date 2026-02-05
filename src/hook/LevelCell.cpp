@@ -8,14 +8,6 @@ extern const std::string legendaryPString;
 extern const std::string mythicPString;
 extern const std::string epicPString;
 
-
-static std::unordered_map<LevelCell *, int> g_deferredPendingLevels;
-static std::unordered_map<LevelCell *, matjson::Value> g_deferredPendingJsons;
-
-
-
-
-
 class $modify(LevelCell) {
   struct Fields {
     std::optional<matjson::Value> m_pendingJson;
@@ -24,10 +16,6 @@ class $modify(LevelCell) {
     int m_waitRetries = 0; // used for waiting for level data to arrive
     ~Fields() { m_fetchTask.cancel(); }
   };
-
-
-
-
 
   void applyRatingToCell(const matjson::Value &json, int levelId) {
     if (!this->m_mainLayer || !this->m_level) {
@@ -585,12 +573,15 @@ class $modify(LevelCell) {
     auto req = web::WebRequest();
     log::debug("Fetching rating data for level cell ID: {}", levelId);
     async::spawn(
-        req.get(fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId)),
+        req.get(fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}",
+                            levelId)),
         [cellRef, levelId, this](web::WebResponse const &response) {
-          log::debug("Received rating response from server for level ID: {}", levelId);
+          log::debug("Received rating response from server for level ID: {}",
+                     levelId);
 
           if (!response.ok()) {
-            log::warn("Server returned non-ok status: {} for level ID: {}", response.code(), levelId);
+            log::warn("Server returned non-ok status: {} for level ID: {}",
+                      response.code(), levelId);
             return;
           }
 
@@ -602,37 +593,30 @@ class $modify(LevelCell) {
 
           auto json = jsonRes.unwrap();
 
-          if (!cellRef) return;
+          if (!cellRef)
+            return;
 
-          LevelCell *ptr = cellRef.operator->();
-          // If the cell's UI is present and it references the same level, apply
-          // the fetched rating immediately on the main thread using our own
-          // instance pointer (we captured 'this').
-          if (this->m_mainLayer && this->m_level && this->m_level->m_levelID == levelId) {
-            log::debug("Applying fetched rating data immediately for level ID: {}", levelId);
+          if (this->m_mainLayer && this->m_level &&
+              this->m_level->m_levelID == levelId) {
+            log::debug(
+                "Applying fetched rating data immediately for level ID: {}",
+                levelId);
             this->applyRatingToCell(json, levelId);
           } else {
-            // Otherwise defer to the main-thread update path
-            g_deferredPendingJsons[ptr] = json;
-            g_deferredPendingLevels[ptr] = levelId;
-            ptr->scheduleUpdate();
+            this->m_fields->m_pendingJson = json;
+            this->m_fields->m_pendingLevelId = levelId;
+            this->scheduleUpdate();
           }
         });
 
-    // ensure update waits for level data to arrive (use globals to avoid
-    // touching m_fields here)
-    g_deferredPendingLevels[this] = levelId;
-    this->scheduleUpdate();
     return;
   }
 
   void onEnter() {
     LevelCell::onEnter();
 
-
     if (m_fields->m_pendingJson && this->m_level &&
         this->m_level->m_levelID == m_fields->m_pendingLevelId) {
-      // Apply pending JSON immediately if the cell references the same level.
       this->applyRatingToCell(m_fields->m_pendingJson.value(),
                               m_fields->m_pendingLevelId);
       m_fields->m_pendingJson = std::nullopt;
@@ -652,5 +636,4 @@ class $modify(LevelCell) {
       }
     }
   }
-
 };

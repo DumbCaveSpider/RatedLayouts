@@ -19,82 +19,6 @@ extern const std::string epicPString = "30,2065,2,435,3,75,155,1,156,2,145,30a-1
 const std::string legendaryTitlePString = "30,2065,2,345,3,75,155,1,156,2,145,40a-1a1a0.3a-1a90a180a8a0a100a10a0a0a0a0a0a0a20a10a0a0a0.313726a0a0.615686a0a1a0a1a0a10a5a0a0a0.882353a0a0.878431a0a1a0a1a0a0.3a0a0.2a0a0a0a0a0a0a0a0a2a1a0a0a1a25a0a0a0a0a0a0a0a0a0a0a0a0a0a0,211,1";
 const std::string mythicTitlePString = "30,2065,2,345,3,75,155,1,156,2,145,60a-1a1a0.3a-1a90a180a10a0a100a10a0a0a0a0a0a0a10a10a0a0a1a0a0.862745a0a0.588235a0a1a0a1a5a0a0a1a0a1a0a0.784314a0a1a0a0.3a0a0.2a0a0a0a0a0a0a0a0a2a1a0a0a1a173a0a0a0a0a0a0a0a0a0a0a0a0a0a0,211,1";
 
-// helper functions all about caching level rating data
-// get the cache file path
-static std::string getCachePath() {
-      auto saveDir = dirs::getModsSaveDir();
-      return utils::string::pathToString(saveDir / "level_ratings_cache.json");  // stored outside the save dir, idk why
-}
-
-// load cached data for a level
-static std::optional<matjson::Value> getCachedLevel(int levelId) {
-      auto cachePath = getCachePath();
-      auto data = utils::file::readString(cachePath);
-      if (!data)
-            return std::nullopt;
-
-      auto json = matjson::parse(data.unwrap());
-      if (!json)
-            return std::nullopt;
-
-      auto root = json.unwrap();
-      if (root.isObject() && root.contains(fmt::format("{}", levelId))) {
-            return root[fmt::format("{}", levelId)];
-      }
-
-      return std::nullopt;
-}
-
-// delete level from cache
-static void deleteLevelFromCache(int levelId) {
-      auto cachePath = getCachePath();
-      auto existingData = utils::file::readString(cachePath);
-      if (existingData) {
-            auto parsed = matjson::parse(existingData.unwrap());
-            if (parsed) {
-                  auto root = parsed.unwrap();
-                  if (root.isObject()) {
-                        std::string key = fmt::format("{}", levelId);
-                        auto result = root.erase(key);
-                  }
-                  auto jsonString = root.dump();
-                  auto writeResult = utils::file::writeString(cachePath, jsonString);
-                  log::debug("Deleted level ID {} from cache", levelId);
-            }
-      }
-}
-
-// save level cache
-static void cacheLevelData(int levelId, const matjson::Value& data) {
-      auto saveDir = dirs::getModsSaveDir();
-      auto createDirResult = utils::file::createDirectory(saveDir);
-      if (!createDirResult) {
-            log::warn("Failed to create save directory for cache");
-            return;
-      }
-
-      auto cachePath = getCachePath();
-
-      // load existing cache
-      matjson::Value root = matjson::Value::object();
-      auto existingData = utils::file::readString(cachePath);
-      if (existingData) {
-            auto parsed = matjson::parse(existingData.unwrap());
-            if (parsed) {
-                  root = parsed.unwrap();
-            }
-      }
-
-      // update data
-      root[fmt::format("{}", levelId)] = data;
-
-      // write to file
-      auto jsonString = root.dump();
-      auto writeResult = utils::file::writeString(cachePath, jsonString);
-      if (writeResult) {
-            log::debug("Cached level rating data for level ID: {}", levelId);
-      }
-}
 
 // most of the code here are just repositioning the stars and coins to fit the
 // new difficulty icon its very messy, yes but it just works do please clean up
@@ -189,19 +113,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
 
             // Fetch rating data from server
             int levelId = this->m_level->m_levelID;
-            deleteLevelFromCache(levelId);  // delete cache
             log::info("Fetching rating data for level ID: {}", levelId);
-
-            // Try to load from cache first
-            auto cachedData = getCachedLevel(levelId);
-
-            if (cachedData) {
-                  log::debug("Loading cached rating data for level ID: {}", levelId);
-                  Ref<RLLevelInfoLayer> layerRef = this;
-                  auto difficultySprite = layerRef->getChildByID("difficulty-sprite");
-                  processLevelRating(cachedData.value(), layerRef, difficultySprite);
-                  return;
-            }
 
             auto getReq = web::WebRequest();
             Ref<RLLevelInfoLayer> layerRef = this;
@@ -232,10 +144,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
 
                       auto json = jsonRes.unwrap();
 
-                      // Cache the response
-                      if (layerRef && layerRef->m_level)
-                            cacheLevelData(layerRef->m_level->m_levelID, json);
-
+                      // Process the response immediately; do not cache
                       if (layerRef)
                             layerRef->processLevelRating(json, layerRef, difficultySprite, true);
                 });
@@ -367,24 +276,8 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   removeExistingCommunityBtn();
             }
 
-            // If no difficulty rating, remove from cache
+            // If no difficulty rating, nothing to apply
             if (difficulty == 0) {
-                  auto cachePath = getCachePath();
-                  auto existingData = utils::file::readString(cachePath);
-                  if (existingData) {
-                        auto parsed = matjson::parse(existingData.unwrap());
-                        if (parsed) {
-                              auto root = parsed.unwrap();
-                              if (root.isObject()) {
-                                    std::string key = fmt::format("{}", layerRef->m_level->m_levelID);
-                                    auto result = root.erase(key);
-                              }
-                              auto jsonString = root.dump();
-                              auto writeResult = utils::file::writeString(cachePath, jsonString);
-                              log::debug("Removed level ID {} from cache (no difficulty)",
-                                         layerRef->m_level->m_levelID);
-                        }
-                  }
                   return;
             }
 
@@ -1194,24 +1087,8 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   removeExistingCommunityBtn();
             }
 
-            // If no difficulty rating, remove from cache
+            // If no difficulty rating, nothing to apply
             if (difficulty == 0) {
-                  auto cachePath = getCachePath();
-                  auto existingData = utils::file::readString(cachePath);
-                  if (existingData) {
-                        auto parsed = matjson::parse(existingData.unwrap());
-                        if (parsed) {
-                              auto root = parsed.unwrap();
-                              if (root.isObject()) {
-                                    std::string key = fmt::format("{}", layerRef->m_level->m_levelID);
-                                    auto result = root.erase(key);
-                              }
-                              auto jsonString = root.dump();
-                              auto writeResult = utils::file::writeString(cachePath, jsonString);
-                              log::debug("Removed level ID {} from cache (no difficulty)",
-                                         layerRef->m_level->m_levelID);
-                        }
-                  }
                   return;
             }
 
@@ -1627,18 +1504,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                                     }
 
                                     // Refresh the community vote button immediately so role overrides take effect
-                                    auto cached = getCachedLevel(layerRef->m_level->m_levelID);
-                                    if (cached) {
-                                          auto rightMenuNode = layerRef->getChildByID("right-side-menu");
-                                          if (rightMenuNode && typeinfo_cast<CCMenu*>(rightMenuNode)) {
-                                                auto existing = static_cast<CCMenu*>(rightMenuNode)->getChildByID("rl-community-vote");
-                                                if (existing) existing->removeFromParent();
-                                                static_cast<CCMenu*>(rightMenuNode)->updateLayout();
-                                          }
 
-                                          // Re-run processing with cached data to recreate the button with the correct state
-                                          layerRef->processLevelRating(cached.value(), layerRef, layerRef->getChildByID("difficulty-sprite"));
-                                    }
                               }
                         );
                   }
@@ -1710,7 +1576,6 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                              this->m_level->m_levelID);
 
                   int levelId = this->m_level->m_levelID;
-                  deleteLevelFromCache(levelId);  // clear cache to force fresh fetch
 
                   auto getReq = web::WebRequest();
                   Ref<RLLevelInfoLayer> layerRef = this;
@@ -1785,28 +1650,8 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                                     }
                               }
 
-                              // also remove from cache to match behavior elsewhere
-                              auto cachePath = getCachePath();
-                              auto existingData = utils::file::readString(cachePath);
-                              if (existingData) {
-                                    auto parsed = matjson::parse(existingData.unwrap());
-                                    if (parsed) {
-                                          auto root = parsed.unwrap();
-                                          if (root.isObject()) {
-                                                std::string key = fmt::format("{}", levelId);
-                                                auto result = root.erase(key);
-                                          }
-                                          auto jsonString = root.dump();
-                                          auto writeResult = utils::file::writeString(cachePath, jsonString);
-                                          log::debug("Removed level ID {} from cache (no difficulty) on refresh", levelId);
-                                    }
-                              }
-
                               return;
                         }
-
-                        // Cache the updated response
-                        cacheLevelData(levelId, json);
 
                         // Update the display with latest data
                         layerRef->processLevelRating(
@@ -1820,7 +1665,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             if (this->m_level && this->m_level->m_levelID != 0 && shouldDownloadLevel()) {
                   log::debug("Level updated, clearing cache for level ID: {}",
                              this->m_level->m_levelID);
-                  deleteLevelFromCache(this->m_level->m_levelID);
+
                   this->repositionRLStars();
             }
             LevelInfoLayer::onUpdate(sender);
@@ -1831,8 +1676,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
 class $modify(RLGameLevelManager, GameLevelManager) {
       void deleteLevel(GJGameLevel* level) {
             if (level && level->m_levelID != 0) {
-                  log::info("Deleting level ID: {} from cache", level->m_levelID);
-                  deleteLevelFromCache(level->m_levelID);
+                  // no cache operations for LevelInfoLayer
             }
             GameLevelManager::deleteLevel(level);
       }
