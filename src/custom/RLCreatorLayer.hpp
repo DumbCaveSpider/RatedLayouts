@@ -7,7 +7,7 @@ using namespace geode::prelude;
 
 class RLCreatorLayer : public CCLayer {
      protected:
-      bool init();
+      bool init() override;
       void onBackButton(CCObject* sender);
       void keyBackClicked() override;
 

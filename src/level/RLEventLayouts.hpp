@@ -15,7 +15,7 @@ class RLEventLayouts : public geode::Popup {
       static RLEventLayouts* create(EventType type);
 
      private:
-      bool init();
+      bool init() override;
       void update(float dt) override;
       void onPlayEvent(CCObject* sender);
       void onCreatorClicked(CCObject* sender);

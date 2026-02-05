@@ -11,7 +11,7 @@ public:
     static RLAchievementsPopup* create();
 
 private:
-    bool init();
+    bool init() override;
 
     void populate(int tabIndex);
     void onTab(CCObject* sender);

@@ -53,7 +53,7 @@ class RLModRatePopup : public geode::Popup {
       async::TaskHolder<web::WebResponse> m_setEventTask;
       async::TaskHolder<web::WebResponse> m_deleteSendsTask;
       async::TaskHolder<web::WebResponse> m_unsendTask;
-      bool init();
+      bool init() override;
       void onSubmitButton(CCObject* sender);
       void onUnrateButton(CCObject* sender);
       void onSuggestButton(CCObject* sender);

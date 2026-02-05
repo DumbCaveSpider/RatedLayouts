@@ -10,7 +10,7 @@ class RLBadgeRequestPopup : public geode::Popup {
       static RLBadgeRequestPopup* create();
 
      private:
-      bool init();
+      bool init() override;
 
       void onSubmit(CCObject* sender);
 

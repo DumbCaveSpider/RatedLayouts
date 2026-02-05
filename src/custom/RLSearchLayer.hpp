@@ -7,7 +7,7 @@ class GJDifficultySprite;
 
 class RLSearchLayer : public CCLayer {
      protected:
-      bool init();
+      bool init() override;
       void onBackButton(CCObject* sender);
       void keyBackClicked() override;
       void onSearchButton(CCObject* sender);

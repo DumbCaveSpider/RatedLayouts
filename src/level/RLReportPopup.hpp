@@ -8,7 +8,7 @@ class RLReportPopup : public geode::Popup {
       static RLReportPopup* create(int levelId);
 
      private:
-      bool init();
+      bool init() override;
       void onSubmit(CCObject* sender);
       void onInfo(CCObject* sender);
       int m_levelId = 0;

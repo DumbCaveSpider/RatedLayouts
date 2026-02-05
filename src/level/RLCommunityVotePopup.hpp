@@ -8,7 +8,7 @@ class RLCommunityVotePopup : public geode::Popup {
       static RLCommunityVotePopup* create(int levelId);
 
      private:
-      bool init();
+      bool init() override;
 
       // handlers
       void onSubmit(CCObject*);

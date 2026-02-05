@@ -8,7 +8,7 @@ class RLGauntletSelectLayer : public CCLayer {
       static RLGauntletSelectLayer* create();
 
      protected:
-      bool init();
+      bool init() override;
       void onBackButton(CCObject* sender);
       void keyBackClicked() override;
       void fetchGauntlets();
@@ -33,7 +33,6 @@ class RLGauntletSelectLayer : public CCLayer {
       CCMenuItemSpriteExtra* m_prevPageBtn = nullptr;
       CCMenuItemSpriteExtra* m_nextPageBtn = nullptr;
       CCLabelBMFont* m_pageLabel = nullptr;
-      std::function<void(web::WebResponse*)> m_gauntletsListener;
       async::TaskHolder<web::WebResponse> m_gauntletsTask;
       ~RLGauntletSelectLayer() { m_gauntletsTask.cancel(); }
 };

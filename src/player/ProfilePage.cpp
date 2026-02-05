@@ -1,7 +1,7 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/ProfilePage.hpp>
-#include <Geode/utils/coro.hpp>
-#include <argon/argon.hpp>
+#include <Geode/utils/async.hpp>
+#include <argon/argon.hpp> 
 
 #include "BadgesAPI.hpp"
 #include "RLDifficultyTotalPopup.hpp"
@@ -281,7 +281,7 @@ class $modify(RLProfilePage, ProfilePage) {
             m_mainLayer->addChild(rlStatsMenu);
 
             if (score) {
-                  coro::spawn << fetchProfileDataTask(score->m_accountID);
+                  async::spawn(fetchProfileDataTask(score->m_accountID));
             }
 
             rlStatsMenu->updateLayout();
@@ -317,7 +317,7 @@ class $modify(RLProfilePage, ProfilePage) {
             }
       }
 
-      geode::Task<void> fetchProfileDataTask(int accountId) {
+      arc::Future<> fetchProfileDataTask(int accountId) {
             log::info("Fetching profile data for account ID: {}", accountId);
             m_fields->accountId = accountId;
 

@@ -1242,7 +1242,7 @@ void RLModRatePopup::onSetEventButton(CCObject* sender) {
       auto item = static_cast<CCMenuItemSpriteExtra*>(sender);
       if (!item) return;
       // mapping by ID
-      std::string id = item->getID();
+      geode::ZStringView id = item->getID();
       log::info("Button ID: {}", id);
       std::string type;
       if (id == "event-daily") {

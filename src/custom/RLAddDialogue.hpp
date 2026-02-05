@@ -8,7 +8,7 @@ class RLAddDialogue : public geode::Popup {
       static RLAddDialogue* create();
 
      private:
-      bool init();
+      bool init() override;
       TextInput* m_dialogueInput = nullptr;
       async::TaskHolder<web::WebResponse> m_setDialogueTask;
       ~RLAddDialogue() { m_setDialogueTask.cancel(); }

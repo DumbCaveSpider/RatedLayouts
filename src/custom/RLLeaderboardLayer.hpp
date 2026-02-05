@@ -15,7 +15,7 @@ class RLLeaderboardLayer : public CCLayer {
       TabButton* m_creatorTab;
       TabButton* m_coinsTab;
 
-      bool init();
+      bool init() override;
       void onBackButton(CCObject* sender);
       void onLeaderboardTypeButton(CCObject* sender);
       void onAccountClicked(CCObject* sender);

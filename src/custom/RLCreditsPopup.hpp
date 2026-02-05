@@ -8,7 +8,7 @@ class RLCreditsPopup : public geode::Popup {
       static RLCreditsPopup* create();
 
      private:
-      bool init();
+      bool init() override;
       void onAccountClicked(CCObject* sender);
       void onInfo(CCObject* sender);
       ScrollLayer* m_scrollLayer = nullptr;

@@ -182,7 +182,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             return true;
       };
 
-      void levelDownloadFinished(GJGameLevel* level) {
+      void levelDownloadFinished(GJGameLevel* level) override {
             LevelInfoLayer::levelDownloadFinished(level);
 
             log::info("Level download finished, fetching rating data...");
@@ -208,38 +208,37 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             auto difficultySprite = layerRef->getChildByID("difficulty-sprite");
 
             auto url = fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId);
-            async::spawn([layerRef, difficultySprite, url]() -> arc::Future<> {
-                  auto req = web::WebRequest();
-                  auto response = co_await req.get(url);
+            auto req = web::WebRequest();
+            async::spawn(
+                req.get(url),
+                [layerRef, difficultySprite](web::WebResponse response) {
+                      log::info("Received rating response from server");
 
-                  log::info("Received rating response from server");
+                      if (!layerRef) {
+                            log::warn("LevelInfoLayer has been destroyed");
+                            return;
+                      }
 
-                  if (!layerRef) {
-                        log::warn("LevelInfoLayer has been destroyed");
-                        co_return;
-                  }
+                      if (!response.ok()) {
+                            log::warn("Server returned non-ok status: {}", response.code());
+                            return;
+                      }
 
-                  if (!response.ok()) {
-                        log::warn("Server returned non-ok status: {}", response.code());
-                        co_return;
-                  }
+                      auto jsonRes = response.json();
+                      if (!jsonRes) {
+                            log::warn("Failed to parse JSON response");
+                            return;
+                      }
 
-                  auto jsonRes = response.json();
-                  if (!jsonRes) {
-                        log::warn("Failed to parse JSON response");
-                        co_return;
-                  }
+                      auto json = jsonRes.unwrap();
 
-                  auto json = jsonRes.unwrap();
+                      // Cache the response
+                      if (layerRef && layerRef->m_level)
+                            cacheLevelData(layerRef->m_level->m_levelID, json);
 
-                  // Cache the response
-                  if (layerRef && layerRef->m_level)
-                        cacheLevelData(layerRef->m_level->m_levelID, json);
-
-                  if (layerRef)
-                        layerRef->processLevelRating(json, layerRef, difficultySprite, true);
-                  co_return;
-            });
+                      if (layerRef)
+                            layerRef->processLevelRating(json, layerRef, difficultySprite, true);
+                });
       }
       void processLevelRating(const matjson::Value& json,
                               Ref<RLLevelInfoLayer> layerRef,

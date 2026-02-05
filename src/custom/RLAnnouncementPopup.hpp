@@ -7,6 +7,6 @@ class RLAnnouncementPopup : public geode::Popup {
       static RLAnnouncementPopup* create();
 
      private:
-      bool init();
+      bool init() override;
       void onClick(CCObject* sender);
 };

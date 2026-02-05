@@ -7,7 +7,7 @@ class RLDonationPopup : public geode::Popup {
       static RLDonationPopup* create();
 
      private:
-      bool init();
+      bool init() override;
       void onClick(CCObject* sender);
       void onGetBadge(CCObject* sender);
 };

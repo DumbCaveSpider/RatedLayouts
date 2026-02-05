@@ -21,8 +21,8 @@ class RLLevelBrowserLayer : public CCLayer, public LevelManagerDelegate, public 
       static RLLevelBrowserLayer* create(Mode mode, ParamList const& params = ParamList(), std::string const& title = "Rated Layouts");
       bool init(GJSearchObject* object);
 
-      void loadLevelsFinished(CCArray* levels, char const* key, int p2);
-      void loadLevelsFailed(char const* key, int p1);
+      void loadLevelsFinished(CCArray* levels, char const* key, int p2) override;
+      void loadLevelsFailed(char const* key, int p1) override;
 
       void refreshLevels(bool force);
       void startLoading();

@@ -52,5 +52,5 @@ class RLUserControl : public geode::Popup {
       void setOptionEnabled(const std::string& key, bool enabled);
       void setAllOptionsEnabled(bool enabled);
 
-      bool init();
+      bool init() override;
 };

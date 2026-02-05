@@ -295,37 +295,38 @@ void RLLeaderboardLayer::onLeaderboardTypeButton(CCObject* sender) {
 
 void RLLeaderboardLayer::fetchLeaderboard(int type, int amount) {
       Ref<RLLeaderboardLayer> self = this;
-      async::spawn([self, type, amount]() -> arc::Future<> {
-            auto response = co_await web::WebRequest()
-                .param("type", type)
-                .param("amount", amount)
-                .get("https://gdrate.arcticwoof.xyz/getScore");
-            if (!self) co_return;
-            if (!response.ok()) {
-                  log::warn("Server returned non-ok status: {}", response.code());
-                  Notification::create("Failed to fetch leaderboard",
-                                       NotificationIcon::Error)
-                      ->show();
-                  co_return;
-            }
+      auto request = web::WebRequest()
+          .param("type", type)
+          .param("amount", amount);
+      async::spawn(
+          request.get("https://gdrate.arcticwoof.xyz/getScore"),
+          [self](web::WebResponse response) {
+                if (!self) return;
+                if (!response.ok()) {
+                      log::warn("Server returned non-ok status: {}", response.code());
+                      Notification::create("Failed to fetch leaderboard",
+                                           NotificationIcon::Error)
+                          ->show();
+                      return;
+                }
 
-            auto jsonRes = response.json();
-            if (!jsonRes) {
-                  log::warn("Failed to parse JSON response");
-                  Notification::create("Invalid server response",
-                                       NotificationIcon::Error)
-                      ->show();
-                  co_return;
-            }
+                auto jsonRes = response.json();
+                if (!jsonRes) {
+                      log::warn("Failed to parse JSON response");
+                      Notification::create("Invalid server response",
+                                           NotificationIcon::Error)
+                          ->show();
+                      return;
+                }
 
-            auto json = jsonRes.unwrap();
-            log::info("Leaderboard data: {}", json.dump());
+                auto json = jsonRes.unwrap();
+                log::info("Leaderboard data: {}", json.dump());
 
-            bool success = json["success"].asBool().unwrapOrDefault();
-            if (!success) {
-                  log::warn("Server returned success: false");
-                  co_return;
-            }
+                bool success = json["success"].asBool().unwrapOrDefault();
+                if (!success) {
+                      log::warn("Server returned success: false");
+                      return;
+                }
 
                 if (json.contains("users") && json["users"].isArray()) {
                       auto users = json["users"].asArray().unwrap();

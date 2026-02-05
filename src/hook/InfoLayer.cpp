@@ -18,54 +18,53 @@ class $modify(RLLInfoLayer, InfoLayer) {
 
                   Ref<RLLInfoLayer> layerRef = this;
                   auto url = fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId);
-                  async::spawn([layerRef, url]() -> arc::Future<> {
-                        auto req = web::WebRequest();
-                        auto response = co_await req.get(url);
+                  auto req = web::WebRequest();
+                  async::spawn(
+                        req.get(url),
+                        [layerRef](web::WebResponse response) {
+                              log::info("Received /fetch response for level ID: {}",
+                                        layerRef && layerRef->m_level ? layerRef->m_level->m_levelID : 0);
 
-                        log::info("Received /fetch response for level ID: {}",
-                                  layerRef && layerRef->m_level ? layerRef->m_level->m_levelID : 0);
-
-                        if (!layerRef) {
-                              log::warn("InfoLayer destroyed before /fetch completed");
-                              co_return;
-                        }
-
-                        if (response.ok()) {
-                              if (!response.json()) {
-                                    log::warn("Failed to parse /fetch JSON response");
-                                    co_return;
+                              if (!layerRef) {
+                                    log::warn("InfoLayer destroyed before /fetch completed");
+                                    return;
                               }
 
-                              auto json = response.json().unwrap();
+                              if (response.ok()) {
+                                    if (!response.json()) {
+                                          log::warn("Failed to parse /fetch JSON response");
+                                          return;
+                                    }
 
-                              bool suggested = json["isSuggested"].asBool().unwrapOrDefault();
-                              if (suggested) {
-                                    log::info("Level is suggested");
-                                    co_return;
+                                    auto json = response.json().unwrap();
+
+                                    bool suggested = json["isSuggested"].asBool().unwrapOrDefault();
+                                    if (suggested) {
+                                          log::info("Level is suggested");
+                                          return;
+                                    }
+
+                                    auto reportButtonSpr = CircleButtonSprite::create(
+                                          // @geode-ignore(unknown-resource)
+                                          CCSprite::createWithSpriteFrameName("geode.loader/exclamation-red.png"),
+                                          CircleBaseColor::Blue,
+                                          CircleBaseSize::Medium);
+
+                                    auto reportButton = CCMenuItemSpriteExtra::create(
+                                        reportButtonSpr, layerRef, menu_selector(RLLInfoLayer::onReportButton));
+
+                                    reportButton->setID("rated-layouts-report-button"_spr);
+                                    auto vanillaReportButton = layerRef->getChildByIDRecursive("report-button");
+                                    auto mainMenu = layerRef->getChildByIDRecursive("main-menu");
+                                    if (vanillaReportButton) {
+                                          mainMenu->addChild(reportButton);
+                                          reportButton->setPosition(vanillaReportButton->getPosition());
+                                          vanillaReportButton->removeFromParentAndCleanup(true);
+                                    }
+                              } else {
+                                    log::warn("failed to fetch level");
                               }
-
-                              auto reportButtonSpr = CircleButtonSprite::create(
-                                    // @geode-ignore(unknown-resource)
-                                    CCSprite::createWithSpriteFrameName("geode.loader/exclamation-red.png"),
-                                    CircleBaseColor::Blue,
-                                    CircleBaseSize::Medium);
-
-                              auto reportButton = CCMenuItemSpriteExtra::create(
-                                  reportButtonSpr, layerRef, menu_selector(RLLInfoLayer::onReportButton));
-
-                              reportButton->setID("rated-layouts-report-button"_spr);
-                              auto vanillaReportButton = layerRef->getChildByIDRecursive("report-button");
-                              auto mainMenu = layerRef->getChildByIDRecursive("main-menu");
-                              if (vanillaReportButton) {
-                                    mainMenu->addChild(reportButton);
-                                    reportButton->setPosition(vanillaReportButton->getPosition());
-                                    vanillaReportButton->removeFromParentAndCleanup(true);
-                              }
-                        } else {
-                              log::warn("failed to fetch level");
-                        }
-                        co_return;
-                  });
+                        });
             }
 
             return true;
