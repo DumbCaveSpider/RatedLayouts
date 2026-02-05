@@ -300,8 +300,8 @@ class $modify(RLProfilePage, ProfilePage) {
       rlButtonsMenu->addChild(rlStatsBtn);
     }
 
-    // If profile is already loaded and user is a mod/admin, show manage button
-    if (m_fields->role >= 1) {
+    // if u are mod or admin, show manage button
+    if (Mod::get()->getSavedValue<int>("role") >= 1) {
       if (!rlButtonsMenu->getChildByID("rl-manage-btn")) {
         auto modUserSpr =
             CCSprite::createWithSpriteFrameName("RL_badgeMod01.png"_spr);
@@ -513,7 +513,7 @@ class $modify(RLProfilePage, ProfilePage) {
           }
 
           // show mod button if mod or admin
-          if (pageRef->m_fields->role >= 1) {
+          if (Mod::get()->getSavedValue<int>("role") >= 1) {
             if (auto rlButtonsMenu =
                     pageRef->getChildByIDRecursive("rl-buttons-menu")) {
               // no recreate the manage button if it already exists
