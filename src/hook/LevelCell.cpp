@@ -8,67 +8,13 @@ extern const std::string legendaryPString;
 extern const std::string mythicPString;
 extern const std::string epicPString;
 
-// get the cache file path
-static std::string getCachePath() {
-  auto saveDir = dirs::getModsSaveDir();
-  return utils::string::pathToString(saveDir / "level_ratings_cache.json");
-}
 
 static std::unordered_map<LevelCell *, int> g_deferredPendingLevels;
 static std::unordered_map<LevelCell *, matjson::Value> g_deferredPendingJsons;
 
 
 
-// load cached data for a level
-static std::optional<matjson::Value> getCachedLevel(int levelId) {
-  auto cachePath = getCachePath();
-  auto data = utils::file::readString(cachePath);
-  if (!data)
-    return std::nullopt;
 
-  auto json = matjson::parse(data.unwrap());
-  if (!json)
-    return std::nullopt;
-
-  auto root = json.unwrap();
-  if (root.isObject() && root.contains(fmt::format("{}", levelId))) {
-    return root[fmt::format("{}", levelId)];
-  }
-
-  return std::nullopt;
-}
-
-// save level cache
-static void cacheLevelData(int levelId, const matjson::Value &data) {
-  auto saveDir = dirs::getModsSaveDir();
-  auto createDirResult = utils::file::createDirectory(saveDir);
-  if (!createDirResult) {
-    log::warn("Failed to create save directory for cache");
-    return;
-  }
-
-  auto cachePath = getCachePath();
-
-  // load existing cache
-  matjson::Value root = matjson::Value::object();
-  auto existingData = utils::file::readString(cachePath);
-  if (existingData) {
-    auto parsed = matjson::parse(existingData.unwrap());
-    if (parsed) {
-      root = parsed.unwrap();
-    }
-  }
-
-  // update data
-  root[fmt::format("{}", levelId)] = data;
-
-  // write to file
-  auto jsonString = root.dump();
-  auto writeResult = utils::file::writeString(cachePath, jsonString);
-  if (writeResult) {
-    log::debug("Cached level rating data for level ID: {}", levelId);
-  }
-}
 
 class $modify(LevelCell) {
   struct Fields {
@@ -95,23 +41,8 @@ class $modify(LevelCell) {
 
     log::debug("difficulty: {}, featured: {}", difficulty, featured);
 
-    // If no difficulty rating, remove from cache
+    // If no difficulty rating, nothing to apply
     if (difficulty == 0) {
-      auto cachePath = getCachePath();
-      auto existingData = utils::file::readString(cachePath);
-      if (existingData) {
-        auto parsed = matjson::parse(existingData.unwrap());
-        if (parsed) {
-          auto root = parsed.unwrap();
-          if (root.isObject()) {
-            std::string key = fmt::format("{}", levelId);
-            root.erase(key);
-          }
-          auto jsonString = root.dump();
-          auto writeResult = utils::file::writeString(cachePath, jsonString);
-          log::debug("Removed level ID {} from cache (no difficulty)", levelId);
-        }
-      }
       return;
     }
 
@@ -642,20 +573,8 @@ class $modify(LevelCell) {
 
     int levelId = static_cast<int>(level->m_levelID);
 
-    auto cachedData = getCachedLevel(levelId);
-    if (cachedData) {
-      if (this->m_mainLayer) {
-        log::debug("Applying cached rating data for level ID: {} immediately on load", levelId);
-        this->applyRatingToCell(cachedData.value(), levelId);
-        return;
-      } else {
-        m_fields->m_pendingJson = cachedData.value();
-        m_fields->m_pendingLevelId = levelId;
-        this->scheduleUpdate();
-        return;
-      }
-    }
-
+    // We don't use cached data for LevelCell. If compatibilityMode is
+    // enabled, mark pending and return; otherwise proceed to fetch.
     if (Mod::get()->getSettingValue<bool>("compatibilityMode")) {
       m_fields->m_pendingLevelId = levelId;
       return;
@@ -663,11 +582,11 @@ class $modify(LevelCell) {
 
     // fetch directly here and apply or store on callback
     Ref<LevelCell> cellRef = this;
-    auto fields = m_fields;
+    auto req = web::WebRequest();
     log::debug("Fetching rating data for level cell ID: {}", levelId);
-    fields->m_fetchTask.spawn(
-        web::WebRequest().get(fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId)),
-        [cellRef, levelId](web::WebResponse const &response) {
+    async::spawn(
+        req.get(fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId)),
+        [cellRef, levelId, this](web::WebResponse const &response) {
           log::debug("Received rating response from server for level ID: {}", levelId);
 
           if (!response.ok()) {
@@ -683,19 +602,26 @@ class $modify(LevelCell) {
 
           auto json = jsonRes.unwrap();
 
-          // Cache response
-          cacheLevelData(levelId, json);
-
           if (!cellRef) return;
 
           LevelCell *ptr = cellRef.operator->();
-          g_deferredPendingJsons[ptr] = json;
-          g_deferredPendingLevels[ptr] = levelId;
-          ptr->scheduleUpdate();
+          // If the cell's UI is present and it references the same level, apply
+          // the fetched rating immediately on the main thread using our own
+          // instance pointer (we captured 'this').
+          if (this->m_mainLayer && this->m_level && this->m_level->m_levelID == levelId) {
+            log::debug("Applying fetched rating data immediately for level ID: {}", levelId);
+            this->applyRatingToCell(json, levelId);
+          } else {
+            // Otherwise defer to the main-thread update path
+            g_deferredPendingJsons[ptr] = json;
+            g_deferredPendingLevels[ptr] = levelId;
+            ptr->scheduleUpdate();
+          }
         });
 
-    // ensure update waits for level data to arrive
-    m_fields->m_pendingLevelId = levelId;
+    // ensure update waits for level data to arrive (use globals to avoid
+    // touching m_fields here)
+    g_deferredPendingLevels[this] = levelId;
     this->scheduleUpdate();
     return;
   }
@@ -715,15 +641,15 @@ class $modify(LevelCell) {
 
     if (m_fields->m_pendingLevelId && this->m_level &&
         this->m_level->m_levelID == m_fields->m_pendingLevelId) {
-      auto cached = getCachedLevel(m_fields->m_pendingLevelId);
-      if (cached) {
-        this->applyRatingToCell(cached.value(), m_fields->m_pendingLevelId);
-      } else if (!Mod::get()->getSettingValue<bool>("compatibilityMode")) {
+      if (!Mod::get()->getSettingValue<bool>("compatibilityMode")) {
+        int pending = m_fields->m_pendingLevelId;
+        m_fields->m_pendingLevelId = 0;
         if (this->m_level) {
           loadFromLevel(this->m_level);
         }
+      } else {
+        m_fields->m_pendingLevelId = 0;
       }
-      m_fields->m_pendingLevelId = 0;
     }
   }
 
