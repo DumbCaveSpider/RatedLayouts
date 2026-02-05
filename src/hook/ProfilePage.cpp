@@ -8,6 +8,8 @@
 #include "../player/RLDifficultyTotalPopup.hpp"
 #include "../player/RLUserControl.hpp"
 #include "BadgesAPI.hpp"
+#include "GUI/CCControlExtension/CCScale9Sprite.h"
+#include "Geode/ui/BasedButtonSprite.hpp"
 
 using namespace geode::prelude;
 
@@ -205,8 +207,8 @@ class $modify(RLProfilePage, ProfilePage) {
 
     // Ensure the menu and surrounding layout are updated when data changes
     rlStatsMenu->updateLayout();
-    if (auto leftMenu = getChildByIDRecursive("left-menu"))
-      leftMenu->updateLayout();
+    if (auto rlButtonsMenu = getChildByIDRecursive("rl-buttons-menu"))
+      rlButtonsMenu->updateLayout();
   }
 
   bool init(int accountID, bool ownProfile) {
@@ -216,6 +218,31 @@ class $modify(RLProfilePage, ProfilePage) {
     if (auto statsMenu = m_mainLayer->getChildByID("stats-menu")) {
       statsMenu->updateLayout();
     }
+
+    // create the rl buttons menu at the side
+    auto rlButtonsMenu = CCMenu::create();
+    rlButtonsMenu->setID("rl-buttons-menu");
+    rlButtonsMenu->setPosition(
+        {m_mainLayer->getContentSize().width / 2.f + 250.f,
+         m_mainLayer->getContentSize().height / 2.f});
+    rlButtonsMenu->setContentSize({32.f, 100.f});
+
+    // Arrange buttons vertically in a centered column
+    rlButtonsMenu->setLayout(ColumnLayout::create()
+                                 ->setGap(6.f)
+                                 ->setAxisAlignment(AxisAlignment::Center)
+                                 ->setGrowCrossAxis(false));
+
+    m_mainLayer->addChild(rlButtonsMenu);
+
+    if (rlButtonsMenu) {
+      auto rlButtonBg = CCScale9Sprite::create("GJ_square02.png");
+      rlButtonBg->setContentSize(rlButtonsMenu->getContentSize() +
+                                 CCSize(10.f, 10.f));
+      rlButtonBg->setPosition(rlButtonsMenu->getPosition());
+      m_mainLayer->addChild(rlButtonBg, -1);
+    }
+
     return true;
   }
 
@@ -233,31 +260,59 @@ class $modify(RLProfilePage, ProfilePage) {
     if (auto rlStatsMenuFound = getChildByIDRecursive("rl-stats-menu"))
       rlStatsMenuFound->removeFromParent();
 
-    auto leftMenu = getChildByIDRecursive("left-menu");
-    if (!leftMenu) {
-      log::warn("left-menu not found");
-      return;
+    auto rlButtonsMenu = m_mainLayer->getChildByID("rl-buttons-menu");
+    if (!rlButtonsMenu) {
+      log::warn("rl-buttons-menu not found — recreating");
+      // Recreate the buttons menu and background so the page shows correctly
+      rlButtonsMenu = CCMenu::create();
+      rlButtonsMenu->setID("rl-buttons-menu");
+      rlButtonsMenu->setPosition(
+          {m_mainLayer->getContentSize().width / 2.f + 250.f,
+           m_mainLayer->getContentSize().height / 2.f});
+      rlButtonsMenu->setContentSize({32.f, 100.f});
+      rlButtonsMenu->setLayout(ColumnLayout::create()
+                                   ->setGap(6.f)
+                                   ->setAxisAlignment(AxisAlignment::Center)
+                                   ->setGrowCrossAxis(false));
+      m_mainLayer->addChild(rlButtonsMenu);
+
+      // recreate background
+      auto rlButtonBg = CCScale9Sprite::create("GJ_square02.png");
+      rlButtonBg->setContentSize(rlButtonsMenu->getContentSize() +
+                                 CCSize(10.f, 10.f));
+      rlButtonBg->setPosition(rlButtonsMenu->getPosition());
+      m_mainLayer->addChild(rlButtonBg, -1);
     }
 
-    auto rlStatsSpr = CCSprite::create("GJ_button_04.png");
-    auto rlStatsSprOn = CCSprite::create("GJ_button_02.png");
+    // view stats
+    if (GJAccountManager::sharedState()->m_accountID != 0) {
+      auto rlViewSpr =
+          CCSprite::createWithSpriteFrameName("RL_planetMed.png"_spr);
+      auto rlStatsSprOff = EditorButtonSprite::create(
+          rlViewSpr, EditorBaseColor::Gray, EditorBaseSize::Normal);
+      auto rlStatsSprOn = EditorButtonSprite::create(
+          rlViewSpr, EditorBaseColor::Cyan, EditorBaseSize::Normal);
 
-    auto rlSprA = CCSprite::createWithSpriteFrameName("RL_planetMed.png"_spr);
-    auto rlSprB = CCSprite::createWithSpriteFrameName("RL_planetMed.png"_spr);
-    rlSprA->setPosition({20.f, 20.f});
-    rlSprB->setPosition({20.f, 20.f});
+      auto rlStatsBtn = CCMenuItemToggler::create(
+          rlStatsSprOff, rlStatsSprOn, this,
+          menu_selector(RLProfilePage::onStatsSwitcher));
+      rlStatsBtn->setID("rl-stats-btn");
+      rlButtonsMenu->addChild(rlStatsBtn);
+    }
 
-    rlStatsSpr->addChild(rlSprA);
-    rlStatsSprOn->addChild(rlSprB);
-
-    rlStatsSpr->setScale(0.8f);
-    rlStatsSprOn->setScale(0.8f);
-
-    auto rlStatsBtn = CCMenuItemToggler::create(
-        rlStatsSpr, rlStatsSprOn, this,
-        menu_selector(RLProfilePage::onStatsSwitcher));
-    rlStatsBtn->setID("rl-stats-btn");
-    leftMenu->addChild(rlStatsBtn);
+    // If profile is already loaded and user is a mod/admin, show manage button
+    if (m_fields->role >= 1) {
+      if (!rlButtonsMenu->getChildByID("rl-manage-btn")) {
+        auto modUserSpr =
+            CCSprite::createWithSpriteFrameName("RL_badgeMod01.png"_spr);
+        auto modUserButton = EditorButtonSprite::create(
+            modUserSpr, EditorBaseColor::LightBlue, EditorBaseSize::Normal);
+        auto modUserBtnItem = CCMenuItemSpriteExtra::create(
+            modUserButton, this, menu_selector(RLProfilePage::onUserManage));
+        modUserBtnItem->setID("rl-manage-btn");
+        rlButtonsMenu->addChild(modUserBtnItem);
+      }
+    }
 
     auto rlStatsMenu = CCMenu::create();
     rlStatsMenu->setID("rl-stats-menu");
@@ -308,7 +363,7 @@ class $modify(RLProfilePage, ProfilePage) {
     rlStatsMenu->updateLayout();
 
     statsMenu->updateLayout();
-    leftMenu->updateLayout();
+    rlButtonsMenu->updateLayout();
   }
 
   void onStatsSwitcher(CCObject *sender) {
@@ -453,12 +508,29 @@ class $modify(RLProfilePage, ProfilePage) {
           pageRef->m_fields->role = role;
           pageRef->m_fields->isSupporter = isSupporter;
 
-          if (isSupporter && pageRef->m_ownProfile) {
-            RLAchievements::onReward("misc_support");
-          }
-
           if (pageRef->m_ownProfile) {
             Mod::get()->setSavedValue("role", pageRef->m_fields->role);
+          }
+
+          // show mod button if mod or admin
+          if (pageRef->m_fields->role >= 1) {
+            if (auto rlButtonsMenu =
+                    pageRef->getChildByIDRecursive("rl-buttons-menu")) {
+              // no recreate the manage button if it already exists
+              if (!rlButtonsMenu->getChildByID("rl-manage-btn")) {
+                auto modUserSpr = CCSprite::createWithSpriteFrameName(
+                    "RL_badgeMod01.png"_spr);
+                auto modUserButton = EditorButtonSprite::create(
+                    modUserSpr, EditorBaseColor::LightBlue,
+                    EditorBaseSize::Normal);
+                auto modUserBtnItem = CCMenuItemSpriteExtra::create(
+                    modUserButton, pageRef,
+                    menu_selector(RLProfilePage::onUserManage));
+                modUserBtnItem->setID("rl-manage-btn");
+                rlButtonsMenu->addChild(modUserBtnItem);
+                rlButtonsMenu->updateLayout();
+              }
+            }
           }
 
           pageRef->updateStatLabel(

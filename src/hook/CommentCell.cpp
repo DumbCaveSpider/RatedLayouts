@@ -80,10 +80,7 @@ class $modify(RLCommentCell, CommentCell) {
       return;
     }
 
-    // Always fetch fresh profile data unless compatibility mode is enabled
-    if (!Mod::get()->getSettingValue<bool>("compatibilityMode")) {
       fetchUserRole(comment->m_accountID);
-    }
   }
 
   void applyCommentTextColor(int accountId) {

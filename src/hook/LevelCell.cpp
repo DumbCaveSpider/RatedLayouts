@@ -561,13 +561,6 @@ class $modify(LevelCell) {
 
     int levelId = static_cast<int>(level->m_levelID);
 
-    // We don't use cached data for LevelCell. If compatibilityMode is
-    // enabled, mark pending and return; otherwise proceed to fetch.
-    if (Mod::get()->getSettingValue<bool>("compatibilityMode")) {
-      m_fields->m_pendingLevelId = levelId;
-      return;
-    }
-
     // fetch directly here and apply or store on callback
     Ref<LevelCell> cellRef = this;
     auto req = web::WebRequest();
@@ -625,12 +618,12 @@ class $modify(LevelCell) {
 
     if (m_fields->m_pendingLevelId && this->m_level &&
         this->m_level->m_levelID == m_fields->m_pendingLevelId) {
-      if (!Mod::get()->getSettingValue<bool>("compatibilityMode")) {
-        int pending = m_fields->m_pendingLevelId;
-        m_fields->m_pendingLevelId = 0;
-        if (this->m_level) {
-          loadFromLevel(this->m_level);
-        }
+
+      int pending = m_fields->m_pendingLevelId;
+      m_fields->m_pendingLevelId = 0;
+      if (this->m_level) {
+        loadFromLevel(this->m_level);
+
       } else {
         m_fields->m_pendingLevelId = 0;
       }
