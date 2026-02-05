@@ -142,7 +142,7 @@ void RLCommunityVotePopup::onSubmit(CCObject*) {
 }
 
 bool RLCommunityVotePopup::init() {
-      if (!Popup::init(420.f, 240.f))
+      if (!Popup::init(420.f, 240.f, "GJ_square02.png"))
             return false;
       setTitle("Rated Layouts Community Vote");
       addSideArt(m_mainLayer, SideArt::All, SideArtStyle::PopupBlue, false);

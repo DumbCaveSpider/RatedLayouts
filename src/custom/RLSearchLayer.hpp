@@ -76,6 +76,13 @@ class RLSearchLayer : public CCLayer {
       void onUncompletedToggle(CCObject* sender);
       void onDemonDifficultyButton(CCObject* sender);
       void onDifficultyButton(CCObject* sender);
+      void onRandomButton(CCObject* sender);
+
+      // pending random fetch state
+      int m_randomPendingLevelId = -1;
+      std::string m_randomPendingKey;
+      float m_randomPendingTimeout = 0.0f;
+      CCMenuItemSpriteExtra* m_randomButton = nullptr;
 
       async::TaskHolder<web::WebResponse> m_searchTask;
       ~RLSearchLayer() { m_searchTask.cancel(); }
