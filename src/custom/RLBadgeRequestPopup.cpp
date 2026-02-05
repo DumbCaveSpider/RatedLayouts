@@ -14,7 +14,7 @@ RLBadgeRequestPopup* RLBadgeRequestPopup::create() {
 }
 
 bool RLBadgeRequestPopup::init() {
-      if (!Popup::init(420.f, 200.f))
+      if (!Popup::init(420.f, 280.f, "GJ_square02.png"))
             return false;
 
       setTitle("Claim Layout Supporter Badge");

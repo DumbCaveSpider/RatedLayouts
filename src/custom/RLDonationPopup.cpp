@@ -19,7 +19,7 @@ RLDonationPopup* RLDonationPopup::create() {
 };
 
 bool RLDonationPopup::init() {
-      if (!Popup::init(460.f, 270.f))
+      if (!Popup::init(460.f, 270.f, "GJ_square07.png"))
             return false;
       // clipping node for rounded corners
       auto sStencil = CCScale9Sprite::create("GJ_square06.png");

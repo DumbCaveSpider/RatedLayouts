@@ -14,7 +14,7 @@ RLReportPopup* RLReportPopup::create(int levelId) {
 }
 
 bool RLReportPopup::init() {
-      if (!Popup::init(440.f, 280.f))
+      if (!Popup::init(440.f, 280.f, "GJ_square02.png"))
             return false;
       setTitle("Rated Layouts Report Level");
       addSideArt(m_mainLayer, SideArt::All, SideArtStyle::PopupBlue, false);

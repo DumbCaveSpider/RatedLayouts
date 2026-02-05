@@ -111,7 +111,7 @@ void RLAchievementsPopup::populate(int tabIndex) {
 }
 
 bool RLAchievementsPopup::init() {
-      if (!Popup::init(470.f, 290.f))
+      if (!Popup::init(470.f, 290.f, "GJ_square02.png"))
             return false;
 
       setTitle("Rated Layouts Achievements");

@@ -15,9 +15,9 @@ static std::string getCachePath() {
 }
 
 static std::unordered_map<LevelCell *, int> g_deferredPendingLevels;
-// deferred Level pointers for cells created before the base loadFromLevel can
-// safely run
-static std::unordered_map<LevelCell *, GJGameLevel *> g_deferredLevels;
+static std::unordered_map<LevelCell *, matjson::Value> g_deferredPendingJsons;
+
+
 
 // load cached data for a level
 static std::optional<matjson::Value> getCachedLevel(int levelId) {
@@ -75,80 +75,13 @@ class $modify(LevelCell) {
     std::optional<matjson::Value> m_pendingJson;
     int m_pendingLevelId = 0;
     async::TaskHolder<web::WebResponse> m_fetchTask;
+    int m_waitRetries = 0; // used for waiting for level data to arrive
     ~Fields() { m_fetchTask.cancel(); }
   };
 
-  void loadCustomLevelCell(int levelId) {
-    // load from cache first
-    auto cachedData = getCachedLevel(levelId);
 
-    if (cachedData) {
-      log::debug("Loading cached rating data for level cell ID: {}", levelId);
-      // If the UI is initialized, apply immediately. Otherwise defer until
-      // onEnter.
-      if (this->m_mainLayer && this->m_level) {
-        this->applyRatingToCell(cachedData.value(), levelId);
-      } else {
-        m_fields->m_pendingJson = cachedData.value();
-        m_fields->m_pendingLevelId = levelId;
-      }
-      return;
-    }
 
-    if (Mod::get()->getSettingValue<bool>("compatibilityMode")) {
-      // log::debug("skipping /fetch request for level ID: {}", levelId);
-      return;
-    }
 
-    log::debug("Fetching rating data for level cell ID: {}", levelId);
-
-    Ref<LevelCell> cellRef = this;
-    auto url =
-        fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId);
-    auto fields = m_fields;
-    fields->m_fetchTask.spawn(
-        web::WebRequest().get(url),
-        [cellRef, this, levelId](web::WebResponse const &response) {
-          log::debug(
-              "Received rating response from server for level cell ID: {}",
-              levelId);
-
-          // Validate that the cell still exists and still references the same
-          // level
-          if (!cellRef || !cellRef->m_mainLayer || !cellRef->m_level) {
-            log::warn("LevelCell missing or has no level, skipping update for "
-                      "level ID: {}",
-                      levelId);
-            return;
-          }
-
-          if (cellRef->m_level->m_levelID != levelId) {
-            log::warn("LevelCell level ID mismatch (current: {}, response: "
-                      "{}), skipping",
-                      cellRef->m_level->m_levelID, levelId);
-            return;
-          }
-
-          if (!response.ok()) {
-            log::warn("Server returned non-ok status: {} for level ID: {}",
-                      response.code(), levelId);
-            return;
-          }
-
-          auto jsonRes = response.json();
-          if (!jsonRes) {
-            log::warn("Failed to parse JSON response");
-            return;
-          }
-
-          auto json = jsonRes.unwrap();
-
-          // Cache the response
-          cacheLevelData(levelId, json);
-
-          this->applyRatingToCell(json, levelId);
-        });
-  }
 
   void applyRatingToCell(const matjson::Value &json, int levelId) {
     if (!this->m_mainLayer || !this->m_level) {
@@ -700,37 +633,80 @@ class $modify(LevelCell) {
   void loadFromLevel(GJGameLevel *level) {
 
     LevelCell::loadFromLevel(level);
+    log::debug("LevelCell loadFromLevel called for level ID: {}",
+               level ? level->m_levelID : 0);
     // If no level or a local level
     if (!level || level->m_levelID == 0) {
       return;
     }
 
-    g_deferredLevels[this] = level;
-    g_deferredPendingLevels[this] = level->m_levelID;
+    int levelId = static_cast<int>(level->m_levelID);
 
-    loadCustomLevelCell(level->m_levelID);
+    auto cachedData = getCachedLevel(levelId);
+    if (cachedData) {
+      if (this->m_mainLayer) {
+        log::debug("Applying cached rating data for level ID: {} immediately on load", levelId);
+        this->applyRatingToCell(cachedData.value(), levelId);
+        return;
+      } else {
+        m_fields->m_pendingJson = cachedData.value();
+        m_fields->m_pendingLevelId = levelId;
+        this->scheduleUpdate();
+        return;
+      }
+    }
+
+    if (Mod::get()->getSettingValue<bool>("compatibilityMode")) {
+      m_fields->m_pendingLevelId = levelId;
+      return;
+    }
+
+    // fetch directly here and apply or store on callback
+    Ref<LevelCell> cellRef = this;
+    auto fields = m_fields;
+    log::debug("Fetching rating data for level cell ID: {}", levelId);
+    fields->m_fetchTask.spawn(
+        web::WebRequest().get(fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId)),
+        [cellRef, levelId](web::WebResponse const &response) {
+          log::debug("Received rating response from server for level ID: {}", levelId);
+
+          if (!response.ok()) {
+            log::warn("Server returned non-ok status: {} for level ID: {}", response.code(), levelId);
+            return;
+          }
+
+          auto jsonRes = response.json();
+          if (!jsonRes) {
+            log::warn("Failed to parse JSON response");
+            return;
+          }
+
+          auto json = jsonRes.unwrap();
+
+          // Cache response
+          cacheLevelData(levelId, json);
+
+          if (!cellRef) return;
+
+          LevelCell *ptr = cellRef.operator->();
+          g_deferredPendingJsons[ptr] = json;
+          g_deferredPendingLevels[ptr] = levelId;
+          ptr->scheduleUpdate();
+        });
+
+    // ensure update waits for level data to arrive
+    m_fields->m_pendingLevelId = levelId;
+    this->scheduleUpdate();
     return;
   }
 
   void onEnter() {
     LevelCell::onEnter();
 
-    auto itLevel = g_deferredLevels.find(this);
-    if (itLevel != g_deferredLevels.end()) {
-      LevelCell::loadFromLevel(itLevel->second);
-      g_deferredLevels.erase(itLevel);
-    }
 
-    auto itDeferred = g_deferredPendingLevels.find(this);
-    if (itDeferred != g_deferredPendingLevels.end()) {
-      m_fields->m_pendingLevelId = itDeferred->second;
-      g_deferredPendingLevels.erase(itDeferred);
-    }
-
-    // If there was cached data deferred earlier, apply it now if it still
-    // matches.
     if (m_fields->m_pendingJson && this->m_level &&
         this->m_level->m_levelID == m_fields->m_pendingLevelId) {
+      // Apply pending JSON immediately if the cell references the same level.
       this->applyRatingToCell(m_fields->m_pendingJson.value(),
                               m_fields->m_pendingLevelId);
       m_fields->m_pendingJson = std::nullopt;
@@ -739,17 +715,16 @@ class $modify(LevelCell) {
 
     if (m_fields->m_pendingLevelId && this->m_level &&
         this->m_level->m_levelID == m_fields->m_pendingLevelId) {
-      loadCustomLevelCell(m_fields->m_pendingLevelId);
+      auto cached = getCachedLevel(m_fields->m_pendingLevelId);
+      if (cached) {
+        this->applyRatingToCell(cached.value(), m_fields->m_pendingLevelId);
+      } else if (!Mod::get()->getSettingValue<bool>("compatibilityMode")) {
+        if (this->m_level) {
+          loadFromLevel(this->m_level);
+        }
+      }
       m_fields->m_pendingLevelId = 0;
     }
   }
 
-  void onExit() { LevelCell::onExit(); }
-
-  void refreshLevelCell() {
-    if (this->m_level && this->m_level->m_levelID != 0) {
-      log::debug("Refreshing level cell ID: {}", this->m_level->m_levelID);
-      loadCustomLevelCell(this->m_level->m_levelID);
-    }
-  }
 };

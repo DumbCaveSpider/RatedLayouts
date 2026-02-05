@@ -150,7 +150,7 @@ RLDifficultyTotalPopup* RLDifficultyTotalPopup::create(int accountId, Mode mode)
 };
 
 bool RLDifficultyTotalPopup::init() {
-      if (!Popup::init(380.f, 210.f))
+      if (!Popup::init(380.f, 210.f, "GJ_square02.png"))
             return false;
       setTitle("Rated Layouts Classic: -");
       auto contentSize = m_mainLayer->getContentSize();

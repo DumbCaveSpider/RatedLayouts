@@ -18,7 +18,7 @@ static void setTogglerGrayscale(CCMenuItemToggler* toggler, const char* spriteNa
 }
 
 bool RLModRatePopup::init() {
-      if (!Popup::init(380.f, 180.f)) return false;
+      if (!Popup::init(380.f, 180.f, "GJ_square02.png")) return false;
       
       m_difficultySprite = nullptr;
       m_isDemonMode = false;
