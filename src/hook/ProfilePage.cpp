@@ -287,11 +287,11 @@ class $modify(RLProfilePage, ProfilePage) {
     // view stats
     if (GJAccountManager::sharedState()->m_accountID != 0) {
       auto rlViewSpr =
-          CCSprite::createWithSpriteFrameName("RL_planetMed.png"_spr);
+          CCSprite::createWithSpriteFrameName("RL_starBig.png"_spr);
       auto rlStatsSprOff = EditorButtonSprite::create(
           rlViewSpr, EditorBaseColor::Gray, EditorBaseSize::Normal);
       auto rlStatsSprOn = EditorButtonSprite::create(
-          rlViewSpr, EditorBaseColor::Cyan, EditorBaseSize::Normal);
+          rlViewSpr, EditorBaseColor::LightBlue, EditorBaseSize::Normal);
 
       auto rlStatsBtn = CCMenuItemToggler::create(
           rlStatsSprOff, rlStatsSprOn, this,
@@ -316,7 +316,7 @@ class $modify(RLProfilePage, ProfilePage) {
 
     auto rlStatsMenu = CCMenu::create();
     rlStatsMenu->setID("rl-stats-menu");
-    rlStatsMenu->setContentSize({200.f, 20.f});
+    rlStatsMenu->setContentSize(statsMenu->getContentSize());
 
     auto row = RowLayout::create();
     row->setAxisAlignment(AxisAlignment::Center);
@@ -339,8 +339,14 @@ class $modify(RLProfilePage, ProfilePage) {
         "rl-planets-entry", "rl-planets-label", planetsText,
         "RL_planetMed.png"_spr, menu_selector(RLProfilePage::onPlanetsClicked));
 
+    auto coinsEntry =
+        createStatEntry("rl-coins-entry", "rl-coins-label",
+                        GameToolbox::pointsToString(m_fields->m_coins),
+                        "RL_BlueCoinSmall.png"_spr, nullptr);
+
     rlStatsMenu->addChild(starsEntry);
     rlStatsMenu->addChild(planetsEntry);
+    rlStatsMenu->addChild(coinsEntry);
 
     if (m_fields->m_points > 0) {
       auto pointsEntry =
@@ -539,12 +545,14 @@ class $modify(RLProfilePage, ProfilePage) {
           pageRef->updateStatLabel(
               "rl-planets-label",
               GameToolbox::pointsToString(pageRef->m_fields->m_planets));
+          pageRef->updateStatLabel(
+              "rl-coins-label",
+              GameToolbox::pointsToString(pageRef->m_fields->m_coins));
 
-          // Handle creator points entry
+          // Handle creator points
           if (auto rlStatsMenu =
                   pageRef->getChildByIDRecursive("rl-stats-menu")) {
             if (pageRef->m_fields->m_points > 0) {
-
               if (!rlStatsMenu->getChildByIDRecursive("rl-points-entry")) {
                 auto pointsEntry = pageRef->createStatEntry(
                     "rl-points-entry", "rl-points-label",

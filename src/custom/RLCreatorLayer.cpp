@@ -120,8 +120,7 @@ bool RLCreatorLayer::init() {
   this->addChild(mainMenu);
 
   auto title = CCSprite::createWithSpriteFrameName("RL_title.png"_spr);
-  title->setPosition({winSize.width / 2, winSize.height / 2 + 130});
-  title->setScale(1.4f);
+  title->setPosition({winSize.width / 2, winSize.height / 2 + 120});
   this->addChild(title);
 
   auto featuredSpr =
@@ -416,41 +415,10 @@ bool RLCreatorLayer::init() {
     m_modVersionLabel->setPosition({80.f, 45.f});
     modInfoBg->addChild(m_modVersionLabel);
 
-    Ref<RLCreatorLayer> selfRef = this;
-    async::spawn(
-        fetchModInfoAsync(),
-        [selfRef](std::optional<ModInfo> infoOpt) {
-          if (!selfRef) return;
-
-          if (!infoOpt) {
-            if (selfRef->m_modStatusLabel) {
-              selfRef->m_modStatusLabel->setString("Offline");
-              selfRef->m_modStatusLabel->setColor({255, 64, 64});
-            }
-            return;
-          }
-
-          auto info = *infoOpt;
-          std::string statusText = info.status + std::string(" - ") + info.serverVersion;
-          if (selfRef->m_modStatusLabel) {
-            selfRef->m_modStatusLabel->setString(statusText.c_str());
-            if (info.status == "Online") {
-              selfRef->m_modStatusLabel->setColor({64, 255, 128});
-            } else {
-              selfRef->m_modStatusLabel->setColor({255, 150, 0});
-            }
-          }
-
-          if (selfRef->m_modVersionLabel) {
-            selfRef->m_modVersionLabel->setString(("Up-to-date - " + info.modVersion).c_str());
-            selfRef->m_modVersionLabel->setColor({64, 255, 128});
-
-            if (info.modVersion != Mod::get()->getVersion().toVString()) {
-              selfRef->m_modVersionLabel->setString(("Outdated - " + Mod::get()->getVersion().toVString()).c_str());
-              selfRef->m_modVersionLabel->setColor({255, 200, 0});
-            }
-          }
-        });
+    if (m_modStatusLabel) {
+      m_modStatusLabel->setString("Checking...");
+      m_modStatusLabel->setColor({255, 150, 0});
+    }
 
     this->addChild(modInfoBg, 10);
   }
@@ -840,41 +808,54 @@ void RLCreatorLayer::onEnter() {
 
   if (!Mod::get()->getSettingValue<bool>("disableModInfo")) {
     // refresh mod info every time the layer is entered
+    if (m_modStatusLabel) {
+      m_modStatusLabel->setString("Checking...");
+      m_modStatusLabel->setColor({255, 150, 0});
+    }
+    if (m_modVersionLabel) {
+      m_modVersionLabel->setString(
+          Mod::get()->getVersion().toVString().c_str());
+      m_modVersionLabel->setColor({255, 150, 0});
+    }
+
     Ref<RLCreatorLayer> selfRef = this;
-    async::spawn(
-        fetchModInfoAsync(),
-        [selfRef](std::optional<ModInfo> infoOpt) {
-          if (!selfRef) return;
+    async::spawn(fetchModInfoAsync(), [selfRef](
+                                          std::optional<ModInfo> infoOpt) {
+      if (!selfRef)
+        return;
 
-          if (!infoOpt) {
-            if (selfRef->m_modStatusLabel) {
-              selfRef->m_modStatusLabel->setString("Offline");
-              selfRef->m_modStatusLabel->setColor({255, 64, 64});
-            }
-            return;
-          }
+      if (!infoOpt) {
+        if (selfRef->m_modStatusLabel) {
+          selfRef->m_modStatusLabel->setString("Offline");
+          selfRef->m_modStatusLabel->setColor({255, 64, 64});
+        }
+        return;
+      }
 
-          auto info = *infoOpt;
-          std::string statusText = info.status + std::string(" - ") + info.serverVersion;
-          if (selfRef->m_modStatusLabel) {
-            selfRef->m_modStatusLabel->setString(statusText.c_str());
-            if (info.status == "Online") {
-              selfRef->m_modStatusLabel->setColor({64, 255, 128});
-            } else {
-              selfRef->m_modStatusLabel->setColor({255, 150, 0});
-            }
-          }
+      auto info = *infoOpt;
+      std::string statusText =
+          info.status + std::string(" - ") + info.serverVersion;
+      if (selfRef->m_modStatusLabel) {
+        selfRef->m_modStatusLabel->setString(statusText.c_str());
+        if (info.status == "Online") {
+          selfRef->m_modStatusLabel->setColor({64, 255, 128});
+        } else {
+          selfRef->m_modStatusLabel->setColor({255, 150, 0});
+        }
+      }
 
-          if (selfRef->m_modVersionLabel) {
-            selfRef->m_modVersionLabel->setString(("Up-to-date - " + info.modVersion).c_str());
-            selfRef->m_modVersionLabel->setColor({64, 255, 128});
+      if (selfRef->m_modVersionLabel) {
+        selfRef->m_modVersionLabel->setString(
+            ("Up-to-date - " + info.modVersion).c_str());
+        selfRef->m_modVersionLabel->setColor({64, 255, 128});
 
-            if (info.modVersion != Mod::get()->getVersion().toVString()) {
-              selfRef->m_modVersionLabel->setString(("Outdated - " + Mod::get()->getVersion().toVString()).c_str());
-              selfRef->m_modVersionLabel->setColor({255, 200, 0});
-            }
-          }
-        });
+        if (info.modVersion != Mod::get()->getVersion().toVString()) {
+          selfRef->m_modVersionLabel->setString(
+              ("Outdated - " + Mod::get()->getVersion().toVString()).c_str());
+          selfRef->m_modVersionLabel->setColor({255, 200, 0});
+        }
+      }
+    });
   }
 }
 

@@ -32,7 +32,9 @@ class RLModRatePopup : public geode::Popup {
       bool m_isDemonMode;
       bool m_isFeatured;
       bool m_isEpicFeatured;
+      bool m_isLegendary;
       CCMenuItemToggler* m_featuredToggleItem;
+      CCMenuItemToggler* m_legendaryToggleItem;
       CCMenuItemToggler* m_epicFeaturedToggleItem;
       CCMenuItemToggler* m_verifiedToggleItem;
       CCMenuItemToggler* m_silentToggleItem;
@@ -65,6 +67,7 @@ class RLModRatePopup : public geode::Popup {
       void onDeleteSendsButton(CCObject* sender);
       void onUnsendButton(CCObject* sender);
       void onSetEventButton(CCObject* sender);
+      void onToggleLegendary(CCObject* sender);
       void onToggleEpicFeatured(CCObject* sender);
       void updateDifficultySprite(int rating);
 };

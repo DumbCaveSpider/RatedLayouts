@@ -24,6 +24,7 @@ bool RLModRatePopup::init() {
       m_isDemonMode = false;
       m_isFeatured = false;
       m_isEpicFeatured = false;
+      m_isLegendary = false;
       m_selectedRating = -1;
       m_isRejected = false;
       m_levelId = -1;
@@ -31,6 +32,7 @@ bool RLModRatePopup::init() {
       m_difficultyInput = nullptr;
       m_featuredValueInput = nullptr;
       m_verifiedToggleItem = nullptr;
+      m_legendaryToggleItem = nullptr;
 
       // get the level ID ya
       if (m_level) {
@@ -219,9 +221,18 @@ bool RLModRatePopup::init() {
                   auto toggleVerified = CCMenuItemToggler::create(
                       offVerifiedSprite, onVerifiedSprite, this, nullptr);
                   m_verifiedToggleItem = toggleVerified;
-                  toggleVerified->setPosition({0, 120});
+                  toggleVerified->setPosition({-50, 0});
                   m_buttonMenu->addChild(toggleVerified);
             }
+
+            // legendary toggle
+            auto offLegendarySprite = CCSpriteGrayscale::createWithSpriteFrameName("RL_legendaryFeaturedCoin.png"_spr);
+            auto onLegendarySprite = CCSprite::createWithSpriteFrameName("RL_legendaryFeaturedCoin.png"_spr);
+            auto toggleLegendary = CCMenuItemToggler::create(
+                offLegendarySprite, onLegendarySprite, this, menu_selector(RLModRatePopup::onToggleLegendary));
+            m_legendaryToggleItem = toggleLegendary;
+            toggleLegendary->setPosition({0, 120});
+            m_buttonMenu->addChild(toggleLegendary);
 
             auto offEpicSprite = CCSpriteGrayscale::createWithSpriteFrameName("RL_epicFeaturedCoin.png"_spr);
             auto onEpicSprite = CCSprite::createWithSpriteFrameName("RL_epicFeaturedCoin.png"_spr);
@@ -378,6 +389,7 @@ void RLModRatePopup::onInfoButton(CCObject* sender) {
             int suggestedTotal = json["suggestedTotal"].asInt().unwrapOrDefault();
             int suggestedFeatured = json["suggestedFeatured"].asInt().unwrapOrDefault();
             int suggestedEpic = json["suggestedEpic"].asInt().unwrapOrDefault();
+            int suggestedLegendary = json["suggestedLegendary"].asInt().unwrapOrDefault();
             int featuredScore = json["featuredScore"].asInt().unwrapOrDefault();
             int rejectedTotal = json["rejectedTotal"].asInt().unwrapOrDefault();
 
@@ -387,10 +399,11 @@ void RLModRatePopup::onInfoButton(CCObject* sender) {
                     "<cg>Total Suggested:</c> {}\n"
                     "<co>Total Suggested Featured:</c> {}\n"
                     "<cp>Total Suggested Epic:</c> {}\n"
+                    "<cf>Total Suggested Legendary:</c> {}\n"
                     "<cy>Featured Score:</c> {}\n"
                     "<cr>Total Rejected:</c> {}\n",
                     averageDifficulty, suggestedTotal,
-                    suggestedFeatured, suggestedEpic, featuredScore, rejectedTotal);
+                    suggestedFeatured, suggestedEpic, suggestedLegendary, featuredScore, rejectedTotal);
 
             FLAlertLayer::create("Level Status Info", infoText, "OK")->show();
             // enable the button again
@@ -561,6 +574,8 @@ void RLModRatePopup::onSubmitButton(CCObject* sender) {
                   featured = 1;
             } else if (m_isEpicFeatured) {
                   featured = 2;
+            } else if (m_isLegendary) {
+                  featured = 3;
             }
       }
       jsonBody["featured"] = featured;
@@ -578,8 +593,8 @@ void RLModRatePopup::onSubmitButton(CCObject* sender) {
                   jsonBody["difficulty"] = m_selectedRating;
             }
 
-            // add featured score if featured or epic featured mode is enabled
-            if ((m_isFeatured || m_isEpicFeatured) && m_featuredScoreInput) {
+            // add featured score if featured, epic, or legendary mode is enabled
+            if ((m_isFeatured || m_isEpicFeatured || m_isLegendary) && m_featuredScoreInput) {
                   auto scoreStr = m_featuredScoreInput->getString();
                   if (!scoreStr.empty()) {
                         int score = numFromString<int>(scoreStr).unwrapOr(0);
@@ -862,12 +877,14 @@ void RLModRatePopup::onSuggestButton(CCObject* sender) {
                   featured = 1;
             } else if (m_isEpicFeatured) {
                   featured = 2;
+            } else if (m_isLegendary) {
+                  featured = 3;
             }
       }
       jsonBody["featured"] = featured;
 
       // include featuredScore when applicable
-      if ((m_isFeatured || m_isEpicFeatured) && m_featuredScoreInput) {
+      if ((m_isFeatured || m_isEpicFeatured || m_isLegendary) && m_featuredScoreInput) {
             auto scoreStr = m_featuredScoreInput->getString();
             if (!scoreStr.empty()) {
                   int score = numFromString<int>(scoreStr).unwrapOr(0);
@@ -983,6 +1000,7 @@ void RLModRatePopup::onToggleFeatured(CCObject* sender) {
       if (m_role != PopupRole::Dev) {
             auto existingCoin = m_difficultyContainer->getChildByID("featured-coin");
             auto existingEpicCoin = m_difficultyContainer->getChildByID("epic-featured-coin");
+            auto existingLegendaryCoin = m_difficultyContainer->getChildByID("legendary-featured-coin");
             if (existingCoin) {
                   existingCoin->removeFromParent();  // could do setVisible false but whatever
             }
@@ -1000,6 +1018,13 @@ void RLModRatePopup::onToggleFeatured(CCObject* sender) {
                         m_epicFeaturedToggleItem->toggle(false);
                         setTogglerGrayscale(m_epicFeaturedToggleItem, "RL_epicFeaturedCoin.png"_spr, false);
                   }
+                  // if legendary previously set, clear it
+                  if (existingLegendaryCoin) existingLegendaryCoin->removeFromParent();
+                  m_isLegendary = false;
+                  if (m_legendaryToggleItem) {
+                        m_legendaryToggleItem->toggle(false);
+                        setTogglerGrayscale(m_legendaryToggleItem, "RL_legendaryFeaturedCoin.png"_spr, false);
+                  }
                   // score only for admin
                   if (userRole == 2) {
                         m_featuredScoreInput->setVisible(true);
@@ -1009,6 +1034,13 @@ void RLModRatePopup::onToggleFeatured(CCObject* sender) {
                                     rejectBtn->setVisible(false);
                               }
                         }
+                  }
+
+                  // If featured was toggled on and there's no legendary active, re-enable submit
+                  if (m_submitButtonItem && m_isFeatured && !m_isLegendary && !m_isRejected) {
+                        auto enabledSpr = ButtonSprite::create("Submit", 80, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+                        m_submitButtonItem->setNormalImage(enabledSpr);
+                        m_submitButtonItem->setEnabled(true);
                   }
             } else {
                   m_featuredScoreInput->setVisible(false);
@@ -1021,10 +1053,12 @@ void RLModRatePopup::onToggleFeatured(CCObject* sender) {
                   if (m_epicFeaturedToggleItem) {
                         setTogglerGrayscale(m_epicFeaturedToggleItem, "RL_epicFeaturedCoin.png"_spr, false);
                   }
+                  if (m_legendaryToggleItem) {
+                        setTogglerGrayscale(m_legendaryToggleItem, "RL_legendaryFeaturedCoin.png"_spr, false);
+                  }
             }
-      } else {
-            // Dev users: do not show/hide preview coins or change score input visibility;
-            // still ensure internal epic/featured state consistency.
+      }
+      if (m_role == PopupRole::Dev) {
             if (m_isFeatured) {
                   m_isEpicFeatured = false;
             }
@@ -1036,6 +1070,108 @@ void RLModRatePopup::onToggleDemon(CCObject* sender) {
 
       m_normalButtonsContainer->setVisible(!m_isDemonMode);
       m_demonButtonsContainer->setVisible(m_isDemonMode);
+}
+
+void RLModRatePopup::onToggleLegendary(CCObject* sender) {
+      int userRole = (m_role == PopupRole::Admin) ? 2 : ((m_role == PopupRole::Mod) ? 1 : 0);
+      m_isLegendary = !m_isLegendary;
+
+      // clear reject if set
+      if (m_isRejected) {
+            m_isRejected = false;
+            auto rejectBtn = m_normalButtonsContainer->getChildByID("rating-button-reject");
+            if (rejectBtn) {
+                  auto rejectBtnItem = static_cast<CCMenuItemSpriteExtra*>(rejectBtn);
+                  auto rejectBg = CCSprite::create("GJ_button_06.png");
+                  auto rejectLabel = CCLabelBMFont::create("-", "bigFont.fnt");
+                  rejectLabel->setScale(0.75f);
+                  rejectLabel->setPosition(rejectBg->getContentSize() / 2);
+                  rejectBg->addChild(rejectLabel);
+                  rejectBg->setID("button-bg-reject");
+                  rejectBtnItem->setNormalImage(rejectBg);
+            }
+      }
+
+      // Only touch preview coins for non-Dev users
+      if (m_role != PopupRole::Dev) {
+            auto existingLegendaryCoin = m_difficultyContainer->getChildByID("legendary-featured-coin");
+            auto existingEpicCoin = m_difficultyContainer->getChildByID("epic-featured-coin");
+            auto existingCoin = m_difficultyContainer->getChildByID("featured-coin");
+
+            if (existingLegendaryCoin) {
+                  existingLegendaryCoin->removeFromParent();
+            }
+
+            if (m_isLegendary) {
+                  // clear lower tiers
+                  if (existingCoin) existingCoin->removeFromParent();
+                  if (existingEpicCoin) existingEpicCoin->removeFromParent();
+
+                  m_isFeatured = false;
+                  m_isEpicFeatured = false;
+
+                  if (m_featuredToggleItem) {
+                        m_featuredToggleItem->toggle(false);
+                        setTogglerGrayscale(m_featuredToggleItem, "RL_featuredCoin.png"_spr, false);
+                  }
+                  if (m_epicFeaturedToggleItem) {
+                        m_epicFeaturedToggleItem->toggle(false);
+                        setTogglerGrayscale(m_epicFeaturedToggleItem, "RL_epicFeaturedCoin.png"_spr, false);
+                  }
+
+                  auto newLegendary = CCSprite::createWithSpriteFrameName("RL_legendaryFeaturedCoin.png"_spr);
+                  newLegendary->setPosition({0, 0});
+                  newLegendary->setScale(1.2f);
+                  newLegendary->setID("legendary-featured-coin");
+                  m_difficultyContainer->addChild(newLegendary, -1);
+
+                  if (userRole == 2) {
+                        m_featuredScoreInput->setVisible(true);
+                        // hide reject while featured score input is shown
+                        if (m_normalButtonsContainer) {
+                              if (auto rejectBtn = m_normalButtonsContainer->getChildByID("rating-button-reject")) {
+                                    rejectBtn->setVisible(false);
+                              }
+                        }
+                  }
+            } else {
+                  m_featuredScoreInput->setVisible(false);
+                  // show reject when featured score input is hidden
+                  if (m_normalButtonsContainer) {
+                        if (auto rejectBtn = m_normalButtonsContainer->getChildByID("rating-button-reject")) {
+                              rejectBtn->setVisible(true);
+                        }
+                  }
+                  if (m_featuredToggleItem) {
+                        setTogglerGrayscale(m_featuredToggleItem, "RL_featuredCoin.png"_spr, false);
+                  }
+                  if (m_epicFeaturedToggleItem) {
+                        setTogglerGrayscale(m_epicFeaturedToggleItem, "RL_epicFeaturedCoin.png"_spr, false);
+                  }
+            }
+      } else {
+            // Dev users: keep internal state but do not change preview/score UI
+            if (m_isLegendary) {
+                  m_isFeatured = false;
+                  m_isEpicFeatured = false;
+            }
+      }
+
+      // Disable the submit button when legendary is enabled and is admin
+      if (m_submitButtonItem) {
+            if (m_isLegendary && m_role == PopupRole::Admin) {
+                  auto disabledSpr = ButtonSprite::create("Submit", 80, true, "goldFont.fnt", "GJ_button_04.png", 30.f, 1.f);
+                  m_submitButtonItem->setNormalImage(disabledSpr);
+                  m_submitButtonItem->setEnabled(false);
+            } else {
+                  // Re-enable only if another toggle is active
+                  if (!m_isRejected && (m_isFeatured || m_isEpicFeatured)) {
+                        auto enabledSpr = ButtonSprite::create("Submit", 80, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+                        m_submitButtonItem->setNormalImage(enabledSpr);
+                        m_submitButtonItem->setEnabled(true);
+                  }
+            }
+      }
 }
 
 void RLModRatePopup::onToggleEpicFeatured(CCObject* sender) {
@@ -1062,6 +1198,7 @@ void RLModRatePopup::onToggleEpicFeatured(CCObject* sender) {
       if (m_role != PopupRole::Dev) {
             auto existingEpicCoin = m_difficultyContainer->getChildByID("epic-featured-coin");
             auto existingCoin = m_difficultyContainer->getChildByID("featured-coin");
+            auto existingLegendaryCoin = m_difficultyContainer->getChildByID("legendary-featured-coin");
 
             if (existingEpicCoin) {
                   existingEpicCoin->removeFromParent();
@@ -1069,10 +1206,17 @@ void RLModRatePopup::onToggleEpicFeatured(CCObject* sender) {
 
             if (m_isEpicFeatured) {
                   if (existingCoin) existingCoin->removeFromParent();
+                  // if legendary previously set, clear it
+                  if (existingLegendaryCoin) existingLegendaryCoin->removeFromParent();
                   m_isFeatured = false;
+                  m_isLegendary = false;
                   if (m_featuredToggleItem) {
                         m_featuredToggleItem->toggle(false);
                         setTogglerGrayscale(m_featuredToggleItem, "RL_featuredCoin.png"_spr, false);
+                  }
+                  if (m_legendaryToggleItem) {
+                        m_legendaryToggleItem->toggle(false);
+                        setTogglerGrayscale(m_legendaryToggleItem, "RL_legendaryFeaturedCoin.png"_spr, false);
                   }
                   auto newEpicCoin = CCSprite::createWithSpriteFrameName("RL_epicFeaturedCoin.png"_spr);
                   newEpicCoin->setPosition({0, 0});
@@ -1088,6 +1232,13 @@ void RLModRatePopup::onToggleEpicFeatured(CCObject* sender) {
                               }
                         }
                   }
+
+                  // If epic was toggled on and there's no legendary active, re-enable submit
+                  if (m_submitButtonItem && m_isEpicFeatured && !m_isLegendary && !m_isRejected) {
+                        auto enabledSpr = ButtonSprite::create("Submit", 80, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+                        m_submitButtonItem->setNormalImage(enabledSpr);
+                        m_submitButtonItem->setEnabled(true);
+                  }
             } else {
                   m_featuredScoreInput->setVisible(false);
                   // show reject when featured score input is hidden
@@ -1099,11 +1250,15 @@ void RLModRatePopup::onToggleEpicFeatured(CCObject* sender) {
                   if (m_featuredToggleItem) {
                         setTogglerGrayscale(m_featuredToggleItem, "RL_featuredCoin.png"_spr, false);
                   }
+                  if (m_legendaryToggleItem) {
+                        setTogglerGrayscale(m_legendaryToggleItem, "RL_legendaryFeaturedCoin.png"_spr, false);
+                  }
             }
       } else {
             // Dev users: keep internal state but do not change preview/score UI
             if (m_isEpicFeatured) {
                   m_isFeatured = false;
+                  m_isLegendary = false;
             }
       }
 }
@@ -1332,4 +1487,4 @@ RLModRatePopup* RLModRatePopup::create(RLModRatePopup::PopupRole role, std::stri
 
       delete ret;
       return nullptr;
-};
+}
