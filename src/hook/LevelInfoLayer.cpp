@@ -7,6 +7,7 @@
 #include "../custom/RLAchievements.hpp"
 #include "../level/RLCommunityVotePopup.hpp"
 #include "../level/RLModRatePopup.hpp"
+#include "Geode/cocos/cocoa/CCObject.h"
 
 using namespace geode::prelude;
 
@@ -1922,5 +1923,36 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
       this->repositionRLStars();
     }
     LevelInfoLayer::onUpdate(sender);
+  }
+
+  void onPlay(CCObject *sender) {
+    LevelInfoLayer::onPlay(sender);
+    if (this->m_level && this->m_level->m_levelID != 0) {
+      int levelId = this->m_level->m_levelID;
+      Ref<RLLevelInfoLayer> layerRef = this;
+      auto req = web::WebRequest();
+      async::spawn(
+          req.get(fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId)),
+          [layerRef, levelId](web::WebResponse response) {
+            if (!layerRef) return;
+            if (!response.ok()) {
+              log::warn("fetch-on-play returned non-ok status: {}", response.code());
+              return;
+            }
+            auto jsonRes = response.json();
+            if (!jsonRes) {
+              log::warn("Failed to parse fetch-on-play JSON response");
+              return;
+            }
+            auto json = jsonRes.unwrap();
+            int difficulty = json["difficulty"].asInt().unwrapOrDefault();
+            if (difficulty > 0) {
+              log::info("Level {} has difficulty {} on play — awarding misc_begin", levelId, difficulty);
+              RLAchievements::onReward("misc_begin");
+            } else {
+              log::debug("Level {} not rated on play (difficulty={})", levelId, difficulty);
+            }
+          });
+    }
   }
 };

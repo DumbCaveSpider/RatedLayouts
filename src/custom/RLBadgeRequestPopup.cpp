@@ -36,8 +36,8 @@ bool RLBadgeRequestPopup::init() {
       "<cp>Ko-fi.</c> beforehand!\n\n"
       "### If you encounter any <cr>issue</c> during this process, please "
       "contact <cf>ArcticWoof</c> on <cb>Discord</c>.",
-      {cs.width - 40.f, 100.f});
-  infoText->setPosition({cs.width / 2.f, cs.height - 120.f});
+      {cs.width - 40.f, 180.f});
+  infoText->setPosition({cs.width / 2.f, cs.height - 170.f});
   infoText->setAnchorPoint({0.5f, 0.5f});
   infoText->setID("rl-badge-request-info");
   m_mainLayer->addChild(infoText);

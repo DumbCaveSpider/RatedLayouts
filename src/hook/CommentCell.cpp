@@ -9,6 +9,7 @@ class $modify(RLCommentCell, CommentCell) {
     int stars = 0;
     int planets = 0;
     bool supporter = false;
+    bool booster = false;
     async::TaskHolder<web::WebResponse> m_fetchTask;
     ~Fields() { m_fetchTask.cancel(); }
   };
@@ -26,7 +27,7 @@ class $modify(RLCommentCell, CommentCell) {
       return;
     }
 
-      fetchUserRole(comment->m_accountID);
+    fetchUserRole(comment->m_accountID);
   }
 
   void applyCommentTextColor(int accountId) {
@@ -42,6 +43,8 @@ class $modify(RLCommentCell, CommentCell) {
     ccColor3B color;
     if (m_fields->supporter) {
       color = {255, 187, 255}; // supporter color
+    } else if (m_fields->booster) {
+      color = {187, 214, 255}; // booster color
     } else if (accountId == 7689052) {
       color = {150, 255, 255}; // ArcticWoof
     } else if (m_fields->role == 1) {
@@ -172,6 +175,7 @@ class $modify(RLCommentCell, CommentCell) {
           int stars = json["stars"].asInt().unwrapOrDefault();
           int planets = json["planets"].asInt().unwrapOrDefault();
           bool isSupporter = json["isSupporter"].asBool().unwrapOrDefault();
+          bool isBooster = json["isBooster"].asBool().unwrapOrDefault();
 
           if (role == 0 && stars == 0 && planets == 0) {
             log::debug("User {} has no role/stars/planets", accountId);
@@ -208,17 +212,17 @@ class $modify(RLCommentCell, CommentCell) {
           cellRef->m_fields->stars = stars;
           cellRef->m_fields->planets = planets;
           cellRef->m_fields->supporter = isSupporter;
-
+          cellRef->m_fields->booster = isBooster;
+          
           log::debug("User comment role: {} supporter={} stars={} planets={}",
                      role, isSupporter, stars, planets);
 
           log::debug("User comment role: {} supporter={}", role,
                      cellRef->m_fields->supporter);
 
+          cellRef->loadBadgeForComment(accountId);
           cellRef->applyCommentTextColor(accountId);
           cellRef->applyStarGlow(accountId, stars, planets);
-
-
         });
     // Only update UI if it still exists
     if (cellRef->m_mainLayer) {
@@ -246,31 +250,24 @@ class $modify(RLCommentCell, CommentCell) {
         auto ownerBadgeSprite =
             CCSprite::createWithSpriteFrameName("RL_badgeOwner.png"_spr);
         ownerBadgeSprite->setScale(0.7f);
-        auto ownerBadgeButton = CCMenuItemSpriteExtra::create(
-            ownerBadgeSprite, this, menu_selector(RLCommentCell::onOwnerBadge));
-        ownerBadgeButton->setID("rl-comment-owner-badge");
-        userNameMenu->addChild(ownerBadgeButton);
+        ownerBadgeSprite->setID("rl-comment-owner-badge");
+        userNameMenu->addChild(ownerBadgeSprite);
       }
-    } else if (m_fields->role == 1) {
+    } else if (m_fields->role == 1) { // mod
       if (!userNameMenu->getChildByID("rl-comment-mod-badge")) {
         auto modBadgeSprite =
             CCSprite::createWithSpriteFrameName("RL_badgeMod01.png"_spr);
         modBadgeSprite->setScale(0.7f);
-        auto modBadgeButton = CCMenuItemSpriteExtra::create(
-            modBadgeSprite, this, menu_selector(RLCommentCell::onModBadge));
-
-        modBadgeButton->setID("rl-comment-mod-badge");
-        userNameMenu->addChild(modBadgeButton);
+        modBadgeSprite->setID("rl-comment-mod-badge");
+        userNameMenu->addChild(modBadgeSprite);
       }
-    } else if (m_fields->role == 2) {
+    } else if (m_fields->role == 2) { 
       if (!userNameMenu->getChildByID("rl-comment-admin-badge")) {
         auto adminBadgeSprite =
             CCSprite::createWithSpriteFrameName("RL_badgeAdmin01.png"_spr);
         adminBadgeSprite->setScale(0.7f);
-        auto adminBadgeButton = CCMenuItemSpriteExtra::create(
-            adminBadgeSprite, this, menu_selector(RLCommentCell::onAdminBadge));
-        adminBadgeButton->setID("rl-comment-admin-badge");
-        userNameMenu->addChild(adminBadgeButton);
+        adminBadgeSprite->setID("rl-comment-admin-badge");
+        userNameMenu->addChild(adminBadgeSprite);
       }
     }
 
@@ -280,61 +277,23 @@ class $modify(RLCommentCell, CommentCell) {
         auto supporterSprite =
             CCSprite::createWithSpriteFrameName("RL_badgeSupporter.png"_spr);
         supporterSprite->setScale(0.7f);
-        auto supporterButton = CCMenuItemSpriteExtra::create(
-            supporterSprite, this,
-            menu_selector(RLCommentCell::onSupporterBadge));
-        supporterButton->setID("rl-comment-supporter-badge");
-        userNameMenu->addChild(supporterButton);
+        supporterSprite->setID("rl-comment-supporter-badge");
+        userNameMenu->addChild(supporterSprite);
       }
     }
 
+    // booster badge
+    if (m_fields->booster) {
+      if (!userNameMenu->getChildByID("rl-comment-booster-badge")) {
+        auto boosterSprite =
+            CCSprite::createWithSpriteFrameName("RL_badgeBooster.png"_spr);
+        boosterSprite->setScale(0.7f);
+        boosterSprite->setID("rl-comment-booster-badge");
+        userNameMenu->addChild(boosterSprite);
+      }
+    }
     userNameMenu->updateLayout();
     applyCommentTextColor(accountId);
-  }
-
-  void onModBadge(CCObject *sender) {
-    FLAlertLayer::create(
-        "Layout Moderator",
-        "This user can <cj>suggest layout levels</c> for <cl>Rated "
-        "Layouts</c> to the <cr>Layout Admins</c>. They have the ability to "
-        "<co>moderate the leaderboard</c>.",
-        "OK")
-        ->show();
-  }
-
-  void onAdminBadge(CCObject *sender) {
-    FLAlertLayer::create(
-        "Layout Administrator",
-        "This user can <cj>rate layout levels</c> for <cl>Rated "
-        "Layouts</c>. They have the same power as <cg>Moderators</c> but "
-        "including the ability to change the <cy>featured ranking on the "
-        "featured layout levels</c> and <cg>set event layouts</c>.",
-        "OK")
-        ->show();
-  }
-  void onOwnerBadge(CCObject *sender) {
-    FLAlertLayer::create(
-        "Rated Layouts Owner",
-        "<cf>ArcticWoof</c> is the <ca>Owner and Developer</c> of <cl>Rated "
-        "Layouts</c> Geode Mod.\nHe controls and manages everything within "
-        "<cl>Rated Layouts</c>, including updates and adding new features as "
-        "well as the ability to <cg>promote users to Layout Moderators or "
-        "Administrators</c>.",
-        "OK")
-        ->show();
-  }
-  void onSupporterBadge(CCObject *sender) {
-    geode::createQuickPopup(
-        "Layout Supporter",
-        "This user is a <cp>Layout Supporter</c>! They have supported the "
-        "development of <cl>Rated Layouts</c> through membership "
-        "donations.\n\nYou can become a <cp>Layout Supporter</c> by donating "
-        "via <cp>Ko-Fi</c>",
-        "OK", "Ko-Fi", [this](auto, bool yes) {
-          if (!yes)
-            return;
-          utils::web::openLinkInBrowser("https://ko-fi.com/arcticwoof");
-        });
   }
 
   void applyStarGlow(int accountId, int stars, int planets) {

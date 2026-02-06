@@ -462,6 +462,7 @@ class $modify(RLProfilePage, ProfilePage) {
 
           pageRef->m_fields->role = role;
           pageRef->m_fields->isSupporter = isSupporter;
+          pageRef->m_fields->isBooster = isBooster;
 
           if (pageRef->m_ownProfile) {
             Mod::get()->setSavedValue("role", pageRef->m_fields->role);

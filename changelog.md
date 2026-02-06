@@ -12,6 +12,7 @@
 - Added **Coin Rank** in the Difficulty Stats Popup.
 - Added **Custom Achievements**! Collect achievements by completing certain milestones and special interactions.
 - Added **Random Level** button in the Custom Search Layer to play a random rated layout level!
+- Added **Total Demon Count** in the Difficulty Stats Popup.
 - Fixed the Leaderboard and added refresh button to manually refresh the leaderboard data.
 - Added Indicators for Top 3 players in the Leaderboard Layer.
 - Change the sprites to be in a spritesheet.

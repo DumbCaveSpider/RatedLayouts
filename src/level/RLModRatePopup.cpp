@@ -216,12 +216,12 @@ bool RLModRatePopup::init() {
             m_buttonMenu->addChild(toggleFeatured);
 
             if (m_role == PopupRole::Admin) {
-                  auto offVerifiedSprite = CCSpriteGrayscale::createWithSpriteFrameName("RL_BlueCoinUI.png"_spr);
-                  auto onVerifiedSprite = CCSprite::createWithSpriteFrameName("RL_BlueCoinUI.png"_spr);
+                  auto offVerifiedSprite = CCSpriteGrayscale::createWithSpriteFrameName("RL_BlueCoinSmall.png"_spr);
+                  auto onVerifiedSprite = CCSprite::createWithSpriteFrameName("RL_BlueCoinSmall.png"_spr);
                   auto toggleVerified = CCMenuItemToggler::create(
                       offVerifiedSprite, onVerifiedSprite, this, nullptr);
                   m_verifiedToggleItem = toggleVerified;
-                  toggleVerified->setPosition({-50, 0});
+                  toggleVerified->setPosition({m_mainLayer->getContentSize().width, m_mainLayer->getContentSize().height - 30});
                   m_buttonMenu->addChild(toggleVerified);
             }
 
