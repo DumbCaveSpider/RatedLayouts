@@ -66,7 +66,7 @@ void RLBadgeRequestPopup::onSubmit(CCObject *sender) {
   }
 
   matjson::Value body = matjson::Value::object();
-  body["discordUsername"] = discord;
+  body["discordUsername"] = std::string(discord);
   body["argonToken"] = Mod::get()->getSavedValue<std::string>("argon_token");
   body["accountId"] = GJAccountManager::get()->m_accountID;
 
