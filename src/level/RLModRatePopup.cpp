@@ -543,7 +543,8 @@ void RLModRatePopup::onSubmitButton(CCObject* sender) {
 
       if (!m_isRejected) {
             if (m_role == PopupRole::Dev) {
-                  auto diffStr = (m_difficultyInput) ? m_difficultyInput->getString() : std::string();
+                  std::string diffStr;
+                  if (m_difficultyInput) diffStr = std::string(m_difficultyInput->getString());
                   if (diffStr.empty()) {
                         popup->showFailMessage("Enter a difficulty first!");
                         return;

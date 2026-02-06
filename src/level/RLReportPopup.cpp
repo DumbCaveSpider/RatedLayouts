@@ -184,9 +184,9 @@ void RLReportPopup::onSubmit(CCObject* sender) {
                 }
 
                 if (m_reasonInput) {
-                      auto s = m_reasonInput->getString();
-                      if (!s.empty()) {
-                            body["reason"] = s;
+                      auto reason = m_reasonInput->getString();
+                      if (!reason.empty()) {
+                            body["reason"] = std::string(reason);
                             anyReason = true;
                       }
                 }
