@@ -8,16 +8,17 @@
 #include "../player/RLDifficultyTotalPopup.hpp"
 #include "../player/RLUserControl.hpp"
 #include "GUI/CCControlExtension/CCScale9Sprite.h"
+#include "Geode/cocos/label_nodes/CCLabelBMFont.h"
 #include "Geode/ui/BasedButtonSprite.hpp"
 
 using namespace geode::prelude;
-
 
 class $modify(RLProfilePage, ProfilePage) {
   struct Fields {
     int role = 0;
     int accountId = 0;
     bool isSupporter = false;
+    bool isBooster = false;
 
     int m_points = 0;
     int m_planets = 0;
@@ -452,6 +453,7 @@ class $modify(RLProfilePage, ProfilePage) {
           int role = json["role"].asInt().unwrapOrDefault();
           int planets = json["planets"].asInt().unwrapOrDefault();
           bool isSupporter = json["isSupporter"].asBool().unwrapOrDefault();
+          bool isBooster = json["isBooster"].asBool().unwrapOrDefault();
 
           pageRef->m_fields->m_stars = stars;
           pageRef->m_fields->m_planets = planets;
@@ -484,6 +486,70 @@ class $modify(RLProfilePage, ProfilePage) {
                 rlButtonsMenu->updateLayout();
               }
             }
+          }
+
+          // add badge to the username-menu
+          CCMenu *usernameMenu = typeinfo_cast<CCMenu *>(
+              pageRef->m_mainLayer->getChildByIDRecursive("username-menu"));
+          CCLabelBMFont *usernameLabel = typeinfo_cast<CCLabelBMFont *>(
+              usernameMenu->getChildByIDRecursive("username-label"));
+          bool hasBadge = false;
+          if (usernameMenu) {
+            // if user is arcticwoof
+            if (pageRef->m_accountID == 7689052) {
+              if (!usernameMenu->getChildByID("rl-profile-owner-badge")) {
+                auto ownerBadgeSprite = CCSprite::createWithSpriteFrameName(
+                    "RL_badgeOwner.png"_spr);
+                ownerBadgeSprite->setID("rl-profile-owner-badge");
+                usernameMenu->addChild(ownerBadgeSprite);
+                hasBadge = true;
+              }
+              // if user is admin
+            } else if (!usernameMenu->getChildByID("rl-profile-admin-badge") &&
+                       pageRef->m_fields->role == 2) {
+              auto adminBadgeSprite = CCSprite::createWithSpriteFrameName(
+                  "RL_badgeAdmin01.png"_spr);
+              adminBadgeSprite->setID("rl-profile-admin-badge");
+              usernameMenu->addChild(adminBadgeSprite);
+              hasBadge = true;
+              // if user is mod
+            } else if (!usernameMenu->getChildByID("rl-profile-mod-badge") &&
+                       pageRef->m_fields->role == 1) {
+              auto modBadgeSprite =
+                  CCSprite::createWithSpriteFrameName("RL_badgeMod01.png"_spr);
+              modBadgeSprite->setID("rl-profile-mod-badge");
+              usernameMenu->addChild(modBadgeSprite);
+              hasBadge = true;
+            }
+            // if user is supporter
+            if (pageRef->m_fields->isSupporter &&
+                !usernameMenu->getChildByID("rl-profile-supporter-badge")) {
+              auto supporterSprite = CCSprite::createWithSpriteFrameName(
+                  "RL_badgeSupporter.png"_spr);
+              supporterSprite->setID("rl-profile-supporter-badge");
+              usernameMenu->addChild(supporterSprite);
+              hasBadge = true;
+            }
+
+            // if user is booster
+            if (pageRef->m_fields->isBooster &&
+                !usernameMenu->getChildByID("rl-profile-booster-badge")) {
+              auto boosterSprite = CCSprite::createWithSpriteFrameName(
+                  "RL_badgeBooster.png"_spr);
+              boosterSprite->setID("rl-profile-booster-badge");
+              usernameMenu->addChild(boosterSprite);
+              hasBadge = true;
+            }
+          }
+
+          // if the badge exists
+          if (hasBadge && usernameMenu) {
+            usernameMenu->setPositionX(usernameMenu->getPositionX() - 10.f);
+            // shrink the username label to fit the badges
+            if (usernameLabel) {
+              usernameLabel->setScale(usernameLabel->getScale() * 0.9f);
+            }
+            usernameMenu->updateLayout();
           }
 
           pageRef->updateStatLabel(
