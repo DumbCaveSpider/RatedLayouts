@@ -32,11 +32,10 @@ This gives the <cy>Layout/Gameplay creators</c> a platform to get their levels r
 - **<cr>Report System</c>**: Report rated layouts that violates the Rated Layouts guidelines. Help us maintain the quality of rated layouts!
 - **<cg>Custom Achievements</c>**: Custom Achievements for completing rated layout levels and achieving milestones and other special interactions.
 - **<cs>QOL Features!</c>**: Various quality of life improvements for both players and creators.
-- 
 ---
 ### Up-coming Features
 - **<cr>Rated Layouts Demonlist</c>**: A dedicated demonlist for rated layout demons. Grind hardest rated layout demons curated by the Rated Layouts Mod Team!
-
+---
 <co>**Note:** This is currently in beta and expected to have some bugs and unfinished features. Please report any issues you encounter!</c>
 
 <cc>![🛠️](frame:GJ_hammerIcon_001.png?scale=0.45) We are actively improving the Layouts Rating System and want to be transparent about it. If you want to learn more, considered joining our [**Discord Server**](https://discord.gg/jBf2wfBgVT)!</c>

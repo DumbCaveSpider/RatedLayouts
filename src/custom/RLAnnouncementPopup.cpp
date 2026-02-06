@@ -13,7 +13,7 @@ RLAnnouncementPopup* RLAnnouncementPopup::create() {
 }
 
 bool RLAnnouncementPopup::init() {
-      if (!Popup::init(400.f, 225.f))
+      if (!Popup::init(400.f, 225.f, "GJ_square07.png"))
             return false;
 
       auto imageSpr = LazySprite::create({m_mainLayer->getScaledContentSize()}, true);
