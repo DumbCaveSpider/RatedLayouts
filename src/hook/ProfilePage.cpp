@@ -546,10 +546,6 @@ class $modify(RLProfilePage, ProfilePage) {
           // if the badge exists
           if (hasBadge && usernameMenu) {
             usernameMenu->setPositionX(usernameMenu->getPositionX() - 10.f);
-            // shrink the username label to fit the badges
-            if (usernameLabel) {
-              usernameLabel->setScale(usernameLabel->getScale() * 0.9f);
-            }
             usernameMenu->updateLayout();
           }
 
@@ -562,6 +558,14 @@ class $modify(RLProfilePage, ProfilePage) {
           pageRef->updateStatLabel(
               "rl-coins-label",
               GameToolbox::pointsToString(pageRef->m_fields->m_coins));
+
+          // If this is the player's own profile, check achievements for Sparks and Planets
+          if (pageRef->m_ownProfile) {
+            log::debug("checking Sparks/Planets achievements (stars={}, planets={})",
+                       pageRef->m_fields->m_stars, pageRef->m_fields->m_planets);
+            RLAchievements::checkAll(RLAchievements::Collectable::Sparks, pageRef->m_fields->m_stars);
+            RLAchievements::checkAll(RLAchievements::Collectable::Planets, pageRef->m_fields->m_planets);
+          }
 
           // Handle creator points
           if (auto rlStatsMenu =
