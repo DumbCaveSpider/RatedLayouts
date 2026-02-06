@@ -17,6 +17,12 @@ static void setTogglerGrayscale(CCMenuItemToggler* toggler, const char* spriteNa
       }
 }
 
+static std::string getResponseFailMessage(web::WebResponse const& response, std::string const& fallback) {
+      auto message = response.string().unwrapOrDefault();
+      if (!message.empty()) return message;
+      return fallback;
+}
+
 bool RLModRatePopup::init() {
       if (!Popup::init(380.f, 180.f, "GJ_square02.png")) return false;
       
@@ -218,10 +224,12 @@ bool RLModRatePopup::init() {
             if (m_role == PopupRole::Admin) {
                   auto offVerifiedSprite = CCSpriteGrayscale::createWithSpriteFrameName("RL_BlueCoinSmall.png"_spr);
                   auto onVerifiedSprite = CCSprite::createWithSpriteFrameName("RL_BlueCoinSmall.png"_spr);
+                  offVerifiedSprite->setScale(1.5f);
+                  onVerifiedSprite->setScale(1.5f);
                   auto toggleVerified = CCMenuItemToggler::create(
                       offVerifiedSprite, onVerifiedSprite, this, nullptr);
                   m_verifiedToggleItem = toggleVerified;
-                  toggleVerified->setPosition({m_mainLayer->getContentSize().width, m_mainLayer->getContentSize().height - 30});
+                  toggleVerified->setPosition({m_mainLayer->getContentSize().width, m_mainLayer->getContentSize().height - 35});
                   m_buttonMenu->addChild(toggleVerified);
             }
 
@@ -307,7 +315,7 @@ bool RLModRatePopup::init() {
       if (userRole == 2) {
             // positions near the right side, stacked vertically
             float eventX = m_mainLayer->getContentSize().width;
-            float eventYStart = 120.f;
+            float eventYStart = 110.f;
             float eventSpacing = 38.f;
             std::vector<std::tuple<std::string, std::string, std::string>> events = {// is tuple like two vectors or three vectors
                                                                                      {"event-daily", "daily", "D"},
@@ -455,7 +463,7 @@ void RLModRatePopup::onDeleteSendsButton(CCObject* sender) {
 
                       if (!response.ok()) {
                             log::warn("Server returned non-ok status: {}", response.code());
-                            upopup->showFailMessage("Failed! Try again later.");
+                            upopup->showFailMessage(getResponseFailMessage(response, "Failed! Try again later."));
                             return;
                       }
 
@@ -507,7 +515,7 @@ void RLModRatePopup::onUnsendButton(CCObject* sender) {
             log::info("Received response from server");
             if (!response.ok()) {
                   log::warn("Server returned non-ok status: {}", response.code());
-                  upopup->showFailMessage("Failed! Try again later.");
+                  upopup->showFailMessage(getResponseFailMessage(response, "Failed! Try again later."));
                   return;
             }
             auto jsonRes = response.json();
@@ -635,7 +643,7 @@ void RLModRatePopup::onSubmitButton(CCObject* sender) {
 
             if (!response.ok()) {
                   log::warn("Server returned non-ok status: {}", response.code());
-                  upopup->showFailMessage("Failed! Try again later.");
+                  upopup->showFailMessage(getResponseFailMessage(response, "Failed! Try again later."));
                   return;
             }
 
@@ -749,7 +757,7 @@ void RLModRatePopup::onUnrateButton(CCObject* sender) {
 
                       if (!response.ok()) {
                             log::warn("Server returned non-ok status: {}", response.code());
-                            upopup->showFailMessage("Failed! Try again later.");
+                            upopup->showFailMessage(getResponseFailMessage(response, "Failed! Try again later."));
                             return;
                       }
 
@@ -925,7 +933,7 @@ void RLModRatePopup::onSuggestButton(CCObject* sender) {
 
             if (!response.ok()) {
                   log::warn("Server returned non-ok status: {}", response.code());
-                  upopup->showFailMessage("Failed! Try again later.");
+                  upopup->showFailMessage(getResponseFailMessage(response, "Failed! Try again later."));
                   return;
             }
 
@@ -1165,11 +1173,14 @@ void RLModRatePopup::onToggleLegendary(CCObject* sender) {
                   m_submitButtonItem->setNormalImage(disabledSpr);
                   m_submitButtonItem->setEnabled(false);
             } else {
-                  // Re-enable only if another toggle is active
-                  if (!m_isRejected && (m_isFeatured || m_isEpicFeatured)) {
+                  if (!m_isRejected) {
                         auto enabledSpr = ButtonSprite::create("Submit", 80, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
                         m_submitButtonItem->setNormalImage(enabledSpr);
                         m_submitButtonItem->setEnabled(true);
+                  } else {
+                        auto disabledSpr = ButtonSprite::create("Submit", 80, true, "goldFont.fnt", "GJ_button_04.png", 30.f, 1.f);
+                        m_submitButtonItem->setNormalImage(disabledSpr);
+                        m_submitButtonItem->setEnabled(false);
                   }
             }
       }
@@ -1454,7 +1465,7 @@ void RLModRatePopup::onSetEventButton(CCObject* sender) {
                       log::info("Received setEvent response for type: {}", type);
                       if (!response.ok()) {
                             log::warn("Server returned non-ok status: {}", response.code());
-                            upopup->showFailMessage("Failed! Try again later.");
+                            upopup->showFailMessage(getResponseFailMessage(response, "Failed! Try again later."));
                             return;
                       }
                       auto jsonRes = response.json();

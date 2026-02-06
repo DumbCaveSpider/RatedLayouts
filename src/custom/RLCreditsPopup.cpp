@@ -348,14 +348,14 @@ void RLCreditsPopup::onHeaderInfo(CCObject *sender) {
   case 3: // Supporters
     FLAlertLayer::create(
         "Layout Supporter",
-        "<cp>Layout Supporter</c> have supported development of <cl>Rated "
+        "<cp>Layout Supporter</c> are those who have supported development of <cl>Rated "
         "Layouts</c> through <cp>Ko-fi</c> membership donation.",
         "OK")
         ->show();
     break;
   case 4: // Boosters
     FLAlertLayer::create("Layout Booster",
-                         "<ca>Layout Booster</c> have boosted the <cl>Rated "
+                         "<ca>Layout Booster</c> are those who boosted the <cl>Rated "
                          "Layouts Discord server</c>, they also have the same "
                          "benefits as <cp>Layout Supporter</c>.",
                          "OK")

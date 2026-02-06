@@ -15,6 +15,7 @@
 #include "RLLeaderboardLayer.hpp"
 #include "RLLevelBrowserLayer.hpp"
 #include "RLSearchLayer.hpp"
+#include "../level/RLSelectSends.hpp"
 struct ModInfo {
   std::string message;
   std::string status;
@@ -691,32 +692,12 @@ void RLCreatorLayer::onFeaturedLayouts(CCObject *sender) {
 }
 
 void RLCreatorLayer::onSentLayouts(CCObject *sender) {
-  // if the user is admin (role == 2), show a quickpopup to choose between type
-  // 1 or type 4
-  if (Mod::get()->getSavedValue<int>("role") >= 2) {
-    Ref<RLCreatorLayer> self = this;
-    geode::createQuickPopup(
-        "View Sent Layouts",
-        "Choose which sent layouts to view:\n\n<cg>All Sent Layouts</c> or "
-        "<co>Sent layouts with 3+ sends</c>.",
-        "All", "3+ Sends", [self](auto, bool yes) {
-          if (!self)
-            return;
-          int type = yes ? 4 : 1;
-          RLLevelBrowserLayer::ParamList params;
-          params.emplace_back("type", numToString(type));
-          auto mode = (type == 4) ? RLLevelBrowserLayer::Mode::AdminSent
-                                  : RLLevelBrowserLayer::Mode::Sent;
-          auto browserLayer =
-              RLLevelBrowserLayer::create(mode, params, "Sent Layouts");
-          auto scene = CCScene::create();
-          scene->addChild(browserLayer);
-          auto transitionFade = CCTransitionFade::create(0.5f, scene);
-          CCDirector::sharedDirector()->pushScene(transitionFade);
-        });
-
+  if (Mod::get()->getSavedValue<int>("role") == 2) {
+  auto selectPopup = RLSelectSends::create();
+  selectPopup->show();
     return;
   }
+  
   RLLevelBrowserLayer::ParamList params;
   params.emplace_back("type", "1");
   auto browserLayer = RLLevelBrowserLayer::create(

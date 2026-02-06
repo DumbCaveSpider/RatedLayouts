@@ -14,6 +14,7 @@ class RLLevelBrowserLayer : public CCLayer, public LevelManagerDelegate, public 
             Search = 4,
             Account = 5,
             EventSafe = 6,
+            LegendarySends = 7
       };
 
       using ParamList = std::vector<std::pair<std::string, std::string>>;

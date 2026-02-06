@@ -1,6 +1,12 @@
 #include "RLReportPopup.hpp"
 #include "../custom/RLAchievements.hpp"
 
+static std::string getResponseFailMessage(web::WebResponse const& response, std::string const& fallback) {
+      auto message = response.string().unwrapOrDefault();
+      if (!message.empty()) return message;
+      return fallback;
+}
+
 RLReportPopup* RLReportPopup::create(int levelId) {
       RLReportPopup* popup = new RLReportPopup();
       // @geode-ignore(unknown-resource)
@@ -204,7 +210,7 @@ void RLReportPopup::onSubmit(CCObject* sender) {
                     [self, uploadPopup](web::WebResponse res) {
                           if (!self) return;
                           if (!res.ok()) {
-                                uploadPopup->showFailMessage("Failed to submit report");
+                                uploadPopup->showFailMessage(getResponseFailMessage(res, "Failed to submit report"));
                                 return;
                           }
                           auto j = res.json();

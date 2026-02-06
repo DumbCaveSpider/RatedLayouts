@@ -1,9 +1,16 @@
 #include "RLUserControl.hpp"
+#include "Geode/ui/Popup.hpp"
 
 #include <Geode/Geode.hpp>
 #include <argon/argon.hpp>
 
 using namespace geode::prelude;
+
+static std::string getResponseFailMessage(web::WebResponse const& response, std::string const& fallback) {
+      auto message = response.string().unwrapOrDefault();
+      if (!message.empty()) return message;
+      return fallback;
+}
 
 const int DEV_ACCOUNT_ID = 7689052;
 
@@ -86,6 +93,13 @@ bool RLUserControl::init() {
       optionsMenu->addChild(blackBtn);
       m_userOptions["blacklisted"] = {blackBtn, blackSpr, false, false};
 
+      // Creator banned action button
+      auto [bannedSpr, bannedBtn] = makeActionButton("Creator Banned", menu_selector(RLUserControl::onOptionAction));
+      bannedBtn->setVisible(false);
+      bannedBtn->setEnabled(false);
+      optionsMenu->addChild(bannedBtn);
+      m_userOptions["bannedCreator"] = {bannedBtn, bannedSpr, false, false};
+
       // Wipe User Data button
       auto [wipeSpr, wipeBtn] = makeActionButton("Wipe User Data", menu_selector(RLUserControl::onWipeAction));
       wipeBtn->setVisible(false);
@@ -151,6 +165,7 @@ bool RLUserControl::init() {
                   // default values if any part of the fetch fails
                   bool isExcluded = false;
                   bool isBlacklisted = false;
+                  bool isBanned = false;
                   int fetchedRole = 0;
 
                   if (!response.ok()) {
@@ -163,6 +178,7 @@ bool RLUserControl::init() {
                               auto json = jsonRes.unwrap();
                               isExcluded = json["excluded"].asBool().unwrapOrDefault();
                               isBlacklisted = json["blacklisted"].asBool().unwrapOrDefault();
+                              isBanned = json["banned"].asBool().unwrapOrDefault();
                               fetchedRole = json["role"].asInt().unwrapOrDefault();
                         }
                   }
@@ -171,14 +187,24 @@ bool RLUserControl::init() {
                   self->m_isInitializing = true;
                   self->setOptionState("exclude", isExcluded, true);
                   self->setOptionState("blacklisted", isBlacklisted, true);
+                  self->setOptionState("bannedCreator", isBanned, true);
 
                   // show and enable option buttons now that profile loading has finished (successfully or not)
                   for (auto& kv : self->m_userOptions) {
+                        auto& key = kv.first;
                         auto& opt = kv.second;
                         if (opt.actionButton) {
                               if (self->m_spinner) self->m_spinner->setVisible(false);
-                              opt.actionButton->setVisible(true);
-                              opt.actionButton->setEnabled(true);
+
+                              // Creator Ban action is restricted to layout admins (role == 2)
+                              bool showAction = true;
+                              if (key == "bannedCreator") {
+                                    int currentRole = Mod::get()->getSavedValue<int>("role");
+                                    if (currentRole != 2) showAction = false;
+                              }
+
+                              opt.actionButton->setVisible(showAction);
+                              opt.actionButton->setEnabled(showAction);
                         }
                   }
 
@@ -356,7 +382,7 @@ void RLUserControl::onWipeAction(CCObject* sender) {
 
                           if (!response.ok()) {
                                 log::warn("deleteUser returned non-ok status: {}", response.code());
-                                upopup->showFailMessage("Failed to delete user");
+                                upopup->showFailMessage(getResponseFailMessage(response, "Failed to delete user"));
                                 if (self->m_spinner) self->m_spinner->setVisible(false);
                                 return;
                           }
@@ -470,7 +496,7 @@ void RLUserControl::onPromoteAction(CCObject* sender) {
 
                           if (!response.ok()) {
                                 log::warn("promoteUser returned non-ok status: {}", response.code());
-                                upopup->showFailMessage("Failed to update user role");
+                                upopup->showFailMessage(getResponseFailMessage(response, "Failed to update user role"));
                                 if (self->m_spinner) self->m_spinner->setVisible(false);
                                 return;
                           }
@@ -511,11 +537,38 @@ void RLUserControl::onOptionAction(CCObject* sender) {
             auto& key = kv.first;
             auto& opt = kv.second;
             if (opt.actionButton == item) {
-                  // toggle the option (based on persisted state)
                   bool newDesired = !opt.persisted;
-                  opt.desired = newDesired;
-                  setOptionState(key, newDesired, false);
-                  applySingleOption(key, newDesired);
+
+                  std::string actionDesc;
+                  if (key == "exclude") {
+                        actionDesc = newDesired ? "set leaderboard exclude" : "remove leaderboard exclude";
+                  } else if (key == "blacklisted") {
+                        actionDesc = newDesired ? "set report blacklist" : "remove report blacklist";
+                  } else if (key == "bannedCreator") {
+                        actionDesc = newDesired ? "set creator banned" : "remove creator ban";
+                  } else {
+                        actionDesc = newDesired ? "apply this change" : "remove this change";
+                  }
+
+                  std::string title = "Confirm Change";
+                  std::string body = fmt::format("Are you sure you want to <cg>{}</c> for user <cg>{}</c>?", actionDesc, m_targetAccountId);
+
+                  Ref<RLUserControl> self = this;
+                  geode::createQuickPopup(
+                      title.c_str(),
+                      body.c_str(),
+                      "Cancel",
+                      "Confirm",
+                      [self, key, newDesired](auto, bool yes) {
+                            if (!yes) return;
+                            auto currentOpt = self->getOptionByKey(key);
+                            if (!currentOpt) return;
+
+                            currentOpt->desired = newDesired;
+                            self->setOptionState(key, newDesired, false);
+                            self->applySingleOption(key, newDesired);
+                      });
+
                   break;
             }
       }
@@ -551,6 +604,14 @@ void RLUserControl::setOptionState(const std::string& key, bool desired, bool up
                         bg = "GJ_button_02.png";
                   } else {
                         text = "Set Report Blacklist";
+                        bg = "GJ_button_01.png";
+                  }
+            } else if (key == "bannedCreator") {
+                  if (desired) {
+                        text = "Remove Creator Ban";
+                        bg = "GJ_button_02.png";
+                  } else {
+                        text = "Set Creator Banned";
                         bg = "GJ_button_01.png";
                   }
             }
@@ -619,7 +680,7 @@ void RLUserControl::applySingleOption(const std::string& key, bool value) {
 
                 if (!response.ok()) {
                       log::warn("setUser returned non-ok status: {}", response.code());
-                      upopup->showFailMessage("Failed to update user");
+                      upopup->showFailMessage(getResponseFailMessage(response, "Failed to update user"));
                       // revert visual to persisted
                       auto currentOpt = self->getOptionByKey(key);
                       if (currentOpt) {

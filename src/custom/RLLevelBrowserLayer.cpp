@@ -222,8 +222,8 @@ bool RLLevelBrowserLayer::init(GJSearchObject* object) {
                   }
             }
             this->fetchLevelsForType(type);
-      } else if (m_mode == Mode::Sent || m_mode == Mode::AdminSent) {
-            int type = (m_mode == Mode::AdminSent) ? 4 : 1;
+      } else if (m_mode == Mode::Sent || m_mode == Mode::AdminSent || m_mode == Mode::LegendarySends) {
+            int type = (m_mode == Mode::AdminSent) ? 4 : (m_mode == Mode::LegendarySends ? 5 : 1);
             if (!m_modeParams.empty()) {
                   auto& val = m_modeParams.front().second;
                   int parsed = 0;
@@ -259,12 +259,14 @@ void RLLevelBrowserLayer::onPrevPage(CCObject* sender) {
             m_page--;
             m_levelCache.clear();
             this->updatePageButton();
-            if (m_mode == Mode::Featured || m_mode == Mode::Sent || m_mode == Mode::AdminSent) {
+            if (m_mode == Mode::Featured || m_mode == Mode::Sent || m_mode == Mode::AdminSent || m_mode == Mode::LegendarySends) {
                   int type = 0;
                   if (m_mode == Mode::Featured)
                         type = 2;
                   else if (m_mode == Mode::AdminSent)
                         type = 4;
+                  else if (m_mode == Mode::LegendarySends)
+                        type = 5;
                   else
                         type = 1;  // Sent
                   if (!m_modeParams.empty()) {
@@ -295,12 +297,14 @@ void RLLevelBrowserLayer::onNextPage(CCObject* sender) {
             m_page++;
             m_levelCache.clear();
             this->updatePageButton();
-            if (m_mode == Mode::Featured || m_mode == Mode::Sent || m_mode == Mode::AdminSent) {
+            if (m_mode == Mode::Featured || m_mode == Mode::Sent || m_mode == Mode::AdminSent || m_mode == Mode::LegendarySends) {
                   int type = 0;
                   if (m_mode == Mode::Featured)
                         type = 2;
                   else if (m_mode == Mode::AdminSent)
                         type = 4;
+                  else if (m_mode == Mode::LegendarySends)
+                        type = 5;
                   else
                         type = 1;  // Sent
                   if (!m_modeParams.empty()) {
@@ -348,12 +352,14 @@ void RLLevelBrowserLayer::setIDPopupClosed(SetIDPopup* popup, int value) {
       m_page = value - 1;
       m_levelCache.clear();
       this->updatePageButton();
-      if (m_mode == Mode::Featured || m_mode == Mode::Sent || m_mode == Mode::AdminSent) {
+      if (m_mode == Mode::Featured || m_mode == Mode::Sent || m_mode == Mode::AdminSent || m_mode == Mode::LegendarySends) {
             int type = 0;
             if (m_mode == Mode::Featured)
                   type = 2;
             else if (m_mode == Mode::AdminSent)
                   type = 4;
+            else if (m_mode == Mode::LegendarySends)
+                  type = 5;
             else
                   type = 1;
             if (!m_modeParams.empty()) {
@@ -402,13 +408,15 @@ void RLLevelBrowserLayer::refreshLevels(bool force) {
       glm->m_levelManagerDelegate = this;
 
       // re-run the getLevels request with the current page
-      if (m_mode == Mode::Featured || m_mode == Mode::Sent || m_mode == Mode::AdminSent) {
+      if (m_mode == Mode::Featured || m_mode == Mode::Sent || m_mode == Mode::AdminSent || m_mode == Mode::LegendarySends) {
             if (force) m_page = 0;
             int type = 0;
             if (m_mode == Mode::Featured)
                   type = 2;
             else if (m_mode == Mode::AdminSent)
                   type = 4;
+            else if (m_mode == Mode::LegendarySends)
+                  type = 5;
             else
                   type = 1;  // Sent
             if (!m_modeParams.empty()) {

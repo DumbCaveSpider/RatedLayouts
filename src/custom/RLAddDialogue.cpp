@@ -2,6 +2,12 @@
 
 using namespace geode::prelude;
 
+static std::string getResponseFailMessage(web::WebResponse const& response, std::string const& fallback) {
+      auto message = response.string().unwrapOrDefault();
+      if (!message.empty()) return message;
+      return fallback;
+}
+
 RLAddDialogue* RLAddDialogue::create() {
       auto popup = new RLAddDialogue();
       if (popup && popup->init()) {
@@ -81,7 +87,7 @@ void RLAddDialogue::onSubmit(CCObject* sender) {
           [self, upopup](web::WebResponse res) {
                 if (!self) return;
                 if (!res.ok()) {
-                      upopup->showFailMessage("Failed to submit dialogue!");
+                      upopup->showFailMessage(getResponseFailMessage(res, "Failed to submit dialogue!"));
                       return;
                 }
                 upopup->showSuccessMessage("Dialogue submitted successfully!");

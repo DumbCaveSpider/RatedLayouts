@@ -8,7 +8,7 @@
 - Added **Customizable Background** in the Rated Layouts Creator Layer and Leaderboard Layer. _(Can be changed in the mod settings)_
 - Added **Rated Layout Browser** button!
 - Added **Coins Verified** status for levels that has verified Blue Coins.
-- Added **Completed** and **Uncompleted** filters in the Custom Search Layer.
+- Added **Completed**, **Uncompleted** and **Coins Verified** filters in the Custom Search Layer.
 - Added **Coin Rank** in the Difficulty Stats Popup.
 - Added **Custom Achievements**! Collect achievements by completing certain milestones and special interactions.
 - Added **Random Level** button in the Custom Search Layer to play a random rated layout level!
@@ -18,8 +18,10 @@
 - Added Indicators for Top 3 players in the Leaderboard Layer.
 - Change the sprites to be in a spritesheet.
 - Clean-up the Mod Rate Popup code/UI.
+- Proper error message handling
 - Removed Page API dependency
-- Removed Level Rating Caching 
+- Removed Level Rating and User Caching
+- Removed Badge API dependency
 - Secret features... shh...
 
 # v0.3.6-beta.1

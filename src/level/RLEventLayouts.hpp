@@ -61,6 +61,7 @@ class RLEventLayouts : public geode::Popup {
             LoadingSpinner* playSpinner = nullptr;
             LoadingSpinner* platPlaySpinner = nullptr;
             double pendingTimeout = 0.0;  // seconds
+            double pendingRetry = 0.0;  // seconds until next retry
       };
 
       EventSection m_sections[3];

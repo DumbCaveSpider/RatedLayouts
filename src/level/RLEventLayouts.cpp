@@ -619,9 +619,10 @@ void RLEventLayouts::update(float dt) {
       int idx = static_cast<int>(this->m_eventType);
       if (idx < 0 || idx >= 3) return;
       auto& sec = m_sections[idx];
-      if (sec.secondsLeft <= 0) return;
-      sec.secondsLeft -= dt;
-      if (sec.secondsLeft < 0) sec.secondsLeft = 0;
+      if (sec.secondsLeft > 0) {
+            sec.secondsLeft -= dt;
+            if (sec.secondsLeft < 0) sec.secondsLeft = 0;
+      }
       if (sec.timerLabel) sec.timerLabel->setString((timerPrefixes[idx] + formatTime(static_cast<long>(sec.secondsLeft))).c_str());
 
       // check whether the level was stored yet and open LevelInfo when available.
@@ -660,6 +661,19 @@ void RLEventLayouts::update(float dt) {
                   psec.pendingTimeout = 0.0;
             } else {
                   psec.pendingTimeout -= dt;
+                  psec.pendingRetry -= dt;
+
+                  // re-request the online level
+                  if (psec.pendingRetry <= 0.0 && psec.pendingTimeout > 0.0) {
+                        // re-query the server for the level
+                        if (glm && glm->m_levelManagerDelegate) {
+                              glm->m_levelManagerDelegate = nullptr;
+                        }
+                        auto retrySearch = GJSearchObject::create(SearchType::Search, numToString(psec.pendingLevelId));
+                        glm->getOnlineLevels(retrySearch);
+                        psec.pendingRetry = 1.0;
+                  }
+
                   if (psec.pendingTimeout <= 0.0) {
                         if (psec.playSpinner) psec.playSpinner->setVisible(false);
                         if (psec.platPlaySpinner) psec.platPlaySpinner->setVisible(false);
@@ -675,6 +689,7 @@ void RLEventLayouts::update(float dt) {
                         psec.pendingKey.clear();
                         psec.pendingLevelId = -1;
                         psec.pendingTimeout = 0.0;
+                        psec.pendingRetry = 0.0;
                   }
             }
       }
@@ -802,6 +817,7 @@ void RLEventLayouts::onPlayEvent(CCObject* sender) {
       sec.pendingKey = key;
       sec.pendingLevelId = levelId;
       sec.pendingTimeout = 10.0;  // 10s timeout
+      sec.pendingRetry = 1.0;  // first retry after ~1s
 
       // show the initialized spinner and hide the clicked menu item
       if (menuItem == sec.playButton) {

@@ -1,5 +1,6 @@
 #pragma once
 #include <Geode/Geode.hpp>
+#include <Geode/binding/CCMenuItemSpriteExtra.hpp>
 
 using namespace geode::prelude;
 
@@ -39,11 +40,13 @@ class RLSearchLayer : public CCLayer {
       CCMenuItemSpriteExtra* m_oldestItem = nullptr;
       CCMenuItemSpriteExtra* m_completedItem = nullptr;
       CCMenuItemSpriteExtra* m_uncompletedItem = nullptr;
+      CCMenuItemSpriteExtra* m_coinsVerifiedItem = nullptr;
       bool m_platformerActive = false;
       bool m_classicActive = false;
       bool m_usernameActive = false;
       bool m_completedActive = false;
       bool m_uncompletedActive = false;
+      bool m_coinsVerifiedActive = false;
 
       // difficulty filter buttons
       CCMenu* m_difficultyFilterMenu = nullptr;
@@ -76,6 +79,7 @@ class RLSearchLayer : public CCLayer {
       void onUncompletedToggle(CCObject* sender);
       void onDemonDifficultyButton(CCObject* sender);
       void onDifficultyButton(CCObject* sender);
+      void onCoinsVerifiedToggle(CCObject* sender);
       void onRandomButton(CCObject* sender);
 
       // pending random fetch state

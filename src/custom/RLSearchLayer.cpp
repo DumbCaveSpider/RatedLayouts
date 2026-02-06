@@ -4,7 +4,7 @@
 using namespace geode::prelude;
 
 // helper to map rating to difficulty level
-static int rl_mapRatingToLevel(int rating) {
+static int mapRatingToLevel(int rating) {
   switch (rating) {
   case 1:
     return -1;
@@ -458,6 +458,16 @@ bool RLSearchLayer::init() {
   m_uncompletedItem = uncompletedItem;
   optionsMenu->addChild(uncompletedItem);
 
+  // coins verified toggle
+  auto coinsVerifiedSpr = ButtonSprite::create(
+      "Coins Verified", "goldFont.fnt", "GJ_button_01.png");
+  auto coinsVerifiedItem = CCMenuItemSpriteExtra::create(
+      coinsVerifiedSpr, this, menu_selector(RLSearchLayer::onCoinsVerifiedToggle));
+  coinsVerifiedItem->setScale(1.0f);
+  coinsVerifiedItem->setID("coins-verified-toggle");
+  m_coinsVerifiedItem = coinsVerifiedItem;
+  optionsMenu->addChild(coinsVerifiedItem);
+
   optionsMenu->updateLayout();
 
   // info button yay
@@ -648,6 +658,8 @@ void RLSearchLayer::onSearchButton(CCObject *sender) {
     params.emplace_back("oldest", numToString(oldestParam));
   if (m_usernameActive)
     params.emplace_back("user", numToString(usernameParam));
+  if (m_coinsVerifiedActive)
+    params.emplace_back("coins", "1");
   params.emplace_back("accountId",
                       numToString(GJAccountManager::get()->m_accountID));
 
@@ -659,6 +671,19 @@ void RLSearchLayer::onSearchButton(CCObject *sender) {
   scene->addChild(browserLayer);
   auto transitionFade = CCTransitionFade::create(0.5f, scene);
   CCDirector::sharedDirector()->pushScene(transitionFade);
+}
+
+void RLSearchLayer::onCoinsVerifiedToggle(CCObject *sender) {
+  auto item = static_cast<CCMenuItemSpriteExtra *>(sender);
+  if (!item)
+    return;
+  m_coinsVerifiedActive = !m_coinsVerifiedActive;
+  auto normalNode = item->getNormalImage();
+  auto btn = static_cast<ButtonSprite *>(normalNode);
+  if (btn) {
+    btn->updateBGImage(m_coinsVerifiedActive ? "GJ_button_02.png"
+                                            : "GJ_button_01.png");
+  }
 }
 
 void RLSearchLayer::onFeaturedToggle(CCObject *sender) {
@@ -878,7 +903,7 @@ void RLSearchLayer::onDemonToggle(CCObject *sender) {
       if (group.empty())
         continue;
       int rep = group[0];
-      int difficultyLevel = rl_mapRatingToLevel(rep);
+      int difficultyLevel = mapRatingToLevel(rep);
       sprite->updateDifficultyFrame(difficultyLevel, GJDifficultyName::Long);
       sprite->setColor({125, 125, 125});
     }
@@ -893,7 +918,7 @@ void RLSearchLayer::onDemonToggle(CCObject *sender) {
       if (group.empty())
         continue;
       int rep = group[0];
-      int difficultyLevel = rl_mapRatingToLevel(rep);
+      int difficultyLevel = mapRatingToLevel(rep);
       sprite->updateDifficultyFrame(difficultyLevel, GJDifficultyName::Short);
       sprite->setColor({125, 125, 125});
     }

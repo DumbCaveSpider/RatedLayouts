@@ -6,6 +6,12 @@
 
 using namespace geode::prelude;
 
+static std::string getResponseFailMessage(web::WebResponse const& response, std::string const& fallback) {
+      auto message = response.string().unwrapOrDefault();
+      if (!message.empty()) return message;
+      return fallback;
+}
+
 $execute {
   // clear old cache on game start to prevent stale data issues
   auto saveDir = dirs::getModsSaveDir();
@@ -81,8 +87,8 @@ class $modify(SupportLayer) {
                     return;
                   log::info("Received response from server");
                   if (!response.ok()) {
-                    log::warn("Server returned non-ok status: {}",
-                              response.code());
+                    log::warn("Server returned non-ok status: {}", response.code());
+                    upopup->showFailMessage(getResponseFailMessage(response, "Failed! Try again later."));
                     return;
                   }
 
@@ -146,8 +152,8 @@ class $modify(SupportLayer) {
                             if (!self || !upopup)
                               return;
                             if (!response.ok()) {
-                              log::warn("Server returned non-ok status: {}",
-                                        response.code());
+                              log::warn("Server returned non-ok status: {}", response.code());
+                              upopup->showFailMessage(getResponseFailMessage(response, "Failed! Try again later."));
                               return;
                             }
                             auto jsonRes = response.json();

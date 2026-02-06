@@ -559,12 +559,16 @@ class $modify(RLProfilePage, ProfilePage) {
               "rl-coins-label",
               GameToolbox::pointsToString(pageRef->m_fields->m_coins));
 
-          // If this is the player's own profile, check achievements for Sparks and Planets
+          // If this is the player's own profile, check achievements for Sparks
+          // and Planets
           if (pageRef->m_ownProfile) {
-            log::debug("checking Sparks/Planets achievements (stars={}, planets={})",
-                       pageRef->m_fields->m_stars, pageRef->m_fields->m_planets);
-            RLAchievements::checkAll(RLAchievements::Collectable::Sparks, pageRef->m_fields->m_stars);
-            RLAchievements::checkAll(RLAchievements::Collectable::Planets, pageRef->m_fields->m_planets);
+            log::debug(
+                "checking Sparks/Planets achievements (stars={}, planets={})",
+                pageRef->m_fields->m_stars, pageRef->m_fields->m_planets);
+            RLAchievements::checkAll(RLAchievements::Collectable::Sparks,
+                                     pageRef->m_fields->m_stars);
+            RLAchievements::checkAll(RLAchievements::Collectable::Planets,
+                                     pageRef->m_fields->m_planets);
           }
 
           // Handle creator points
@@ -596,6 +600,12 @@ class $modify(RLProfilePage, ProfilePage) {
   }
 
   void onUserManage(CCObject *sender) {
+    if (Mod::get()->getSavedValue<int>("role") < 1) {
+      Notification::create("You don't have permission to manage users.",
+                           NotificationIcon::Error)
+          ->show();
+      return;
+    }
     int accountId = m_fields->accountId;
     auto userControl = RLUserControl::create(accountId);
     userControl->show();
