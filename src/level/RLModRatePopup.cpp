@@ -254,6 +254,7 @@ bool RLModRatePopup::init() {
             // For Dev provide a TextInput to set the featured value directly
             m_featuredValueInput = TextInput::create(100.f, "Featured");
             m_featuredValueInput->setPosition({m_mainLayer->getContentSize().width / 2 + 30.f, 50.f});
+            m_featuredValueInput->setCommonFilter(CommonFilter::Int);
             m_featuredValueInput->setID("featured-value-input");
             m_buttonMenu->addChild(m_featuredValueInput);
       }
@@ -264,7 +265,7 @@ bool RLModRatePopup::init() {
             auto onSilent = ButtonSprite::create("Silent", 80, true, "goldFont.fnt", "GJ_button_02.png", 30.f, 1.f);
             auto silentToggle = CCMenuItemToggler::create(offSilent, onSilent, this, nullptr);
             if (silentToggle) {
-                  silentToggle->setPosition({80, 70});
+                  silentToggle->setPosition({80, 80});
                   silentToggle->setID("silent-toggle");
                   m_buttonMenu->addChild(silentToggle);
                   m_silentToggleItem = silentToggle;
@@ -274,7 +275,7 @@ bool RLModRatePopup::init() {
             auto coinVerifiedOn = ButtonSprite::create("Verified", 80, true, "goldFont.fnt", "GJ_button_02.png", 30.f, 1.f);
             auto verifiedToggle = CCMenuItemToggler::create(coinVerified, coinVerifiedOn, this, nullptr);
             if (verifiedToggle) {
-                  verifiedToggle->setPosition({m_mainLayer->getContentSize().width / 2, 70});
+                  verifiedToggle->setPosition({m_mainLayer->getContentSize().width / 2, 80});
                   verifiedToggle->setID("verified-toggle");
                   m_buttonMenu->addChild(verifiedToggle);
                   m_verifiedToggleItem = verifiedToggle;
@@ -283,9 +284,25 @@ bool RLModRatePopup::init() {
             auto deleteSendSpr = ButtonSprite::create("Delete Sends", 80, true, "goldFont.fnt", "GJ_button_06.png", 30.f, 1.f);
             auto deleteSendBtn = CCMenuItemSpriteExtra::create(deleteSendSpr, this, menu_selector(RLModRatePopup::onDeleteSendsButton));
             if (deleteSendBtn) {
-                  deleteSendBtn->setPosition({m_mainLayer->getContentSize().width - 80.f, 70});
+                  deleteSendBtn->setPosition({m_mainLayer->getContentSize().width - 80.f, 80});
                   deleteSendBtn->setID("delete-sends-button");
                   m_buttonMenu->addChild(deleteSendBtn);
+            }
+
+            auto banSpr = ButtonSprite::create("Ban", 80, true, "goldFont.fnt", "GJ_button_06.png", 30.f, 1.f);
+            auto banBtn = CCMenuItemSpriteExtra::create(banSpr, this, menu_selector(RLModRatePopup::onBanLevelButton));
+            if (banBtn) {
+                  banBtn->setPosition({80, 40});
+                  banBtn->setID("ban-level-button");
+                  m_buttonMenu->addChild(banBtn);
+            }
+
+            auto unbanSpr = ButtonSprite::create("Unban", 80, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+            auto unbanBtn = CCMenuItemSpriteExtra::create(unbanSpr, this, menu_selector(RLModRatePopup::onUnbanLevelButton));
+            if (unbanBtn) {
+                  unbanBtn->setPosition({m_mainLayer->getContentSize().width / 2, 40});
+                  unbanBtn->setID("unban-level-button");
+                  m_buttonMenu->addChild(unbanBtn);
             }
       }
 
@@ -293,6 +310,7 @@ bool RLModRatePopup::init() {
       if (m_role == PopupRole::Dev) {
             m_difficultyInput = TextInput::create(100.f, "Difficulty");
             m_difficultyInput->setPosition({m_mainLayer->getContentSize().width / 2 - 110.f, 120.f});
+            m_difficultyInput->setCommonFilter(CommonFilter::Int);
             m_difficultyInput->setID("dev-difficulty-input");
             m_mainLayer->addChild(m_difficultyInput);
       }
@@ -334,6 +352,7 @@ bool RLModRatePopup::init() {
       // featured score textbox (created conditionally based on role)
       m_featuredScoreInput = TextInput::create(100.f, "Score");
       m_featuredScoreInput->setPosition({300.f, 40.f});
+      m_featuredScoreInput->setCommonFilter(CommonFilter::Int);
       m_featuredScoreInput->setVisible(false);
       m_featuredScoreInput->setID("featured-score-input");
       m_mainLayer->addChild(m_featuredScoreInput);
@@ -347,6 +366,7 @@ bool RLModRatePopup::init() {
       // Position featured value input (if present) near the difficulty input for Dev users
       if (m_role == PopupRole::Dev && m_featuredValueInput) {
             m_featuredValueInput->setPosition({m_mainLayer->getContentSize().width / 2, 120.f});
+            m_featuredValueInput->setCommonFilter(CommonFilter::Int);
       }
 
       return true;
@@ -400,6 +420,7 @@ void RLModRatePopup::onInfoButton(CCObject* sender) {
             int suggestedLegendary = json["suggestedLegendary"].asInt().unwrapOrDefault();
             int featuredScore = json["featuredScore"].asInt().unwrapOrDefault();
             int rejectedTotal = json["rejectedTotal"].asInt().unwrapOrDefault();
+            bool isBanned = json["isBanned"].asBool().unwrapOrDefault();
 
             std::string infoText =
                 fmt::format(
@@ -409,16 +430,140 @@ void RLModRatePopup::onInfoButton(CCObject* sender) {
                     "<cp>Total Suggested Epic:</c> {}\n"
                     "<cf>Total Suggested Legendary:</c> {}\n"
                     "<cy>Featured Score:</c> {}\n"
-                    "<cr>Total Rejected:</c> {}\n",
+                    "<cr>Total Rejected:</c> {}\n"
+                    "<cs>Level Banned?:</c> {}\n",
                     averageDifficulty, suggestedTotal,
-                    suggestedFeatured, suggestedEpic, suggestedLegendary, featuredScore, rejectedTotal);
+                    suggestedFeatured, suggestedEpic, suggestedLegendary, featuredScore, rejectedTotal, isBanned);
 
-            FLAlertLayer::create("Level Status Info", infoText, "OK")->show();
+            FLAlertLayer::create("Mod Level Info", infoText, "OK")->show();
             // enable the button again
             if (auto buttonItem = typeinfo_cast<CCMenuItemSpriteExtra*>(sender)) {
                   buttonItem->setEnabled(true);
             }
       });
+}
+
+void RLModRatePopup::onUnbanLevelButton(CCObject* sender) {
+      auto popup = UploadActionPopup::create(nullptr, "Unbanning level...");
+      popup->show();
+      log::info("Unbanning level - Level ID: {}", m_levelId);
+
+      // Get argon token
+      auto token = Mod::get()->getSavedValue<std::string>("argon_token");
+      if (token.empty()) {
+            log::error("Failed to get user token");
+            popup->showFailMessage("Token not found!");
+            return;
+      }
+
+      // matjson payload
+      matjson::Value jsonBody = matjson::Value::object();
+      jsonBody["accountId"] = GJAccountManager::get()->m_accountID;
+      jsonBody["argonToken"] = token;
+      jsonBody["levelId"] = m_levelId;
+
+      log::info("Sending request: {}", jsonBody.dump());
+
+      auto postReq = web::WebRequest();
+      postReq.bodyJSON(jsonBody);
+      
+      Ref<RLModRatePopup> self = this;
+      Ref<UploadActionPopup> upopup = popup;
+      m_unbanLevelTask.spawn(
+            postReq.post("https://gdrate.arcticwoof.xyz/setUnban"),
+            [self, upopup](web::WebResponse response) {
+            if (!self || !upopup) return;
+            log::info("Received response from server");
+
+            if (!response.ok()) {
+                  log::warn("Server returned non-ok status: {}", response.code());
+                  upopup->showFailMessage(getResponseFailMessage(response, "Failed! Try again later."));
+                  return;
+            }
+
+            auto jsonRes = response.json();
+            if (!jsonRes) {
+                  log::warn("Failed to parse JSON response");
+                  upopup->showFailMessage("Invalid server response.");
+                  return;
+            }
+
+            auto json = jsonRes.unwrap();
+            bool success = json["success"].asBool().unwrapOrDefault();
+
+            if (success) {
+                  log::info("Unban level successful!");
+                  upopup->showSuccessMessage("Level unbanned!");
+            } else {
+                  upopup->showFailMessage(getResponseFailMessage(response, "Failed to unban level."));
+            }
+      });
+}
+
+void RLModRatePopup::onBanLevelButton(CCObject* sender) {
+      std::string title = std::string("Ban Level?");
+      geode::createQuickPopup(
+          "Ban Level?",
+          "Are you sure you want to <cr>ban</c> this level? This will prevent it from being rated or featured.",
+          "No",
+          "Ban",
+          [this](auto, bool yes) {
+                if (!yes) return;
+                auto popup = UploadActionPopup::create(nullptr, "Banning level...");
+                popup->show();
+                log::info("Banning level - Level ID: {}", m_levelId);
+
+                // Get argon token
+                auto token = Mod::get()->getSavedValue<std::string>("argon_token");
+                if (token.empty()) {
+                      log::error("Failed to get user token");
+                      popup->showFailMessage("Token not found!");
+                      return;
+                }
+
+                // matjson payload
+                matjson::Value jsonBody = matjson::Value::object();
+                jsonBody["accountId"] = GJAccountManager::get()->m_accountID;
+                jsonBody["argonToken"] = token;
+                jsonBody["levelId"] = m_levelId;
+
+                log::info("Sending request: {}", jsonBody.dump());
+
+                auto postReq = web::WebRequest();
+                postReq.bodyJSON(jsonBody);
+                
+                Ref<RLModRatePopup> self = this;
+                Ref<UploadActionPopup> upopup = popup;
+                m_banLevelTask.spawn(
+                      postReq.post("https://gdrate.arcticwoof.xyz/setBan"),
+                      [self, upopup](web::WebResponse response) {
+                      if (!self || !upopup) return;
+                      log::info("Received response from server");
+
+                      if (!response.ok()) {
+                            log::warn("Server returned non-ok status: {}", response.code());
+                            upopup->showFailMessage(getResponseFailMessage(response, "Failed! Try again later."));
+                            return;
+                      }
+
+                      auto jsonRes = response.json();
+                      if (!jsonRes) {
+                            log::warn("Failed to parse JSON response");
+                            upopup->showFailMessage("Invalid server response.");
+                            return;
+                      }
+
+                      auto json = jsonRes.unwrap();
+                      bool success = json["success"].asBool().unwrapOrDefault();
+
+                      if (success) {
+                            log::info("Ban level successful!");
+                            upopup->showSuccessMessage("Level banned!");
+                      } else {
+                            upopup->showFailMessage(getResponseFailMessage(response, "Failed to ban level."));
+                      }
+                });
+          });
 }
 
 void RLModRatePopup::onDeleteSendsButton(CCObject* sender) {
@@ -861,9 +1006,20 @@ void RLModRatePopup::onSuggestButton(CCObject* sender) {
             return;
       }
 
-      if (!m_isRejected && m_selectedRating == -1) {
-            popup->showFailMessage("Select a rating first!");
-            return;
+      if (!m_isRejected) {
+            if (m_role == PopupRole::Dev) {
+                  std::string diffStr;
+                  if (m_difficultyInput) diffStr = std::string(m_difficultyInput->getString());
+                  if (diffStr.empty()) {
+                        popup->showFailMessage("Enter a difficulty first!");
+                        return;
+                  }
+            } else {
+                  if (m_selectedRating == -1) {
+                        popup->showFailMessage("Select a rating first!");
+                        return;
+                  }
+            }
       }
 
       // matjson payload

@@ -96,7 +96,7 @@ void RLAchievements::init() {
                 {"misc_moderator", "GD Mod Simulator", "Become a Layout Moderator", RLAchievements::Collectable::Misc, 1, "RL_badgeMod01.png"_spr},
                 {"misc_report", "Vigilant Citizen", "Make a valid Report on a Layout", RLAchievements::Collectable::Misc, 10, "RL_bob.png"_spr},
                 {"misc_arcticwoof", "Find the Woof", "Find the Rated Layouts Owner", RLAchievements::Collectable::Misc, 1, "RL_arcticwoof.png"_spr},
-                {"misc_coming", "Something is coming…", "You now know about him, be careful about where you go…", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
+            //     {"misc_coming", "Something is coming…", "You now know about him, be careful about where you go…", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
                 {"misc_extreme", "TOP ONE LAYOUT LIST!", "Complete an Extreme Demon Rated Layout", RLAchievements::Collectable::Misc, 1, "diffIcon_10_btn_001.png"},
 
                 // community vote achievements

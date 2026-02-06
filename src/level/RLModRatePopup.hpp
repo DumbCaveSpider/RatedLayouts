@@ -55,6 +55,8 @@ class RLModRatePopup : public geode::Popup {
       async::TaskHolder<web::WebResponse> m_setEventTask;
       async::TaskHolder<web::WebResponse> m_deleteSendsTask;
       async::TaskHolder<web::WebResponse> m_unsendTask;
+      async::TaskHolder<web::WebResponse> m_banLevelTask;
+      async::TaskHolder<web::WebResponse> m_unbanLevelTask;
       bool init() override;
       void onSubmitButton(CCObject* sender);
       void onUnrateButton(CCObject* sender);
@@ -65,6 +67,8 @@ class RLModRatePopup : public geode::Popup {
       void onRatingButton(CCObject* sender);
       void onInfoButton(CCObject* sender);
       void onDeleteSendsButton(CCObject* sender);
+      void onBanLevelButton(CCObject* sender);
+      void onUnbanLevelButton(CCObject* sender);
       void onUnsendButton(CCObject* sender);
       void onSetEventButton(CCObject* sender);
       void onToggleLegendary(CCObject* sender);

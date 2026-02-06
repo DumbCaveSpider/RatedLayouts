@@ -723,7 +723,7 @@ void RLUserControl::applySingleOption(const std::string& key, bool value) {
                       self->setOptionEnabled(key, true);
                       upopup->showSuccessMessage("User has been updated!");
                 } else {
-                      upopup->showFailMessage("Failed to update user");
+                      upopup->showFailMessage(getResponseFailMessage(response, "Failed to update user"));
                       auto currentOpt = self->getOptionByKey(key);
                       if (currentOpt) {
                             self->m_isInitializing = true;
