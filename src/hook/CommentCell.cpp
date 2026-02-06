@@ -1,61 +1,7 @@
-#include <BadgesAPI.hpp>
 #include <Geode/Geode.hpp>
 #include <Geode/modify/CommentCell.hpp>
 
 using namespace geode::prelude;
-
-static std::unordered_map<int, std::vector<Badge>> g_pendingBadges;
-
-$execute {
-  BadgesAPI::registerBadge(
-      "rl-mod-badge", "Rated Layouts Moderator",
-      "This user can <cj>suggest layout levels</c> for <cl>Rated "
-      "Layouts</c> to the <cr>Layout Admins</c>. They have the ability to "
-      "<co>moderate the leaderboard</c>.",
-      [] {
-        return CCSprite::createWithSpriteFrameName("RL_badgeMod01.png"_spr);
-      },
-      [](const Badge &badge, const UserInfo &user) {
-        g_pendingBadges[user.accountID].push_back(badge);
-      });
-  BadgesAPI::registerBadge(
-      "rl-admin-badge", "Rated Layouts Admin",
-      "This user can <cj>rate layout levels</c> for <cl>Rated "
-      "Layouts</c>. They have the same power as <cg>Moderators</c> but "
-      "including the ability to change the <cy>featured ranking on the "
-      "featured layout levels</c> and <cg>set event layouts</c>.",
-      [] {
-        return CCSprite::createWithSpriteFrameName("RL_badgeAdmin01.png"_spr);
-      },
-      [](const Badge &badge, const UserInfo &user) {
-        g_pendingBadges[user.accountID].push_back(badge);
-      });
-  BadgesAPI::registerBadge(
-      "rl-owner-badge", "Rated Layouts Owner",
-      "<cf>ArcticWoof</c> is the <ca>Owner and Developer</c> of <cl>Rated "
-      "Layouts</c> Geode Mod.\nHe controls and manages everything within "
-      "<cl>Rated Layouts</c>, including updates and adding new features as "
-      "well as the ability to <cg>promote users to Layout Moderators or "
-      "Administrators</c>.",
-      [] {
-        return CCSprite::createWithSpriteFrameName("RL_badgeOwner.png"_spr);
-      },
-      [](const Badge &badge, const UserInfo &user) {
-        g_pendingBadges[user.accountID].push_back(badge);
-      });
-  BadgesAPI::registerBadge(
-      "rl-supporter-badge", "Rated Layouts Supporter",
-      "This user is a <cp>Layout Supporter</c>! They have supported the "
-      "development of <cl>Rated Layouts</c> through membership "
-      "donations.\n\nYou can become a <cp>Layout Supporter</c> by donating via "
-      "<cp>Ko-Fi</c>",
-      [] {
-        return CCSprite::createWithSpriteFrameName("RL_badgeSupporter.png"_spr);
-      },
-      [](const Badge &badge, const UserInfo &user) {
-        g_pendingBadges[user.accountID].push_back(badge);
-      });
-}
 
 class $modify(RLCommentCell, CommentCell) {
   struct Fields {
@@ -272,28 +218,7 @@ class $modify(RLCommentCell, CommentCell) {
           cellRef->applyCommentTextColor(accountId);
           cellRef->applyStarGlow(accountId, stars, planets);
 
-          auto it = g_pendingBadges.find(accountId);
-          if (it != g_pendingBadges.end()) {
-            for (auto const &b : it->second) {
-              if (!b.targetNode || !b.targetNode->getParent())
-                continue;
 
-              if (b.badgeID == "rl-owner-badge") {
-                if (accountId == 7689052)
-                  BadgesAPI::showBadge(b);
-              } else if (b.badgeID == "rl-mod-badge") {
-                if (accountId != 7689052 && role == 1)
-                  BadgesAPI::showBadge(b);
-              } else if (b.badgeID == "rl-admin-badge") {
-                if (accountId != 7689052 && role == 2)
-                  BadgesAPI::showBadge(b);
-              } else if (b.badgeID == "rl-supporter-badge") {
-                if (cellRef->m_fields->supporter)
-                  BadgesAPI::showBadge(b);
-              }
-            }
-            g_pendingBadges.erase(it);
-          }
         });
     // Only update UI if it still exists
     if (cellRef->m_mainLayer) {
