@@ -16,6 +16,7 @@
 - Added **Layout Booster Badge** for users who has boosted the Rated Layouts Discord server.
 - Fixed the Leaderboard and added refresh button to manually refresh the leaderboard data.
 - Added Indicators for Top 3 players in the Leaderboard Layer.
+- Layout that is Rated by RobTop will automatically gets unrated.
 - Change the sprites to be in a spritesheet.
 - Clean-up the Mod Rate Popup code/UI.
 - Proper error message handling

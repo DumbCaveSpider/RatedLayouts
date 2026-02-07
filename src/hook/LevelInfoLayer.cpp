@@ -171,9 +171,14 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
 
       auto json = jsonRes.unwrap();
 
-      // Process the response immediately; do not cache
+      // Process the response immediately
       if (layerRef)
         layerRef->processLevelRating(json, layerRef, difficultySprite, true);
+
+      // if level is rated, check via checkRated endpoint
+      if (layerRef->m_level->m_stars > 0) {
+        layerRef->checkRated(layerRef->m_level->m_levelID);
+      }
     });
   }
   void processLevelRating(const matjson::Value &json,
@@ -1797,6 +1802,27 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
     this->fetchRLLevelInfo();
   }
 
+  void checkRated(int levelId) {
+    auto req = web::WebRequest();
+    matjson::Value jsonBody = matjson::Value::object();
+    jsonBody["accountId"] = GJAccountManager::get()->m_accountID;
+    jsonBody["argonToken"] =
+        Mod::get()->getSavedValue<std::string>("argon_token");
+    jsonBody["levelId"] = levelId;
+    req.bodyJSON(jsonBody);
+
+    async::spawn(req.post("https://gdrate.arcticwoof.xyz/checkRated"),
+                 [levelId](web::WebResponse response) {
+                   if (!response.ok()) {
+                     log::debug("Level ID {} is not rated (server returned {})",
+                                levelId, response.code());
+                   } else {
+                     log::debug("Level ID {} is rated (server returned 200)",
+                                levelId);
+                   }
+                 });
+  }
+
   void fetchRLLevelInfo() {
     if (this->m_level && this->m_level->m_levelID != 0) {
       log::debug("Refreshing level info for level ID: {}",
@@ -1932,11 +1958,14 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
       Ref<RLLevelInfoLayer> layerRef = this;
       auto req = web::WebRequest();
       async::spawn(
-          req.get(fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId)),
+          req.get(fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}",
+                              levelId)),
           [layerRef, levelId](web::WebResponse response) {
-            if (!layerRef) return;
+            if (!layerRef)
+              return;
             if (!response.ok()) {
-              log::warn("fetch-on-play returned non-ok status: {}", response.code());
+              log::warn("fetch-on-play returned non-ok status: {}",
+                        response.code());
               return;
             }
             auto jsonRes = response.json();
@@ -1947,10 +1976,13 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             auto json = jsonRes.unwrap();
             int difficulty = json["difficulty"].asInt().unwrapOrDefault();
             if (difficulty > 0) {
-              log::info("Level {} has difficulty {} on play — awarding misc_begin", levelId, difficulty);
+              log::info(
+                  "Level {} has difficulty {} on play — awarding misc_begin",
+                  levelId, difficulty);
               RLAchievements::onReward("misc_begin");
             } else {
-              log::debug("Level {} not rated on play (difficulty={})", levelId, difficulty);
+              log::debug("Level {} not rated on play (difficulty={})", levelId,
+                         difficulty);
             }
           });
     }

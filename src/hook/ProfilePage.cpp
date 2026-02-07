@@ -181,14 +181,14 @@ class $modify(RLProfilePage, ProfilePage) {
                                  ->setAxisAlignment(AxisAlignment::Center)
                                  ->setGrowCrossAxis(false));
 
-    m_mainLayer->addChild(rlButtonsMenu);
+    m_mainLayer->addChild(rlButtonsMenu, 10);
 
     if (rlButtonsMenu) {
       auto rlButtonBg = CCScale9Sprite::create("GJ_square02.png");
       rlButtonBg->setContentSize(rlButtonsMenu->getContentSize() +
                                  CCSize(10.f, 10.f));
       rlButtonBg->setPosition(rlButtonsMenu->getPosition());
-      m_mainLayer->addChild(rlButtonBg, -1);
+      m_mainLayer->addChild(rlButtonBg, 9);
     }
 
     return true;
@@ -222,7 +222,7 @@ class $modify(RLProfilePage, ProfilePage) {
                                    ->setGap(6.f)
                                    ->setAxisAlignment(AxisAlignment::Center)
                                    ->setGrowCrossAxis(false));
-      m_mainLayer->addChild(rlButtonsMenu);
+      m_mainLayer->addChild(rlButtonsMenu, 10);
 
       // recreate background
       auto rlButtonBg = CCScale9Sprite::create("GJ_square02.png");
