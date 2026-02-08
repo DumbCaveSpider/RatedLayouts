@@ -8,7 +8,7 @@
 	},
 	"id": "arcticwoof.rated_layouts",
 	"name": "Rated Layouts",
-	"version": "v0.3.7-beta.1",
+	"version": "v0.4.0-beta.1",
 	"developer": "ArcticWoof",
 	"description": "Play layout rated levels",
 	"resources": {
@@ -104,6 +104,61 @@
 			"default": [0, 105, 255],
 			"description": "Customize the ground color of the **Main Page**, **Custom Search**, and **Leaderboard**",
 			"enable-if": "!disableBackground"
+		},
+		"newRateTitle": {
+			"type": "title",
+			"name": "Notification Settings"
+		},
+		"disableNewRate": {
+			"name": "Disable Notification",
+			"type": "bool",
+			"default": false,
+			"description": "Disables notification that appears when a new rated/event layout occured."
+		},
+		"notiScale": {
+			"type": "float",
+			"name": "Notification Scale",
+			"default": 1.0,
+			"description": "Set the scale of the newly rated/event layout notification. <cy>Minimum is 0.1, and Maximum is 1.0.</cy>",
+			"min": 0.1,
+			"max": 1.0,
+			"control": {
+				"arrows": true,
+				"slider": false,
+				"input": true,
+				"arrow-step": 0.1
+			},
+			"enable-if": "!disableNewRate"
+		},
+		"pollingInterval": {
+			"type": "float",
+			"name": "Polling Interval (Seconds)",
+			"default": 30,
+			"description": "Set the polling interval for checking newly rated/event layouts. <cy>Minimum is 1 second.</cy>",
+			"min": 10.0,
+			"max": 60.0,
+			"control": {
+				"arrows": true,
+				"slider": false,
+				"input": true,
+				"arrow-step": 1.0
+			},
+			"enable-if": "!disableNewRate"
+		},
+		"removeSeconds" :{
+			"type": "int",
+			"name": "Remove Notification After (Seconds)",
+			"default": 1,
+			"description": "Set the time duration for how long the newly rated/event layout notification stays on screen. <cy>Minimum is 1 second.</cy>",
+			"min": 1,
+			"max": 30,
+			"control": {
+				"arrows": true,
+				"slider": false,
+				"input": true,
+				"arrow-step": 1
+			},
+			"enable-if": "!disableNewRate"
 		},
 		"titleMisc": {
 			"type": "title",

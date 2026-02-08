@@ -585,9 +585,16 @@ class $modify(LevelCell) {
           }
 
           auto json = jsonRes.unwrap();
+          int difficulty = json["difficulty"].asInt().unwrapOr(0);
 
           if (!cellRef)
             return;
+
+          // if level is rated, check via checkRated endpoint
+          if (this->m_level->m_stars > 0 && difficulty > 0) {
+            checkRated(this->m_level->m_levelID);
+            return;
+          }
 
           if (this->m_mainLayer && this->m_level &&
               this->m_level->m_levelID == levelId) {
@@ -621,12 +628,32 @@ class $modify(LevelCell) {
 
       int pending = m_fields->m_pendingLevelId;
       m_fields->m_pendingLevelId = 0;
+
       if (this->m_level) {
         loadFromLevel(this->m_level);
-
       } else {
         m_fields->m_pendingLevelId = 0;
       }
     }
+  }
+  void checkRated(int levelId) {
+    auto req = web::WebRequest();
+    matjson::Value jsonBody = matjson::Value::object();
+    jsonBody["accountId"] = GJAccountManager::get()->m_accountID;
+    jsonBody["argonToken"] =
+        Mod::get()->getSavedValue<std::string>("argon_token");
+    jsonBody["levelId"] = levelId;
+    req.bodyJSON(jsonBody);
+
+    async::spawn(req.post("https://gdrate.arcticwoof.xyz/checkRated"),
+                 [levelId](web::WebResponse response) {
+                   if (!response.ok()) {
+                     log::debug("Level ID {} is not rated (server returned {})",
+                                levelId, response.code());
+                   } else {
+                     log::debug("Level ID {} is rated (server returned 200)",
+                                levelId);
+                   }
+                 });
   }
 };

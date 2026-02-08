@@ -1,5 +1,6 @@
 #include "RLSelectSends.hpp"
 #include "../custom/RLLevelBrowserLayer.hpp"
+#include "Geode/ui/Layout.hpp"
 #include "Geode/ui/MDTextArea.hpp"
 #include <Geode/Geode.hpp>
 #include <Geode/binding/ButtonSprite.hpp>
@@ -19,22 +20,15 @@ RLSelectSends *RLSelectSends::create() {
 };
 
 bool RLSelectSends::init() {
-  if (!Popup::init(380.f, 180.f, "square01_001.png"))
+  if (!Popup::init(300.f, 180.f, "square01_001.png"))
     return false;
-  setTitle("View Sent Layouts");
-  m_title->setPositionY(m_title->getPositionY() - 10.f);
-  m_title->setScale(0.9f);
-
-  auto text = MDTextArea::create("Select a category of sent layouts to view the sent layouts.",
-                                 {m_mainLayer->getContentSize().width - 30.f, 80.f});
-  text->setPosition({m_mainLayer->getContentSize().width / 2, m_mainLayer->getContentSize().height - 90.f});
-  m_mainLayer->addChild(text);
 
   auto buttonMenu = CCMenu::create();
-  buttonMenu->setContentWidth(m_mainLayer->getContentWidth() - 20.f);
-  buttonMenu->setPosition({m_mainLayer->getContentSize().width / 2, 30});
-  buttonMenu->setLayout(RowLayout::create()->setGap(10.f)->setAxisAlignment(
-      AxisAlignment::Center));
+  buttonMenu->setContentSize({m_mainLayer->getContentSize().width - 10,
+                              m_mainLayer->getContentSize().height - 10});
+  buttonMenu->setPosition(m_mainLayer->getContentSize() / 2);
+  buttonMenu->setLayout(ColumnLayout::create()->setGap(10.f)->setAxisAlignment(
+      AxisAlignment::Center)->setAxisReverse(true));
 
   auto showAllBtn =
       CCMenuItemSpriteExtra::create(ButtonSprite::create("All Sent"), this,
@@ -88,8 +82,9 @@ void RLSelectSends::onThreePlusSends(CCObject *sender) {
 void RLSelectSends::onLegendarySends(CCObject *sender) {
   RLLevelBrowserLayer::ParamList params;
   params.emplace_back("type", "5");
-  auto browserLayer = RLLevelBrowserLayer::create(
-      RLLevelBrowserLayer::Mode::LegendarySends, params, "Legendary Sent Layouts");
+  auto browserLayer =
+      RLLevelBrowserLayer::create(RLLevelBrowserLayer::Mode::LegendarySends,
+                                  params, "Legendary Sent Layouts");
   auto scene = CCScene::create();
   scene->addChild(browserLayer);
   auto transitionFade = CCTransitionFade::create(0.5f, scene);

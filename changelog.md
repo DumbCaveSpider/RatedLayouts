@@ -1,4 +1,4 @@
-# v0.3.7-beta.1
+# v0.4.0-beta.1
 
 - Ported to Geode v5.0.0
 - Improved **Level Browser**! Now you can search more than **100 levels**!
@@ -14,6 +14,7 @@
 - Added **Random Level** button in the Custom Search Layer to play a random rated layout level!
 - Added **Total Demon Count** in the Difficulty Stats Popup.
 - Added **Layout Booster Badge** for users who has boosted the Rated Layouts Discord server.
+- Added **Newly Rated/Event Notifications**
 - Fixed the Leaderboard and added refresh button to manually refresh the leaderboard data.
 - Added Indicators for Top 3 players in the Leaderboard Layer.
 - Layout that is Rated by RobTop will automatically gets unrated.

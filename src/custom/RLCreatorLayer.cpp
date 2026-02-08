@@ -7,6 +7,8 @@
 #include "../custom/RLAchievements.hpp"
 #include "../custom/RLAchievementsPopup.hpp"
 #include "../level/RLEventLayouts.hpp"
+#include "../level/RLNotificationOverlay.hpp"
+#include "../level/RLSelectSends.hpp"
 #include "RLAddDialogue.hpp"
 #include "RLAnnouncementPopup.hpp"
 #include "RLCreditsPopup.hpp"
@@ -15,7 +17,7 @@
 #include "RLLeaderboardLayer.hpp"
 #include "RLLevelBrowserLayer.hpp"
 #include "RLSearchLayer.hpp"
-#include "../level/RLSelectSends.hpp"
+
 struct ModInfo {
   std::string message;
   std::string status;
@@ -79,6 +81,16 @@ bool RLCreatorLayer::init() {
   }
 
   auto winSize = CCDirector::sharedDirector()->getWinSize();
+
+  // add the new Notification Overlay to OverlayManager
+  if (auto overlayMgr = OverlayManager::get()) {
+    if (auto noti = RLNotificationOverlay::create()) {
+      if (!overlayMgr->getChildByID("rl-notification-overlay")) {
+        noti->setID("rl-notification-overlay");
+        overlayMgr->addChild(noti, 10);
+      }
+    }
+  }
 
   // create if moving bg disabled
   if (Mod::get()->getSettingValue<bool>("disableBackground") == true) {
@@ -624,7 +636,8 @@ void RLCreatorLayer::onUnknownButton(CCObject *sender) {
 void RLCreatorLayer::onInfoButton(CCObject *sender) {
   MDPopup::create(
       "About Rated Layouts",
-      "## <cl>Rated Layouts</cl> is a community-run rating system focusing on "
+      "## <cl>Rated Layouts</cl> is a community-run rating system focusing "
+      "on "
       "gameplay in layout levels.\n\n"
       "### Each of the buttons on this screen lets you browse different "
       "categories of rated layouts:\n\n"
@@ -634,17 +647,20 @@ void RLCreatorLayer::onInfoButton(CCObject *sender) {
       "<cg>**Leaderboard**</c>: The top-rated players ranked by blueprint "
       "stars and creator points.\n\n"
       "<cg>**Layout Gauntlets**</c>: Special themed layouts hosted by the "
-      "Rated Layouts Team. This holds the <cl>Layout Creator Contests</c>!\n\n"
+      "Rated Layouts Team. This holds the <cl>Layout Creator "
+      "Contests</c>!\n\n"
       "<cg>**Sent Layouts**</c>: Suggested or sent layouts by the Layout "
       "Moderators. The community can vote on these layouts based of their "
-      "Design, Difficulty and Gameplay. <co>(Only enabled if you have at least "
+      "Design, Difficulty and Gameplay. <co>(Only enabled if you have at "
+      "least "
       "20% in Normal Mode or 80% in Practice Mode)</c>\n\n"
       "<cg>**Search Layouts**</c>: Search for rated layouts by their level "
       "name/ID.\n\n"
       "<cg>**Event Layouts**</c>: Showcases time-limited Daily, Weekly and "
       "Monthly layouts picked by the <cr>Layout Admins</c>.\n\n"
       "### Join the <cb>[Rated Layouts "
-      "Discord](https://discord.gg/jBf2wfBgVT)</c> server for more information "
+      "Discord](https://discord.gg/jBf2wfBgVT)</c> server for more "
+      "information "
       "and to submit your layouts for rating.\n\n",
       "OK")
       ->show();
@@ -693,11 +709,11 @@ void RLCreatorLayer::onFeaturedLayouts(CCObject *sender) {
 
 void RLCreatorLayer::onSentLayouts(CCObject *sender) {
   if (Mod::get()->getSavedValue<int>("role") == 2) {
-  auto selectPopup = RLSelectSends::create();
-  selectPopup->show();
+    auto selectPopup = RLSelectSends::create();
+    selectPopup->show();
     return;
   }
-  
+
   RLLevelBrowserLayer::ParamList params;
   params.emplace_back("type", "1");
   auto browserLayer = RLLevelBrowserLayer::create(
