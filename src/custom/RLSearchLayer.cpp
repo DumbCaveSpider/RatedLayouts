@@ -360,7 +360,7 @@ bool RLSearchLayer::init() {
 
   // awarded button toggle
   auto awardedSpr =
-      ButtonSprite::create("Awarded", "goldFont.fnt", "GJ_button_01.png");
+      ButtonSprite::create("Awarded", 120, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
   auto awardedItem = CCMenuItemSpriteExtra::create(
       awardedSpr, this, menu_selector(RLSearchLayer::onAwardedToggle));
   awardedItem->setScale(1.0f);
@@ -370,8 +370,7 @@ bool RLSearchLayer::init() {
 
   // featured button toggle
   auto featuredSpr = ButtonSprite::create(
-      "Featured", "goldFont.fnt",
-      "GJ_button_01.png"); // Use a single sprite button as a menu item instead
+      "Featured", 120, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f); // Use a single sprite button as a menu item instead
                            // of a toggler
   auto featuredItem = CCMenuItemSpriteExtra::create(
       featuredSpr, this, menu_selector(RLSearchLayer::onFeaturedToggle));
@@ -382,7 +381,7 @@ bool RLSearchLayer::init() {
 
   // epic button toggle
   auto epicSpr =
-      ButtonSprite::create("Epic", "goldFont.fnt", "GJ_button_01.png");
+      ButtonSprite::create("Epic", 120, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
   auto epicItem = CCMenuItemSpriteExtra::create(
       epicSpr, this, menu_selector(RLSearchLayer::onEpicToggle));
   epicItem->setScale(1.0f);
@@ -391,7 +390,7 @@ bool RLSearchLayer::init() {
   optionsMenu->addChild(epicItem);
   // legendary button toggle
   auto legendarySpr =
-      ButtonSprite::create("Legendary", "goldFont.fnt", "GJ_button_01.png");
+      ButtonSprite::create("Legendary", 120, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
   auto legendaryItem = CCMenuItemSpriteExtra::create(
       legendarySpr, this, menu_selector(RLSearchLayer::onLegendaryToggle));
   legendaryItem->setScale(1.0f);
@@ -400,7 +399,7 @@ bool RLSearchLayer::init() {
   optionsMenu->addChild(legendaryItem);
   // platformer toggle
   auto platformerSpr =
-      ButtonSprite::create("Platformer", "goldFont.fnt", "GJ_button_01.png");
+      ButtonSprite::create("Platformer", 120, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
   auto platformerItem = CCMenuItemSpriteExtra::create(
       platformerSpr, this, menu_selector(RLSearchLayer::onPlatformerToggle));
   platformerItem->setScale(1.0f);
@@ -410,7 +409,7 @@ bool RLSearchLayer::init() {
 
   // classic toggle
   auto classicSpr =
-      ButtonSprite::create("Classic", "goldFont.fnt", "GJ_button_01.png");
+      ButtonSprite::create("Classic", 120, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
   auto classicItem = CCMenuItemSpriteExtra::create(
       classicSpr, this, menu_selector(RLSearchLayer::onClassicToggle));
   classicItem->setScale(1.0f);
@@ -420,7 +419,7 @@ bool RLSearchLayer::init() {
 
   // username toggle
   auto usernameSpr =
-      ButtonSprite::create("Username", "goldFont.fnt", "GJ_button_01.png");
+      ButtonSprite::create("Username", 120, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
   auto usernameItem = CCMenuItemSpriteExtra::create(
       usernameSpr, this, menu_selector(RLSearchLayer::onUsernameToggle));
   usernameItem->setScale(1.0f);
@@ -430,7 +429,7 @@ bool RLSearchLayer::init() {
 
   // sorting toggle - descending
   auto oldestSpr =
-      ButtonSprite::create("Oldest", "goldFont.fnt", "GJ_button_01.png");
+      ButtonSprite::create("Oldest", 120, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
   auto oldestItem = CCMenuItemSpriteExtra::create(
       oldestSpr, this, menu_selector(RLSearchLayer::onOldestToggle));
   oldestItem->setScale(1.0f);
@@ -440,7 +439,7 @@ bool RLSearchLayer::init() {
 
   // completed toggle
   auto completedSpr =
-      ButtonSprite::create("Completed", "goldFont.fnt", "GJ_button_01.png");
+      ButtonSprite::create("Completed", 120, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
   auto completedItem = CCMenuItemSpriteExtra::create(
       completedSpr, this, menu_selector(RLSearchLayer::onCompletedToggle));
   completedItem->setScale(1.0f);
@@ -450,7 +449,7 @@ bool RLSearchLayer::init() {
 
   // uncompleted toggle
   auto uncompletedSpr =
-      ButtonSprite::create("Uncompleted", "goldFont.fnt", "GJ_button_01.png");
+      ButtonSprite::create("Uncompleted", 120, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
   auto uncompletedItem = CCMenuItemSpriteExtra::create(
       uncompletedSpr, this, menu_selector(RLSearchLayer::onUncompletedToggle));
   uncompletedItem->setScale(1.0f);
@@ -460,7 +459,7 @@ bool RLSearchLayer::init() {
 
   // coins verified toggle
   auto coinsVerifiedSpr = ButtonSprite::create(
-      "Coins Verified", "goldFont.fnt", "GJ_button_01.png");
+      "Coins Verified", 120, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
   auto coinsVerifiedItem = CCMenuItemSpriteExtra::create(
       coinsVerifiedSpr, this, menu_selector(RLSearchLayer::onCoinsVerifiedToggle));
   coinsVerifiedItem->setScale(1.0f);
