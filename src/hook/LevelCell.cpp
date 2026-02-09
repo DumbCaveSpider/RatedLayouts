@@ -1,6 +1,7 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/LevelCell.hpp>
 #include <Geode/utils/async.hpp>
+#include <string>
 
 using namespace geode::prelude;
 
@@ -26,8 +27,10 @@ class $modify(LevelCell) {
     }
     int difficulty = json["difficulty"].asInt().unwrapOrDefault();
     int featured = json["featured"].asInt().unwrapOrDefault();
+    int score = json["featuredScore"].asInt().unwrapOrDefault();
 
-    log::debug("difficulty: {}, featured: {}", difficulty, featured);
+    log::debug("difficulty: {}, featured: {}, score: {}", difficulty, featured,
+               score);
 
     // If no difficulty rating, nothing to apply
     if (difficulty == 0) {
@@ -101,6 +104,26 @@ class $modify(LevelCell) {
             "uproxide.more_difficulties/more-difficulties-spr")) {
       moreDifficultiesSpr->setVisible(false);
       sprite->setOpacity(255);
+    }
+
+    // featured score label
+    if (score > 0 && featured > 0) {
+      auto existingScoreLabel =
+          m_mainLayer->getChildByID("featured-score-label");
+      if (existingScoreLabel) {
+        existingScoreLabel->removeFromParent();
+      }
+      auto scoreLabel = CCLabelBMFont::create(
+          std::string("Featured Score: " + numToString(score)).c_str(),
+          "chatFont.fnt");
+      if (scoreLabel) {
+        scoreLabel->setPosition({350, 5});
+        scoreLabel->setColor({255, 215, 0});
+        scoreLabel->setScale(0.5f);
+        scoreLabel->setAnchorPoint({1.0f, 0.f});
+        scoreLabel->setID("featured-score-label");
+        m_mainLayer->addChild(scoreLabel);
+      }
     }
 
     // star or planet icon (planet for platformer levels)

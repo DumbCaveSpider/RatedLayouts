@@ -32,10 +32,7 @@ class RLCreatorLayer : public CCLayer {
       void onSecretDialogueButton(CCObject* sender);
       void onSupporterButton(CCObject* sender);
 
-      CCNode* m_bgContainer = nullptr;
-      std::vector<CCSprite*> m_bgTiles;
-      CCNode* m_groundContainer = nullptr;
-      std::vector<CCSprite*> m_groundTiles;
+      MenuGameLayer* m_menuLayer = nullptr;
       std::vector<CCSprite*> m_bgDecorations;
       float m_decoGridX = 30.f;
       float m_decoGridY = 30.f;

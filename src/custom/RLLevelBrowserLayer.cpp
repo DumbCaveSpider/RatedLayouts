@@ -9,7 +9,7 @@
 
 using namespace geode::prelude;
 
-static constexpr CCSize LIST_SIZE{358.f, 220.f};
+static constexpr CCSize LIST_SIZE{356.f, 220.f};
 static constexpr int PER_PAGE = 10;
 
 RLLevelBrowserLayer* RLLevelBrowserLayer::create(Mode mode, ParamList const& params, std::string const& title) {
