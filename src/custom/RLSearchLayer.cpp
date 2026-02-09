@@ -1,5 +1,6 @@
 #include "RLSearchLayer.hpp"
 #include "RLLevelBrowserLayer.hpp"
+#include <cue/RepeatingBackground.hpp>
 
 using namespace geode::prelude;
 
@@ -50,73 +51,23 @@ bool RLSearchLayer::init() {
     addChild(bg, -1);
   }
 
-  // test the ground moving thingy :o
-  // idk how gd actually does it correctly but this is close enough i guess
-  if (Mod::get()->getSettingValue<bool>("disableBackground") == false) {
+  // create if moving bg disabled
+  if (Mod::get()->getSettingValue<bool>("disableBackground") == true) {
+    auto bg = createLayerBG();
+    bg->setColor(
+        Mod::get()->getSettingValue<cocos2d::ccColor3B>("rgbBackground"));
+    addChild(bg, -1);
+  } else {
     auto value = Mod::get()->getSettingValue<int>("backgroundType");
-    m_bgContainer = CCNode::create();
-    m_bgContainer->setContentSize(winSize);
-    this->addChild(m_bgContainer, -7);
     std::string bgIndex = (value >= 1 && value <= 9)
                               ? ("0" + numToString(value))
                               : numToString(value);
     std::string bgName = "game_bg_" + bgIndex + "_001.png";
-    auto testBg = CCSprite::create(bgName.c_str());
-    if (!testBg) {
-      testBg = CCSprite::create("game_bg_01_001.png");
-    }
-    if (testBg) {
-      float tileW = testBg->getContentSize().width;
-      int tiles = static_cast<int>(ceil(winSize.width / tileW)) + 2;
-      for (int i = 0; i < tiles; ++i) {
-        auto bgSpr = CCSprite::create(bgName.c_str());
-        if (!bgSpr)
-          bgSpr = CCSprite::create("game_bg_01_001.png");
-        if (!bgSpr)
-          continue;
-        bgSpr->setAnchorPoint({0.f, 0.f});
-        bgSpr->setPosition({i * tileW, 0.f});
-        bgSpr->setColor(
-            Mod::get()->getSettingValue<cocos2d::ccColor3B>("rgbBackground"));
-        m_bgContainer->addChild(bgSpr);
-        m_bgTiles.push_back(bgSpr);
-      }
-    }
-
-    m_groundContainer = CCNode::create();
-    m_groundContainer->setContentSize(winSize);
-    this->addChild(m_groundContainer, -5);
-
-    auto floorValue = Mod::get()->getSettingValue<int>("floorType");
-    std::string floorIndex = (floorValue >= 1 && floorValue <= 9)
-                                 ? ("0" + numToString(floorValue))
-                                 : numToString(floorValue);
-    std::string groundName = "groundSquare_" + floorIndex + "_001.png";
-    auto testGround = CCSprite::create(groundName.c_str());
-    if (!testGround)
-      testGround = CCSprite::create("groundSquare_01_001.png");
-    if (testGround) {
-      float tileW = testGround->getContentSize().width;
-      int tiles = static_cast<int>(ceil(winSize.width / tileW)) + 2;
-      for (int i = 0; i < tiles; ++i) {
-        auto gSpr = CCSprite::create(groundName.c_str());
-        if (!gSpr)
-          gSpr = CCSprite::create("groundSquare_01_001.png");
-        if (!gSpr)
-          continue;
-        gSpr->setAnchorPoint({0.f, 0.f});
-        gSpr->setPosition({i * tileW, -70.f});
-        gSpr->setColor(
-            Mod::get()->getSettingValue<cocos2d::ccColor3B>("rgbFloor"));
-        m_groundContainer->addChild(gSpr);
-        m_groundTiles.push_back(gSpr);
-      }
-    }
-
-    auto floorLineSpr =
-        CCSprite::createWithSpriteFrameName("floorLine_01_001.png");
-    floorLineSpr->setPosition({winSize.width / 2, 58});
-    m_groundContainer->addChild(floorLineSpr, -4);
+    auto bg = cue::RepeatingBackground::create(bgName.c_str(), 1.f,
+                                               cue::RepeatMode::X);
+    bg->setColor(
+        Mod::get()->getSettingValue<cocos2d::ccColor3B>("rgbBackground"));
+    addChild(bg, -1);
   }
 
   // back menu
@@ -359,8 +310,8 @@ bool RLSearchLayer::init() {
   this->addChild(optionsMenuBg, -1);
 
   // awarded button toggle
-  auto awardedSpr =
-      ButtonSprite::create("Awarded", 120, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+  auto awardedSpr = ButtonSprite::create("Awarded", 120, true, "goldFont.fnt",
+                                         "GJ_button_01.png", 30.f, 1.f);
   auto awardedItem = CCMenuItemSpriteExtra::create(
       awardedSpr, this, menu_selector(RLSearchLayer::onAwardedToggle));
   awardedItem->setScale(1.0f);
@@ -370,8 +321,9 @@ bool RLSearchLayer::init() {
 
   // featured button toggle
   auto featuredSpr = ButtonSprite::create(
-      "Featured", 120, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f); // Use a single sprite button as a menu item instead
-                           // of a toggler
+      "Featured", 120, true, "goldFont.fnt", "GJ_button_01.png", 30.f,
+      1.f); // Use a single sprite button as a menu item instead
+            // of a toggler
   auto featuredItem = CCMenuItemSpriteExtra::create(
       featuredSpr, this, menu_selector(RLSearchLayer::onFeaturedToggle));
   featuredItem->setScale(1.0f);
@@ -380,8 +332,8 @@ bool RLSearchLayer::init() {
   optionsMenu->addChild(featuredItem);
 
   // epic button toggle
-  auto epicSpr =
-      ButtonSprite::create("Epic", 120, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+  auto epicSpr = ButtonSprite::create("Epic", 120, true, "goldFont.fnt",
+                                      "GJ_button_01.png", 30.f, 1.f);
   auto epicItem = CCMenuItemSpriteExtra::create(
       epicSpr, this, menu_selector(RLSearchLayer::onEpicToggle));
   epicItem->setScale(1.0f);
@@ -389,8 +341,8 @@ bool RLSearchLayer::init() {
   m_epicItem = epicItem;
   optionsMenu->addChild(epicItem);
   // legendary button toggle
-  auto legendarySpr =
-      ButtonSprite::create("Legendary", 120, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+  auto legendarySpr = ButtonSprite::create(
+      "Legendary", 120, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
   auto legendaryItem = CCMenuItemSpriteExtra::create(
       legendarySpr, this, menu_selector(RLSearchLayer::onLegendaryToggle));
   legendaryItem->setScale(1.0f);
@@ -398,8 +350,8 @@ bool RLSearchLayer::init() {
   m_legendaryItem = legendaryItem;
   optionsMenu->addChild(legendaryItem);
   // platformer toggle
-  auto platformerSpr =
-      ButtonSprite::create("Platformer", 120, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+  auto platformerSpr = ButtonSprite::create(
+      "Platformer", 120, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
   auto platformerItem = CCMenuItemSpriteExtra::create(
       platformerSpr, this, menu_selector(RLSearchLayer::onPlatformerToggle));
   platformerItem->setScale(1.0f);
@@ -408,8 +360,8 @@ bool RLSearchLayer::init() {
   optionsMenu->addChild(platformerItem);
 
   // classic toggle
-  auto classicSpr =
-      ButtonSprite::create("Classic", 120, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+  auto classicSpr = ButtonSprite::create("Classic", 120, true, "goldFont.fnt",
+                                         "GJ_button_01.png", 30.f, 1.f);
   auto classicItem = CCMenuItemSpriteExtra::create(
       classicSpr, this, menu_selector(RLSearchLayer::onClassicToggle));
   classicItem->setScale(1.0f);
@@ -418,8 +370,8 @@ bool RLSearchLayer::init() {
   optionsMenu->addChild(classicItem);
 
   // username toggle
-  auto usernameSpr =
-      ButtonSprite::create("Username", 120, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+  auto usernameSpr = ButtonSprite::create("Username", 120, true, "goldFont.fnt",
+                                          "GJ_button_01.png", 30.f, 1.f);
   auto usernameItem = CCMenuItemSpriteExtra::create(
       usernameSpr, this, menu_selector(RLSearchLayer::onUsernameToggle));
   usernameItem->setScale(1.0f);
@@ -428,8 +380,8 @@ bool RLSearchLayer::init() {
   optionsMenu->addChild(usernameItem);
 
   // sorting toggle - descending
-  auto oldestSpr =
-      ButtonSprite::create("Oldest", 120, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+  auto oldestSpr = ButtonSprite::create("Oldest", 120, true, "goldFont.fnt",
+                                        "GJ_button_01.png", 30.f, 1.f);
   auto oldestItem = CCMenuItemSpriteExtra::create(
       oldestSpr, this, menu_selector(RLSearchLayer::onOldestToggle));
   oldestItem->setScale(1.0f);
@@ -438,8 +390,8 @@ bool RLSearchLayer::init() {
   optionsMenu->addChild(oldestItem);
 
   // completed toggle
-  auto completedSpr =
-      ButtonSprite::create("Completed", 120, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+  auto completedSpr = ButtonSprite::create(
+      "Completed", 120, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
   auto completedItem = CCMenuItemSpriteExtra::create(
       completedSpr, this, menu_selector(RLSearchLayer::onCompletedToggle));
   completedItem->setScale(1.0f);
@@ -448,8 +400,8 @@ bool RLSearchLayer::init() {
   optionsMenu->addChild(completedItem);
 
   // uncompleted toggle
-  auto uncompletedSpr =
-      ButtonSprite::create("Uncompleted", 120, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+  auto uncompletedSpr = ButtonSprite::create(
+      "Uncompleted", 120, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
   auto uncompletedItem = CCMenuItemSpriteExtra::create(
       uncompletedSpr, this, menu_selector(RLSearchLayer::onUncompletedToggle));
   uncompletedItem->setScale(1.0f);
@@ -458,10 +410,12 @@ bool RLSearchLayer::init() {
   optionsMenu->addChild(uncompletedItem);
 
   // coins verified toggle
-  auto coinsVerifiedSpr = ButtonSprite::create(
-      "Coins Verified", 120, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+  auto coinsVerifiedSpr =
+      ButtonSprite::create("Coins Verified", 120, true, "goldFont.fnt",
+                           "GJ_button_01.png", 30.f, 1.f);
   auto coinsVerifiedItem = CCMenuItemSpriteExtra::create(
-      coinsVerifiedSpr, this, menu_selector(RLSearchLayer::onCoinsVerifiedToggle));
+      coinsVerifiedSpr, this,
+      menu_selector(RLSearchLayer::onCoinsVerifiedToggle));
   coinsVerifiedItem->setScale(1.0f);
   coinsVerifiedItem->setID("coins-verified-toggle");
   m_coinsVerifiedItem = coinsVerifiedItem;
@@ -681,7 +635,7 @@ void RLSearchLayer::onCoinsVerifiedToggle(CCObject *sender) {
   auto btn = static_cast<ButtonSprite *>(normalNode);
   if (btn) {
     btn->updateBGImage(m_coinsVerifiedActive ? "GJ_button_02.png"
-                                            : "GJ_button_01.png");
+                                             : "GJ_button_01.png");
   }
 }
 

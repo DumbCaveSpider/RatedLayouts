@@ -57,6 +57,12 @@
 			"default": false,
 			"description": "Disable moving background in **all Rated Layouts Layer and Pages**. <cy>Enable this setting if you experience performance issues.</cy>"
 		},
+		"rgbBackground": {
+			"type": "rgb",
+			"name": "Background Color",
+			"default": [40, 125, 255],
+			"description": "Customize the background color of the **Main Page**, **Custom Search**, and **Leaderboard**"
+		},
 		"backgroundType": {
 			"type": "int",
 			"name": "Background Type",
@@ -72,37 +78,6 @@
 				"arrow-step": 1,
 				"big-arrow-step": 10
 			},
-			"enable-if": "!disableBackground"
-		},
-		"floorType": {
-			"type": "int",
-			"name": "Ground Type",
-			"default": 1,
-			"description": "Change the custom moving background ground in the Rated Layouts page. <cy>Numbers are based off the order shown in the ground selection in editor.</cy>",
-			"min": 1,
-			"max": 7,
-			"control": {
-				"arrows": true,
-				"slider": false,
-				"input": false,
-				"big-arrows": false,
-				"arrow-step": 1,
-				"big-arrow-step": 10
-			},
-			"enable-if": "!disableBackground"
-		},
-		"rgbBackground": {
-    		"type": "rgb",
-    		"name": "Background Color",
-    		"default": [40, 125, 255],
-			"description": "Customize the background color of the **Main Page**, **Custom Search**, and **Leaderboard**",
-			"enable-if": "!disableBackground"
-		},
-		"rgbFloor": {
-			"type": "rgb",
-			"name": "Ground Color",
-			"default": [0, 105, 255],
-			"description": "Customize the ground color of the **Main Page**, **Custom Search**, and **Leaderboard**",
 			"enable-if": "!disableBackground"
 		},
 		"newRateTitle": {
@@ -148,7 +123,7 @@
 		"removeSeconds" :{
 			"type": "int",
 			"name": "Remove Notification After (Seconds)",
-			"default": 1,
+			"default": 5,
 			"description": "Set the time duration for how long the newly rated/event layout notification stays on screen. <cy>Minimum is 1 second.</cy>",
 			"min": 1,
 			"max": 30,
