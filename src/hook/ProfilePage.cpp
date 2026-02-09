@@ -569,6 +569,8 @@ class $modify(RLProfilePage, ProfilePage) {
                                      pageRef->m_fields->m_stars);
             RLAchievements::checkAll(RLAchievements::Collectable::Planets,
                                      pageRef->m_fields->m_planets);
+            RLAchievements::checkAll(RLAchievements::Collectable::Points,
+                                     pageRef->m_fields->m_points);
           }
 
           // Handle creator points
