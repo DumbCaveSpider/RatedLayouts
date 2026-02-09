@@ -109,20 +109,25 @@ class $modify(LevelCell) {
     // featured score label
     if (score > 0 && featured > 0) {
       auto existingScoreLabel =
-          m_mainLayer->getChildByID("featured-score-label");
+          m_backgroundLayer->getChildByID("featured-score-label");
       if (existingScoreLabel) {
         existingScoreLabel->removeFromParent();
       }
       auto scoreLabel = CCLabelBMFont::create(
-          std::string("Featured Score: " + numToString(score)).c_str(),
+          std::string("RL Featured Score: " + numToString(score)).c_str(),
           "chatFont.fnt");
       if (scoreLabel) {
-        scoreLabel->setPosition({350, 5});
-        scoreLabel->setColor({255, 215, 0});
+        scoreLabel->setPosition({m_backgroundLayer->getContentSize().width - 7.f, 5.f});
+        scoreLabel->setColor({ 150, 200, 255 });
         scoreLabel->setScale(0.5f);
         scoreLabel->setAnchorPoint({1.0f, 0.f});
         scoreLabel->setID("featured-score-label");
-        m_mainLayer->addChild(scoreLabel);
+        m_backgroundLayer->addChild(scoreLabel);
+      }
+
+      if (m_compactView) {
+        scoreLabel->setPosition({m_backgroundLayer->getContentSize().width - 5.f, 2.f});
+        scoreLabel->setScale(0.4f);
       }
     }
 
