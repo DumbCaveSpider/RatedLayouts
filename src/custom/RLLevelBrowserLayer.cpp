@@ -935,15 +935,18 @@ void RLLevelBrowserLayer::populateFromArray(CCArray *levels) {
   contentLayer->removeAllChildrenWithCleanup(true);
 
   const float cellH = 90.f;
+  int index = 0;
   for (GJGameLevel *level : CCArrayExt<GJGameLevel *>(levels)) {
     if (!level)
       continue;
-    auto cell = new LevelCell("", 356.f, cellH);
+    auto cell = new LevelCell("RLLevelCell", 356.f, cellH);
     cell->autorelease();
     cell->loadFromLevel(level);
     cell->setContentSize({356.f, cellH});
     cell->setAnchorPoint({0.0f, 1.0f});
+    cell->updateBGColor(index);
     contentLayer->addChild(cell);
+    index++;
   }
 
   int returned = static_cast<int>(levels->count());

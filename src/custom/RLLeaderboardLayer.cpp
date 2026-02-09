@@ -375,25 +375,7 @@ void RLLeaderboardLayer::populateLeaderboard(
     CCSprite *bgSprite = nullptr;
     int currentAccountID = GJAccountManager::sharedState()->m_accountID;
 
-    if (rank == 1) {
-      // Gold for rank 1
-      bgSprite = CCSprite::create();
-      bgSprite->setTextureRect(CCRectMake(0, 0, 356.f, 40.f));
-      bgSprite->setColor({255, 215, 0});
-      bgSprite->setOpacity(175);
-    } else if (rank == 2) {
-      // Silver for rank 2
-      bgSprite = CCSprite::create();
-      bgSprite->setTextureRect(CCRectMake(0, 0, 356.f, 40.f));
-      bgSprite->setColor({192, 192, 192});
-      bgSprite->setOpacity(175);
-    } else if (rank == 3) {
-      // Bronze for rank 3
-      bgSprite = CCSprite::create();
-      bgSprite->setTextureRect(CCRectMake(0, 0, 356.f, 40.f));
-      bgSprite->setColor({205, 127, 50});
-      bgSprite->setOpacity(175);
-    } else if (accountId == currentAccountID) {
+    if (accountId == currentAccountID) {
       bgSprite = CCSprite::create();
       bgSprite->setTextureRect(CCRectMake(0, 0, 356.f, 40.f));
       bgSprite->setColor({230, 150, 10});
@@ -412,6 +394,33 @@ void RLLeaderboardLayer::populateLeaderboard(
       cell->addChild(bgSprite, 0);
     }
 
+    // glow for top 3
+    if (rank == 1) {
+      auto glow = CCSprite::createWithSpriteFrameName("chest_glow_bg_001.png");
+      glow->setPosition({100.f, 40.5f});
+      glow->setRotation(90);
+      glow->setAnchorPoint({0.f, 0.5f});
+      glow->setScale(5.f);
+      glow->setColor({255, 215, 0});
+      cell->addChild(glow, 1);
+    } else if (rank == 2) {
+      auto glow = CCSprite::createWithSpriteFrameName("chest_glow_bg_001.png");
+      glow->setPosition({100.f, 40.5f});
+      glow->setRotation(90);
+      glow->setAnchorPoint({0.f, 0.5f});
+      glow->setScale(5.f);
+      glow->setColor({192, 192, 192});
+      cell->addChild(glow, 1);
+    } else if (rank == 3) {
+      auto glow = CCSprite::createWithSpriteFrameName("chest_glow_bg_001.png");
+      glow->setPosition({100.f, 40.5f});
+      glow->setRotation(90);
+      glow->setAnchorPoint({0.f, 0.5f});
+      glow->setScale(5.f);
+      glow->setColor({205, 127, 50});
+      cell->addChild(glow, 1);
+    }
+
     // award achievement for getting on the leaderboard for the first time :)
     if (accountId == currentAccountID) {
       RLAchievements::onReward("misc_leaderboard"); // gg
@@ -423,7 +432,7 @@ void RLLeaderboardLayer::populateLeaderboard(
     rankLabel->setScale(0.5f);
     rankLabel->setPosition({15.f, 20.f});
     rankLabel->setAnchorPoint({0.f, 0.5f});
-    cell->addChild(rankLabel);
+    cell->addChild(rankLabel, 2);
 
     auto username = userValue["username"].asString().unwrapOrDefault();
     auto accountLabel = CCLabelBMFont::create(username.c_str(), "goldFont.fnt");
@@ -444,7 +453,7 @@ void RLLeaderboardLayer::populateLeaderboard(
     }
     player->setPosition({55.f, 20.f});
     player->setScale(0.75f);
-    cell->addChild(player);
+    cell->addChild(player, 2);
 
     auto buttonMenu = CCMenu::create();
     buttonMenu->setPosition({0, 0});
@@ -457,7 +466,7 @@ void RLLeaderboardLayer::populateLeaderboard(
     accountButton->setAnchorPoint({0.f, 0.5f});
 
     buttonMenu->addChild(accountButton);
-    cell->addChild(buttonMenu);
+    cell->addChild(buttonMenu, 2);
 
     auto scoreLabelText = CCLabelBMFont::create(
         fmt::format("{}", GameToolbox::pointsToString(score)).c_str(),
@@ -465,7 +474,7 @@ void RLLeaderboardLayer::populateLeaderboard(
     scoreLabelText->setScale(0.5f);
     scoreLabelText->setPosition({320.f, 20.f});
     scoreLabelText->setAnchorPoint({1.f, 0.5f});
-    cell->addChild(scoreLabelText);
+    cell->addChild(scoreLabelText, 2);
 
     const bool isStar = m_starsTab->isToggled();
     const bool isPlanets = m_planetsTab && m_planetsTab->isToggled();
@@ -479,7 +488,7 @@ void RLLeaderboardLayer::populateLeaderboard(
     iconSprite->setScale(0.65f);
     iconSprite->setPosition({325.f, 20.f});
     iconSprite->setAnchorPoint({0.f, 0.5f});
-    cell->addChild(iconSprite);
+    cell->addChild(iconSprite, 2);
 
     contentLayer->addChild(cell);
     rank++;

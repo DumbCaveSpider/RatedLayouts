@@ -54,8 +54,8 @@ bool RLReportPopup::init() {
 
       // helper to create a toggler with two visual states
       auto makeToggle = [this](const std::string& text) -> CCMenuItemToggler* {
-            auto offSpr = ButtonSprite::create(text.c_str(), "goldFont.fnt", "GJ_button_01.png");
-            auto onSpr = ButtonSprite::create(text.c_str(), "goldFont.fnt", "GJ_button_02.png");
+            auto offSpr = ButtonSprite::create(text.c_str(),120, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+            auto onSpr = ButtonSprite::create(text.c_str(), 120, true, "goldFont.fnt", "GJ_button_02.png", 30.f, 1.f);
             auto togg = CCMenuItemToggler::create(offSpr, onSpr, this, nullptr);
             return togg;
       };
