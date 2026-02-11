@@ -72,6 +72,20 @@ bool RLLevelBrowserLayer::init(GJSearchObject *object) {
   infoButton->setPosition({25, 25});
   uiMenu->addChild(infoButton);
 
+  // compact mode toggle button (bottom-left)
+  auto compactSpr = CCSprite::createWithSpriteFrameName("GJ_smallModeIcon_001.png");
+  if (compactSpr) {
+    m_compactToggleBtn = CCMenuItemSpriteExtra::create(
+        compactSpr, this, menu_selector(RLLevelBrowserLayer::onCompactToggle));
+    if (m_compactToggleBtn) {
+      m_compactToggleBtn->setPosition({infoButton->getPositionX(), infoButton->getPositionY() + 40});
+      uiMenu->addChild(m_compactToggleBtn);
+
+      m_compactMode = Mod::get()->getSavedValue<bool>("compact_mode", false);
+      m_compactToggleBtn->setOpacity(m_compactMode ? 255 : 180);
+    }
+  }
+
   m_listLayer = GJListLayer::create(nullptr, title, {191, 114, 62, 255},
                                     LIST_SIZE.width, LIST_SIZE.height, 0);
   m_listLayer->setPosition(
@@ -934,19 +948,40 @@ void RLLevelBrowserLayer::populateFromArray(CCArray *levels) {
   auto contentLayer = m_scrollLayer->m_contentLayer;
   contentLayer->removeAllChildrenWithCleanup(true);
 
-  const float cellH = 90.f;
+  const float defaultCellH = 90.f;
+  const float compactCellH = 50.f;
   int index = 0;
   for (GJGameLevel *level : CCArrayExt<GJGameLevel *>(levels)) {
     if (!level)
       continue;
+    float cellH = m_compactMode ? compactCellH : defaultCellH;
     auto cell = new LevelCell("RLLevelCell", 356.f, cellH);
     cell->autorelease();
+    cell->m_compactView = m_compactMode;
     cell->loadFromLevel(level);
     cell->setContentSize({356.f, cellH});
     cell->setAnchorPoint({0.0f, 1.0f});
     cell->updateBGColor(index);
     contentLayer->addChild(cell);
     index++;
+
+    // adjust position for compact mode to align with non-compact cells
+    if (m_compactMode) {
+      cell->m_mainLayer->setPositionX(cell->m_mainLayer->getPositionX() - 20.f);
+      cell->m_mainMenu->setPositionX(cell->m_mainMenu->getPositionX() + 20.f);
+      if (auto creatorName =
+              cell->m_mainMenu->getChildByIDRecursive("creator-name")) {
+        creatorName->setPositionX(creatorName->getPositionX() - 20.f);
+      }
+      if (auto completedIcon =
+              cell->m_mainLayer->getChildByIDRecursive("completed-icon")) {
+        completedIcon->setPosition(295.f, compactCellH / 2);
+      }
+      if (auto percentageLabel =
+              cell->m_mainLayer->getChildByIDRecursive("percentage-label")) {
+        percentageLabel->setPosition(295.f, compactCellH / 2);
+      }
+    }
   }
 
   int returned = static_cast<int>(levels->count());
@@ -991,6 +1026,72 @@ void RLLevelBrowserLayer::onInfoButton(CCObject *sender) {
       ->show();
 }
 
+void RLLevelBrowserLayer::onCompactToggle(CCObject *sender) {
+  m_compactMode = !m_compactMode;
+  Mod::get()->setSavedValue<bool>("compact_mode", m_compactMode);
+  if (m_compactToggleBtn) {
+    m_compactToggleBtn->setOpacity(m_compactMode ? 255 : 180);
+  }
+
+  if (!m_scrollLayer || !m_scrollLayer->m_contentLayer)
+    return;
+
+  auto contentLayer = m_scrollLayer->m_contentLayer;
+  auto children = contentLayer->getChildren();
+  if (!children)
+    return;
+
+  std::vector<GJGameLevel *> levels;
+  for (auto node : CCArrayExt<CCNode *>(children)) {
+    auto cell = typeinfo_cast<LevelCell *>(node);
+    if (!cell)
+      continue;
+    if (cell->m_level)
+      levels.push_back(cell->m_level);
+  }
+
+  contentLayer->removeAllChildrenWithCleanup(true);
+
+  const float defaultCellH = 90.f;
+  const float compactCellH = 50.f;
+
+  int index = 0;
+  for (auto lvl : levels) {
+    if (!lvl)
+      continue;
+    float cellH = m_compactMode ? compactCellH : defaultCellH;
+    auto cell = new LevelCell("RLLevelCell", 356.f, cellH);
+    cell->autorelease();
+    cell->m_compactView = m_compactMode;
+    cell->loadFromLevel(lvl);
+    cell->setContentSize({356.f, cellH});
+    cell->setAnchorPoint({0.0f, 1.0f});
+    cell->updateBGColor(index);
+    contentLayer->addChild(cell);
+    index++;
+
+    // adjust position for compact mode to align with non-compact cells
+    if (m_compactMode) {
+      cell->m_mainLayer->setPositionX(cell->m_mainLayer->getPositionX() - 20.f);
+      cell->m_mainMenu->setPositionX(cell->m_mainMenu->getPositionX() + 20.f);
+      if (auto creatorName =
+              cell->m_mainMenu->getChildByIDRecursive("creator-name")) {
+        creatorName->setPositionX(creatorName->getPositionX() - 20.f);
+      }
+      if (auto completedIcon =
+              cell->m_mainLayer->getChildByIDRecursive("completed-icon")) {
+        completedIcon->setPosition(295.f, compactCellH / 2);
+      }
+      if (auto percentageLabel =
+              cell->m_mainLayer->getChildByIDRecursive("percentage-label")) {
+        percentageLabel->setPosition(295.f, compactCellH / 2);
+      }
+    }
+  }
+
+  contentLayer->updateLayout();
+  m_needsLayout = true;
+}
 void RLLevelBrowserLayer::update(float dt) {
   // Deferred layout if requested
   if (m_needsLayout) {

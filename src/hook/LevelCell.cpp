@@ -577,6 +577,13 @@ class $modify(LevelCell) {
     }
   }
 
+  bool init() {
+    if (!LevelCell::init())
+      return false;
+    this->m_compactView = Mod::get()->getSavedValue<bool>("compact_mode", false);
+    return true;
+  }
+
   void loadFromLevel(GJGameLevel *level) {
 
     LevelCell::loadFromLevel(level);

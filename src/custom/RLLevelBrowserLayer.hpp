@@ -53,6 +53,11 @@ class RLLevelBrowserLayer : public CCLayer, public LevelManagerDelegate, public 
 
       std::unordered_map<long long, GJGameLevel*> m_levelCache;
 
+      // compact mode toggle
+      bool m_compactMode = false;
+      CCMenuItemSpriteExtra* m_compactToggleBtn = nullptr;
+      CCLabelBMFont* m_compactToggleLabel = nullptr;
+
       int m_page = 0;
       int m_totalPages = 1;
 
@@ -105,6 +110,7 @@ class RLLevelBrowserLayer : public CCLayer, public LevelManagerDelegate, public 
       void onClearButton(CCObject* sender);
       void onPageButton(CCObject* sender);
       void onInfoButton(CCObject* sender);
+      void onCompactToggle(CCObject* sender);
 
       // SetIDPopup delegate
       void setIDPopupClosed(SetIDPopup* popup, int value) override;

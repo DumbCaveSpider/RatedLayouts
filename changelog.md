@@ -15,6 +15,7 @@
 - Added **Total Demon Count** in the Difficulty Stats Popup.
 - Added **Layout Booster Badge** for users who has boosted the Rated Layouts Discord server.
 - Added **Newly Rated/Event Notifications**
+- Added **Featured Score** label in the level cells for featured rated layouts.
 - Fixed the Leaderboard and added refresh button to manually refresh the leaderboard data.
 - Added Indicators for Top 3 players in the Leaderboard Layer.
 - Layout that is Rated by RobTop will automatically gets unrated.

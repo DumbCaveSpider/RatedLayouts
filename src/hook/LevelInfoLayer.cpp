@@ -69,6 +69,8 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
     if (!LevelInfoLayer::init(level, challenge))
       return false;
 
+    level->m_rateFeature = true;
+
     log::debug("LevelInfoLayer: entering for level id {}", level->m_levelID);
 
     int starRatings = level->m_stars;
