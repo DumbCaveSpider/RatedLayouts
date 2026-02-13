@@ -1,3 +1,4 @@
+#include "../custom/RLLevelBrowserLayer.hpp"
 #include <Geode/Geode.hpp>
 #include <Geode/modify/LevelCell.hpp>
 #include <Geode/utils/async.hpp>
@@ -81,6 +82,56 @@ class $modify(LevelCell) {
       break;
     }
 
+    // calculate the ruby value based on difficulty
+    int rubyInitValue = 0;
+    switch (difficulty) {
+    case 1:
+      rubyInitValue = 0;
+      break;
+    case 2:
+      rubyInitValue = 50;
+      break;
+    case 3:
+      rubyInitValue = 100;
+      break;
+    case 4:
+      rubyInitValue = 175;
+      break;
+    case 5:
+      rubyInitValue = 175;
+      break;
+    case 6:
+      rubyInitValue = 250;
+      break;
+    case 7:
+      rubyInitValue = 250;
+      break;
+    case 8:
+      rubyInitValue = 350;
+      break;
+    case 9:
+      rubyInitValue = 350;
+      break;
+    case 10:
+      rubyInitValue = 500;
+      break;
+    case 15:
+      rubyInitValue = 625;
+      break;
+    case 20:
+      rubyInitValue = 750;
+      break;
+    case 25:
+      rubyInitValue = 875;
+      break;
+    case 30:
+      rubyInitValue = 1000;
+      break;
+    default:
+      rubyInitValue = 0;
+      break;
+    }
+
     // update  difficulty sprite
     auto difficultyContainer =
         m_mainLayer->getChildByID("difficulty-container");
@@ -106,6 +157,104 @@ class $modify(LevelCell) {
       sprite->setOpacity(255);
     }
 
+    // move the download, likes icon and label
+    auto downloadIcon = m_mainLayer->getChildByID("downloads-icon");
+    auto downloadLabel = m_mainLayer->getChildByID("downloads-label");
+    auto likesIcon = m_mainLayer->getChildByID("likes-icon");
+    auto likesLabel = m_mainLayer->getChildByID("likes-label");
+    if (downloadIcon) {
+      downloadIcon->setPositionX(downloadIcon->getPositionX() - 7.f);
+    }
+    if (downloadLabel) {
+      downloadLabel->setPositionX(downloadLabel->getPositionX() - 7.f);
+    }
+    if (likesIcon) {
+      likesIcon->setPositionX(likesIcon->getPositionX() - 14.f);
+    }
+    if (likesLabel) {
+      likesLabel->setPositionX(likesLabel->getPositionX() - 14.f);
+    }
+
+    // remove any existing ruby nodes to avoid duplicates
+    if (auto existingRubyIcon = m_mainLayer->getChildByID("ruby-icon"))
+      existingRubyIcon->removeFromParent();
+    if (auto existingRubyLabel = m_mainLayer->getChildByID("ruby-label"))
+      existingRubyLabel->removeFromParent();
+
+    // add the ruby icon
+    CCSprite *rubyIcon =
+        CCSprite::createWithSpriteFrameName("RL_rubySmall.png"_spr);
+    rubyIcon->setPosition(
+        {likesIcon->getPositionX() + 45.f, likesIcon->getPositionY()});
+    rubyIcon->setID("ruby-icon");
+    m_mainLayer->addChild(rubyIcon);
+
+    // determine collected rubies
+    int collected = 0;
+    bool isCompleted = false;
+    if (this->m_level) {
+      int lvlId = static_cast<int>(this->m_level->m_levelID);
+      isCompleted =
+          GameStatsManager::sharedState()->hasCompletedLevel(this->m_level);
+      if (isCompleted) {
+        // completed: show full value
+        collected = rubyInitValue;
+      } else {
+        // not completed: compute based on normal percent
+        int percentage = 0;
+        // to the devs asking, why cant you just do m_level->m_normalPercent? or
+        // getNormalPercent()? i want you to try do that and see what percentage
+        // or value it returns? did it says 0 even though you have made some
+        // percent progress? no clue why it does that :/
+        if (auto pctNode =
+                this->m_mainLayer->getChildByID("percentage-label")) {
+          // so i just did the hacky way and take the label and use the value of
+          // that instead
+          auto pctLabel = static_cast<CCLabelBMFont *>(pctNode);
+          std::string s = pctLabel->getString();
+          std::string digits;
+          for (char ch : s) {
+            if (std::isdigit(static_cast<unsigned char>(ch)))
+              digits.push_back(ch);
+          }
+          if (!digits.empty()) {
+            percentage = numFromString<int>(digits).unwrapOrDefault();
+          } else {
+            percentage = this->m_level
+                             ? this->m_level->m_normalPercent
+                             : 0; // ts always returns 0 for some reason
+          }
+        } else {
+          percentage = this->m_level ? this->m_level->m_normalPercent
+                                     : 0; // ts always returns 0 for some reason
+        }
+
+        double calcAtPercent = static_cast<double>(rubyInitValue) * 0.8 *
+                               (static_cast<double>(percentage) / 100.0);
+        collected = static_cast<int>(std::lround(calcAtPercent));
+        if (collected > rubyInitValue)
+          collected = rubyInitValue;
+      }
+    }
+
+    if (rubyIcon) {
+      std::string labelStr =
+          numToString(collected) + "/" + numToString(rubyInitValue);
+      auto rubyLabel = CCLabelBMFont::create(labelStr.c_str(), "bigFont.fnt");
+      rubyLabel->setPosition(
+          {rubyIcon->getPositionX() + 10.f, rubyIcon->getPositionY()});
+      rubyLabel->setScale(0.4f);
+      rubyLabel->setAnchorPoint({0.f, 0.5f});
+      rubyLabel->setID("ruby-label");
+      if (isCompleted) {
+        // tinted red for completed levels
+        rubyLabel->setColor({255, 150, 150});
+        rubyLabel->setString(
+            numToString(rubyInitValue).c_str()); // just show total if completed
+      }
+      m_mainLayer->addChild(rubyLabel);
+    }
+
     // featured score label
     if (score > 0 && featured > 0) {
       auto existingScoreLabel =
@@ -117,8 +266,9 @@ class $modify(LevelCell) {
           std::string("RL Featured Score: " + numToString(score)).c_str(),
           "chatFont.fnt");
       if (scoreLabel) {
-        scoreLabel->setPosition({m_backgroundLayer->getContentSize().width - 7.f, 5.f});
-        scoreLabel->setColor({ 150, 200, 255 });
+        scoreLabel->setPosition(
+            {m_backgroundLayer->getContentSize().width - 7.f, 5.f});
+        scoreLabel->setColor({150, 200, 255});
         scoreLabel->setScale(0.5f);
         scoreLabel->setAnchorPoint({1.0f, 0.f});
         scoreLabel->setID("featured-score-label");
@@ -126,8 +276,21 @@ class $modify(LevelCell) {
       }
 
       if (m_compactView) {
-        scoreLabel->setPosition({m_backgroundLayer->getContentSize().width - 5.f, 2.f});
+        scoreLabel->setPosition(
+            {m_backgroundLayer->getContentSize().width - 5.f, 2.f});
         scoreLabel->setScale(0.4f);
+      }
+    }
+
+    if (m_compactView) {
+      // ruby and icon
+      if (auto rubyIcon = m_mainLayer->getChildByID("ruby-icon")) {
+        rubyIcon->setPositionX(rubyIcon->getPositionX() - 8.f);
+        rubyIcon->setScale(0.6f);
+      }
+      if (auto rubyLabel = m_mainLayer->getChildByID("ruby-label")) {
+        rubyLabel->setPositionX(rubyLabel->getPositionX() - 10.f);
+        rubyLabel->setScale(0.3f);
       }
     }
 
@@ -580,7 +743,15 @@ class $modify(LevelCell) {
   bool init() {
     if (!LevelCell::init())
       return false;
-    this->m_compactView = Mod::get()->getSavedValue<bool>("compact_mode", false);
+    // i only want it for rl level browser, lol
+    if (auto scene = CCDirector::sharedDirector()->getRunningScene()) {
+      if (typeinfo_cast<RLLevelBrowserLayer *>(
+              scene->getChildren()->objectAtIndex(0))) {
+        this->m_compactView =
+            Mod::get()->getSavedValue<bool>("compact_mode", false);
+        return true;
+      }
+    }
     return true;
   }
 

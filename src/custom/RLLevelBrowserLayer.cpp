@@ -73,12 +73,14 @@ bool RLLevelBrowserLayer::init(GJSearchObject *object) {
   uiMenu->addChild(infoButton);
 
   // compact mode toggle button (bottom-left)
-  auto compactSpr = CCSprite::createWithSpriteFrameName("GJ_smallModeIcon_001.png");
+  auto compactSpr =
+      CCSprite::createWithSpriteFrameName("GJ_smallModeIcon_001.png");
   if (compactSpr) {
     m_compactToggleBtn = CCMenuItemSpriteExtra::create(
         compactSpr, this, menu_selector(RLLevelBrowserLayer::onCompactToggle));
     if (m_compactToggleBtn) {
-      m_compactToggleBtn->setPosition({infoButton->getPositionX(), infoButton->getPositionY() + 40});
+      m_compactToggleBtn->setPosition(
+          {infoButton->getPositionX(), infoButton->getPositionY() + 40});
       uiMenu->addChild(m_compactToggleBtn);
 
       m_compactMode = Mod::get()->getSavedValue<bool>("compact_mode", false);

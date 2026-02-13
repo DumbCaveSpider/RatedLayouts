@@ -3,11 +3,11 @@
 #include <Geode/modify/LevelInfoLayer.hpp>
 #include <Geode/utils/async.hpp>
 #include <argon/argon.hpp>
+#include <cmath>
 
 #include "../custom/RLAchievements.hpp"
 #include "../level/RLCommunityVotePopup.hpp"
 #include "../level/RLModRatePopup.hpp"
-#include "Geode/cocos/cocoa/CCObject.h"
 
 using namespace geode::prelude;
 
@@ -55,6 +55,8 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
     float m_originalCoin1Y = 0.0f;
     float m_originalCoin2Y = 0.0f;
     float m_originalCoin3Y = 0.0f;
+    bool m_orbsShiftApplied =
+        false; // true when orbs-icon/label were shifted for ruby UI
     async::TaskHolder<web::WebResponse> m_submitTask;
     async::TaskHolder<web::WebResponse> m_accessTask;
     async::TaskHolder<Result<std::string>> m_authTask;
@@ -69,9 +71,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
     if (!LevelInfoLayer::init(level, challenge))
       return false;
 
-    level->m_rateFeature = true;
-
-    log::debug("LevelInfoLayer: entering for level id {}", level->m_levelID);
+    log::debug("entering for level id {}", level->m_levelID);
 
     int starRatings = level->m_stars;
     bool legitCompleted = level->m_isCompletionLegitimate;
@@ -174,8 +174,11 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
       auto json = jsonRes.unwrap();
 
       // Process the response immediately
-      if (layerRef)
+      if (layerRef) {
         layerRef->processLevelRating(json, layerRef, difficultySprite, true);
+        layerRef->addOrUpdateRubyUI(
+            layerRef, json["difficulty"].asInt().unwrapOrDefault());
+      }
 
       // if level is rated, check via checkRated endpoint
       if (layerRef->m_level->m_stars > 0) {
@@ -1422,6 +1425,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
           starLabel->setPosition(
               {starIcon->getPositionX() - 7, starIcon->getPositionY()});
         }
+
       } else {
         log::warn("Failed to create star label (update) for level {}",
                   layerRef && layerRef->m_level ? layerRef->m_level->m_levelID
@@ -1654,6 +1658,147 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
     }
   };
 
+  std::pair<int, int> computeRubySplit(GJGameLevel *level, int totalRuby) {
+    int percent = 0;
+    if (level) {
+      percent = level->m_normalPercent;
+    }
+
+    // If player has 100% normal completion, award the full ruby total.
+    int calculated;
+    if (percent >= 100) {
+      calculated = totalRuby;
+    } else {
+      double calcAtPercent = static_cast<double>(totalRuby) * 0.8 *
+                             (static_cast<double>(percent) / 100.0);
+      calculated = static_cast<int>(std::lround(calcAtPercent));
+      // ensure we never exceed totalRuby due to rounding
+      if (calculated > totalRuby) {
+        calculated = totalRuby;
+      }
+    }
+
+    // Completion: Total Ruby x 0.2 (rounded)
+    double completionD = static_cast<double>(totalRuby) * 0.2;
+    int completion = static_cast<int>(std::lround(completionD));
+
+    return {calculated, completion};
+  }
+
+  void addOrUpdateRubyUI(Ref<RLLevelInfoLayer> layerRef, int difficulty) {
+    if (!layerRef)
+      return;
+
+    // compute ruby value (TOTAL RUBY)
+    int rubyInitValue = 0;
+    switch (difficulty) {
+    case 1:
+      rubyInitValue = 0;
+      break;
+    case 2:
+      rubyInitValue = 50;
+      break;
+    case 3:
+      rubyInitValue = 100;
+      break;
+    case 4:
+      rubyInitValue = 175;
+      break;
+    case 5:
+      rubyInitValue = 175;
+      break;
+    case 6:
+      rubyInitValue = 250;
+      break;
+    case 7:
+      rubyInitValue = 250;
+      break;
+    case 8:
+      rubyInitValue = 350;
+      break;
+    case 9:
+      rubyInitValue = 350;
+      break;
+    case 10:
+      rubyInitValue = 500;
+      break;
+    case 15:
+      rubyInitValue = 625;
+      break;
+    case 20:
+      rubyInitValue = 750;
+      break;
+    case 25:
+      rubyInitValue = 875;
+      break;
+    case 30:
+      rubyInitValue = 1000;
+      break;
+    default:
+      rubyInitValue = 0;
+      break;
+    }
+
+    // must have a reference point to position the ruby UI
+    auto lengthIcon = layerRef->getChildByID("length-icon");
+    if (!lengthIcon)
+      return;
+
+    // update orbs UI to show ruby
+    m_orbsIcon->setVisible(true);
+    // set to ruby sprite frame (use existing frame cache if possible)
+    if (auto frame =
+            CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(
+                "RL_rubiesIcon.png"_spr)) {
+      m_orbsIcon->setDisplayFrame(frame);
+    } else if (auto tex = CCTextureCache::sharedTextureCache()->addImage(
+                   "RL_rubiesIcon.png"_spr, false)) {
+      auto frame = CCSpriteFrame::createWithTexture(
+          tex, {{0, 0}, tex->getContentSize()});
+      m_orbsIcon->setDisplayFrame(frame);
+    }
+
+    m_orbsLabel->setVisible(true);
+    auto split = computeRubySplit(layerRef->m_level, rubyInitValue);
+    int calculatedAtPercent = split.first;
+    // int completionVal = split.second;
+    std::string orbsDisplay =
+        numToString(calculatedAtPercent) + "/" + numToString(rubyInitValue);
+    m_orbsLabel->setString(orbsDisplay.c_str());
+
+    // apply layout shifts only once (track via Fields::m_orbsShiftApplied)
+    if (!layerRef->m_fields->m_orbsShiftApplied) {
+      auto downloadsIcon = layerRef->getChildByID("downloads-icon");
+
+      if (downloadsIcon) {
+        downloadsIcon->setPositionY(downloadsIcon->getPositionY() + 8);
+      }
+      if (m_downloadsLabel) {
+        m_downloadsLabel->setPositionY(m_downloadsLabel->getPositionY() + 8);
+      }
+      if (m_likesIcon) {
+        m_likesIcon->setPositionY(m_likesIcon->getPositionY() + 10);
+      }
+      if (m_likesLabel) {
+        m_likesLabel->setPositionY(m_likesLabel->getPositionY() + 10);
+      }
+      if (lengthIcon) {
+        lengthIcon->setPositionY(lengthIcon->getPositionY() + 12);
+      }
+      if (m_lengthLabel) {
+        m_lengthLabel->setPositionY(m_lengthLabel->getPositionY() + 12);
+      }
+
+      if (m_orbsIcon || m_orbsLabel) {
+        m_orbsIcon->setScale(0.8f);
+        m_orbsIcon->setPositionY(m_orbsIcon->getPositionY() + 15);
+        m_orbsLabel->setPositionY(m_orbsIcon->getPositionY());
+      }
+
+      layerRef->m_fields->m_orbsShiftApplied = true;
+    }
+  }
+
   void requestStatus(int accountId) {
     // argon my beloved <3
     std::string token;
@@ -1831,6 +1976,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                  this->m_level->m_levelID);
 
       int levelId = this->m_level->m_levelID;
+      GJGameLevel *level = this->m_level;
 
       auto getReq = web::WebRequest();
       Ref<RLLevelInfoLayer> layerRef = this;
@@ -1838,7 +1984,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
       async::spawn(
           getReq.get(fmt::format(
               "https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId)),
-          [layerRef, levelId](web::WebResponse response) {
+          [layerRef, levelId, level](web::WebResponse response) {
             log::info(
                 "Received updated rating data from server for level ID: {}",
                 levelId);
@@ -1875,6 +2021,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             auto json = response.json().unwrap();
 
             int difficulty = json["difficulty"].asInt().unwrapOrDefault();
+            layerRef->addOrUpdateRubyUI(layerRef, difficulty);
             if (difficulty == 0) {
               // remove label and icon if present
               auto difficultySprite =
@@ -1930,8 +2077,6 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   layerRef->m_fields->m_originalCoinsSaved = false;
                 }
               }
-
-              return;
             }
 
             // Update the display with latest data

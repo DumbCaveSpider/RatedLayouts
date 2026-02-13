@@ -73,6 +73,10 @@ void RLAddDialogue::onSubmit(CCObject* sender) {
             upopup->showFailMessage("Dialogue cannot be empty!");
             return;
       }
+      if (dialogueText.length() > 500) {
+            upopup->showFailMessage("Dialogue cannot exceed 500 characters!");
+            return;
+      }
       // send to server
       matjson::Value body = matjson::Value::object();
       body["body"] = dialogueText;

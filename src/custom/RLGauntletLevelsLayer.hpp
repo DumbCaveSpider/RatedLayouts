@@ -1,4 +1,5 @@
 #include <Geode/Geode.hpp>
+#include <cue/RepeatingBackground.hpp>
 #include <chrono>
 #include <vector>
 
@@ -62,7 +63,7 @@ class RLGauntletLevelsLayer : public CCLayer {
 
       // Background parallax
       CCSprite* m_bgSprite = nullptr;
-      CCSprite* m_bgSprite2 = nullptr;
+      cue::RepeatingBackground* m_bgSprite2 = nullptr;
       CCPoint m_bgOriginPos = ccp(0, 0);
       CCPoint m_menuOriginPos = ccp(0, 0);
       float m_bgParallax = 0.25f;

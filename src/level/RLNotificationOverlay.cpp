@@ -139,7 +139,7 @@ void RLNotificationOverlay::callRateNotification(float dt) {
               obj["accountName"].asString().unwrapOr(std::string(""));
           r.isSuggested = obj["isSuggested"].asBool().unwrapOr(false);
           r.coinVerified = obj["coinVerified"].asBool().unwrapOr(false);
-          r.isPlatformer = obj["isPlat"].asBool().unwrapOr(false);
+          r.isPlatformer = obj["isPlatformer"].asBool().unwrapOr(false);
           r.eventType = obj["eventType"].asString().unwrapOr(std::string(""));
           return r;
         };
