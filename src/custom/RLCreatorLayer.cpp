@@ -339,6 +339,16 @@ bool RLCreatorLayer::init() {
       {creditButton->getPositionX(), creditButton->getPositionY() + 80});
   infoMenu->addChild(demonListBtn);
 
+  // shop
+  auto shopSpr =
+      CCSpriteGrayscale::createWithSpriteFrameName("RL_shop01.png"_spr);
+  shopSpr->setScale(0.7f);
+  auto shopBtn = CCMenuItemSpriteExtra::create(
+      shopSpr, this, menu_selector(RLCreatorLayer::onShopButton));
+  shopBtn->setPosition(
+      {creditButton->getPositionX(), creditButton->getPositionY() + 120});
+  infoMenu->addChild(shopBtn);
+
   // button bob
   if (Mod::get()->getSavedValue<int>("role") >= 1) {
     auto addDiagloueBtnSpr =
@@ -348,7 +358,7 @@ bool RLCreatorLayer::init() {
         addDiagloueBtnSpr, this,
         menu_selector(RLCreatorLayer::onSecretDialogueButton));
     addDialogueBtn->setPosition(
-        {creditButton->getPositionX(), creditButton->getPositionY() + 120});
+        {creditButton->getPositionX(), creditButton->getPositionY() + 160});
     infoMenu->addChild(addDialogueBtn);
   }
 
@@ -442,6 +452,42 @@ void RLCreatorLayer::onSecretDialogueButton(CCObject *sender) {
   }
   auto dialogue = RLAddDialogue::create();
   dialogue->show();
+}
+
+void RLCreatorLayer::onShopButton(CCObject *sender) {
+  auto obj1 = DialogObject::create("Layout Creator",
+                                   "Lamp oil?<d100> Rope?<d100> Bombs?", 28,
+                                   1.f, false, ccWHITE);
+  // additional follow-up dialog object
+  auto obj2 = DialogObject::create("Layout Creator",
+                                   "You want it? <d100> It's yours my friend",
+                                   28, 1.f, false, ccWHITE);
+  auto obj3 = DialogObject::create(
+      "Layout Creator",
+      fmt::format("As long as you have <cy>{}</c> <cr>Rubies</c>... ",
+                  Mod::get()->getSavedValue<int>("rubies")),
+      28, 1.f, false, ccWHITE);
+  auto obj4 = DialogObject::create(
+      "Layout Creator", "Wait, that's <cy>exactly how much you have!</c>", 28,
+      1.f, false, ccWHITE);
+  auto obj5 = DialogObject::create(
+      "Layout Creator", "Too bad you <cr>can't buy anything</c> with them...",
+      28, 1.f, false, ccWHITE);
+  auto obj6 = DialogObject::create("Layout Creator", "For now ;)", 28, 1.f,
+                                   false, ccWHITE);
+
+  CCArray *objects = nullptr;
+  objects = CCArray::create();
+  objects->addObject(obj1);
+  objects->addObject(obj2);
+  objects->addObject(obj3);
+  objects->addObject(obj4);
+  objects->addObject(obj5);
+  objects->addObject(obj6);
+  // show layer
+  auto dialog = DialogLayer::createDialogLayer(obj1, objects, 2);
+  dialog->addToMainScene();
+  dialog->animateInRandomSide();
 }
 
 void RLCreatorLayer::onAnnoucementButton(CCObject *sender) {

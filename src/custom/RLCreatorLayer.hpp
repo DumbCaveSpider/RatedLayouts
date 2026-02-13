@@ -26,6 +26,7 @@ class RLCreatorLayer : public CCLayer {
       void onAchievementsButton(CCObject* sender);
       void onCreditsButton(CCObject* sender);
       void onDemonListButton(CCObject* sender);
+      void onShopButton(CCObject* sender);
       void onSettingsButton(CCObject* sender);
       void onDiscordButton(CCObject* sender);
       void onBrowserButton(CCObject* sender);
