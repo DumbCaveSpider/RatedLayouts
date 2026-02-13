@@ -47,6 +47,72 @@ class $modify(RLPlayLayer, PlayLayer) {
         auto json = jsonRes.unwrap();
         auto difficulty = json["difficulty"].asInt().unwrapOr(0);
         self->m_fields->m_levelDifficulty = difficulty;
+
+        auto savePath = dirs::getModsSaveDir() / Mod::get()->getID() /
+                        "rubies_collected.json";
+        auto existing =
+            utils::file::readString(utils::string::pathToString(savePath));
+        matjson::Value root = matjson::Value::object();
+        if (existing) {
+          auto parsed = matjson::parse(existing.unwrap());
+          if (parsed && parsed.unwrap().isObject()) {
+            root = parsed.unwrap();
+          }
+        }
+
+        std::string levelKey = fmt::format("{}", lvlId);
+        if (!root[levelKey].isObject()) {
+          auto getTotalRubies = [](int difficulty) {
+            switch (difficulty) {
+            case 1:
+              return 0;
+            case 2:
+              return 50;
+            case 3:
+              return 100;
+            case 4:
+              return 175;
+            case 5:
+              return 175;
+            case 6:
+              return 250;
+            case 7:
+              return 250;
+            case 8:
+              return 350;
+            case 9:
+              return 350;
+            case 10:
+              return 500;
+            case 15:
+              return 625;
+            case 20:
+              return 750;
+            case 25:
+              return 875;
+            case 30:
+              return 1000;
+            default:
+              return 0;
+            }
+          };
+
+          int totalRuby = getTotalRubies(difficulty);
+          root[levelKey] = matjson::Value::object();
+          root[levelKey]["totalRubies"] = totalRuby;
+          root[levelKey]["collectedRubies"] = 0;
+
+          auto writeRes = utils::file::writeString(
+              utils::string::pathToString(savePath), root.dump());
+          if (!writeRes) {
+            log::warn("Failed to create rubies_collected.json entry for "
+                      "level {}: {}",
+                      lvlId, writeRes.unwrapErr());
+          } else {
+            log::debug("Created rubies_collected.json entry for level {} -> {}",
+                       lvlId, totalRuby);
+          }
+        }
       });
     } else {
       m_fields->m_isRatedLayout = false;
@@ -247,13 +313,12 @@ class $modify(RLPlayLayer, PlayLayer) {
             int oldRubies = Mod::get()->getSavedValue<int>("rubies");
             int newRubies = oldRubies + adjustedRubies;
             Mod::get()->setSavedValue<int>("rubies", newRubies);
-            log::debug("Awarded {} rubies (global): {} -> {}", adjustedRubies,
-                       oldRubies, newRubies);
+            log::debug("Awarded {} rubies: {} -> {}", adjustedRubies, oldRubies,
+                       newRubies);
 
             rewardLayer->m_diamonds = 0;
             if (rewardLayer->m_diamondsLabel) {
-              rewardLayer->m_diamondsLabel->setString(
-                  numToString(oldRubies).c_str());
+              rewardLayer->incrementDiamondsCount(oldRubies);
             }
           }
 

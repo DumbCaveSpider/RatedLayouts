@@ -176,6 +176,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
       // Process the response immediately
       if (layerRef) {
         layerRef->processLevelRating(json, layerRef, difficultySprite, true);
+        layerRef->repositionRubyUI();
         layerRef->addOrUpdateRubyUI(
             layerRef, json["difficulty"].asInt().unwrapOrDefault());
       }
@@ -1788,6 +1789,10 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
       if (m_lengthLabel) {
         m_lengthLabel->setPositionY(m_lengthLabel->getPositionY() + 12);
       }
+      if (m_exactLengthLabel) {
+        m_exactLengthLabel->setPositionY(m_exactLengthLabel->getPositionY() +
+                                         12);
+      }
 
       if (m_orbsIcon || m_orbsLabel) {
         m_orbsIcon->setScale(0.8f);
@@ -2095,7 +2100,45 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
 
       this->repositionRLStars();
     }
+
     LevelInfoLayer::onUpdate(sender);
+  }
+
+  void repositionRubyUI() {
+    if (m_fields->m_orbsShiftApplied) {
+      log::debug("Repositioning Ruby UI and related elements");
+      auto downloadsIcon = this->getChildByID("downloads-icon");
+      auto lengthIcon = this->getChildByID("length-icon");
+
+      if (downloadsIcon) {
+        downloadsIcon->setPositionY(downloadsIcon->getPositionY() + 6);
+      }
+      if (m_downloadsLabel) {
+        m_downloadsLabel->setPositionY(m_downloadsLabel->getPositionY() + 6);
+      }
+      if (m_likesIcon) {
+        m_likesIcon->setPositionY(m_likesIcon->getPositionY() + 8);
+      }
+      if (m_likesLabel) {
+        m_likesLabel->setPositionY(m_likesLabel->getPositionY() + 8);
+      }
+      if (lengthIcon) {
+        lengthIcon->setPositionY(lengthIcon->getPositionY() + 10);
+      }
+      if (m_lengthLabel) {
+        m_lengthLabel->setPositionY(m_lengthLabel->getPositionY() + 10);
+      }
+      if (m_exactLengthLabel) {
+        m_exactLengthLabel->setPositionY(m_exactLengthLabel->getPositionY() +
+                                         10);
+      }
+
+      if (m_orbsIcon || m_orbsLabel) {
+        m_orbsIcon->setScale(0.8f);
+        m_orbsIcon->setPositionY(m_orbsIcon->getPositionY() + 15);
+        m_orbsLabel->setPositionY(m_orbsIcon->getPositionY());
+      }
+    }
   }
 
   void onPlay(CCObject *sender) {

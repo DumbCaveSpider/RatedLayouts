@@ -242,7 +242,7 @@ class $modify(LevelCell) {
           numToString(collected) + "/" + numToString(rubyInitValue);
       auto rubyLabel = CCLabelBMFont::create(labelStr.c_str(), "bigFont.fnt");
       rubyLabel->setPosition(
-          {rubyIcon->getPositionX() + 10.f, rubyIcon->getPositionY()});
+          {rubyIcon->getPositionX() + 10.f, rubyIcon->getPositionY() - 1.f});
       rubyLabel->setScale(0.4f);
       rubyLabel->setAnchorPoint({0.f, 0.5f});
       rubyLabel->setID("ruby-label");
