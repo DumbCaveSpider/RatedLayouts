@@ -86,8 +86,24 @@ bool RLEventLayouts::init() {
   container->setPosition({22, containerTopY});
   m_mainLayer->addChild(container);
 
-  // also create platformer (planet) container directly underneath the main
-  // container
+  auto cellSize = container->getContentSize();
+  auto levelCell = new LevelCell("RLLevelCell", 420, 94);
+  levelCell->setScale(.85f);
+  levelCell->setPosition(-18.f, -4.f);
+  levelCell->autorelease();
+  levelCell->setContentSize(cellSize);
+  levelCell->setAnchorPoint({0.5f, 0.5f});
+  container->addChild(levelCell, 1);
+  m_sections[idx].levelCell = levelCell;
+
+  // main play LoadingSpinner (centered in container)
+  if (auto spinner = LoadingSpinner::create(25.f)) {
+    spinner->setPosition({cellSize.width / 2.f, cellSize.height / 2.f});
+    spinner->setVisible(false);
+    container->addChild(spinner, 2);
+    m_sections[idx].playSpinner = spinner;
+  }
+
   auto platContainer = CCLayer::create();
   platContainer->setContentSize({380.f, 84.f});
   platContainer->setAnchorPoint({0.5f, 0.5f});
@@ -100,7 +116,23 @@ bool RLEventLayouts::init() {
     platContainer->addChild(platBg, -1);
   }
   m_sections[idx].platContainer = platContainer;
-  // space of 6px between containers
+
+  auto platCell = new LevelCell("RLLevelCell", 420, 94);
+  platCell->setScale(.85f);
+  platCell->setPosition(-18.f, -4.f);
+  platCell->autorelease();
+  platCell->setContentSize(cellSize);
+  platCell->setAnchorPoint({0.5f, 0.5f});
+  platContainer->addChild(platCell, 1);
+  m_sections[idx].platLevelCell = platCell;
+
+  if (auto platSpinner = LoadingSpinner::create(25.f)) {
+    platSpinner->setPosition({cellSize.width / 2.f, cellSize.height / 2.f});
+    platSpinner->setVisible(false);
+    platContainer->addChild(platSpinner, 2);
+    m_sections[idx].platPlaySpinner = platSpinner;
+  }
+
   float platY =
       containerTopY - (container->getContentSize().height / 2.f +
                        platContainer->getContentSize().height / 2.f + 6.f);
@@ -117,131 +149,6 @@ bool RLEventLayouts::init() {
                             m_mainLayer->getContentSize().height - 15.f});
   m_mainLayer->addChild(headerLabel, 3);
 
-  // level name (inside a fixed-width container to cap width at 280.f)
-  const float nameContainerWidth = 200.f;
-  const float nameContainerHeight = 18.f;
-  auto nameContainer = CCLayer::create();
-  nameContainer->setContentSize({nameContainerWidth, nameContainerHeight});
-  const float nameY = container->getContentSize().height * 0.6f;
-  nameContainer->setPosition({70.f, nameY});
-  nameContainer->setAnchorPoint({0.f, 0.5f});
-  container->addChild(nameContainer);
-  auto levelNameLabel = CCLabelBMFont::create("-", "bigFont.fnt");
-  levelNameLabel->setAnchorPoint({0.f, 0.5f});
-  levelNameLabel->setPosition({0.f, nameContainerHeight / 2.f});
-  levelNameLabel->setScale(0.8f);
-  nameContainer->addChild(levelNameLabel);
-  m_sections[idx].levelNameLabel = levelNameLabel;
-
-  // platformer name container
-  auto platNameContainer = CCLayer::create();
-  platNameContainer->setContentSize({nameContainerWidth, nameContainerHeight});
-  float platNameY = platContainer->getContentSize().height * 0.6f;
-  platNameContainer->setPosition({70.f, platNameY});
-  platNameContainer->setAnchorPoint({0.f, 0.5f});
-  platContainer->addChild(platNameContainer);
-  auto platLevelNameLabel = CCLabelBMFont::create("-", "bigFont.fnt");
-  platLevelNameLabel->setAnchorPoint({0.f, 0.5f});
-  platLevelNameLabel->setPosition({0.f, nameContainerHeight / 2.f});
-  platLevelNameLabel->setScale(0.8f);
-  platNameContainer->addChild(platLevelNameLabel);
-  m_sections[idx].platLevelNameLabel = platLevelNameLabel;
-
-  // rewards label (classic)
-  auto rewardsLabel = CCLabelBMFont::create("Rewards: -", "bigFont.fnt");
-  rewardsLabel->setAnchorPoint({0.5f, 0.5f});
-  rewardsLabel->setScale(0.4f);
-  float initialCenterX = container->getContentSize().width / 2.f;
-  float initialLabelY = 12.f;
-  rewardsLabel->setPosition({initialCenterX, initialLabelY});
-  container->addChild(rewardsLabel, 2);
-  m_sections[idx].difficultyValueLabel = rewardsLabel;
-
-  // rewards label (platformer)
-  auto platRewardsLabel = CCLabelBMFont::create("Rewards: -", "bigFont.fnt");
-  platRewardsLabel->setAnchorPoint({0.5f, 0.5f});
-  platRewardsLabel->setScale(0.4f);
-  float initialCenterXp = platContainer->getContentSize().width / 2.f;
-  float initialLabelYp = 12.f;
-  platRewardsLabel->setPosition({initialCenterXp, initialLabelYp});
-  platContainer->addChild(platRewardsLabel, 2);
-  m_sections[idx].platDifficultyValueLabel = platRewardsLabel;
-
-  // reward star (classic)
-  auto rewardsStar = CCSprite::createWithSpriteFrameName("RL_starMed.png"_spr);
-  if (rewardsStar) {
-    rewardsStar->setScale(0.6f);
-    // position to the right of centered label
-    float labelWidth =
-        rewardsLabel->getContentSize().width * rewardsLabel->getScaleX();
-    float gap = 6.f;
-    float starX =
-        initialCenterX + (labelWidth / 2.f) + gap +
-        (rewardsStar->getContentSize().width * rewardsStar->getScaleX() / 2.f);
-    rewardsStar->setPosition({starX, initialLabelY});
-    container->addChild(rewardsStar, 2);
-  }
-  m_sections[idx].starIcon = rewardsStar;
-
-  // platform reward icon (planet)
-  auto platStar = CCSprite::createWithSpriteFrameName("RL_planetMed.png"_spr);
-  if (platStar) {
-    platStar->setScale(0.6f);
-    float labelWidthP = platRewardsLabel->getContentSize().width *
-                        platRewardsLabel->getScaleX();
-    float gapP = 6.f;
-    float starXp =
-        initialCenterXp + (labelWidthP / 2.f) + gapP +
-        (platStar->getContentSize().width * platStar->getScaleX() / 2.f);
-    platStar->setPosition({starXp, initialLabelYp});
-    platContainer->addChild(platStar, 2);
-  }
-  m_sections[idx].platStarIcon = platStar;
-
-  // creator menu (classic)
-  auto creatorMenu = CCMenu::create();
-  creatorMenu->setPosition({0, 0});
-  creatorMenu->setContentSize(container->getContentSize());
-  auto creatorLabel = CCLabelBMFont::create("By", "goldFont.fnt");
-  creatorLabel->setAnchorPoint({0.f, 0.5f});
-  creatorLabel->setScale(0.55f);
-
-  auto creatorItem = CCMenuItemSpriteExtra::create(
-      creatorLabel, this, menu_selector(RLEventLayouts::onCreatorClicked));
-  creatorItem->setTag(0);
-  creatorItem->setAnchorPoint({0.f, 0.5f});
-  creatorItem->setContentSize({100.f, 12.f});
-  // position creator for classic container
-  creatorItem->setPosition({70.f, 35.f});
-  creatorLabel->setPosition({0.f, creatorItem->getContentSize().height / 2.f});
-  creatorLabel->setAnchorPoint({0.f, 0.5f});
-  creatorMenu->addChild(creatorItem);
-  container->addChild(creatorMenu, 2);
-  m_sections[idx].creatorLabel = creatorLabel;
-  m_sections[idx].creatorButton = creatorItem;
-
-  // creator menu (platformer)
-  auto platCreatorMenu = CCMenu::create();
-  platCreatorMenu->setPosition({0, 0});
-  platCreatorMenu->setContentSize(platContainer->getContentSize());
-  auto platCreatorLabel = CCLabelBMFont::create("By", "goldFont.fnt");
-  platCreatorLabel->setAnchorPoint({0.f, 0.5f});
-  platCreatorLabel->setScale(0.55f);
-  auto platCreatorItem = CCMenuItemSpriteExtra::create(
-      platCreatorLabel, this, menu_selector(RLEventLayouts::onCreatorClicked));
-  platCreatorItem->setTag(0);
-  platCreatorItem->setAnchorPoint({0.f, 0.5f});
-  platCreatorItem->setContentSize({100.f, 12.f});
-  // position creator for platformer container
-  platCreatorItem->setPosition({70.f, 35.f});
-  platCreatorLabel->setPosition(
-      {0.f, platCreatorItem->getContentSize().height / 2.f});
-  platCreatorLabel->setAnchorPoint({0.f, 0.5f});
-  platCreatorMenu->addChild(platCreatorItem);
-  platContainer->addChild(platCreatorMenu, 2);
-  m_sections[idx].platCreatorLabel = platCreatorLabel;
-  m_sections[idx].platCreatorButton = platCreatorItem;
-
   // timer label
   std::vector<std::string> timerPrefixes = {"Next Daily in ", "Next Weekly in ",
                                             "Next Monthly in "};
@@ -251,66 +158,6 @@ bool RLEventLayouts::init() {
   timerLabel->setScale(0.4f);
   m_mainLayer->addChild(timerLabel);
   m_sections[idx].timerLabel = timerLabel;
-
-  // difficulty sprite (classic)
-  auto diffSprite = GJDifficultySprite::create(0, GJDifficultyName::Short);
-  diffSprite->setPosition({40, container->getContentSize().height / 2});
-  container->addChild(diffSprite);
-  m_sections[idx].diff = diffSprite;
-
-  // difficulty sprite (platformer)
-  auto platDiffSprite = GJDifficultySprite::create(0, GJDifficultyName::Short);
-  platDiffSprite->setPosition({40, platContainer->getContentSize().height / 2});
-  platContainer->addChild(platDiffSprite);
-  m_sections[idx].platDiff = platDiffSprite;
-
-  // play button (classic)
-  auto playMenu = CCMenu::create();
-  playMenu->setPosition({0, 0});
-  auto playSprite = CCSprite::createWithSpriteFrameName("GJ_playBtn2_001.png");
-  if (!playSprite)
-    playSprite = CCSprite::createWithSpriteFrameName("GJ_playBtn2_001.png");
-  playSprite->setScale(0.65f);
-  auto playButton = CCMenuItemSpriteExtra::create(
-      playSprite, this, menu_selector(RLEventLayouts::onPlayEvent));
-  playButton->setPosition({330.f, container->getContentSize().height / 2});
-  playButton->setAnchorPoint({0.5f, 0.5f});
-  playMenu->addChild(playButton);
-  auto playSpinner = LoadingSpinner::create(40.f);
-  if (playSpinner) {
-    playSpinner->setPosition(playButton->getPosition());
-    playSpinner->setVisible(true);
-    playMenu->addChild(playSpinner);
-    m_sections[idx].playSpinner = playSpinner;
-  }
-  playButton->setVisible(false);
-  container->addChild(playMenu, 2);
-  m_sections[idx].playButton = playButton;
-
-  // play button (platformer)
-  auto platPlayMenu = CCMenu::create();
-  platPlayMenu->setPosition({0, 0});
-  auto platPlaySprite =
-      CCSprite::createWithSpriteFrameName("GJ_playBtn2_001.png");
-  if (!platPlaySprite)
-    platPlaySprite = CCSprite::createWithSpriteFrameName("GJ_playBtn2_001.png");
-  platPlaySprite->setScale(0.65f);
-  auto platPlayButton = CCMenuItemSpriteExtra::create(
-      platPlaySprite, this, menu_selector(RLEventLayouts::onPlayEvent));
-  platPlayButton->setPosition(
-      {330.f, platContainer->getContentSize().height / 2});
-  platPlayButton->setAnchorPoint({0.5f, 0.5f});
-  platPlayMenu->addChild(platPlayButton);
-  auto platPlaySpinner = LoadingSpinner::create(40.f);
-  if (platPlaySpinner) {
-    platPlaySpinner->setPosition(platPlayButton->getPosition());
-    platPlaySpinner->setVisible(true);
-    platPlayMenu->addChild(platPlaySpinner);
-    m_sections[idx].platPlaySpinner = platPlaySpinner;
-  }
-  platPlayButton->setVisible(false);
-  platContainer->addChild(platPlayMenu, 2);
-  m_sections[idx].platPlayButton = platPlayButton;
 
   // safe button
   auto safeMenu = CCMenu::create();
@@ -356,17 +203,8 @@ bool RLEventLayouts::init() {
             return;
           const auto &key = keys[idx];
           auto sec = &self->m_sections[idx];
-          // if the key is missing or contains no levelId, keep showing the
-          // loading spinner and hide play buttons
+
           if (!json.contains(key)) {
-            if (sec->playSpinner)
-              sec->playSpinner->setVisible(true);
-            if (sec->playButton)
-              sec->playButton->setVisible(false);
-            if (sec->platPlaySpinner)
-              sec->platPlaySpinner->setVisible(true);
-            if (sec->platPlayButton)
-              sec->platPlayButton->setVisible(false);
             return;
           }
           auto obj = json[key];
@@ -374,139 +212,111 @@ bool RLEventLayouts::init() {
           auto levelIdValue = obj["levelId"].as<int>();
           if (levelIdValue) {
             levelId = levelIdValue.unwrap();
-            if (sec->playSpinner)
-              sec->playSpinner->setVisible(false);
-            if (sec->playButton) {
-              sec->playButton->setVisible(true);
-              sec->playButton->setEnabled(true);
-            }
-
-            self->m_sections[idx].levelId = levelId;
-            self->m_sections[idx].secondsLeft =
-                obj["secondsLeft"].as<int>().unwrapOrDefault();
-          } else {
-            if (sec->playSpinner)
-              sec->playSpinner->setVisible(true);
-            if (sec->playButton)
-              sec->playButton->setVisible(false);
           }
 
-          auto levelName = obj["levelName"].as<std::string>().unwrapOrDefault();
-          auto creator = obj["creator"].as<std::string>().unwrapOrDefault();
-          auto difficulty = obj["difficulty"].as<int>().unwrapOrDefault();
-          auto accountId = obj["accountId"].as<int>().unwrapOrDefault();
-          auto featured = obj["featured"].as<int>().unwrapOrDefault();
+          self->m_sections[idx].levelId = levelId;
+          self->m_sections[idx].secondsLeft =
+              obj["secondsLeft"].as<int>().unwrapOrDefault();
 
-          if (!sec || !sec->container)
-            return;
-          auto nameLabel = sec->levelNameLabel;
-          auto creatorLabel = sec->creatorLabel;
-          if (nameLabel) {
-            nameLabel->setString(levelName.c_str());
-            const float maxNameWidth = 200.f;
-            const float baseNameScale = 0.8f;
-            nameLabel->setScale(baseNameScale);
-            const float labelWidth =
-                nameLabel->getContentSize().width * nameLabel->getScaleX();
-            if (labelWidth > maxNameWidth) {
-              const float newScale =
-                  maxNameWidth / nameLabel->getContentSize().width;
-              nameLabel->setScale(newScale);
-            }
-          }
-          if (creatorLabel) {
-            creatorLabel->setString(("By " + creator).c_str());
-            creatorLabel->setAnchorPoint({0.f, 0.5f});
-          };
-
-          if (sec->difficultyValueLabel && sec->container) {
-            sec->difficultyValueLabel->setString(
-                ("Rewards: " + numToString(difficulty)).c_str());
-            const float centerX = sec->container->getContentSize().width / 2.f;
-            const float labelY = 12.f;
-            sec->difficultyValueLabel->setPosition({centerX, labelY});
-
-            // recreate star to ensure correct sprite and positioning
-            if (sec->starIcon) {
-              sec->starIcon->removeFromParent();
-              sec->starIcon = nullptr;
-            }
-            auto newStar =
-                CCSprite::createWithSpriteFrameName("RL_starMed.png"_spr);
-            if (newStar) {
-              newStar->setScale(0.6f);
-              float labelWidth =
-                  sec->difficultyValueLabel->getContentSize().width *
-                  sec->difficultyValueLabel->getScaleX();
-              float gap = 2.f;
-              float starX = centerX + (labelWidth / 2.f) + gap +
-                            (newStar->getContentSize().width *
-                             newStar->getScaleX() / 2.f);
-              newStar->setPosition({starX, labelY});
-              sec->container->addChild(newStar, 2);
-              sec->starIcon = newStar;
-            }
-          }
-
-          // update classic difficulty sprite and featured coin
-          if (sec->diff) {
-            sec->diff->updateDifficultyFrame(getDifficulty(difficulty),
-                                             GJDifficultyName::Short);
-            if (featured >= 1 && featured <= 4) {
-              sec->featured = featured;
-              const char *coinSprite =
-                  (featured == 1)   ? "RL_featuredCoin.png"_spr
-                  : (featured == 2) ? "RL_epicFeaturedCoin.png"_spr
-                  : (featured == 3) ? "RL_legendaryFeaturedCoin.png"_spr
-                                    : "RL_mythicFeaturedCoin.png"_spr;
-              if (sec->featuredIcon) {
-                sec->featuredIcon->removeFromParent();
-                sec->featuredIcon = nullptr;
+          // if we already have the full GJGameLevel cached, populate the
+          if (auto glm = GameLevelManager::sharedState()) {
+            // main-level search object/key
+            auto mainSearchObj = GJSearchObject::create(
+                SearchType::Search, fmt::format("{}", levelId));
+            auto mainKey = std::string(mainSearchObj->getKey());
+            std::string platJsonKey = mainKey + "Plat";
+            int platLevelId = -1;
+            if (json.contains(platJsonKey)) {
+              auto pval = json[platJsonKey]["levelId"].as<int>();
+              if (pval) {
+                platLevelId = pval.unwrap();
               }
-              auto coinIcon = CCSprite::createWithSpriteFrameName(coinSprite);
-              if (coinIcon) {
-                coinIcon->setPosition(
-                    {sec->diff->getContentSize().width / 2.f,
-                     sec->diff->getContentSize().height / 2.f});
-                coinIcon->setZOrder(-1);
-                sec->diff->addChild(coinIcon);
-                sec->featuredIcon = coinIcon;
+            }
 
-                // add particle for epic/legendary/mythic rings
-                if (featured == 2 || featured == 3 || featured == 4) {
-                  const std::string &pString = (featured == 2) ? epicPString
-                                               : (featured == 3)
-                                                   ? legendaryPString
-                                                   : mythicPString;
-                  if (!pString.empty()) {
-                    if (auto existingP =
-                            coinIcon->getChildByID("rating-particles")) {
-                      existingP->removeFromParent();
-                    }
-                    ParticleStruct pStruct;
-                    GameToolbox::particleStringToStruct(pString, pStruct);
-                    CCParticleSystemQuad *particle =
-                        GameToolbox::particleFromStruct(pStruct, nullptr,
-                                                        false);
-                    if (particle) {
-                      coinIcon->addChild(particle, 1);
-                      particle->resetSystem();
-                      particle->setPosition(coinIcon->getContentSize() / 2.f);
-                      particle->setID("rating-particles"_spr);
-                      particle->update(0.15f);
-                      particle->update(0.15f);
+            if (platLevelId > 0) {
+              auto combinedSearchObj = GJSearchObject::create(
+                  SearchType::Search,
+                  fmt::format("{},{}", levelId, platLevelId));
+              auto combinedKey = std::string(combinedSearchObj->getKey());
+
+              // check cache for combined key
+              auto storedLvls = glm->getStoredOnlineLevels(combinedKey.c_str());
+              if (storedLvls && storedLvls->count() > 0) {
+                // iterate through returned levels and populate matching cells
+                for (unsigned int si = 0; si < storedLvls->count(); ++si) {
+                  if (auto lvl = static_cast<GJGameLevel *>(
+                          storedLvls->objectAtIndex(si))) {
+                    if (lvl->m_levelID == levelId &&
+                        self->m_sections[idx].levelCell) {
+                      self->m_sections[idx].levelCell->loadFromLevel(lvl);
+                      if (self->m_sections[idx].playSpinner)
+                        self->m_sections[idx].playSpinner->setVisible(false);
+                    } else if (lvl->m_levelID == platLevelId &&
+                               self->m_sections[idx].platLevelCell) {
+                      self->m_sections[idx].platLevelCell->loadFromLevel(lvl);
+                      if (self->m_sections[idx].platPlaySpinner)
+                        self->m_sections[idx].platPlaySpinner->setVisible(
+                            false);
                     }
                   }
                 }
+              } else {
+                self->m_sections[idx].pendingKey = combinedKey;
+                self->m_sections[idx].pendingLevelId = levelId;
+                self->m_sections[idx].pendingPlatKey = combinedKey;
+                self->m_sections[idx].pendingPlatLevelId = platLevelId;
+                if (self->m_sections[idx].playSpinner)
+                  self->m_sections[idx].playSpinner->setVisible(true);
+                if (self->m_sections[idx].platPlaySpinner)
+                  self->m_sections[idx].platPlaySpinner->setVisible(true);
+                glm->getOnlineLevels(combinedSearchObj);
               }
             } else {
-              if (sec->featuredIcon) {
-                sec->featuredIcon->removeFromParent();
-                sec->featuredIcon = nullptr;
-                sec->featured = 0;
+              auto storedLvls = glm->getStoredOnlineLevels(mainKey.c_str());
+              if (storedLvls && storedLvls->count() > 0) {
+                if (auto lvl = static_cast<GJGameLevel *>(
+                        storedLvls->objectAtIndex(0))) {
+                  if (self->m_sections[idx].levelCell) {
+                    self->m_sections[idx].levelCell->loadFromLevel(lvl);
+                    if (self->m_sections[idx].playSpinner)
+                      self->m_sections[idx].playSpinner->setVisible(false);
+                    if (self->m_sections[idx].levelCell->m_mainMenu) {
+                      self->m_sections[idx].levelCell->m_mainMenu->setPosition(
+                          {0, 0});
+                      auto viewButton =
+                          self->m_sections[idx]
+                              .levelCell->m_mainMenu->getChildByID(
+                                  "view-button");
+                      auto creatorButton =
+                          self->m_sections[idx]
+                              .levelCell->m_mainMenu->getChildByID(
+                                  "creator-name");
+                      creatorButton->setPosition({50, 54});
+                      creatorButton->setAnchorPoint({0.f, 0.5f});
+                      viewButton->setPosition(
+                          {self->m_sections[idx]
+                               .levelCell->getContentSize()
+                               .width,
+                           self->m_sections[idx]
+                                   .levelCell->getContentSize()
+                                   .height /
+                               2.f});
+                    }
+                  }
+                }
+              } else {
+                // Level not cached, request it from server
+                self->m_sections[idx].pendingKey = mainKey;
+                self->m_sections[idx].pendingLevelId = levelId;
+                if (self->m_sections[idx].playSpinner)
+                  self->m_sections[idx].playSpinner->setVisible(true);
+                glm->getOnlineLevels(mainSearchObj);
               }
             }
           }
+
+          if (!sec || !sec->container)
+            return;
 
           // platformer support: check for dailyPlat/weeklyPlat/monthlyPlat
           // variant
@@ -520,180 +330,70 @@ bool RLEventLayouts::init() {
               sec->platSecondsLeft =
                   pobj["secondsLeft"].as<int>().unwrapOrDefault();
 
-              // we have a platformer level: hide spinner and show play button
-              if (sec->platPlaySpinner)
-                sec->platPlaySpinner->setVisible(false);
-              if (sec->platPlayButton) {
-                sec->platPlayButton->setVisible(true);
-                sec->platPlayButton->setEnabled(true);
-                sec->platPlayButton->setTag(platLevelId);
-              }
-
-              auto platLevelName =
-                  pobj["levelName"].as<std::string>().unwrapOrDefault();
-              auto platCreator =
-                  pobj["creator"].as<std::string>().unwrapOrDefault();
-              auto platDifficulty =
-                  pobj["difficulty"].as<int>().unwrapOrDefault();
-              auto platAccountId =
-                  pobj["accountId"].as<int>().unwrapOrDefault();
-              auto platFeatured = pobj["featured"].as<int>().unwrapOrDefault();
-
-              // update name label
-              if (sec->platLevelNameLabel) {
-                sec->platLevelNameLabel->setString(platLevelName.c_str());
-                const float maxNameWidth = 200.f;
-                const float baseNameScale = 0.8f;
-                sec->platLevelNameLabel->setScale(baseNameScale);
-                float labelWidth =
-                    sec->platLevelNameLabel->getContentSize().width *
-                    sec->platLevelNameLabel->getScaleX();
-                if (labelWidth > maxNameWidth) {
-                  float newScale =
-                      maxNameWidth /
-                      sec->platLevelNameLabel->getContentSize().width;
-                  sec->platLevelNameLabel->setScale(newScale);
-                }
-              }
-
-              // update creator
-              if (sec->platCreatorLabel) {
-                sec->platCreatorLabel->setString(("By " + platCreator).c_str());
-                sec->platCreatorLabel->setAnchorPoint({0.f, 0.5f});
-              }
-
-              // update rewards / planet icon
-              if (sec->platDifficultyValueLabel && sec->platContainer) {
-                sec->platDifficultyValueLabel->setString(
-                    ("Rewards: " + numToString(platDifficulty)).c_str());
-                const float centerXp =
-                    sec->platContainer->getContentSize().width / 2.f;
-                const float labelYp = 12.f;
-                sec->platDifficultyValueLabel->setPosition({centerXp, labelYp});
-
-                // recreate planet icon to ensure correct sprite and positioning
-                if (sec->platStarIcon) {
-                  sec->platStarIcon->removeFromParent();
-                  sec->platStarIcon = nullptr;
-                }
-                auto newPlat =
-                    CCSprite::createWithSpriteFrameName("RL_planetMed.png"_spr);
-                if (newPlat) {
-                  newPlat->setScale(0.6f);
-                  const float labelWidthP =
-                      sec->platDifficultyValueLabel->getContentSize().width *
-                      sec->platDifficultyValueLabel->getScaleX();
-                  const float gapP = 2.f;
-                  const float starXp = centerXp + (labelWidthP / 2.f) + gapP +
-                                       (newPlat->getContentSize().width *
-                                        newPlat->getScaleX() / 2.f);
-                  newPlat->setPosition({starXp, labelYp});
-                  sec->platContainer->addChild(newPlat, 2);
-                  sec->platStarIcon = newPlat;
-                }
-              }
-
-              // update difficulty and featured for platformer
-              if (sec->platDiff) {
-                sec->platDiff->updateDifficultyFrame(
-                    getDifficulty(platDifficulty), GJDifficultyName::Short);
-                if (platFeatured == 1 || platFeatured == 2) {
-                  sec->platFeatured = platFeatured;
-                  const char *coinSprite = (platFeatured == 1)
-                                               ? "RL_featuredCoin.png"_spr
-                                               : "RL_epicFeaturedCoin.png"_spr;
-                  if (sec->platFeaturedIcon) {
-                    sec->platFeaturedIcon->removeFromParent();
-                    sec->platFeaturedIcon = nullptr;
-                  }
-                  auto coinIconP =
-                      CCSprite::createWithSpriteFrameName(coinSprite);
-                  if (coinIconP) {
-                    coinIconP->setPosition(
-                        {sec->platDiff->getContentSize().width / 2.f,
-                         sec->platDiff->getContentSize().height / 2.f});
-                    coinIconP->setZOrder(-1);
-                    sec->platDiff->addChild(coinIconP);
-                    sec->platFeaturedIcon = coinIconP;
-
-                    // platformer particle
-                    if (platFeatured == 2 || platFeatured == 3 ||
-                        platFeatured == 4) {
-                      const std::string &pString =
-                          (platFeatured == 2)   ? epicPString
-                          : (platFeatured == 3) ? legendaryPString
-                                                : mythicPString;
-                      if (!pString.empty()) {
-                        if (auto existingP =
-                                coinIconP->getChildByID("rating-particles")) {
-                          existingP->removeFromParent();
-                        }
-                        ParticleStruct pStruct;
-                        GameToolbox::particleStringToStruct(pString, pStruct);
-                        CCParticleSystemQuad *particle =
-                            GameToolbox::particleFromStruct(pStruct, nullptr,
-                                                            false);
-                        if (particle) {
-                          coinIconP->addChild(particle, 1);
-                          particle->resetSystem();
-                          particle->setPosition(coinIconP->getContentSize() /
-                                                2.f);
-                          particle->setID("rating-particles"_spr);
-                          particle->update(0.15f);
-                          particle->update(0.15f);
-                        }
+              // populate platform LevelCell from cache if available
+              if (auto glm = GameLevelManager::sharedState()) {
+                auto platSearchObj = GJSearchObject::create(
+                    SearchType::Search, fmt::format("{}", platLevelId));
+                auto platKey = std::string(platSearchObj->getKey());
+                auto storedLvls = glm->getStoredOnlineLevels(platKey.c_str());
+                // try to find the exact plat level in the stored results (may
+                // contain multiple entries)
+                GJGameLevel *platMatch = nullptr;
+                if (storedLvls && storedLvls->count() > 0) {
+                  for (unsigned int si = 0; si < storedLvls->count(); ++si) {
+                    if (auto cand = static_cast<GJGameLevel *>(
+                            storedLvls->objectAtIndex(si))) {
+                      if (cand->m_levelID == platLevelId) {
+                        platMatch = cand;
+                        break;
                       }
                     }
                   }
-                } else {
-                  if (sec->platFeaturedIcon) {
-                    sec->platFeaturedIcon->removeFromParent();
-                    sec->platFeaturedIcon = nullptr;
-                    sec->platFeatured = 0;
+                }
+
+                if (platMatch) {
+                  if (sec->platLevelCell) {
+                    sec->platLevelCell->loadFromLevel(platMatch);
+                    // ensure platformer spinner is hidden after load
+                    if (sec->platPlaySpinner)
+                      sec->platPlaySpinner->setVisible(false);
+                    // Position m_mainMenu after level is loaded
+                    if (sec->platLevelCell->m_mainMenu) {
+                      sec->platLevelCell->m_mainMenu->setPosition({0, 0});
+                      auto viewButton =
+                          sec->platLevelCell->m_mainMenu->getChildByID(
+                              "view-button");
+                      auto creatorButton =
+                          sec->platLevelCell->m_mainMenu->getChildByID(
+                              "creator-name");
+                      creatorButton->setPosition({50, 54});
+                      creatorButton->setAnchorPoint({0.f, 0.5f});
+                      viewButton->setPosition(
+                          {sec->platLevelCell->getContentSize().width,
+                           sec->platLevelCell->getContentSize().height / 2.f});
+                    }
                   }
+                } else {
+                  // not cached — request and show spinner
+                  sec->pendingPlatKey = platKey;
+                  sec->pendingPlatLevelId = platLevelId;
+                  if (sec->platPlaySpinner)
+                    sec->platPlaySpinner->setVisible(true);
+                  glm->getOnlineLevels(platSearchObj);
                 }
               }
-
-              sec->platAccountId = platAccountId;
-              if (sec->platCreatorButton) {
-                sec->platCreatorButton->setTag(platAccountId);
-                sec->platCreatorButton->setPosition({70.f, 35.f});
-                sec->platCreatorButton->setContentSize(
-                    {sec->platCreatorLabel->getContentSize().width *
-                         sec->platCreatorLabel->getScaleX(),
-                     12.f});
-              }
-            } else {
-              // no platformer level yet
-              if (sec->platPlaySpinner)
-                sec->platPlaySpinner->setVisible(true);
-              if (sec->platPlayButton)
-                sec->platPlayButton->setVisible(false);
             }
-          }
-
-          sec->accountId = accountId;
-          if (sec->creatorButton) {
-            sec->creatorButton->setTag(accountId);
-            sec->creatorButton->setContentSize(
-                {sec->creatorLabel->getContentSize().width *
-                     sec->creatorLabel->getScaleX(),
-                 12.f});
-          }
-          if (sec->playButton) {
-            sec->playButton->setTag(levelId);
-          }
-          std::vector<std::string> timerPrefixes = {
-              "Next Daily in ", "Next Weekly in ", "Next Monthly in "};
-          if (sec->timerLabel)
-            sec->timerLabel->setString(
-                (timerPrefixes[idx] +
-                 formatTime(static_cast<long>(sec->secondsLeft)))
-                    .c_str());
+            std::vector<std::string> timerPrefixes = {
+                "Next Daily in ", "Next Weekly in ", "Next Monthly in "};
+            if (sec->timerLabel)
+              sec->timerLabel->setString(
+                  (timerPrefixes[idx] +
+                   formatTime(static_cast<long>(sec->secondsLeft)))
+                      .c_str());
+          };
         });
+    return true;
   }
-
-  return true;
 }
 
 void RLEventLayouts::onInfo(CCObject *sender) {
@@ -703,20 +403,24 @@ void RLEventLayouts::onInfo(CCObject *sender) {
       "curated by the <cr>Layout Admins.</c>\n\n"
       "Each layout features a <cb>unique selection</c> of levels handpicked "
       "for their <co>gameplay and layout design!</c>\n\n"
-      "If you want to play <cg>Past Event Layouts</c>, click the <co>Safe</c> "
+      "If you want to play <cg>Past Event Layouts</c>, click the "
+      "<co>Safe</c> "
       "button at the bottom-left of the popup to view previously event "
       "layouts.\n\n"
       "### <co>Daily Layouts</c> refresh every 24 hours, <cy>Weekly "
-      "Layouts</c> every 7 days, and <cp>Monthly Layouts</c> every 30 days.\n\n"
+      "Layouts</c> every 7 days, and <cp>Monthly Layouts</c> every 30 "
+      "days.\n\n"
       "*<cy>All event layouts are set manually so sometimes layouts might be "
       "there for long than expected</c>*\n\n"
       "\r\n\r\n---\r\n\r\n"
       "- <cg>**Daily Layout**</c> showcase <cl>Easy Layouts</c> *(Easy to "
       "Insane Difficulty)* for you to grind and play various layouts\n"
-      "- <cy>**Weekly Layout**</c> showcase a more <cr>challenging layouts</c> "
+      "- <cy>**Weekly Layout**</c> showcase a more <cr>challenging "
+      "layouts</c> "
       "to play *(Easy to Hard Demons Difficulty)*\n"
       "- <cp>**Monthly Layout**</c> showcase themed <cp>Layouts</c> that "
-      "relates to the current month or showcase well-made/hyped layouts. Often "
+      "relates to the current month or showcase well-made/hyped layouts. "
+      "Often "
       "usually showcase <cr>Very hard layouts</c> or <cl>Easy Layouts</c> "
       "depending on the monthly layout has to offer.\n",
       "OK")
@@ -740,81 +444,100 @@ void RLEventLayouts::update(float dt) {
         (timerPrefixes[idx] + formatTime(static_cast<long>(sec.secondsLeft)))
             .c_str());
 
-  // check whether the level was stored yet and open LevelInfo when available.
+  // check whether the level was stored yet and populate LevelCells when
+  // available.
   auto glm = GameLevelManager::sharedState();
   for (int i = 0; i < 3; ++i) {
     auto &psec = m_sections[i];
-    if (psec.pendingKey.empty())
-      continue;
 
-    // check stored levels
-    auto stored = glm->getStoredOnlineLevels(psec.pendingKey.c_str());
-    if (stored && stored->count() > 0) {
-      auto level = static_cast<GJGameLevel *>(stored->objectAtIndex(0));
-      if (!level || level->m_levelID != psec.pendingLevelId) {
-        Notification::create("Level ID mismatch", NotificationIcon::Warning)
-            ->show();
-      } else {
-        log::debug("RLEventLayouts: Opening LevelInfoLayer for level id {} "
-                   "(from stored cache)",
-                   psec.pendingLevelId);
-        auto scene = LevelInfoLayer::scene(level, false);
-        auto transitionFade = CCTransitionFade::create(0.5f, scene);
-        CCDirector::sharedDirector()->pushScene(transitionFade);
-        RLAchievements::onReward("misc_event");
-      }
-
-      // hide any initialized spinners and restore play buttons
-      if (psec.playSpinner)
-        psec.playSpinner->setVisible(false);
-      if (psec.platPlaySpinner)
-        psec.platPlaySpinner->setVisible(false);
-      if (psec.playButton) {
-        psec.playButton->setEnabled(true);
-        psec.playButton->setVisible(true);
-      }
-      if (psec.platPlayButton) {
-        psec.platPlayButton->setEnabled(true);
-        psec.platPlayButton->setVisible(true);
-      }
-      psec.pendingKey.clear();
-      psec.pendingLevelId = -1;
-      psec.pendingTimeout = 0.0;
-    } else {
-      psec.pendingTimeout -= dt;
-      psec.pendingRetry -= dt;
-
-      // re-request the online level
-      if (psec.pendingRetry <= 0.0 && psec.pendingTimeout > 0.0) {
-        // re-query the server for the level
-        if (glm && glm->m_levelManagerDelegate) {
-          glm->m_levelManagerDelegate = nullptr;
+    if (!psec.pendingKey.empty()) {
+      auto stored = glm->getStoredOnlineLevels(psec.pendingKey.c_str());
+      if (stored && stored->count() > 0) {
+        GJGameLevel *match = nullptr;
+        for (unsigned int si = 0; si < stored->count(); ++si) {
+          if (auto cand =
+                  static_cast<GJGameLevel *>(stored->objectAtIndex(si))) {
+            if (cand->m_levelID == psec.pendingLevelId) {
+              match = cand;
+              break;
+            }
+          }
         }
-        auto retrySearch = GJSearchObject::create(
-            SearchType::Search, numToString(psec.pendingLevelId));
-        glm->getOnlineLevels(retrySearch);
-        psec.pendingRetry = 1.0;
-      }
 
-      if (psec.pendingTimeout <= 0.0) {
-        if (psec.playSpinner)
-          psec.playSpinner->setVisible(false);
-        if (psec.platPlaySpinner)
-          psec.platPlaySpinner->setVisible(false);
-        if (psec.playButton) {
-          psec.playButton->setEnabled(true);
-          psec.playButton->setVisible(true);
+        if (!match) {
+          Notification::create("Level ID mismatch", NotificationIcon::Warning)
+              ->show();
+          psec.pendingKey.clear();
+          psec.pendingLevelId = -1;
+        } else {
+          log::debug("RLEventLayouts: Loading level {} into LevelCell",
+                     psec.pendingLevelId);
+          if (psec.levelCell) {
+            psec.levelCell->loadFromLevel(match);
+            if (psec.levelCell->m_mainMenu) {
+              psec.levelCell->m_mainMenu->setPosition({0, 0});
+              auto viewButton =
+                  psec.levelCell->m_mainMenu->getChildByID("view-button");
+              auto creatorButton =
+                  psec.levelCell->m_mainMenu->getChildByID("creator-name");
+              creatorButton->setPosition({50, 54});
+              creatorButton->setAnchorPoint({0.f, 0.5f});
+              viewButton->setPosition(
+                  {psec.levelCell->getContentSize().width,
+                   psec.levelCell->getContentSize().height / 2.f});
+            }
+            if (psec.playSpinner)
+              psec.playSpinner->setVisible(false);
+          }
+          psec.pendingKey.clear();
+          psec.pendingLevelId = -1;
         }
-        if (psec.platPlayButton) {
-          psec.platPlayButton->setEnabled(true);
-          psec.platPlayButton->setVisible(true);
+      }
+    }
+
+    if (!psec.pendingPlatKey.empty()) {
+      auto stored = glm->getStoredOnlineLevels(psec.pendingPlatKey.c_str());
+      if (stored && stored->count() > 0) {
+        GJGameLevel *match = nullptr;
+        for (unsigned int si = 0; si < stored->count(); ++si) {
+          if (auto cand =
+                  static_cast<GJGameLevel *>(stored->objectAtIndex(si))) {
+            if (cand->m_levelID == psec.pendingPlatLevelId) {
+              match = cand;
+              break;
+            }
+          }
         }
-        Notification::create("Level not found", NotificationIcon::Warning)
-            ->show();
-        psec.pendingKey.clear();
-        psec.pendingLevelId = -1;
-        psec.pendingTimeout = 0.0;
-        psec.pendingRetry = 0.0;
+
+        if (!match) {
+          Notification::create("Plat level ID mismatch",
+                               NotificationIcon::Warning)
+              ->show();
+          psec.pendingPlatKey.clear();
+          psec.pendingPlatLevelId = -1;
+        } else {
+          log::debug("RLEventLayouts: Loading plat level {} into PlatCell",
+                     psec.pendingPlatLevelId);
+          if (psec.platLevelCell) {
+            psec.platLevelCell->loadFromLevel(match);
+            if (psec.platLevelCell->m_mainMenu) {
+              psec.platLevelCell->m_mainMenu->setPosition({0, 0});
+              auto viewButton =
+                  psec.platLevelCell->m_mainMenu->getChildByID("view-button");
+              auto creatorButton =
+                  psec.platLevelCell->m_mainMenu->getChildByID("creator-name");
+              creatorButton->setPosition({50, 54});
+              creatorButton->setAnchorPoint({0.f, 0.5f});
+              viewButton->setPosition(
+                  {psec.platLevelCell->getContentSize().width,
+                   psec.platLevelCell->getContentSize().height / 2.f});
+            }
+            if (psec.platPlaySpinner)
+              psec.platPlaySpinner->setVisible(false);
+          }
+          psec.pendingPlatKey.clear();
+          psec.pendingPlatLevelId = -1;
+        }
       }
     }
   }
@@ -834,147 +557,6 @@ static std::string formatTime(long seconds) {
   return std::string(buf);
 }
 
-static int getDifficulty(int numerator) {
-  int difficultyLevel = 0;
-  switch (numerator) {
-  case 1:
-    difficultyLevel = -1;
-    break;
-  case 2:
-    difficultyLevel = 1;
-    break;
-  case 3:
-    difficultyLevel = 2;
-    break;
-  case 4:
-  case 5:
-    difficultyLevel = 3;
-    break;
-  case 6:
-  case 7:
-    difficultyLevel = 4;
-    break;
-  case 8:
-  case 9:
-    difficultyLevel = 5;
-    break;
-  case 10:
-    difficultyLevel = 7;
-    break;
-  case 15:
-    difficultyLevel = 8;
-    break;
-  case 20:
-    difficultyLevel = 6;
-    break;
-  case 25:
-    difficultyLevel = 9;
-    break;
-  case 30:
-    difficultyLevel = 10;
-    break;
-  default:
-    difficultyLevel = 0;
-  }
-  return difficultyLevel;
-}
-
-void RLEventLayouts::onCreatorClicked(CCObject *sender) {
-  if (!m_mainLayer)
-    return;
-  auto menuItem = static_cast<CCMenuItem *>(sender);
-  if (!menuItem)
-    return;
-  int accountId = menuItem->getTag();
-  if (accountId <= 0)
-    return;
-  ProfilePage::create(accountId, false)->show();
-}
-
-void RLEventLayouts::onPlayEvent(CCObject *sender) {
-  if (!m_mainLayer) {
-    log::warn("mainLayer doesn't exist");
-    return;
-  }
-  auto menuItem = static_cast<CCMenuItem *>(sender);
-  if (!menuItem) {
-    log::warn("menuItem doesn't exist");
-    return;
-  }
-  int levelId = menuItem->getTag();
-  if (levelId <= 0) {
-    log::warn("levelid doesn't exist");
-    return;
-  }
-
-  // fetch level metadata and push to LevelInfoLayer scene
-  auto searchObj =
-      GJSearchObject::create(SearchType::Search, numToString(levelId));
-  auto key = std::string(searchObj->getKey());
-  auto glm = GameLevelManager::sharedState();
-
-  // Check if we already have the level stored
-  auto stored = glm->getStoredOnlineLevels(key.c_str());
-  if (stored && stored->count() > 0) {
-    log::debug("stored online level count: {}", stored->count());
-    auto level = static_cast<GJGameLevel *>(stored->objectAtIndex(0));
-    if (level && level->m_levelID == levelId) {
-      log::debug(
-          "RLEventLayouts: Opening LevelInfoLayer for level id {} (from cache)",
-          levelId);
-      auto scene = LevelInfoLayer::scene(level, false);
-      auto transitionFade = CCTransitionFade::create(0.5f, scene);
-      CCDirector::sharedDirector()->pushScene(transitionFade);
-      RLAchievements::onReward("misc_event");
-      return;
-    }
-  }
-
-  int secIdx = -1;
-  for (int i = 0; i < 3; ++i) {
-    if (m_sections[i].playButton == menuItem ||
-        m_sections[i].platPlayButton == menuItem) {
-      secIdx = i;
-      break;
-    }
-  }
-  if (secIdx < 0)
-    secIdx = 0;
-  auto &sec = m_sections[secIdx];
-
-  // clear any previous pending spinner for this section
-  if (sec.pendingSpinner) {
-    sec.pendingSpinner->removeFromParent();
-    sec.pendingSpinner = nullptr;
-  }
-
-  sec.pendingKey = key;
-  sec.pendingLevelId = levelId;
-  sec.pendingTimeout = 10.0; // 10s timeout
-  sec.pendingRetry = 1.0;    // first retry after ~1s
-
-  // show the initialized spinner and hide the clicked menu item
-  if (menuItem == sec.playButton) {
-    if (sec.playSpinner)
-      sec.playSpinner->setVisible(true);
-    menuItem->setVisible(false);
-    menuItem->setEnabled(false);
-  } else if (menuItem == sec.platPlayButton) {
-    if (sec.platPlaySpinner)
-      sec.platPlaySpinner->setVisible(true);
-    menuItem->setVisible(false);
-    menuItem->setEnabled(false);
-  }
-
-  // clear any external delegate to avoid callbacks
-  if (glm && glm->m_levelManagerDelegate) {
-    log::debug("temporarily clearing GameLevelManager delegate for "
-               "getOnlineLevels request");
-    glm->m_levelManagerDelegate = nullptr;
-  }
-  glm->getOnlineLevels(searchObj);
-}
-
 void RLEventLayouts::onSafeButton(CCObject *sender) {
   int idx = static_cast<int>(this->m_eventType);
   const char *types[] = {"daily", "weekly", "monthly"};
@@ -982,7 +564,8 @@ void RLEventLayouts::onSafeButton(CCObject *sender) {
 
   RLLevelBrowserLayer::ParamList params;
   params.emplace_back("safe", std::string(typeStr));
-  std::string title = utils::string::toUpper(std::string(typeStr) + std::string(" Event Safe"));
+  std::string title =
+      utils::string::toUpper(std::string(typeStr) + std::string(" Event Safe"));
   auto browserLayer = RLLevelBrowserLayer::create(
       RLLevelBrowserLayer::Mode::EventSafe, params, title);
   auto scene = CCScene::create();

@@ -509,13 +509,11 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                         difficultySprite->getPosition(),
                         CurrencyRewardType::Default, 0.0, 1.0)) {
                   if (isPlat) {
-                    rewardLayer->m_starsLabel->setString(
-                        numToString(displayReward).c_str());
-                    rewardLayer->m_stars = displayReward;
+                    rewardLayer->m_stars = 0;
+                    rewardLayer->incrementStarsCount(newAmount);
                   } else {
-                    rewardLayer->m_moonsLabel->setString(
-                        numToString(displayReward).c_str());
-                    rewardLayer->m_moons = displayReward;
+                    rewardLayer->m_moons = 0;
+                    rewardLayer->incrementMoonsCount(newAmount);
                   }
 
                   // If rubies are present for this level and not already

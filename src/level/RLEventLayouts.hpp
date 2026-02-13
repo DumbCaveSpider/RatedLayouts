@@ -1,77 +1,56 @@
 #include <Geode/Geode.hpp>
-#include <unordered_map>
-#include <unordered_set>
 
 using namespace geode::prelude;
 
 class RLEventLayouts : public geode::Popup {
-     public:
-      enum class EventType {
-            Daily = 0,
-            Weekly = 1,
-            Monthly = 2,
-      };
+public:
+  enum class EventType {
+    Daily = 0,
+    Weekly = 1,
+    Monthly = 2,
+  };
 
-      static RLEventLayouts* create(EventType type);
+  static RLEventLayouts *create(EventType type);
 
-     private:
-      bool init() override;
-      void update(float dt) override;
-      void onPlayEvent(CCObject* sender);
-      void onCreatorClicked(CCObject* sender);
-      void onInfo(CCObject* sender);
-      void onSafeButton(CCObject* sender);
+private:
+  bool init() override;
+  void update(float dt) override;
+  void onInfo(CCObject *sender);
+  void onSafeButton(CCObject *sender);
 
-      struct EventSection {
-            CCLayer* container = nullptr;
-            GJDifficultySprite* diff = nullptr;
-            CCLabelBMFont* timerLabel = nullptr;
-            CCLabelBMFont* levelNameLabel = nullptr;
-            CCLabelBMFont* creatorLabel = nullptr;
-            CCMenuItem* creatorButton = nullptr;
-            CCMenuItem* playButton = nullptr;
-            CCLabelBMFont* difficultyValueLabel = nullptr;
-            CCSprite* starIcon = nullptr;
-            CCSprite* featuredIcon = nullptr;
-            int accountId = -1;
-            int levelId = -1;
-            int featured = 0;
-            time_t createdAt = 0;
-            double secondsLeft = 0.0;
+  struct EventSection {
+    CCLayer *container = nullptr;
+    CCLayer *platContainer = nullptr;
+    LevelCell *levelCell = nullptr;
+    LevelCell *platLevelCell = nullptr;
+    CCLabelBMFont *timerLabel = nullptr;
 
-            // Platformer (planet) container and fields
-            CCLayer* platContainer = nullptr;
-            GJDifficultySprite* platDiff = nullptr;
-            CCLabelBMFont* platLevelNameLabel = nullptr;
-            CCLabelBMFont* platCreatorLabel = nullptr;
-            CCMenuItem* platCreatorButton = nullptr;
-            CCMenuItem* platPlayButton = nullptr;
-            CCLabelBMFont* platDifficultyValueLabel = nullptr;
-            CCSprite* platStarIcon = nullptr;
-            CCSprite* platFeaturedIcon = nullptr;
-            int platAccountId = -1;
-            int platLevelId = -1;
-            int platFeatured = 0;
-            double platSecondsLeft = 0.0;
+    int accountId = -1;
+    int levelId = -1;
+    int platLevelId = -1;
+    int featured = 0;
+    time_t createdAt = 0;
+    double secondsLeft = 0.0;
+    double platSecondsLeft = 0.0;
+    std::string pendingKey;
+    int pendingLevelId = -1;
+    std::string pendingPlatKey;
+    int pendingPlatLevelId = -1;
+    LoadingSpinner *pendingSpinner = nullptr;
+    LoadingSpinner *playSpinner = nullptr;
+    LoadingSpinner *platPlaySpinner = nullptr;
+    double pendingTimeout = 0.0; // seconds
+    double pendingRetry = 0.0;   // seconds until next retry
+  };
 
-            // Pending request state
-            std::string pendingKey;
-            int pendingLevelId = -1;
-            LoadingSpinner* pendingSpinner = nullptr;
-            LoadingSpinner* playSpinner = nullptr;
-            LoadingSpinner* platPlaySpinner = nullptr;
-            double pendingTimeout = 0.0;  // seconds
-            double pendingRetry = 0.0;  // seconds until next retry
-      };
-
-      EventSection m_sections[3];
-      EventType m_eventType = EventType::Daily;
-      CCLayer* m_eventMenu = nullptr;
-      bool m_setupFinished = false;
-      async::TaskHolder<web::WebResponse> m_eventTask;
-      async::TaskHolder<web::WebResponse> m_safeListTask;
-      ~RLEventLayouts() {
-            m_eventTask.cancel();
-            m_safeListTask.cancel();
-      }
+  EventSection m_sections[3];
+  EventType m_eventType = EventType::Daily;
+  CCLayer *m_eventMenu = nullptr;
+  bool m_setupFinished = false;
+  async::TaskHolder<web::WebResponse> m_eventTask;
+  async::TaskHolder<web::WebResponse> m_safeListTask;
+  ~RLEventLayouts() {
+    m_eventTask.cancel();
+    m_safeListTask.cancel();
+  }
 };

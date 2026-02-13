@@ -306,6 +306,7 @@ class $modify(EndLevelLayer) {
                   // achievements for Sparks/Planets increment
                   int oldStars = Mod::get()->getSavedValue<int>("stars", 0);
                   int oldPlanets = Mod::get()->getSavedValue<int>("planets", 0);
+                  int oldRubies = Mod::get()->getSavedValue<int>("rubies", 0);
 
                   int responseAmount = isPlat ? responsePlanets : responseStars;
                   int delta = responseAmount - (isPlat ? oldPlanets : oldStars);
@@ -420,6 +421,7 @@ class $modify(EndLevelLayer) {
                   if (remainingRubies > 0) {
                     auto rubyPop = CCSprite::createWithSpriteFrameName(
                         "RL_bigRuby.png"_spr);
+                    rubyPop->setID("rl-ruby-pop-sprite");
                     if (rubyPop) {
                       rubyPop->setPosition(
                           {bigStarSprite->getPositionX(),
@@ -466,13 +468,11 @@ class $modify(EndLevelLayer) {
                             CurrencyRewardType::Default, 0.0, 1.0)) {
                       // display the calculated stars
                       if (isPlat) {
-                        rewardLayer->m_starsLabel->setString(
-                            numToString(displayStars).c_str());
-                        rewardLayer->m_stars = displayStars;
+                        rewardLayer->m_stars = 0;
+                        rewardLayer->incrementStarsCount(displayStars);
                       } else {
-                        rewardLayer->m_moonsLabel->setString(
-                            numToString(displayStars).c_str());
-                        rewardLayer->m_moons = displayStars;
+                        rewardLayer->m_moons = 0;
+                        rewardLayer->incrementMoonsCount(displayStars);
                       }
 
                       // If rubies were awarded, use the diamonds slot on the
@@ -480,8 +480,6 @@ class $modify(EndLevelLayer) {
                       // sprite with ruby sprite (display shows percent total)
                       if (remainingRubies > 0) {
                         if (rewardLayer->m_diamondsLabel) {
-                          int oldRubies =
-                              Mod::get()->getSavedValue<int>("rubies");
                           rewardLayer->m_diamonds = 0;
                           rewardLayer->incrementDiamondsCount(oldRubies);
                         }
