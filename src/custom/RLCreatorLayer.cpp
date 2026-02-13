@@ -465,7 +465,7 @@ void RLCreatorLayer::onShopButton(CCObject *sender) {
   auto obj3 = DialogObject::create(
       "Layout Creator",
       fmt::format("As long as you have <cy>{}</c> <cr>Rubies</c>... ",
-                  Mod::get()->getSavedValue<int>("rubies")),
+                  GameToolbox::pointsToString(Mod::get()->getSavedValue<int>("rubies"))),
       28, 1.f, false, ccWHITE);
   auto obj4 = DialogObject::create(
       "Layout Creator", "Wait, that's <cy>exactly how much you have!</c>", 28,

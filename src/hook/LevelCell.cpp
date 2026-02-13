@@ -745,11 +745,14 @@ class $modify(LevelCell) {
       return false;
     // i only want it for rl level browser, lol
     if (auto scene = CCDirector::sharedDirector()->getRunningScene()) {
-      if (typeinfo_cast<RLLevelBrowserLayer *>(
-              scene->getChildren()->objectAtIndex(0))) {
-        this->m_compactView =
-            Mod::get()->getSavedValue<bool>("compact_mode", false);
-        return true;
+      auto children = scene->getChildren();
+      if (children && children->count() > 0) {
+        auto first = children->objectAtIndex(0);
+        if (first && typeinfo_cast<RLLevelBrowserLayer *>(first)) {
+          this->m_compactView =
+              Mod::get()->getSavedValue<bool>("compact_mode", false);
+          return true;
+        }
       }
     }
     return true;
