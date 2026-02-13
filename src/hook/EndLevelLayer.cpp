@@ -1,4 +1,5 @@
 #include "../custom/RLAchievements.hpp"
+#include "../custom/RubyUtils.hpp"
 #include <Geode/Geode.hpp>
 #include <Geode/modify/EndLevelLayer.hpp>
 
@@ -397,85 +398,17 @@ class $modify(EndLevelLayer) {
                   difficultyLabel->runAction(
                       CCFadeIn::create(fadeAction->getDuration()));
 
-                  auto getTotalRubies = [](int difficulty) {
-                    switch (difficulty) {
-                    case 1:
-                      return 0;
-                    case 2:
-                      return 50;
-                    case 3:
-                      return 100;
-                    case 4:
-                      return 175;
-                    case 5:
-                      return 175;
-                    case 6:
-                      return 250;
-                    case 7:
-                      return 250;
-                    case 8:
-                      return 350;
-                    case 9:
-                      return 350;
-                    case 10:
-                      return 500;
-                    case 15:
-                      return 625;
-                    case 20:
-                      return 750;
-                    case 25:
-                      return 875;
-                    case 30:
-                      return 1000;
-                    default:
-                      return 0;
-                    }
-                  };
-
                   int difficultyForRubies = starReward; // same as difficulty
-                  int totalRuby = getTotalRubies(difficultyForRubies);
-
-                  // read per-level collected rubies from save JSON
-                  auto savePath = dirs::getModsSaveDir() / Mod::get()->getID() /
-                                  "rubies_collected.json";
-                  auto existing = utils::file::readString(
-                      utils::string::pathToString(savePath));
-                  matjson::Value root = matjson::Value::object();
-                  if (existing) {
-                    auto parsed = matjson::parse(existing.unwrap());
-                    if (parsed && parsed.unwrap().isObject())
-                      root = parsed.unwrap();
-                  }
-
-                  std::string levelKey = fmt::format(
-                      "{}", static_cast<int>(level ? level->m_levelID : 0));
-                  matjson::Value entry = root[levelKey];
-                  int collected = 0;
-                  if (entry.isObject()) {
-                    collected = entry["collectedRubies"].asInt().unwrapOr(0);
-                    log::debug("rubies_collected.json: level {} already "
-                               "collected {} rubies (file)",
-                               level ? level->m_levelID : 0, collected);
-                  }
-
-                  int remaining = std::max(0, totalRuby - collected);
-
-                  int percent = level ? level->m_normalPercent : 0;
-                  int calcAtPercent;
-                  if (percent >= 100) {
-                    calcAtPercent = totalRuby;
-                  } else {
-                    double calcD = static_cast<double>(totalRuby) * 0.8 *
-                                   (static_cast<double>(percent) / 100.0);
-                    calcAtPercent = static_cast<int>(std::lround(calcD));
-                    if (calcAtPercent > totalRuby)
-                      calcAtPercent = totalRuby;
-                  }
-
+                  auto rubyInfo =
+                      rl::computeRubyInfo(level, difficultyForRubies);
+                  int totalRuby = rubyInfo.total;
+                  int collected = rubyInfo.collected;
+                  int remaining = rubyInfo.remaining;
+                  int calcAtPercent = rubyInfo.calcAtPercent;
                   int awardableByPercent =
                       std::max(0, calcAtPercent - collected);
-                  // reward the remaining rubies (total - collected)
                   int remainingRubies = remaining;
+                  int percent = level ? level->m_normalPercent : 0;
 
                   log::debug(
                       "Computed rubies for end-level reward: total={}, "
@@ -547,24 +480,23 @@ class $modify(EndLevelLayer) {
                       // sprite with ruby sprite (display shows percent total)
                       if (remainingRubies > 0) {
                         if (rewardLayer->m_diamondsLabel) {
+                          int oldRubies =
+                              Mod::get()->getSavedValue<int>("rubies");
                           rewardLayer->m_diamonds = 0;
-                          rewardLayer->m_diamondsLabel->setString(
-                              numToString(calcAtPercent).c_str());
-                          rewardLayer->m_diamonds = calcAtPercent;
+                          rewardLayer->incrementDiamondsCount(oldRubies);
                         }
 
                         // persist updated collected rubies (clamp to total)
                         int newCollected = collected + remainingRubies;
                         if (newCollected > totalRuby)
                           newCollected = totalRuby;
-                        root[levelKey] = matjson::Value::object();
-                        root[levelKey]["totalRubies"] = totalRuby;
-                        root[levelKey]["collectedRubies"] = newCollected;
-                        auto writeRes = utils::file::writeString(
-                            utils::string::pathToString(savePath), root.dump());
-                        if (!writeRes) {
-                          log::warn("Failed to write rubies_collected.json: {}",
-                                    writeRes.unwrapErr());
+                        bool wrote = rl::persistCollectedRubies(
+                            level ? level->m_levelID : 0, totalRuby,
+                            newCollected);
+                        if (!wrote) {
+                          log::warn("Failed to write rubies_collected.json for "
+                                    "level {}",
+                                    level ? level->m_levelID : 0);
                         } else {
                           log::debug("Updated rubies_collected.json: level {} "
                                      "collected -> {}",
@@ -621,15 +553,22 @@ class $modify(EndLevelLayer) {
                                   frameName);
                       } else {
                         if (isPlat) {
-                          rewardLayer->m_starsSprite->setDisplayFrame(
-                              displayFrame);
+                          if (rewardLayer->m_starsSprite)
+                            rewardLayer->m_starsSprite->setDisplayFrame(
+                                displayFrame);
                         } else {
-                          rewardLayer->m_moonsSprite->setDisplayFrame(
-                              displayFrame);
+                          if (rewardLayer->m_moonsSprite)
+                            rewardLayer->m_moonsSprite->setDisplayFrame(
+                                displayFrame);
                         }
-                        rewardLayer->m_currencyBatchNode->setTexture(texture);
-                        rewardLayer->m_diamondsSprite->setDisplayFrame(
-                            rubyDisplayFrame);
+                        if (rewardLayer->m_currencyBatchNode)
+                          rewardLayer->m_currencyBatchNode->setTexture(texture);
+
+                        // Only set diamond->ruby frame if both exist
+                        if (rewardLayer->m_diamondsSprite && rubyDisplayFrame) {
+                          rewardLayer->m_diamondsSprite->setDisplayFrame(
+                              rubyDisplayFrame);
+                        }
 
                         for (auto sprite : CCArrayExt<CurrencySprite>(
                                  rewardLayer->m_objects)) {

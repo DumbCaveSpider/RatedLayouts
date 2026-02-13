@@ -1,7 +1,9 @@
+#include "../custom/RubyUtils.hpp"
 #include "Geode/utils/general.hpp"
 #include <Geode/Geode.hpp>
 #include <Geode/modify/PlayLayer.hpp>
 #include <Geode/utils/async.hpp>
+
 
 using namespace geode::prelude;
 
@@ -62,42 +64,8 @@ class $modify(RLPlayLayer, PlayLayer) {
 
         std::string levelKey = fmt::format("{}", lvlId);
         if (!root[levelKey].isObject()) {
-          auto getTotalRubies = [](int difficulty) {
-            switch (difficulty) {
-            case 1:
-              return 0;
-            case 2:
-              return 50;
-            case 3:
-              return 100;
-            case 4:
-              return 175;
-            case 5:
-              return 175;
-            case 6:
-              return 250;
-            case 7:
-              return 250;
-            case 8:
-              return 350;
-            case 9:
-              return 350;
-            case 10:
-              return 500;
-            case 15:
-              return 625;
-            case 20:
-              return 750;
-            case 25:
-              return 875;
-            case 30:
-              return 1000;
-            default:
-              return 0;
-            }
-          };
 
-          int totalRuby = getTotalRubies(difficulty);
+          int totalRuby = rl::getTotalRubiesForDifficulty(difficulty);
           root[levelKey] = matjson::Value::object();
           root[levelKey]["totalRubies"] = totalRuby;
           root[levelKey]["collectedRubies"] = 0;
@@ -141,61 +109,11 @@ class $modify(RLPlayLayer, PlayLayer) {
         }
       }
 
-      std::string levelKey =
-          fmt::format("{}", static_cast<int>(this->m_level->m_levelID));
-      matjson::Value entry = root[levelKey];
-      int collected = 0;
-      if (entry.isObject()) {
-        collected = entry["collectedRubies"].asInt().unwrapOr(0);
-        log::debug("rubies_collected.json: level {} already collected {} "
-                   "rubies (file)",
-                   this->m_level->m_levelID, collected);
-      } else {
-        // no existing entry — start at 0
-        collected = 0;
-      }
-
-      // compute total rubies for this level's difficulty (fallback to stored
-      // difficulty)
       int difficulty = m_fields->m_levelDifficulty;
-      auto getTotalRubies = [](int difficulty) {
-        switch (difficulty) {
-        case 1:
-          return 0;
-        case 2:
-          return 50;
-        case 3:
-          return 100;
-        case 4:
-          return 175;
-        case 5:
-          return 175;
-        case 6:
-          return 250;
-        case 7:
-          return 250;
-        case 8:
-          return 350;
-        case 9:
-          return 350;
-        case 10:
-          return 500;
-        case 15:
-          return 625;
-        case 20:
-          return 750;
-        case 25:
-          return 875;
-        case 30:
-          return 1000;
-        default:
-          return 0;
-        }
-      };
-      int totalRuby = getTotalRubies(difficulty);
-
-      // remaining rubies available to award
-      int remaining = std::max(0, totalRuby - collected);
+      auto rubyInfo = rl::computeRubyInfo(this->m_level, difficulty);
+      int totalRuby = rubyInfo.total;
+      int collected = rubyInfo.collected;
+      int remaining = rubyInfo.remaining;
 
       // compute awarded rubies based on player's current percent in this play
       int percent = this->getCurrentPercent();
@@ -251,7 +169,7 @@ class $modify(RLPlayLayer, PlayLayer) {
           }
 
           // replace displayed sprite with ruby sprite
-          std::string frameName = "RL_rubiesIcon.png"_spr;
+          std::string frameName = "RL_bigRuby.png"_spr;
           auto displayFrame =
               CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(
                   frameName.c_str());
@@ -316,8 +234,8 @@ class $modify(RLPlayLayer, PlayLayer) {
             log::debug("Awarded {} rubies: {} -> {}", adjustedRubies, oldRubies,
                        newRubies);
 
-            rewardLayer->m_diamonds = 0;
             if (rewardLayer->m_diamondsLabel) {
+              rewardLayer->m_diamonds = 0;
               rewardLayer->incrementDiamondsCount(oldRubies);
             }
           }
@@ -330,14 +248,11 @@ class $modify(RLPlayLayer, PlayLayer) {
       int newCollected = collected + adjustedRubies;
       if (newCollected > totalRuby)
         newCollected = totalRuby;
-      root[levelKey] = matjson::Value::object();
-      root[levelKey]["totalRubies"] = totalRuby;
-      root[levelKey]["collectedRubies"] = newCollected;
-      auto writeRes = utils::file::writeString(
-          utils::string::pathToString(savePath), root.dump());
-      if (!writeRes) {
-        log::warn("Failed to write rubies_collected.json: {}",
-                  writeRes.unwrapErr());
+      bool wrote = rl::persistCollectedRubies(this->m_level->m_levelID,
+                                              totalRuby, newCollected);
+      if (!wrote) {
+        log::warn("Failed to write rubies_collected.json: level {}",
+                  this->m_level->m_levelID);
       } else {
         log::debug("Updated rubies_collected.json: level {} collected -> {}",
                    this->m_level->m_levelID, newCollected);
