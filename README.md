@@ -23,6 +23,7 @@ This gives the <cy>Layout/Gameplay creators</c> a platform to get their levels r
 - **<cg>NEW</c> <co>Planets Collectables</c>**: Earn Planets Collectables by completing platformer rated layout levels!
 - **<cg>NEW</c> <cj>Layout Creator Points</c>**: Earn Layout Creator Points whenever you get a rated layout level!
 - **<cg>NEW</c> <cl>Blue Layout Coins</c>**: Collect Blue Layout Coins hidden in rated layout levels.
+- **<cg>NEW</c> <cr>Rubies</c>**: Earn Rubies and use it to unlock special cosmetics in the Ruby Shop!
 - **<cg>Seamless Integration</c>**: Works alongside the existing rating system, this won't replace the current rating system but rather provide an alternative.
 - **<cr>Improved Demon Ratings</c>**: More accurate demon ratings by introducing new difficulty value, making demons has more value depending on their actual difficulty.
 - **<cg>Faster Rating Process</c>**: Community-focus rating system which makes it easier to get levels rated quickly.

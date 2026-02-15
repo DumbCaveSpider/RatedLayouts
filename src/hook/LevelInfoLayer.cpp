@@ -173,13 +173,16 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
       }
 
       auto json = jsonRes.unwrap();
+      bool isSuggested = json["isSuggested"].asBool().unwrapOrDefault();
 
       // Process the response immediately
       if (layerRef) {
         layerRef->processLevelRating(json, layerRef, difficultySprite, true);
-        layerRef->repositionRubyUI();
-        layerRef->addOrUpdateRubyUI(
-            layerRef, json["difficulty"].asInt().unwrapOrDefault());
+        if (!isSuggested) {
+          layerRef->repositionRubyUI();
+          layerRef->addOrUpdateRubyUI(
+              layerRef, json["difficulty"].asInt().unwrapOrDefault());
+        }
       }
 
       // if level is rated, check via checkRated endpoint
@@ -521,7 +524,8 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   if (remainingRubies > 0) {
                     if (rewardLayer->m_diamondsLabel) {
                       rewardLayer->m_diamonds = 0;
-                      rewardLayer->incrementDiamondsCount(Mod::get()->getSavedValue<int>("rubies"));
+                      rewardLayer->incrementDiamondsCount(
+                          Mod::get()->getSavedValue<int>("rubies"));
                     }
                   }
 
@@ -560,11 +564,13 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   if (rewardLayer->m_currencyBatchNode)
                     rewardLayer->m_currencyBatchNode->setTexture(texture);
 
-                  if (rubyDisplayFrame && rubyTexture && rewardLayer->m_currencyBatchNode) {
+                  if (rubyDisplayFrame && rubyTexture &&
+                      rewardLayer->m_currencyBatchNode) {
                     rewardLayer->m_currencyBatchNode->setTexture(rubyTexture);
                   }
 
-                  for (auto sprite : CCArrayExt<CurrencySprite>(rewardLayer->m_objects)) {
+                  for (auto sprite :
+                       CCArrayExt<CurrencySprite>(rewardLayer->m_objects)) {
                     if (!sprite)
                       continue;
                     if (sprite->m_burstSprite)
@@ -574,8 +580,9 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                     }
 
                     // default star/moon frames
-                    if (sprite->m_spriteType == (isPlat ? CurrencySpriteType::Star
-                                                         : CurrencySpriteType::Moon)) {
+                    if (sprite->m_spriteType ==
+                        (isPlat ? CurrencySpriteType::Star
+                                : CurrencySpriteType::Moon)) {
                       sprite->setDisplayFrame(displayFrame);
                     }
 
@@ -583,7 +590,8 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                     if (sprite->m_spriteType == CurrencySpriteType::Diamond) {
                       if (rubyDisplayFrame) {
                         if (rubyTexture && rewardLayer->m_currencyBatchNode) {
-                          rewardLayer->m_currencyBatchNode->setTexture(rubyTexture);
+                          rewardLayer->m_currencyBatchNode->setTexture(
+                              rubyTexture);
                         }
                         sprite->setDisplayFrame(rubyDisplayFrame);
                       }
@@ -595,7 +603,8 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                     if (rubyTexture && rewardLayer->m_currencyBatchNode) {
                       rewardLayer->m_currencyBatchNode->setTexture(rubyTexture);
                     }
-                    rewardLayer->m_diamondsSprite->setDisplayFrame(rubyDisplayFrame);
+                    rewardLayer->m_diamondsSprite->setDisplayFrame(
+                        rubyDisplayFrame);
                   }
 
                   layerRef->addChild(rewardLayer, 100);
@@ -640,7 +649,8 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                         CurrencyRewardType::Default, 0.0, 1.0)) {
                   if (rewardLayer->m_diamondsLabel) {
                     rewardLayer->m_diamonds = 0;
-                    rewardLayer->incrementDiamondsCount(Mod::get()->getSavedValue<int>("rubies"));
+                    rewardLayer->incrementDiamondsCount(
+                        Mod::get()->getSavedValue<int>("rubies"));
                   }
 
                   // setup ruby frame for diamond slot
@@ -666,7 +676,8 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                         rubyDisplayFrame);
                   }
 
-                  if (rubyDisplayFrame && rubyTexture && rewardLayer->m_currencyBatchNode) {
+                  if (rubyDisplayFrame && rubyTexture &&
+                      rewardLayer->m_currencyBatchNode) {
                     rewardLayer->m_currencyBatchNode->setTexture(rubyTexture);
                   }
 
@@ -2184,8 +2195,13 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
 
             auto json = response.json().unwrap();
 
+            bool isSuggested = json["isSuggested"].asBool().unwrapOrDefault();
             int difficulty = json["difficulty"].asInt().unwrapOrDefault();
-            layerRef->addOrUpdateRubyUI(layerRef, difficulty);
+
+            if (!isSuggested) {
+              layerRef->addOrUpdateRubyUI(layerRef, difficulty);
+            }
+
             if (difficulty == 0) {
               // remove label and icon if present
               auto difficultySprite =
