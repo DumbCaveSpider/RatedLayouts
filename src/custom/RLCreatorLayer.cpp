@@ -624,7 +624,7 @@ void RLCreatorLayer::onUnknownButton(CCObject *sender) {
 }
 
 void RLCreatorLayer::onInfoButton(CCObject *sender) {
-  MDPopup::create(
+  MDPopup::create(true,
       "About Rated Layouts",
       "## <cl>Rated Layouts</cl> is a community-run rating system focusing "
       "on "
