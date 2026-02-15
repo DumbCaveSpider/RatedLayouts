@@ -77,8 +77,7 @@ bool RLCreatorLayer::init() {
     return false;
 
   // quick achievements for custom bg
-  if (Mod::get()->getSettingValue<int>("backgroundType") != 1 ||
-      Mod::get()->getSettingValue<int>("floorType") != 1) {
+  if (Mod::get()->getSettingValue<int>("backgroundType") != 1) {
     RLAchievements::onReward("misc_custom_bg");
   }
 
