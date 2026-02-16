@@ -55,16 +55,10 @@ bool RLGauntletLevelsLayer::init(matjson::Value const &gauntletData) {
   this->addChild(titleLabelShadow, 9);
   this->addChild(titleLabel, 10);
 
-  auto backMenu = CCMenu::create();
-  backMenu->setPosition({0, 0});
+  auto menu = CCMenu::create();
+  menu->setPosition({0, 0});
 
-  auto backButtonSpr =
-      CCSprite::createWithSpriteFrameName("GJ_arrow_01_001.png");
-  CCMenuItemSpriteExtra *backButton = CCMenuItemSpriteExtra::create(
-      backButtonSpr, this, menu_selector(RLGauntletLevelsLayer::onBackButton));
-  backButton->setPosition({25, winSize.height - 25});
-  backMenu->addChild(backButton);
-  this->addChild(backMenu);
+  addBackButton(this, BackButtonStyle::Green);
 
   this->setKeypadEnabled(true);
 
@@ -85,7 +79,7 @@ bool RLGauntletLevelsLayer::init(matjson::Value const &gauntletData) {
       infoButtonSpr, this,
       menu_selector(RLGauntletLevelsLayer::onGauntletInfo));
   infoButton->setPosition({winSize.width - 25, winSize.height - 25});
-  backMenu->addChild(infoButton);
+  menu->addChild(infoButton);
 
   // Fetch level details
   fetchLevelDetails(m_gauntletId);
@@ -647,10 +641,7 @@ void RLGauntletLevelsLayer::updateBackgroundParallax(CCPoint const &menuPos) {
     m_bgSprite2->setPosition(ccpAdd(m_bgOriginPos, ccpMult(bgOffset, 1.0f)));
   }
 }
-
-void RLGauntletLevelsLayer::onBackButton(CCObject *sender) {
+void RLGauntletLevelsLayer::keyBackClicked() {
   CCDirector::sharedDirector()->popSceneWithTransition(
       0.5f, PopTransition::kPopTransitionFade);
 }
-
-void RLGauntletLevelsLayer::keyBackClicked() { this->onBackButton(nullptr); }

@@ -59,11 +59,7 @@ bool RLLevelBrowserLayer::init(GJSearchObject *object) {
   auto uiMenu = CCMenu::create();
   uiMenu->setPosition({0, 0});
 
-  auto backSpr = CCSprite::createWithSpriteFrameName("GJ_arrow_01_001.png");
-  auto backButton = CCMenuItemSpriteExtra::create(
-      backSpr, this, menu_selector(RLLevelBrowserLayer::onBackButton));
-  backButton->setPosition({25, winSize.height - 25});
-  uiMenu->addChild(backButton);
+  addBackButton(this, BackButtonStyle::Pink);
 
   auto infoSpr = CCSprite::createWithSpriteFrameName("RL_info01.png"_spr);
   infoSpr->setScale(0.7f);
@@ -241,13 +237,6 @@ bool RLLevelBrowserLayer::init(GJSearchObject *object) {
   }
 
   return true;
-}
-
-void RLLevelBrowserLayer::keyBackClicked() { onBackButton(nullptr); }
-
-void RLLevelBrowserLayer::onBackButton(CCObject *sender) {
-  CCDirector::sharedDirector()->popSceneWithTransition(
-      0.5f, PopTransition::kPopTransitionFade);
 }
 
 void RLLevelBrowserLayer::onPrevPage(CCObject *sender) {
@@ -1149,4 +1138,9 @@ void RLLevelBrowserLayer::update(float dt) {
   if (m_pageButton) {
     m_pageButton->setVisible(m_totalPages > 1);
   }
+}
+
+void RLLevelBrowserLayer::keyBackClicked() {
+  CCDirector::sharedDirector()->popSceneWithTransition(
+      0.5f, PopTransition::kPopTransitionFade);
 }

@@ -11,7 +11,6 @@ class RLGauntletLevelsLayer : public CCLayer {
 
      protected:
       bool init(matjson::Value const& gauntletData);
-      void onBackButton(CCObject* sender);
       void keyBackClicked() override;
       void fetchLevelDetails(int gauntletId);
       void onLevelDetailsFetched(matjson::Value const& json);

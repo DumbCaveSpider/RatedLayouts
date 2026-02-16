@@ -74,12 +74,7 @@ bool RLSearchLayer::init() {
   auto backMenu = CCMenu::create();
   backMenu->setPosition({0, 0});
 
-  auto backSpr = CCSprite::createWithSpriteFrameName("GJ_arrow_01_001.png");
-  auto backButton = CCMenuItemSpriteExtra::create(
-      backSpr, this, menu_selector(RLSearchLayer::onBackButton));
-  backButton->setPosition({25, winSize.height - 25});
-  backMenu->addChild(backButton);
-  this->addChild(backMenu);
+  addBackButton(this, BackButtonStyle::Pink);
 
   // search input stuff would go here
   m_searchInputMenu = CCMenu::create();
@@ -926,13 +921,6 @@ void RLSearchLayer::onClearButton(CCObject *sender) {
   }
 }
 
-void RLSearchLayer::keyBackClicked() { onBackButton(nullptr); }
-
-void RLSearchLayer::onBackButton(CCObject *sender) {
-  CCDirector::sharedDirector()->popSceneWithTransition(
-      0.5f, PopTransition::kPopTransitionFade);
-}
-
 void RLSearchLayer::update(float dt) {
   if (m_bgTiles.size()) {
     float move = m_bgSpeed * dt;
@@ -1013,4 +1001,9 @@ RLSearchLayer *RLSearchLayer::create() {
   }
   delete layer;
   return nullptr;
+}
+
+void RLSearchLayer::keyBackClicked() {
+  CCDirector::sharedDirector()->popSceneWithTransition(
+      0.5f, PopTransition::kPopTransitionFade);
 }

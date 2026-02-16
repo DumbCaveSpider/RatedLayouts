@@ -5,11 +5,11 @@
 #include <cue/RepeatingBackground.hpp>
 #include <optional>
 
-#include "../custom/RLAchievements.hpp"
-#include "../custom/RLAchievementsPopup.hpp"
 #include "../level/RLEventLayouts.hpp"
 #include "../level/RLNotificationOverlay.hpp"
 #include "../level/RLSelectSends.hpp"
+#include "RLAchievements.hpp"
+#include "RLAchievementsPopup.hpp"
 #include "RLAddDialogue.hpp"
 #include "RLAnnouncementPopup.hpp"
 #include "RLCreditsPopup.hpp"
@@ -18,6 +18,7 @@
 #include "RLLeaderboardLayer.hpp"
 #include "RLLevelBrowserLayer.hpp"
 #include "RLSearchLayer.hpp"
+#include "RLShopLayer.hpp"
 #include "ccTypes.h"
 
 struct ModInfo {
@@ -117,12 +118,7 @@ bool RLCreatorLayer::init() {
   auto backMenu = CCMenu::create();
   backMenu->setPosition({0, 0});
 
-  auto backButtonSpr =
-      CCSprite::createWithSpriteFrameName("GJ_arrow_03_001.png");
-  CCMenuItemSpriteExtra *backButton = CCMenuItemSpriteExtra::create(
-      backButtonSpr, this, menu_selector(RLCreatorLayer::onBackButton));
-  backButton->setPosition({25, winSize.height - 25});
-  backMenu->addChild(backButton);
+  addBackButton(this, BackButtonStyle::Pink);
 
   auto modSettingsBtnSprite = CircleButtonSprite::createWithSpriteFrameName(
       // @geode-ignore(unknown-resource)
@@ -339,8 +335,7 @@ bool RLCreatorLayer::init() {
   infoMenu->addChild(demonListBtn);
 
   // shop
-  auto shopSpr =
-      CCSpriteGrayscale::createWithSpriteFrameName("RL_shop01.png"_spr);
+  auto shopSpr = CCSprite::createWithSpriteFrameName("RL_shop01.png"_spr);
   shopSpr->setScale(0.7f);
   auto shopBtn = CCMenuItemSpriteExtra::create(
       shopSpr, this, menu_selector(RLCreatorLayer::onShopButton));
@@ -454,40 +449,11 @@ void RLCreatorLayer::onSecretDialogueButton(CCObject *sender) {
 }
 
 void RLCreatorLayer::onShopButton(CCObject *sender) {
-  auto obj1 = DialogObject::create("Layout Creator",
-                                   "Lamp oil?<d100> Rope?<d100> Bombs?", 28,
-                                   1.f, false, ccWHITE);
-  // additional follow-up dialog object
-  auto obj2 = DialogObject::create("Layout Creator",
-                                   "You want it? <d100> It's yours my friend",
-                                   28, 1.f, false, ccWHITE);
-  auto obj3 = DialogObject::create(
-      "Layout Creator",
-      fmt::format("As long as you have <cy>{}</c> <cr>Rubies</c>... ",
-                  GameToolbox::pointsToString(
-                      Mod::get()->getSavedValue<int>("rubies"))),
-      28, 1.f, false, ccWHITE);
-  auto obj4 = DialogObject::create(
-      "Layout Creator", "Wait, that's <cy>exactly how much you have!</c>", 28,
-      1.f, false, ccWHITE);
-  auto obj5 = DialogObject::create(
-      "Layout Creator", "Too bad you <cr>can't buy anything</c> with them...",
-      28, 1.f, false, ccWHITE);
-  auto obj6 = DialogObject::create("Layout Creator", "For now ;)", 28, 1.f,
-                                   false, ccWHITE);
-
-  CCArray *objects = nullptr;
-  objects = CCArray::create();
-  objects->addObject(obj1);
-  objects->addObject(obj2);
-  objects->addObject(obj3);
-  objects->addObject(obj4);
-  objects->addObject(obj5);
-  objects->addObject(obj6);
-  // show layer
-  auto dialog = DialogLayer::createDialogLayer(obj1, objects, 2);
-  dialog->addToMainScene();
-  dialog->animateInRandomSide();
+  auto shopLayer = RLShopLayer::create();
+  auto scene = CCScene::create();
+  scene->addChild(shopLayer);
+  auto transitionFade = CCTransitionFade::create(0.5f, scene);
+  CCDirector::sharedDirector()->pushScene(transitionFade);
 }
 
 void RLCreatorLayer::onAnnoucementButton(CCObject *sender) {
@@ -683,11 +649,6 @@ void RLCreatorLayer::onMonthlyLayouts(CCObject *sender) {
   monthlyPopup->show();
 }
 
-void RLCreatorLayer::onBackButton(CCObject *sender) {
-  CCDirector::sharedDirector()->popSceneWithTransition(
-      0.5f, PopTransition::kPopTransitionFade);
-}
-
 void RLCreatorLayer::onFeaturedLayouts(CCObject *sender) {
   auto browserLayer = RLLevelBrowserLayer::create(
       RLLevelBrowserLayer::Mode::Featured, RLLevelBrowserLayer::ParamList(),
@@ -714,8 +675,6 @@ void RLCreatorLayer::onSentLayouts(CCObject *sender) {
   auto transitionFade = CCTransitionFade::create(0.5f, scene);
   CCDirector::sharedDirector()->pushScene(transitionFade);
 }
-
-void RLCreatorLayer::keyBackClicked() { this->onBackButton(nullptr); }
 
 void RLCreatorLayer::update(float dt) {
   // MenuGameLayer handles background animation/scrolling
@@ -825,4 +784,9 @@ RLCreatorLayer *RLCreatorLayer::create() {
   }
   delete ret;
   return nullptr;
+}
+
+void RLCreatorLayer::keyBackClicked() {
+  CCDirector::sharedDirector()->popSceneWithTransition(
+      0.5f, PopTransition::kPopTransitionFade);
 }

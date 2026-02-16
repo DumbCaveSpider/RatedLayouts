@@ -9,7 +9,6 @@ class RLGauntletSelectLayer : public CCLayer {
 
      protected:
       bool init() override;
-      void onBackButton(CCObject* sender);
       void keyBackClicked() override;
       void fetchGauntlets();
       void onGauntletsFetched(matjson::Value const& json);

@@ -37,16 +37,10 @@ bool RLGauntletSelectLayer::init() {
   // crap
   addSideArt(this, SideArt::All, SideArtStyle::LayerGray, false);
 
-  auto backMenu = CCMenu::create();
-  backMenu->setPosition({0, 0});
+  auto menu = CCMenu::create();
+  menu->setPosition({0, 0});
 
-  auto backButtonSpr =
-      CCSprite::createWithSpriteFrameName("GJ_arrow_01_001.png");
-  CCMenuItemSpriteExtra *backButton = CCMenuItemSpriteExtra::create(
-      backButtonSpr, this, menu_selector(RLGauntletSelectLayer::onBackButton));
-  backButton->setPosition({25, winSize.height - 25});
-  backMenu->addChild(backButton);
-  this->addChild(backMenu);
+  addBackButton(this, BackButtonStyle::Green);
 
   this->setKeypadEnabled(true);
 
@@ -61,7 +55,7 @@ bool RLGauntletSelectLayer::init() {
   auto announceBtn = CCMenuItemSpriteExtra::create(
       announceSpr, this, menu_selector(RLGauntletSelectLayer::onInfoButton));
   announceBtn->setPosition({25, 25});
-  backMenu->addChild(announceBtn);
+  menu->addChild(announceBtn);
   fetchGauntlets();
   return true;
 }
@@ -70,12 +64,6 @@ void RLGauntletSelectLayer::onInfoButton(CCObject *sender) {
   auto announcement = RLAnnouncementPopup::create();
   announcement->show();
 }
-
-void RLGauntletSelectLayer::onBackButton(CCObject *sender) {
-  CCDirector::sharedDirector()->popSceneWithTransition(
-      0.5f, PopTransition::kPopTransitionFade);
-}
-void RLGauntletSelectLayer::keyBackClicked() { this->onBackButton(nullptr); }
 
 void RLGauntletSelectLayer::onGauntletButtonClick(CCObject *sender) {
   auto item = static_cast<CCMenuItemSpriteExtra *>(sender);
@@ -399,4 +387,8 @@ void RLGauntletSelectLayer::updatePage() {
     m_nextPageBtn->setEnabled(m_currentPage < totalPages - 1);
     m_nextPageBtn->setOpacity(m_currentPage < totalPages - 1 ? 255 : 120);
   }
+}
+void RLGauntletSelectLayer::keyBackClicked() {
+  CCDirector::sharedDirector()->popSceneWithTransition(
+      0.5f, PopTransition::kPopTransitionFade);
 }

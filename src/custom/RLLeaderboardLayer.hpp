@@ -17,14 +17,13 @@ protected:
   CCMenuItemSpriteExtra *m_refreshBtn;
 
   bool init() override;
-  void onBackButton(CCObject *sender);
+  void keyBackClicked() override;
   void onLeaderboardTypeButton(CCObject *sender);
   void onAccountClicked(CCObject *sender);
   void fetchLeaderboard(int type, int amount);
   void populateLeaderboard(const std::vector<matjson::Value> &users);
   void onInfoButton(CCObject *sender);
   void onRefreshButton(CCObject *sender);
-  void keyBackClicked() override;
 
   CCNode *m_bgContainer = nullptr;
   std::vector<CCSprite *> m_bgTiles;

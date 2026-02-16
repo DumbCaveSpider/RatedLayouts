@@ -32,13 +32,7 @@ bool RLLeaderboardLayer::init() {
   auto backMenu = CCMenu::create();
   backMenu->setPosition({0, 0});
 
-  auto backButtonSpr =
-      CCSprite::createWithSpriteFrameName("GJ_arrow_01_001.png");
-  auto backButton = CCMenuItemSpriteExtra::create(
-      backButtonSpr, this, menu_selector(RLLeaderboardLayer::onBackButton));
-  backButton->setPosition({25, winSize.height - 25});
-  backMenu->addChild(backButton);
-  this->addChild(backMenu);
+  addBackButton(this, BackButtonStyle::Pink);
 
   this->fetchLeaderboard(1, 100);
 
@@ -176,14 +170,6 @@ void RLLeaderboardLayer::onInfoButton(CCObject *sender) {
       "OK")
       ->show();
 }
-
-void RLLeaderboardLayer::onBackButton(CCObject *sender) {
-  CCDirector::sharedDirector()->popSceneWithTransition(
-      0.5f, PopTransition::kPopTransitionFade); // im such a robtop doing this
-                                                // fancy pop scene :D
-}
-
-void RLLeaderboardLayer::keyBackClicked() { this->onBackButton(nullptr); }
 
 void RLLeaderboardLayer::update(float dt) {
   if (m_bgTiles.size()) {
@@ -373,6 +359,7 @@ void RLLeaderboardLayer::populateLeaderboard(
     cell->setContentSize({356.f, 40.f});
 
     CCSprite *bgSprite = nullptr;
+    CCSprite* namePlate = nullptr;
     int currentAccountID = GJAccountManager::sharedState()->m_accountID;
 
     if (accountId == currentAccountID) {
@@ -391,8 +378,14 @@ void RLLeaderboardLayer::populateLeaderboard(
 
     if (bgSprite) {
       bgSprite->setPosition({178.f, 20.f});
+      bgSprite->setOpacity(150);
       cell->addChild(bgSprite, 0);
     }
+
+    // if (namePlate) {
+    //   namePlate->setPosition({178.f, 20.f});
+    //   cell->addChild(namePlate, -1);
+    // }
 
     // glow for top 3
     if (rank == 1) {
@@ -506,4 +499,9 @@ RLLeaderboardLayer *RLLeaderboardLayer::create() {
   }
   delete ret;
   return nullptr;
+}
+
+void RLLeaderboardLayer::keyBackClicked() {
+  CCDirector::sharedDirector()->popSceneWithTransition(
+      0.5f, PopTransition::kPopTransitionFade);
 }
