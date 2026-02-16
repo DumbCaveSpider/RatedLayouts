@@ -464,7 +464,8 @@ void RLCreatorLayer::onShopButton(CCObject *sender) {
   auto obj3 = DialogObject::create(
       "Layout Creator",
       fmt::format("As long as you have <cy>{}</c> <cr>Rubies</c>... ",
-                  GameToolbox::pointsToString(Mod::get()->getSavedValue<int>("rubies"))),
+                  GameToolbox::pointsToString(
+                      Mod::get()->getSavedValue<int>("rubies"))),
       28, 1.f, false, ccWHITE);
   auto obj4 = DialogObject::create(
       "Layout Creator", "Wait, that's <cy>exactly how much you have!</c>", 28,
@@ -624,7 +625,7 @@ void RLCreatorLayer::onUnknownButton(CCObject *sender) {
 }
 
 void RLCreatorLayer::onInfoButton(CCObject *sender) {
-  MDPopup::create(true,
+  MDPopup::create(
       "About Rated Layouts",
       "## <cl>Rated Layouts</cl> is a community-run rating system focusing "
       "on "

@@ -10,25 +10,27 @@ jobs:
   build:
     strategy:
       fail-fast: false
+
       matrix:
         config:
-        - name: Windows
-          os: windows-latest
+          - name: Windows
+            os: windows-latest
+            build-type: RelWithDebInfo
 
-        - name: macOS
-          os: macos-latest
+          - name: macOS
+            os: macos-latest
 
-        - name: iOS
-          os: macos-latest
-          target: iOS
+          - name: iOS
+            os: macos-latest
+            target: iOS
 
-        - name: Android32
-          os: ubuntu-latest
-          target: Android32
+          - name: Android32
+            os: ubuntu-latest
+            target: Android32
 
-        - name: Android64
-          os: ubuntu-latest
-          target: Android64
+          - name: Android64
+            os: ubuntu-latest
+            target: Android64
 
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
@@ -39,14 +41,15 @@ jobs:
       - name: Build the mod
         uses: geode-sdk/build-geode-mod@main
         with:
-          sdk: nightly
           combine: true
+          export-pdb: true
           target: ${{ matrix.config.target }}
+          build-config: ${{ matrix.config.build-type || 'Release'}}
 
   package:
-    name: Package builds
+    name: Package Builds
     runs-on: ubuntu-latest
-    needs: ['build']
+    needs: ["build"]
 
     steps:
       - uses: geode-sdk/build-geode-mod/combine@main
@@ -56,3 +59,57 @@ jobs:
         with:
           name: Build Output
           path: ${{ steps.build.outputs.build-output }}
+
+  nightly:
+    name: Nightly Release
+    runs-on: ubuntu-latest
+    needs: ["package"]
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts/
+
+      - name: Get latest release tag
+        id: getrelease
+        run: echo "tag=$(curl -s https://api.github.com/repos/${{ github.event.repository.full_name }}/releases/latest | jq -r '.tag_name // "${{ github.event.repository.default_branch }}"')" >> $GITHUB_OUTPUT
+
+      - name: Publish Nightly release
+        id: publish-nightly
+        if: ${{ github.ref_name == github.event.repository.default_branch }}
+        uses: andelf/nightly-release@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: nightly
+          name: "Development Release"
+          body: |
+            **Development build for commit ${{ github.sha }}**.
+            > [`View Changes`](${{ github.event.repository.html_url }}/compare/${{ steps.getrelease.outputs.tag }}...nightly)
+          files: |
+            ./artifacts/Build Output/*.*
+
+      - name: Check for Discord webhook URL
+        id: check-discord
+        if: ${{ github.ref_name == github.event.repository.default_branch && steps.publish-nightly.outputs.id != '' }}
+        run: echo "has-nightly-webhook=${{ secrets.NIGHTLY_WEBHOOK != '' }}" >> $GITHUB_OUTPUT
+
+      - name: Send Discord webhook
+        if: ${{ steps.check-discord.outputs.has-nightly-webhook == 'true' }}
+        uses: prevter/discord-webhook@main
+        with:
+          webhook-url: ${{ secrets.NIGHTLY_WEBHOOK }}
+          files: |
+            ./artifacts/Build Output/*.geode
+          embed-title: "[${{ github.event.repository.name }}] Nightly Release"
+          embed-description: |
+            **Development build for commit [`${{ github.sha }}`](${{ github.event.repository.html_url}}/commit/${{ github.sha }})**.
+            > [`View Changes`](${{ github.event.repository.html_url }}/compare/${{ steps.getrelease.outputs.tag }}...nightly)
+          embed-color: "#0062b1"
+          embed-url: ${{ steps.publish-nightly.outputs.url }}
+          embed-author: ${{ github.actor }}
+          embed-author-icon: "https://avatars.githubusercontent.com/u/${{ github.actor_id }}?v=4"
+          embed-thumbnail: "https://raw.githubusercontent.com/${{ github.repository }}/refs/tags/nightly/logo.png"
+          embed-timestamp: "now"
