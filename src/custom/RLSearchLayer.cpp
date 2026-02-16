@@ -452,16 +452,17 @@ bool RLSearchLayer::init() {
 }
 
 void RLSearchLayer::onInfoButton(CCObject *sender) {
-  FLAlertLayer::create("Rated Layouts Search",
-                  "Use the <cg>search bar</c> to find Rated Layouts by "
-                  "<co>name or keywords.</c>\n"
-                  "Use the <cr>difficulty filter</c> to select which "
-                  "<cl>layout difficulties</c> to include in the search. You "
-                  "can select <cy>multiple difficulties at once.</c>\n"
-                  "Use the <cb>options</c> to filter your search.\n"
-                  "Press the <cg>Search button</c> to perform the search with "
-                  "the selected criteria.",
-                  "OK")
+  FLAlertLayer::create(
+      "Rated Layouts Search",
+      "Use the <cg>search bar</c> to find <cl>Rated Layouts Levels</c> by "
+      "<co>name or keywords.</c>\n"
+      "Use the <cr>difficulty filter</c> to select which "
+      "<cl>layout difficulties</c> to include in the search.\n"
+      "Press the <cg>Search button</c> to perform the search with "
+      "the selected criteria."
+      "To view the <cl>latest rated layouts</c>, leave the search bar empty, "
+      "then press <cg>Search</c>.",
+      "OK")
       ->show();
 }
 
