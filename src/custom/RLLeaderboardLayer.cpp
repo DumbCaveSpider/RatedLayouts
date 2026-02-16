@@ -384,11 +384,13 @@ void RLLeaderboardLayer::populateLeaderboard(
     }
 
     CCSprite *nameplate = nullptr;
-    if (nameplateId != 0 && !Mod::get()->getSettingValue<bool>("disableNameplate")) {
+    if (nameplateId != 0 &&
+        !Mod::get()->getSettingValue<bool>("disableNameplate")) {
       nameplate = CCSprite::createWithSpriteFrameName(
           fmt::format("nameplate_{}.png"_spr, nameplateId).c_str());
       if (nameplate) {
-        nameplate->setPosition({bgSprite->getPositionX() - 10, bgSprite->getPositionY()});
+        nameplate->setPosition(
+            {bgSprite->getPositionX() - 10, bgSprite->getPositionY()});
         cell->addChild(nameplate, -1);
       }
     }

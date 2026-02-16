@@ -123,4 +123,4 @@ bool RLNameplateItem::markOwned(int index) {
   return static_cast<bool>(writeRes);
 }
 
-} // namespace rl
+} // namespace ratedlayouts
