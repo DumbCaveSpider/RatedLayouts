@@ -4,7 +4,7 @@
 
 using namespace geode::prelude;
 
-namespace rl {
+namespace ratedlayouts {
 struct RubyInfo {
   int total = 0;         // total rubies for difficulty
   int collected = 0;     // already collected (from rubies_collected.json)

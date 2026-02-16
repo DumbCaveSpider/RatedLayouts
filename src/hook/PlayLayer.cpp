@@ -1,11 +1,11 @@
-#include "../custom/RubyUtils.hpp"
+#include "../utils/RubyUtils.hpp"
 #include "Geode/utils/general.hpp"
 #include <Geode/Geode.hpp>
 #include <Geode/modify/PlayLayer.hpp>
 #include <Geode/utils/async.hpp>
 
-
 using namespace geode::prelude;
+using namespace ratedlayouts;
 
 class $modify(RLPlayLayer, PlayLayer) {
   struct Fields {
@@ -65,7 +65,7 @@ class $modify(RLPlayLayer, PlayLayer) {
         std::string levelKey = fmt::format("{}", lvlId);
         if (!root[levelKey].isObject()) {
 
-          int totalRuby = rl::getTotalRubiesForDifficulty(difficulty);
+          int totalRuby = getTotalRubiesForDifficulty(difficulty);
           root[levelKey] = matjson::Value::object();
           root[levelKey]["totalRubies"] = totalRuby;
           root[levelKey]["collectedRubies"] = 0;
@@ -110,7 +110,7 @@ class $modify(RLPlayLayer, PlayLayer) {
       }
 
       int difficulty = m_fields->m_levelDifficulty;
-      auto rubyInfo = rl::computeRubyInfo(this->m_level, difficulty);
+      auto rubyInfo = computeRubyInfo(this->m_level, difficulty);
       int totalRuby = rubyInfo.total;
       int collected = rubyInfo.collected;
       int remaining = rubyInfo.remaining;
@@ -248,8 +248,8 @@ class $modify(RLPlayLayer, PlayLayer) {
       int newCollected = collected + adjustedRubies;
       if (newCollected > totalRuby)
         newCollected = totalRuby;
-      bool wrote = rl::persistCollectedRubies(this->m_level->m_levelID,
-                                              totalRuby, newCollected);
+      bool wrote = persistCollectedRubies(this->m_level->m_levelID, totalRuby,
+                                          newCollected);
       if (!wrote) {
         log::warn("Failed to write rubies_collected.json: level {}",
                   this->m_level->m_levelID);

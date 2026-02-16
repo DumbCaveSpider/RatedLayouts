@@ -6,11 +6,12 @@
 #include <cmath>
 
 #include "../custom/RLAchievements.hpp"
-#include "../custom/RubyUtils.hpp"
+#include "../utils/RubyUtils.hpp"
 #include "../level/RLCommunityVotePopup.hpp"
 #include "../level/RLModRatePopup.hpp"
 
 using namespace geode::prelude;
+using namespace ratedlayouts;
 
 const int DEV_ACCOUNTID = 7689052;
 
@@ -499,7 +500,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                       "disableRewardAnimation")) {
                 // use helper to obtain ruby totals/collected/remaining
                 auto rubyInfo =
-                    rl::computeRubyInfo(layerRef->m_level, difficulty);
+                    computeRubyInfo(layerRef->m_level, difficulty);
                 int remainingRubies = rubyInfo.remaining;
                 int calcAtPercent = rubyInfo.calcAtPercent;
 
@@ -632,7 +633,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
               // still check for uncollected rubies and show a ruby-only
               // reward animation if applicable
               auto rubyInfo =
-                  rl::computeRubyInfo(layerRef->m_level, difficulty, levelId);
+                  computeRubyInfo(layerRef->m_level, difficulty, levelId);
               int remainingRubies = rubyInfo.remaining;
               int calcAtPercent = rubyInfo.calcAtPercent;
 
@@ -707,7 +708,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   int newCollected = rubyInfo.collected + remainingRubies;
                   if (newCollected > rubyInfo.total)
                     newCollected = rubyInfo.total;
-                  if (rl::persistCollectedRubies(levelId, rubyInfo.total,
+                  if (persistCollectedRubies(levelId, rubyInfo.total,
                                                  newCollected)) {
                     int oldGlobal = Mod::get()->getSavedValue<int>("rubies", 0);
                     Mod::get()->setSavedValue<int>("rubies",

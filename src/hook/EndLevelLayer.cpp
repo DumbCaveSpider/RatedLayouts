@@ -1,9 +1,10 @@
 #include "../custom/RLAchievements.hpp"
-#include "../custom/RubyUtils.hpp"
+#include "../utils/RubyUtils.hpp"
 #include <Geode/Geode.hpp>
 #include <Geode/modify/EndLevelLayer.hpp>
 
 using namespace geode::prelude;
+using namespace ratedlayouts;
 
 // remove UI tint from end-level coin sprites/backgrounds and animated coins
 static void removeUITint(Ref<EndLevelLayer> layer) {
@@ -401,7 +402,7 @@ class $modify(EndLevelLayer) {
 
                   int difficultyForRubies = starReward; // same as difficulty
                   auto rubyInfo =
-                      rl::computeRubyInfo(level, difficultyForRubies);
+                      computeRubyInfo(level, difficultyForRubies);
                   int totalRuby = rubyInfo.total;
                   int collected = rubyInfo.collected;
                   int remaining = rubyInfo.remaining;
@@ -488,7 +489,7 @@ class $modify(EndLevelLayer) {
                         int newCollected = collected + remainingRubies;
                         if (newCollected > totalRuby)
                           newCollected = totalRuby;
-                        bool wrote = rl::persistCollectedRubies(
+                        bool wrote = persistCollectedRubies(
                             level ? level->m_levelID : 0, totalRuby,
                             newCollected);
                         if (!wrote) {

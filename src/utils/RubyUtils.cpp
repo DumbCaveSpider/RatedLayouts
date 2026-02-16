@@ -3,7 +3,7 @@
 
 using namespace geode::prelude;
 
-namespace rl {
+namespace ratedlayouts {
 
 int getTotalRubiesForDifficulty(int difficulty) noexcept {
   switch (difficulty) {

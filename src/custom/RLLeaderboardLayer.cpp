@@ -354,12 +354,13 @@ void RLLeaderboardLayer::populateLeaderboard(
 
     int accountId = userValue["accountId"].asInt().unwrapOrDefault();
     int score = userValue["score"].asInt().unwrapOrDefault();
+    int nameplateId = userValue["nameplate"].asInt().unwrapOr(0);
 
     auto cell = TableViewCell::create();
     cell->setContentSize({356.f, 40.f});
 
     CCSprite *bgSprite = nullptr;
-    CCSprite* namePlate = nullptr;
+    CCSprite *namePlate = nullptr;
     int currentAccountID = GJAccountManager::sharedState()->m_accountID;
 
     if (accountId == currentAccountID) {
@@ -382,10 +383,15 @@ void RLLeaderboardLayer::populateLeaderboard(
       cell->addChild(bgSprite, 0);
     }
 
-    // if (namePlate) {
-    //   namePlate->setPosition({178.f, 20.f});
-    //   cell->addChild(namePlate, -1);
-    // }
+    CCSprite *nameplate = nullptr;
+    if (nameplateId != 0) {
+      nameplate = CCSprite::createWithSpriteFrameName(
+          fmt::format("nameplate_{}.png"_spr, nameplateId).c_str());
+      if (nameplate) {
+        nameplate->setPosition({178.f, 20.f});
+        cell->addChild(nameplate, -1);
+      }
+    }
 
     // glow for top 3
     if (rank == 1) {
