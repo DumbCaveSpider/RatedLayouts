@@ -957,7 +957,7 @@ void RLLevelBrowserLayer::populateFromArray(CCArray *levels) {
     index++;
 
     // adjust position for compact mode to align with non-compact cells
-    if (m_compactMode) {
+    if (m_compactMode && !Loader::get()->isModLoaded("cvolton.compact_lists")) {
       cell->m_mainLayer->setPositionX(cell->m_mainLayer->getPositionX() - 20.f);
       cell->m_mainMenu->setPositionX(cell->m_mainMenu->getPositionX() + 20.f);
       if (auto creatorName =
@@ -1062,7 +1062,7 @@ void RLLevelBrowserLayer::onCompactToggle(CCObject *sender) {
     index++;
 
     // adjust position for compact mode to align with non-compact cells
-    if (m_compactMode) {
+    if (m_compactMode && !Loader::get()->isModLoaded("cvolton.compact_lists")) {
       cell->m_mainLayer->setPositionX(cell->m_mainLayer->getPositionX() - 20.f);
       cell->m_mainMenu->setPositionX(cell->m_mainMenu->getPositionX() + 20.f);
       if (auto creatorName =

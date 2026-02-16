@@ -747,10 +747,10 @@ void RLModRatePopup::onSubmitButton(CCObject* sender) {
                   jsonBody["difficulty"] = m_selectedRating;
             }
 
-            // add featured score if featured, epic, or legendary mode is enabled
-            if ((m_isFeatured || m_isEpicFeatured || m_isLegendary) && m_featuredScoreInput) {
+            // add featured score
+            if (m_featuredScoreInput) {
                   auto scoreStr = m_featuredScoreInput->getString();
-                  if (!scoreStr.empty()) {
+                  if (!scoreStr.empty() && (m_isFeatured || m_isEpicFeatured || m_isLegendary || m_role == PopupRole::Dev)) {
                         int score = numFromString<int>(scoreStr).unwrapOr(0);
                         jsonBody["featuredScore"] = score;
                   }
@@ -1049,9 +1049,9 @@ void RLModRatePopup::onSuggestButton(CCObject* sender) {
       jsonBody["featured"] = featured;
 
       // include featuredScore when applicable
-      if ((m_isFeatured || m_isEpicFeatured || m_isLegendary) && m_featuredScoreInput) {
+      if (m_featuredScoreInput) {
             auto scoreStr = m_featuredScoreInput->getString();
-            if (!scoreStr.empty()) {
+            if (!scoreStr.empty() && (m_isFeatured || m_isEpicFeatured || m_isLegendary || m_role == PopupRole::Dev)) {
                   int score = numFromString<int>(scoreStr).unwrapOr(0);
                   jsonBody["featuredScore"] = score;
             }
