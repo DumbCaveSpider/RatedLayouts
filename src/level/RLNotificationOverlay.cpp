@@ -77,6 +77,11 @@ bool RLNotificationOverlay::init() {
     return true;
   }
 
+  if (Mod::get()->getSettingValue<bool>("disableNewRate")) {
+    log::info("notifications are disabled");
+    return true;
+  }
+
   this->schedule(schedule_selector(RLNotificationOverlay::callRateNotification),
                  static_cast<float>(pollingInterval));
 
@@ -84,7 +89,7 @@ bool RLNotificationOverlay::init() {
 }
 
 void RLNotificationOverlay::callRateNotification(float dt) {
-  if (Mod::get()->getSettingValue<bool>("disableRateNotifications")) {
+  if (Mod::get()->getSettingValue<bool>("disableNewRate")) {
     log::info("notifications are disabled");
     return;
   }
