@@ -141,6 +141,24 @@
 			},
 			"enable-if": "!disableNewRate"
 		},
+		"titleNameplate": {
+			"type": "title",
+			"name": "Nameplate Customization"
+		},
+		"disableNameplate": {
+			"name": "Disable Nameplate",
+			"type": "bool",
+			"default": false,
+			"description": "Disable nameplate in comments and leaderboards.",
+			"enable-if": "!disableNameplateInComment"
+		},
+		"disableNameplateInComment": {
+			"name": "Disable Nameplate in Comment",
+			"type": "bool",
+			"default": false,
+			"description": "Disable nameplate in comments only. <cy>Enable this if you want to keep nameplate in player profile but not in comments.</cy>",
+			"enable-if": "!disableNameplate"
+		},
 		"titleMisc": {
 			"type": "title",
 			"name": "Miscellaneous Settings"

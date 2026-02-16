@@ -35,7 +35,7 @@ bool RLBuyItemPopup::init() {
   bool owned = RLNameplateItem::isOwned(m_itemId);
   setTitle(owned
                ? "Nameplate Owned"
-               : fmt::format("Buy Nameplate for {} rubies?", m_value).c_str());
+               : fmt::format("Buy Nameplate for {} Rubies?", m_value).c_str());
 
   // kill the close button
   if (auto closeBtn = this->m_closeBtn) {

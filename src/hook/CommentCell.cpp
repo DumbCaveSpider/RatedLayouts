@@ -10,6 +10,7 @@ class $modify(RLCommentCell, CommentCell) {
     int planets = 0;
     bool supporter = false;
     bool booster = false;
+    int nameplate = 0;
     async::TaskHolder<web::WebResponse> m_fetchTask;
     ~Fields() { m_fetchTask.cancel(); }
   };
@@ -118,112 +119,133 @@ class $modify(RLCommentCell, CommentCell) {
 
     Ref<RLCommentCell> cellRef = this; // commentcell ref
 
-    m_fields->m_fetchTask.spawn(
-        std::move(postTask), [cellRef, accountId](web::WebResponse response) {
-          log::debug("Received role response from server for comment");
+    m_fields->m_fetchTask.spawn(std::move(postTask), [cellRef, accountId](
+                                                         web::WebResponse
+                                                             response) {
+      log::debug("Received role response from server for comment");
 
-          // did this so it doesnt crash if the cell is deleted before
-          // response yea took me a while
-          if (!cellRef) {
-            log::warn("CommentCell has been destroyed, skipping role update");
+      // did this so it doesnt crash if the cell is deleted before
+      // response yea took me a while
+      if (!cellRef) {
+        log::warn("CommentCell has been destroyed, skipping role update");
+        return;
+      }
+
+      if (!response.ok()) {
+        log::warn("Server returned non-ok status: {}", response.code());
+        if (response.code() == 404) {
+          log::debug("Profile not found on server for {}", accountId);
+          if (!cellRef)
             return;
-          }
+          cellRef->m_fields->role = 0;
+          cellRef->m_fields->stars = 0;
 
-          if (!response.ok()) {
-            log::warn("Server returned non-ok status: {}", response.code());
-            if (response.code() == 404) {
-              log::debug("Profile not found on server for {}", accountId);
-              if (!cellRef)
-                return;
-              cellRef->m_fields->role = 0;
-              cellRef->m_fields->stars = 0;
-
-              // remove any role badges if present (very unlikely scenario lol)
-              if (cellRef->m_mainLayer) {
-                if (auto userNameMenu = typeinfo_cast<CCMenu *>(
-                        cellRef->m_mainLayer->getChildByIDRecursive(
-                            "username-menu"))) {
-                  if (auto owner =
-                          userNameMenu->getChildByID("rl-comment-owner-badge"))
-                    owner->removeFromParent();
-                  if (auto mod =
-                          userNameMenu->getChildByID("rl-comment-mod-badge"))
-                    mod->removeFromParent();
-                  if (auto admin =
-                          userNameMenu->getChildByID("rl-comment-admin-badge"))
-                    admin->removeFromParent();
-                  userNameMenu->updateLayout();
-                }
-                // remove any glow
-                auto glowId = fmt::format("rl-comment-glow-{}", accountId);
-                if (auto glow =
-                        cellRef->m_mainLayer->getChildByIDRecursive(glowId))
-                  glow->removeFromParent();
-              }
+          // remove any role badges if present (very unlikely scenario lol)
+          if (cellRef->m_mainLayer) {
+            if (auto userNameMenu = typeinfo_cast<CCMenu *>(
+                    cellRef->m_mainLayer->getChildByIDRecursive(
+                        "username-menu"))) {
+              if (auto owner =
+                      userNameMenu->getChildByID("rl-comment-owner-badge"))
+                owner->removeFromParent();
+              if (auto mod = userNameMenu->getChildByID("rl-comment-mod-badge"))
+                mod->removeFromParent();
+              if (auto admin =
+                      userNameMenu->getChildByID("rl-comment-admin-badge"))
+                admin->removeFromParent();
+              userNameMenu->updateLayout();
             }
-            return;
+            // remove any glow
+            auto glowId = fmt::format("rl-comment-glow-{}", accountId);
+            if (auto glow = cellRef->m_mainLayer->getChildByIDRecursive(glowId))
+              glow->removeFromParent();
           }
+        }
+        return;
+      }
 
-          auto jsonRes = response.json();
-          if (!jsonRes) {
-            log::warn("Failed to parse JSON response");
-            return;
+      auto jsonRes = response.json();
+      if (!jsonRes) {
+        log::warn("Failed to parse JSON response");
+        return;
+      }
+
+      auto json = jsonRes.unwrap();
+      int role = json["role"].asInt().unwrapOrDefault();
+      int stars = json["stars"].asInt().unwrapOrDefault();
+      int planets = json["planets"].asInt().unwrapOrDefault();
+      bool isSupporter = json["isSupporter"].asBool().unwrapOrDefault();
+      bool isBooster = json["isBooster"].asBool().unwrapOrDefault();
+      int nameplate = json["nameplate"].asInt().unwrapOrDefault();
+
+      if (role == 0 && stars == 0 && planets == 0) {
+        log::debug("User {} has no role/stars/planets", accountId);
+        if (!cellRef)
+          return;
+        cellRef->m_fields->role = 0;
+        cellRef->m_fields->stars = 0;
+        // remove any role badges and glow only if UI exists
+        if (cellRef->m_mainLayer) {
+          if (auto userNameMenu = typeinfo_cast<CCMenu *>(
+                  cellRef->m_mainLayer->getChildByIDRecursive(
+                      "username-menu"))) {
+            if (auto owner =
+                    userNameMenu->getChildByID("rl-comment-owner-badge"))
+              owner->removeFromParent();
+            if (auto mod = userNameMenu->getChildByID("rl-comment-mod-badge"))
+              mod->removeFromParent();
+            if (auto admin =
+                    userNameMenu->getChildByID("rl-comment-admin-badge"))
+              admin->removeFromParent();
+            userNameMenu->updateLayout();
           }
+          // remove any glow
+          auto glowId = fmt::format("rl-comment-glow-{}", accountId);
+          if (auto glow = cellRef->m_mainLayer->getChildByIDRecursive(glowId))
+            glow->removeFromParent();
+        }
+        return;
+      }
 
-          auto json = jsonRes.unwrap();
-          int role = json["role"].asInt().unwrapOrDefault();
-          int stars = json["stars"].asInt().unwrapOrDefault();
-          int planets = json["planets"].asInt().unwrapOrDefault();
-          bool isSupporter = json["isSupporter"].asBool().unwrapOrDefault();
-          bool isBooster = json["isBooster"].asBool().unwrapOrDefault();
-
-          if (role == 0 && stars == 0 && planets == 0) {
-            log::debug("User {} has no role/stars/planets", accountId);
-            if (!cellRef)
-              return;
-            cellRef->m_fields->role = 0;
-            cellRef->m_fields->stars = 0;
-            // remove any role badges and glow only if UI exists
-            if (cellRef->m_mainLayer) {
-              if (auto userNameMenu = typeinfo_cast<CCMenu *>(
-                      cellRef->m_mainLayer->getChildByIDRecursive(
-                          "username-menu"))) {
-                if (auto owner =
-                        userNameMenu->getChildByID("rl-comment-owner-badge"))
-                  owner->removeFromParent();
-                if (auto mod =
-                        userNameMenu->getChildByID("rl-comment-mod-badge"))
-                  mod->removeFromParent();
-                if (auto admin =
-                        userNameMenu->getChildByID("rl-comment-admin-badge"))
-                  admin->removeFromParent();
-                userNameMenu->updateLayout();
-              }
-              // remove any glow
-              auto glowId = fmt::format("rl-comment-glow-{}", accountId);
-              if (auto glow =
-                      cellRef->m_mainLayer->getChildByIDRecursive(glowId))
-                glow->removeFromParent();
-            }
-            return;
+      // nameplate thing
+      if (!Mod::get()->getSettingValue<bool>("disableNameplate") ||
+          !Mod::get()->getSettingValue<bool>("disableNameplateInComment")) {
+        if (cellRef->m_backgroundLayer && nameplate > 0) {
+          auto nameplateSpr = CCSprite::createWithSpriteFrameName(
+              fmt::format("nameplate_{}.png"_spr, nameplate).c_str());
+          if (cellRef->m_compactMode) {
+            nameplateSpr->setPosition(
+                {cellRef->m_backgroundLayer->getContentSize().width / 2,
+                 cellRef->m_backgroundLayer->getContentSize().height / 2});
+            nameplateSpr->setScale(0.925f);
+            cellRef->m_backgroundLayer->setOpacity(150);
+            cellRef->m_backgroundLayer->addChild(nameplateSpr, -1);
+          } else {
+            nameplateSpr->setScale(2.f);
+            nameplateSpr->setPosition(
+                {-20, cellRef->m_backgroundLayer->getContentSize().height / 2});
+            cellRef->m_backgroundLayer->setOpacity(150);
+            cellRef->m_backgroundLayer->addChild(nameplateSpr, -1);
           }
+        }
+      }
 
-          cellRef->m_fields->role = role;
-          cellRef->m_fields->stars = stars;
-          cellRef->m_fields->planets = planets;
-          cellRef->m_fields->supporter = isSupporter;
-          cellRef->m_fields->booster = isBooster;
-          
-          log::debug("User comment role: {} supporter={} stars={} planets={}",
-                     role, isSupporter, stars, planets);
+      cellRef->m_fields->role = role;
+      cellRef->m_fields->stars = stars;
+      cellRef->m_fields->planets = planets;
+      cellRef->m_fields->supporter = isSupporter;
+      cellRef->m_fields->booster = isBooster;
+      log::debug("User comment role: {} supporter={} stars={} planets={} "
+                 "nameplate={}",
+                 role, isSupporter, stars, planets, nameplate);
 
-          log::debug("User comment role: {} supporter={}", role,
-                     cellRef->m_fields->supporter);
+      log::debug("User comment role: {} supporter={}", role,
+                 cellRef->m_fields->supporter);
 
-          cellRef->loadBadgeForComment(accountId);
-          cellRef->applyCommentTextColor(accountId);
-          cellRef->applyStarGlow(accountId, stars, planets);
-        });
+      cellRef->loadBadgeForComment(accountId);
+      cellRef->applyCommentTextColor(accountId);
+      cellRef->applyStarGlow(accountId, stars, planets);
+    });
     // Only update UI if it still exists
     if (cellRef->m_mainLayer) {
       cellRef->loadBadgeForComment(accountId);
@@ -261,7 +283,7 @@ class $modify(RLCommentCell, CommentCell) {
         modBadgeSprite->setID("rl-comment-mod-badge");
         userNameMenu->addChild(modBadgeSprite);
       }
-    } else if (m_fields->role == 2) { 
+    } else if (m_fields->role == 2) {
       if (!userNameMenu->getChildByID("rl-comment-admin-badge")) {
         auto adminBadgeSprite =
             CCSprite::createWithSpriteFrameName("RL_badgeAdmin01.png"_spr);

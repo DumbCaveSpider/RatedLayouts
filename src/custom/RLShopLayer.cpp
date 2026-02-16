@@ -8,10 +8,6 @@
 #include "RLBuyItemPopup.hpp"
 #include <Geode/Enums.hpp>
 #include <Geode/Geode.hpp>
-#include <Geode/binding/CCCounterLabel.hpp>
-#include <Geode/binding/DialogObject.hpp>
-#include <Geode/binding/FMODAudioEngine.hpp>
-#include <Geode/binding/UploadActionPopup.hpp>
 #include <fmt/format.h>
 
 using namespace geode::prelude;
@@ -91,13 +87,13 @@ bool RLShopLayer::init() {
   // ruby shop sign
   auto shopSignSpr =
       CCSprite::createWithSpriteFrameName("RL_shopSign_001.png"_spr);
-  shopSignSpr->setPosition({winSize.width / 2 + 80, winSize.height - 45});
+  shopSignSpr->setPosition({winSize.width / 2 + 60, winSize.height - 45});
   shopSignSpr->setScale(1.2f);
   this->addChild(shopSignSpr, -2);
 
   // button to reset
   auto resetBtnSpr = ButtonSprite::create(
-      "Reset Rubies", 80, true, "goldFont.fnt", "GJ_button_06.png", 30.f, .7f);
+      "Reset Rubies", 80, true, "goldFont.fnt", "GJ_button_06.png", 25.f, .7f);
   auto resetBtn = CCMenuItemSpriteExtra::create(
       resetBtnSpr, this, menu_selector(RLShopLayer::onResetRubies));
   resetBtn->setPosition(
@@ -105,14 +101,22 @@ bool RLShopLayer::init() {
   menu->addChild(resetBtn);
 
   // button to unequip nameplate
-  auto unequipSpr =
-      ButtonSprite::create("Unequip Nameplate", 80, true, "goldFont.fnt",
-                           "GJ_button_06.png", 30.f, .7f);
+  auto unequipSpr = ButtonSprite::create("Unequip", 80, true, "goldFont.fnt",
+                                         "GJ_button_06.png", 25.f, .7f);
   auto unequipBtn = CCMenuItemSpriteExtra::create(
       unequipSpr, this, menu_selector(RLShopLayer::onUnequipNameplate));
   unequipBtn->setPosition(
-      {rubyLabel->getPositionX() - 30, rubyLabel->getPositionY() - 70});
+      {rubyLabel->getPositionX() - 30, rubyLabel->getPositionY() - 60});
   menu->addChild(unequipBtn);
+
+  // open submission form
+  auto submitSpr = ButtonSprite::create("Submission", 80, true, "goldFont.fnt",
+                                        "GJ_button_01.png", 25.f, .7f);
+  auto submitBtn = CCMenuItemSpriteExtra::create(
+      submitSpr, this, menu_selector(RLShopLayer::onForm));
+  submitBtn->setPosition(
+      {rubyLabel->getPositionX() - 30, rubyLabel->getPositionY() - 90});
+  menu->addChild(submitBtn);
 
   // shop item menu
   auto shopMenu = CCMenu::create();
@@ -154,7 +158,9 @@ bool RLShopLayer::init() {
                  {7, 10000, 29960249, "DaRealSkellyGuy"},
                  {8, 12500, 11827369, "Froose"},
                  {9, 13125, 19304186, "DarkFeind"},
-                 {10, 14700, 26139147, "NitzFoxcrak"}};
+                 {10, 14700, 26139147, "NitzFoxcrak"},
+                 {11, 12000, 13733061, "F1regek"},
+                 {12, 12000, 15289357, "Landon72"}};
   m_shopRow1->setAnchorPoint({0.5f, 0.5f});
   m_shopRow2->setAnchorPoint({0.5f, 0.5f});
 
@@ -223,6 +229,13 @@ bool RLShopLayer::init() {
   return true;
 }
 
+void RLShopLayer::onForm(CCObject *sender) {
+  Notification::create("Opening a new link to the browser",
+                       NotificationIcon::Info)
+      ->show();
+  utils::web::openLinkInBrowser("https://forms.gle/3UU5JJE1XrfwPK5u7");
+}
+
 void RLShopLayer::onLayoutCreator(CCObject *sender) {
   // gen random
   static geode::utils::random::Generator gen = [] {
@@ -245,21 +258,22 @@ void RLShopLayer::onLayoutCreator(CCObject *sender) {
   case 2:
     obj1 = DialogObject::create(
         "Layout Creator",
-        "Come back later when you get a little more hmm <d050><cg>Richer</c>!",
+        "Come back later when you get a little more hmm... <d050><cg>Richer</c>!",
         28, 1.f, false, ccWHITE);
     break;
   case 3:
-    obj1 = DialogObject::create("Layout Creator",
-                                "I don't have anything at the moment,<d050> my "
-                                "<cr>truck broke down</c> :(",
-                                28, 1.f, false, ccWHITE);
-    break;
-  case 4:
     obj1 = DialogObject::create(
         "Layout Creator",
-        "Someone <cy>robbed all of my stuff</c>!<d050> I'm "
-        "waiting for it to be delivered again.",
+        "These are very <cg>high quality nameplates</c>, you know! "
+        "<d050><cy>Not like those </c><cr>cheap ones</c>!",
         28, 1.f, false, ccWHITE);
+    break;
+  case 4:
+    obj1 =
+        DialogObject::create("Layout Creator",
+                             "Hope your <cr>rubies</c> are legit! <d050><cg>We "
+                             "have a strict no-refund policy</c>! >:D",
+                             28, 1.f, false, ccWHITE);
     break;
   case 5:
     obj1 = DialogObject::create(
@@ -308,9 +322,9 @@ void RLShopLayer::onBuyItem(CCObject *sender) {
 void RLShopLayer::onUnequipNameplate(CCObject *sender) {
   createQuickPopup(
       "Unequip Nameplate",
-      "Are you sure you want to <cr>unequip your current nameplate</c>? You "
-      "can "
-      "re-equip it later from the shop page.",
+      "Are you sure you want to <cr>unequip your current "
+      "nameplate</c>?\n<cy>You can "
+      "re-equip it later from this shop page.</c>",
       "No", "Yes", [this](auto, bool yes) {
         if (!yes)
           return;
