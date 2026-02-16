@@ -160,7 +160,17 @@ bool RLShopLayer::init() {
                  {9, 13125, 19304186, "DarkFeind"},
                  {10, 14700, 26139147, "NitzFoxcrak"},
                  {11, 12000, 13733061, "F1regek"},
-                 {12, 12000, 15289357, "Landon72"}};
+                 {12, 12000, 15289357, "Landon72"},
+                 {13, 20000, 3595559, "Darkore"},
+                 {14, 10000, 24877069, "abbaba"},
+                 {15, 10000, 24877069, "abbaba"},
+                 {16, 10000, 24877069, "abbaba"},
+                 {17, 10000, 24877069, "abbaba"},
+                 {18, 12500, 26209086, "Niki2025"},
+                 {19, 12500, 26209086, "Niki2025"},
+                 {20, 27500, 36519986, "NullJuicecd"},
+                 {21, 27500, 36519986, "NullJuicecd"},
+                 {22, 20000, 24448008, "hexz347"}};
   m_shopRow1->setAnchorPoint({0.5f, 0.5f});
   m_shopRow2->setAnchorPoint({0.5f, 0.5f});
 
@@ -256,10 +266,10 @@ void RLShopLayer::onLayoutCreator(CCObject *sender) {
         ccWHITE);
     break;
   case 2:
-    obj1 = DialogObject::create(
-        "Layout Creator",
-        "Come back later when you get a little more hmm... <d050><cg>Richer</c>!",
-        28, 1.f, false, ccWHITE);
+    obj1 = DialogObject::create("Layout Creator",
+                                "Come back later when you get a little more "
+                                "hmm... <d050><cg>Richer</c>!",
+                                28, 1.f, false, ccWHITE);
     break;
   case 3:
     obj1 = DialogObject::create(

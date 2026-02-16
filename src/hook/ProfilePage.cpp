@@ -578,7 +578,7 @@ class $modify(RLProfilePage, ProfilePage) {
           // Handle creator points
           if (auto rlStatsMenu =
                   pageRef->getChildByIDRecursive("rl-stats-menu")) {
-            if (pageRef->m_fields->m_points > 0) {
+            if (pageRef->m_fields->m_points > 0 && !Mod::get()->getSettingValue<bool>("disableCreatorPoints")) {
               if (!rlStatsMenu->getChildByIDRecursive("rl-points-entry")) {
                 auto pointsEntry = pageRef->createStatEntry(
                     "rl-points-entry", "rl-points-label",
