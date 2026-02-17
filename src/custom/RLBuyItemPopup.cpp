@@ -163,9 +163,13 @@ void RLBuyItemPopup::onApply(CCObject *sender) {
 void RLBuyItemPopup::onBuy(CCObject *sender) {
   int current = Mod::get()->getSavedValue<int>("rubies", 0);
   if (current < m_value) {
-    Notification::create("Not enough rubies to buy this item.",
-                         NotificationIcon::Warning)
-        ->show();
+    DialogObject *obj = DialogObject::create(
+        "Layout Creator",
+        "You don't have enough <cr>rubies</c> to buy this item!", 28, 1.f,
+        false, ccWHITE);
+    auto dialog = DialogLayer::createDialogLayer(obj, nullptr, 2);
+    dialog->addToMainScene();
+    dialog->animateInRandomSide();
     return;
   }
 

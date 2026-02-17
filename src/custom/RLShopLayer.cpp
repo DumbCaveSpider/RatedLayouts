@@ -8,6 +8,7 @@
 #include "RLBuyItemPopup.hpp"
 #include <Geode/Enums.hpp>
 #include <Geode/Geode.hpp>
+#include <Geode/binding/FMODAudioEngine.hpp>
 #include <fmt/format.h>
 
 using namespace geode::prelude;
@@ -30,6 +31,7 @@ bool RLShopLayer::init() {
   auto winSize = CCDirector::sharedDirector()->getWinSize();
 
   addBackButton(this, BackButtonStyle::Pink);
+
   // bg
   auto shopBGSpr = CCSprite::createWithSpriteFrameName("RL_shopBG.png"_spr);
   auto bgSize = shopBGSpr->getTextureRect().size;
@@ -248,6 +250,18 @@ void RLShopLayer::onForm(CCObject *sender) {
   utils::web::openLinkInBrowser("https://forms.gle/3UU5JJE1XrfwPK5u7");
 }
 
+// play the dum audio lol
+void RLShopLayer::onEnter() {
+  CCLayer::onEnter();
+  FMODAudioEngine::sharedEngine()->playMusic("rubyShop.mp3"_spr, true, 0.f, 0);
+}
+
+void RLShopLayer::onExit() {
+  CCLayer::onExit();
+  GameManager::sharedState()->playMenuMusic();
+  GameManager::sharedState()->fadeInMenuMusic();
+}
+
 void RLShopLayer::onLayoutCreator(CCObject *sender) {
   // gen random
   static geode::utils::random::Generator gen = [] {
@@ -310,18 +324,6 @@ void RLShopLayer::onBuyItem(CCObject *sender) {
   RLNameplateInfo info;
   if (!RLNameplateItem::getInfo(idx, info)) {
     log::warn("RLShopLayer: no nameplate info for index {}", idx);
-    return;
-  }
-
-  if (Mod::get()->getSavedValue<int>("rubies") < info.value &&
-      !RLNameplateItem::isOwned(info.index)) {
-    DialogObject *obj = DialogObject::create(
-        "Layout Creator",
-        "You don't have enough <cr>rubies</c> to buy this item!", 28, 1.f,
-        false, ccWHITE);
-    auto dialog = DialogLayer::createDialogLayer(obj, nullptr, 2);
-    dialog->addToMainScene();
-    dialog->animateInRandomSide();
     return;
   }
 

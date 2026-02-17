@@ -31,6 +31,9 @@
 		},
 		"sprites": [
 			"resources/*.png"
+		],
+		"files": [
+			"resources/*.mp3"
 		]
 			
 	},

@@ -1,5 +1,6 @@
 #include "RLCreatorLayer.hpp"
 
+#include <Geode/binding/GameManager.hpp>
 #include <Geode/ui/GeodeUI.hpp>
 #include <Geode/utils/async.hpp>
 #include <cue/RepeatingBackground.hpp>

@@ -11,6 +11,8 @@ class RLShopLayer : public CCLayer {
 protected:
   bool init() override;
   void keyBackClicked() override;
+  void onExit() override;
+  void onEnter() override;
 
 public:
   static RLShopLayer *create();
