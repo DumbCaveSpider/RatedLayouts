@@ -208,25 +208,22 @@ class $modify(RLCommentCell, CommentCell) {
       }
 
       // nameplate thing
-      if (!Mod::get()->getSettingValue<bool>("disableNameplate") ||
-          !Mod::get()->getSettingValue<bool>("disableNameplateInComment")) {
-        if (cellRef->m_backgroundLayer && nameplate > 0) {
-          auto nameplateSpr = CCSprite::createWithSpriteFrameName(
-              fmt::format("nameplate_{}.png"_spr, nameplate).c_str());
-          if (cellRef->m_compactMode) {
-            nameplateSpr->setPosition(
-                {cellRef->m_backgroundLayer->getContentSize().width / 2,
-                 cellRef->m_backgroundLayer->getContentSize().height / 2});
-            nameplateSpr->setScale(0.925f);
-            cellRef->m_backgroundLayer->setOpacity(150);
-            cellRef->m_backgroundLayer->addChild(nameplateSpr, -1);
-          } else {
-            nameplateSpr->setScale(2.f);
-            nameplateSpr->setPosition(
-                {-20, cellRef->m_backgroundLayer->getContentSize().height / 2});
-            cellRef->m_backgroundLayer->setOpacity(150);
-            cellRef->m_backgroundLayer->addChild(nameplateSpr, -1);
-          }
+      if (cellRef->m_backgroundLayer && nameplate != 0 && !Mod::get()->getSettingValue<bool>("disableNameplateInComment")) {
+        auto nameplateSpr = CCSprite::createWithSpriteFrameName(
+            fmt::format("nameplate_{}.png"_spr, nameplate).c_str());
+        if (cellRef->m_compactMode) {
+          nameplateSpr->setPosition(
+              {cellRef->m_backgroundLayer->getContentSize().width / 2,
+               cellRef->m_backgroundLayer->getContentSize().height / 2});
+          nameplateSpr->setScale(0.925f);
+          cellRef->m_backgroundLayer->setOpacity(150);
+          cellRef->m_backgroundLayer->addChild(nameplateSpr, -1);
+        } else {
+          nameplateSpr->setScale(2.f);
+          nameplateSpr->setPosition(
+              {-20, cellRef->m_backgroundLayer->getContentSize().height / 2});
+          cellRef->m_backgroundLayer->setOpacity(150);
+          cellRef->m_backgroundLayer->addChild(nameplateSpr, -1);
         }
       }
 

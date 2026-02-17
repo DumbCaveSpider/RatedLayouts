@@ -149,18 +149,16 @@
 			"name": "Nameplate Customization"
 		},
 		"disableNameplate": {
-			"name": "Disable Nameplate",
+			"name": "Disable Nameplate in Leaderboard",
 			"type": "bool",
 			"default": false,
-			"description": "Disable nameplate in comments and leaderboards.",
-			"enable-if": "!disableNameplateInComment"
+			"description": "Disable nameplate in Rated Layouts leaderboards."
 		},
 		"disableNameplateInComment": {
 			"name": "Disable Nameplate in Comment",
 			"type": "bool",
 			"default": false,
-			"description": "Disable nameplate in comments only. <cy>Enable this if you want to keep nameplate in leaderboard but not in comments.</cy>",
-			"enable-if": "!disableNameplate"
+			"description": "Disable nameplate in comments only."
 		},
 		"titleMisc": {
 			"type": "title",

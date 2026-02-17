@@ -174,7 +174,22 @@ bool RLShopLayer::init() {
                  {21, 27500, 36519986, "NullJuicecd"},
                  {22, 20000, 24448008, "hexz347"},
                  {23, 57500, 7689052, "ArcticWoof"},
-                 {24, 10000, 15289357, "Landon72"}};
+                 {24, 10000, 15289357, "Landon72"},
+                 {25, 12340, 15289357, "Landon72"},
+                 {26, 30000, 5354634, "stkyc"},
+                 {27, 15000, 5354634, "stkyc"},
+                 {28, 10000, 4882817, "bonneville1"},
+                 {29, 15000, 16737398, "Hydraniac"},
+                 {30, 29032, 21389, "Enlightenment"},
+                 {31, 10000, 15289357, "Landon72"},
+                 {32, 10000, 15289357, "Landon72"},
+                 {33, 30000, 21389, "Enlightenment"},
+                 {34, 12500, 14881095, "sebtheboi"},
+                 {35, 10000, 21213401, "Flyingfish9"},
+                 {36, 11000, 21213401, "Flyingfish9"},
+                 {37, 12500, 21213401, "Flyingfish9"},
+                 {38, 10500, 25552964, "DestructionEToH"},
+                 {39, 11240, 37401841, "MunchyBob"}};
   m_shopRow1->setAnchorPoint({0.5f, 0.5f});
   m_shopRow2->setAnchorPoint({0.5f, 0.5f});
 
@@ -295,11 +310,11 @@ void RLShopLayer::onLayoutCreator(CCObject *sender) {
         28, 1.f, false, ccWHITE);
     break;
   case 4:
-    obj1 =
-        DialogObject::create("Layout Creator",
-                             "Hope your <cr>rubies</c> are legit! <d050><cg>We "
-                             "have a strict no-refund policy</c>! >:D",
-                             28, 1.f, false, ccWHITE);
+    obj1 = DialogObject::create(
+        "Layout Creator",
+        "So this weird kid <cl>Darkore</c> hook up this sweet tunes on my "
+        "<cr>shop</c>. <cp>I love it</c>!",
+        28, 1.f, false, ccWHITE);
     break;
   case 5:
     obj1 = DialogObject::create(
