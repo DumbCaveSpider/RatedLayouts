@@ -201,8 +201,8 @@ bool RLShopLayer::init() {
   const float centerY = shopMenu->getPositionY();
   const float offset = (rowHeight / 2.f) + (gap / 2.f);
 
-  m_shopRow1->setPosition({shopMenu->getPositionX(), centerY + offset - 18});
-  m_shopRow2->setPosition({shopMenu->getPositionX(), centerY - offset});
+  m_shopRow1->setPosition({shopMenu->getPositionX(), centerY + offset - 16}); // the magic number is for my ocd
+  m_shopRow2->setPosition({shopMenu->getPositionX(), centerY - offset + 3});
   deckSpr->addChild(m_shopRow1, 1);
   deckSpr->addChild(m_shopRow2, 1);
 
