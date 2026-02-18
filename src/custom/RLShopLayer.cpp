@@ -93,6 +93,14 @@ bool RLShopLayer::init() {
   shopSignSpr->setScale(1.2f);
   this->addChild(shopSignSpr, -2);
 
+  // PLUSHIESS
+  auto plushiesSpr =
+      CCSprite::createWithSpriteFrameName("RL_plushpile.png"_spr);
+  plushiesSpr->setPosition({winSize.width / 2 - 10, winSize.height / 2 + 28});
+  plushiesSpr->setScale(0.7f);
+  plushiesSpr->setAnchorPoint({0.5f, 0.f});
+  this->addChild(plushiesSpr, -2);
+
   // button to reset
   auto resetBtnSpr = ButtonSprite::create(
       "Reset Rubies", 80, true, "goldFont.fnt", "GJ_button_06.png", 25.f, .7f);
@@ -190,7 +198,10 @@ bool RLShopLayer::init() {
                  {37, 12500, 21213401, "Flyingfish9"},
                  {38, 10500, 25552964, "DestructionEToH"},
                  {39, 11240, 37401841, "MunchyBob"},
-                 {40, 65000, 7689052, "ArcticWoof"}};
+                 {40, 65000, 7689052, "ArcticWoof"},
+                 {41, 15000, 5354634, "stkyc"},
+                 {42, 10000, 5354634, "stkyc"},
+                 {43, 10000, 11827369, "Froose"}};
   m_shopRow1->setAnchorPoint({0.5f, 0.5f});
   m_shopRow2->setAnchorPoint({0.5f, 0.5f});
 
@@ -201,7 +212,9 @@ bool RLShopLayer::init() {
   const float centerY = shopMenu->getPositionY();
   const float offset = (rowHeight / 2.f) + (gap / 2.f);
 
-  m_shopRow1->setPosition({shopMenu->getPositionX(), centerY + offset - 16}); // the magic number is for my ocd
+  m_shopRow1->setPosition(
+      {shopMenu->getPositionX(),
+       centerY + offset - 16}); // the magic number is for my ocd
   m_shopRow2->setPosition({shopMenu->getPositionX(), centerY - offset + 3});
   deckSpr->addChild(m_shopRow1, 1);
   deckSpr->addChild(m_shopRow2, 1);
@@ -261,7 +274,8 @@ bool RLShopLayer::init() {
 
 void RLShopLayer::onForm(CCObject *sender) {
   createQuickPopup("Nameplate Submission Form",
-                   "You will be redirected to the <cl>Nameplate Submission Form</c> in your web browser.\n<cy>Continue?</c>",
+                   "You will be redirected to the <cl>Nameplate Submission "
+                   "Form</c> in your web browser.\n<cy>Continue?</c>",
                    "No", "Yes", [](auto, bool yes) {
                      if (!yes)
                        return;
@@ -293,13 +307,16 @@ void RLShopLayer::onLayoutCreator(CCObject *sender) {
     return g;
   }();
 
-  int v = gen.generate<int>(0, 6);
+  int v = gen.generate<int>(0, 9);
   uint64_t raw = gen.next();
   DialogObject *dialogObj = nullptr;
   std::string response = "Can I help you?";
   log::debug("Random value: {}, raw: {}", v, raw);
   switch (v) {
   case 1:
+    response =
+        "Welcome to <cr>my shop</c>! I have the best <cg>nameplates</c> in the "
+        "business!";
     break;
   case 2:
     response = "Come back later when you get a little more "
@@ -319,6 +336,13 @@ void RLShopLayer::onLayoutCreator(CCObject *sender) {
     break;
   case 6:
     response = "Stop bothering me and play some <cl>layouts</c>!";
+    break;
+  case 7:
+    response = "I heard if you <cg>buy all the nameplates</c>, <cy>something "
+               "special happens...</c>";
+    break;
+  case 8:
+    response = "Got my new <cp>plushies</c> next to me! They are so cute!";
     break;
   default:
     response = "Can I help you?";
