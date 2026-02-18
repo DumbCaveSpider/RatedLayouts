@@ -28,7 +28,11 @@ bool RLGauntletLevelsLayer::init(matjson::Value const &gauntletData) {
 
   auto bg = cue::RepeatingBackground::create("game_bg_01_001.png", 1.f,
                                              cue::RepeatMode::X);
-  bg->setColor({50, 50, 50});
+  int bgR = gauntletData["r"].asInt().unwrapOr(50);
+  int bgG = gauntletData["g"].asInt().unwrapOr(50);
+  int bgB = gauntletData["b"].asInt().unwrapOr(50);
+  bg->setColor({static_cast<GLubyte>(bgR), static_cast<GLubyte>(bgG),
+                static_cast<GLubyte>(bgB)});
   bg->setSpeed(0.0f);
   this->addChild(bg, -1);
   m_bgSprite = static_cast<CCSprite *>(bg);
@@ -162,6 +166,40 @@ void RLGauntletLevelsLayer::createLevelButtons(matjson::Value const &levelsData,
   const float buttonWidth = 120.0f;
   const float spacingX = 100.0f;
 
+  std::string levelIDsCSV;
+  bool firstId = true;
+  m_levelsSearchIds.clear();
+  for (auto &value : levelsArray) {
+    if (!value.isObject())
+      continue;
+    auto idOpt = value["levelid"].asInt();
+    if (!idOpt)
+      continue;
+    int lid = idOpt.unwrap();
+    m_levelsSearchIds.push_back(lid);
+    if (!firstId)
+      levelIDsCSV += ",";
+    levelIDsCSV += numToString(lid);
+    firstId = false;
+  }
+
+  m_levelsSearchKey.clear();
+  if (!levelIDsCSV.empty()) {
+    auto glm = GameLevelManager::sharedState();
+    if (glm) {
+      auto multiSearch =
+          GJSearchObject::create(SearchType::Type19, levelIDsCSV.c_str());
+      m_levelsSearchKey = std::string(multiSearch->getKey());
+      glm->getOnlineLevels(multiSearch);
+      this->runAction(CCSequence::create(
+          CCDelayTime::create(0.15f),
+          CCCallFunc::create(
+              this,
+              callfunc_selector(RLGauntletLevelsLayer::refreshCompletionCache)),
+          nullptr));
+    }
+  }
+
   size_t validCount = 0;
   for (auto &v : levelsArray)
     if (v.isObject())
@@ -222,6 +260,7 @@ void RLGauntletLevelsLayer::createLevelButtons(matjson::Value const &levelsData,
     difficultyLabel->setScale(0.625f);
     difficultyLabel->setPosition(
         {gauntletSprite->getContentSize().width / 2, -10});
+    difficultyLabel->setID(fmt::format("rl-gauntlet-diff-{}", levelId).c_str());
     gauntletSprite->addChild(difficultyLabel);
 
     auto starSpr = CCSprite::createWithSpriteFrameName("RL_starBig.png"_spr);
@@ -229,6 +268,43 @@ void RLGauntletLevelsLayer::createLevelButtons(matjson::Value const &levelsData,
     starSpr->setScale(0.5f);
     starSpr->setPosition({difficultyLabel->getPositionX(), -10});
     gauntletSprite->addChild(starSpr);
+
+    bool isCompleted = false;
+    if (levelId > 0 && GameStatsManager::sharedState()) {
+      auto glm = GameLevelManager::sharedState();
+      if (glm && !m_levelsSearchKey.empty()) {
+        auto storedAll = glm->getStoredOnlineLevels(m_levelsSearchKey.c_str());
+        if (storedAll && storedAll->count() > 0) {
+          for (unsigned int si = 0; si < storedAll->count(); ++si) {
+            auto g = static_cast<GJGameLevel *>(storedAll->objectAtIndex(si));
+            if (g && static_cast<int>(g->m_levelID) == levelId) {
+              isCompleted =
+                  GameStatsManager::sharedState()->hasCompletedLevel(g);
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    if (isCompleted) {
+      // avoid duplicate icon
+      auto existing = gauntletSprite->getChildByID(
+          fmt::format("rl-gauntlet-complete-{}", levelId).c_str());
+      if (!existing) {
+        auto completeIcon =
+            CCSprite::createWithSpriteFrameName("GJ_completesIcon_001.png");
+        if (completeIcon) {
+          completeIcon->setPosition(
+              {gauntletSprite->getContentSize().width / 2,
+               gauntletSprite->getContentSize().height / 2});
+          completeIcon->setID(
+              fmt::format("rl-gauntlet-complete-{}", levelId).c_str());
+          gauntletSprite->addChild(completeIcon, 20);
+        }
+      }
+      difficultyLabel->setColor({0, 150, 255});
+    }
 
     auto button = CCMenuItemSpriteExtra::create(
         gauntletSprite, this,
@@ -641,6 +717,81 @@ void RLGauntletLevelsLayer::updateBackgroundParallax(CCPoint const &menuPos) {
     m_bgSprite2->setPosition(ccpAdd(m_bgOriginPos, ccpMult(bgOffset, 1.0f)));
   }
 }
+
+void RLGauntletLevelsLayer::refreshCompletionCache() {
+  if (m_levelsSearchKey.empty() || m_levelsSearchIds.empty())
+    return;
+  auto glm = GameLevelManager::sharedState();
+  if (!glm)
+    return;
+
+  auto storedAll = glm->getStoredOnlineLevels(m_levelsSearchKey.c_str());
+  if (!storedAll || storedAll->count() == 0)
+    return; // nothing cached yet
+
+  for (int levelId : m_levelsSearchIds) {
+    bool isCompleted = false;
+    GJGameLevel *found = nullptr;
+    for (unsigned int i = 0; i < storedAll->count(); ++i) {
+      auto g = static_cast<GJGameLevel *>(storedAll->objectAtIndex(i));
+      if (g && static_cast<int>(g->m_levelID) == levelId) {
+        found = g;
+        break;
+      }
+    }
+    if (found && GameStatsManager::sharedState()) {
+      isCompleted = GameStatsManager::sharedState()->hasCompletedLevel(found);
+    }
+
+    // find UI button for this level and update visuals
+    if (m_levelsMenu) {
+      auto children = m_levelsMenu->getChildren();
+      for (unsigned int ci = 0; ci < children->count(); ++ci) {
+        auto child = static_cast<CCNode *>(children->objectAtIndex(ci));
+        auto btn = typeinfo_cast<CCMenuItemSpriteExtra *>(child);
+        if (!btn)
+          continue;
+        if (btn->getTag() != levelId)
+          continue;
+
+        auto normal = btn->getNormalImage();
+        auto spr = static_cast<CCSprite *>(normal);
+        if (!spr)
+          break;
+
+        auto diffId = fmt::format("rl-gauntlet-diff-{}", levelId);
+        auto diffNode = spr->getChildByID(diffId.c_str());
+        auto diffLabel = typeinfo_cast<CCLabelBMFont *>(diffNode);
+
+        auto completeId = fmt::format("rl-gauntlet-complete-{}", levelId);
+        auto existingIcon = spr->getChildByID(completeId.c_str());
+
+        if (isCompleted) {
+          if (!existingIcon) {
+            auto completeIcon =
+                CCSprite::createWithSpriteFrameName("GJ_completesIcon_001.png");
+            if (completeIcon) {
+              completeIcon->setPosition({spr->getContentSize().width / 2,
+                                         spr->getContentSize().height / 2});
+              completeIcon->setID(completeId.c_str());
+              spr->addChild(completeIcon, 20);
+            }
+          }
+          if (diffLabel)
+            diffLabel->setColor({0, 150, 255});
+        } else {
+          // not completed: remove any stale icon and reset color
+          if (existingIcon)
+            existingIcon->removeFromParent();
+          if (diffLabel)
+            diffLabel->setColor({255, 255, 255});
+        }
+        break; // found button for this level
+      }
+    }
+  }
+}
+
 void RLGauntletLevelsLayer::keyBackClicked() {
   CCDirector::sharedDirector()->popSceneWithTransition(
       0.5f, PopTransition::kPopTransitionFade);

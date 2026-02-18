@@ -454,9 +454,9 @@ void RLSearchLayer::onInfoButton(CCObject *sender) {
       "Use the <cr>difficulty filter</c> to select which "
       "<cl>layout difficulties</c> to include in the search.\n"
       "Press the <cg>Search button</c> to perform the search with "
-      "the selected criteria."
-      "To view the <cl>latest rated layouts</c>, leave the search bar empty, "
-      "then press <cg>Search</c>.",
+      "the selected criteria.\n"
+      "To view the <cl>recently rated layouts</c>, leave the search bar empty, "
+      "then press the <cg>Search</c>.",
       "OK")
       ->show();
 }

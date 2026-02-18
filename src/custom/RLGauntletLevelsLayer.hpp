@@ -84,5 +84,12 @@ class RLGauntletLevelsLayer : public CCLayer {
       // Center points of placed buttons
       std::vector<CCPoint> m_buttonCenters;
       async::TaskHolder<web::WebResponse> m_getLevelsTask;
+
+      std::string m_levelsSearchKey;
+      std::vector<int> m_levelsSearchIds;
+
+      // refresh cached completion status when GameLevelManager fills store
+      void refreshCompletionCache();
+
       ~RLGauntletLevelsLayer() { m_getLevelsTask.cancel(); }
 };
