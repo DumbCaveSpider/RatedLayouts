@@ -288,48 +288,39 @@ void RLShopLayer::onLayoutCreator(CCObject *sender) {
 
   int v = gen.generate<int>(0, 6);
   uint64_t raw = gen.next();
-  DialogObject *obj1 = nullptr;
+  DialogObject *dialogObj = nullptr;
+  std::string response = "Can I help you?";
   log::debug("Random value: {}, raw: {}", v, raw);
   switch (v) {
   case 1:
-    obj1 = DialogObject::create(
-        "Layout Creator",
-        "Go play some <cl>layouts</c>. <cr>You brokie! >:(</c>", 28, 1.f, false,
-        ccWHITE);
     break;
   case 2:
-    obj1 = DialogObject::create("Layout Creator",
-                                "Come back later when you get a little more "
-                                "hmm... <d050><cg>Richer</c>!",
-                                28, 1.f, false, ccWHITE);
+    response = "Come back later when you get a little more "
+               "hmm... <d050><cg>Richer</c>!";
     break;
   case 3:
-    obj1 = DialogObject::create(
-        "Layout Creator",
-        "These are very <cg>high quality nameplates</c>, you know! "
-        "<d050><cy>Not like those </c><cr>cheap ones</c>!",
-        28, 1.f, false, ccWHITE);
+    response = "These are very <cg>high quality nameplates</c>, you know! "
+               "<d050><cy>Not like those </c><cr>cheap ones</c>!";
     break;
   case 4:
-    obj1 = DialogObject::create(
-        "Layout Creator",
+    response =
         "So this weird kid <cl>Darkore</c> hook up this sweet tunes on my "
-        "<cr>shop</c>. <cp>I love it</c>!",
-        28, 1.f, false, ccWHITE);
+        "<cr>shop</c>. <cp>I love it</c>!";
     break;
   case 5:
-    obj1 = DialogObject::create(
-        "Layout Creator",
-        "I really need to put a better <cg>security</c> on this shop.", 28, 1.f,
-        false, ccWHITE);
+    response = "I really need to put a better <cg>security</c> on my shop.";
+    break;
+  case 6:
+    response = "Stop bothering me and play some <cl>layouts</c>!";
     break;
   default:
-    obj1 = DialogObject::create("Layout Creator", "Can I help you?", 28, 1.f,
-                                false, ccWHITE);
+    response = "Can I help you?";
     break;
   }
+  dialogObj = DialogObject::create("Layout Creator", response.c_str(), 28, 1.f,
+                                   false, ccWHITE);
 
-  auto dialog = DialogLayer::createDialogLayer(obj1, nullptr, 2);
+  auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 2);
   dialog->addToMainScene();
   dialog->animateInRandomSide();
 }

@@ -5,6 +5,7 @@
 #include <Geode/binding/UploadActionPopup.hpp>
 #include <Geode/modify/ProfilePage.hpp>
 #include <fmt/format.h>
+#include <string>
 
 using namespace geode::prelude;
 using namespace ratedlayouts;
@@ -163,10 +164,43 @@ void RLBuyItemPopup::onApply(CCObject *sender) {
 void RLBuyItemPopup::onBuy(CCObject *sender) {
   int current = Mod::get()->getSavedValue<int>("rubies", 0);
   if (current < m_value) {
-    DialogObject *obj = DialogObject::create(
-        "Layout Creator",
-        "You don't have enough <cr>rubies</c> to buy this item!", 28, 1.f,
-        false, ccWHITE);
+    // gen random
+    std::string response =
+        "You don't have enough <cr>rubies</c> to buy this item!";
+    static geode::utils::random::Generator gen = [] {
+      geode::utils::random::Generator g;
+      g.seed(geode::utils::random::secureU64()); // seed once
+      return g;
+    }();
+
+    int v = gen.generate<int>(0, 9);
+    switch (v) {
+    case 1:
+      response = "You can't <cg>afford</c> that <cl>item</c>!";
+      break;
+    case 2:
+      response = "You need more <cr>rubies</c> to get this!";
+      break;
+    case 3:
+      response = "Collect those yummy <cr>rubies</c> please.";
+      break;
+    case 4:
+      response = "You don't have enough <cr>rubies</c>! <d150><co>hah you broke bud.</c>";
+      break;
+    case 5:
+      response = "This item costs <cr>rubies</c>, and you don't have enough!";
+      break;
+    case 6:
+      response = "Go play some <cl>layouts</c> to earn more <cr>rubies</c>!";
+      break;
+    case 7:
+      response = "I ain't the <cg>bank</c>, go get your own <cr>rubies</c>!";
+      break;
+    case 8:
+      response = "You have successfully brought the item of being <cr>poor</c>!<d050> <cg>Congrats you get NOTHING!</c>";
+    }
+    DialogObject *obj = DialogObject::create("Layout Creator", response.c_str(),
+                                             28, 1.f, false, ccWHITE);
     auto dialog = DialogLayer::createDialogLayer(obj, nullptr, 2);
     dialog->addToMainScene();
     dialog->animateInRandomSide();
