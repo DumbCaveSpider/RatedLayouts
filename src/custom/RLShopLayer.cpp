@@ -260,10 +260,17 @@ bool RLShopLayer::init() {
 }
 
 void RLShopLayer::onForm(CCObject *sender) {
-  Notification::create("Opening a new link to the browser",
-                       NotificationIcon::Info)
-      ->show();
-  utils::web::openLinkInBrowser("https://forms.gle/3UU5JJE1XrfwPK5u7");
+  createQuickPopup("Nameplate Submission Form",
+                   "You will be redirected to the <cl>Nameplate Submission Form</c> in your web browser.\n<cy>Continue?</c>",
+                   "No", "Yes", [](auto, bool yes) {
+                     if (!yes)
+                       return;
+                     Notification::create("Opening a new link to the browser",
+                                          NotificationIcon::Info)
+                         ->show();
+                     utils::web::openLinkInBrowser(
+                         "https://forms.gle/3UU5JJE1XrfwPK5u7");
+                   });
 }
 
 // play the dum audio lol
