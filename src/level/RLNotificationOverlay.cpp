@@ -163,13 +163,15 @@ void RLNotificationOverlay::callRateNotification(float dt) {
             Mod::get()->getSavedValue<int>("latestNotifiedRateEventId");
         if (newRate.present) {
           if (newRate.levelId != currentLatestLevelId) {
-            Loader::get()->queueInMainThread([this, newRate]() {
+            Ref<RLNotificationOverlay> self = this;
+            Loader::get()->queueInMainThread([self, newRate]() {
+              if (!self) return;
               auto alert = RLNotificationAlert::create(
                   "New Rated Layout", newRate.levelName, newRate.difficulty,
                   newRate.featured, newRate.levelId, newRate.accountName,
                   newRate.isPlatformer, "rate");
               if (alert) {
-                this->pushAlert(alert);
+                self->pushAlert(alert);
                 Mod::get()->setSavedValue<int>("latestNotifiedRateLevelId",
                                                newRate.levelId);
               }
@@ -180,14 +182,16 @@ void RLNotificationOverlay::callRateNotification(float dt) {
         }
         if (newEvent.present) {
           if (newEvent.levelId != currentLatestEventId) {
-            Loader::get()->queueInMainThread([this, newEvent]() {
+            Ref<RLNotificationOverlay> self = this;
+            Loader::get()->queueInMainThread([self, newEvent]() {
+              if (!self) return;
               auto alert = RLNotificationAlert::create(
                   fmt::format("New {} Layout", newEvent.eventType),
                   newEvent.levelName, newEvent.difficulty, newEvent.featured,
                   newEvent.levelId, newEvent.accountName, newEvent.isPlatformer,
                   newEvent.eventType);
               if (alert) {
-                this->pushAlert(alert);
+                self->pushAlert(alert);
                 Mod::get()->setSavedValue<int>("latestNotifiedRateEventId",
                                                newEvent.levelId);
               }
