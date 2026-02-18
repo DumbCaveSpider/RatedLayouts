@@ -201,7 +201,8 @@ bool RLShopLayer::init() {
                  {40, 65000, 7689052, "ArcticWoof"},
                  {41, 15000, 5354634, "stkyc"},
                  {42, 10000, 5354634, "stkyc"},
-                 {43, 10000, 11827369, "Froose"}};
+                 {43, 10000, 11827369, "Froose"},
+                 {44, 14000, 25479036, "KetazonerLop"}};
   m_shopRow1->setAnchorPoint({0.5f, 0.5f});
   m_shopRow2->setAnchorPoint({0.5f, 0.5f});
 
