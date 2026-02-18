@@ -40,6 +40,10 @@ bool RLGauntletSelectLayer::init() {
   auto menu = CCMenu::create();
   menu->setPosition({0, 0});
 
+  auto infoMenu = CCMenu::create();
+  infoMenu->setPosition({0, 0});
+  this->addChild(infoMenu, 10);
+
   addBackButton(this, BackButtonStyle::Green);
 
   this->setKeypadEnabled(true);
@@ -55,7 +59,7 @@ bool RLGauntletSelectLayer::init() {
   auto announceBtn = CCMenuItemSpriteExtra::create(
       announceSpr, this, menu_selector(RLGauntletSelectLayer::onInfoButton));
   announceBtn->setPosition({25, 25});
-  menu->addChild(announceBtn);
+  infoMenu->addChild(announceBtn);
   fetchGauntlets();
   return true;
 }
