@@ -97,10 +97,29 @@ bool RLShopLayer::init() {
   auto plushiesSpr =
       CCSprite::createWithSpriteFrameName("RL_plushpile.png"_spr);
   plushiesSpr->setPosition({winSize.width / 2 - 10, winSize.height / 2 + 28});
-  plushiesSpr->setScale(0.7f);
   plushiesSpr->setAnchorPoint({0.5f, 0.f});
   this->addChild(plushiesSpr, -2);
 
+  // random sign image
+  std::vector<std::string> signFrames = {
+      "signImage_00.png"_spr, "signImage_01.png"_spr, "signImage_02.png"_spr,
+      "signImage_03.png"_spr, "signImage_04.png"_spr, "signImage_05.png"_spr,
+      "signImage_06.png"_spr, "signImage_07.png"_spr, "signImage_08.png"_spr};
+  static geode::utils::random::Generator signGen = [] {
+    geode::utils::random::Generator g;
+    g.seed(geode::utils::random::secureU64());
+    return g;
+  }();
+
+  int signIndex =
+      signGen.generate<int>(0, static_cast<int>(signFrames.size() - 1));
+  auto signSpr =
+      CCSprite::createWithSpriteFrameName(signFrames[signIndex].c_str());
+  if (signSpr) {
+    signSpr->setPosition({19, 32});
+    signSpr->setRotation(-10);
+    plushiesSpr->addChild(signSpr, 1);
+  }
   // button to reset
   auto resetBtnSpr = ButtonSprite::create(
       "Reset Rubies", 80, true, "goldFont.fnt", "GJ_button_06.png", 25.f, .7f);
@@ -202,7 +221,9 @@ bool RLShopLayer::init() {
                  {41, 15000, 5354634, "stkyc"},
                  {42, 10000, 5354634, "stkyc"},
                  {43, 10000, 11827369, "Froose"},
-                 {44, 14000, 25479036, "KetazonerLop"}};
+                 {44, 14000, 25479036, "KetazonerLop"},
+                 {45, 64115, 13803757, "FireExegd"},
+                 {46, 20000, 22572488, "Junotrion"}};
   m_shopRow1->setAnchorPoint({0.5f, 0.5f});
   m_shopRow2->setAnchorPoint({0.5f, 0.5f});
 

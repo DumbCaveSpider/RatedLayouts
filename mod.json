@@ -8,7 +8,7 @@
 	},
 	"id": "arcticwoof.rated_layouts",
 	"name": "Rated Layouts",
-	"version": "v0.4.0-beta.5",
+	"version": "v0.4.0-beta.6",
 	"developer": "ArcticWoof",
 	"description": "Play layout rated levels",
 	"resources": {
@@ -27,6 +27,9 @@
 			],
 			"RLShop": [
 				"resources/RL_Shop/*.png"
+			],
+			"RLSigns": [
+				"resources/RL_Signs/*.png"
 			]
 		},
 		"sprites": [
