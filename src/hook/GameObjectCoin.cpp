@@ -1,14 +1,15 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/CCSprite.hpp>
 #include <Geode/modify/EffectGameObject.hpp>
+#include <Geode/modify/GameObject.hpp>
 #include <algorithm>
-#include <limits>
 #include <vector>
 
 using namespace geode::prelude;
 
 const int USER_COIN = 1329;
 const ccColor3B BRONZE_COLOR = ccColor3B{255, 175, 75};
+bool g_isRatedLayout = false;
 
 // Replace coin visuals when GameObjects are set up
 class $modify(EffectGameObject) {
@@ -69,6 +70,8 @@ class $modify(EffectGameObject) {
           if (!coinVerified) {
             return; // do not apply custom blue/empty animations
           }
+
+          g_isRatedLayout = true;
 
           // coinVerified == true -> use RL_BlueCoin frames only (no fallback)
           CCAnimation *blueAnim = CCAnimation::create();
@@ -245,57 +248,6 @@ class $modify(EffectGameObject) {
 
 class $modify(CCSprite) {
   void setDisplayFrame(CCSpriteFrame *newFrame) {
-    if (newFrame) {
-      const char *engineEmptyNames[4] = {
-          "secretCoin_2_b_01_001.png"_spr, "secretCoin_2_b_01_002.png"_spr,
-          "secretCoin_2_b_01_003.png"_spr, "secretCoin_2_b_01_004.png"_spr};
-      for (int i = 0; i < 4; ++i) {
-        auto ef =
-            CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(
-                engineEmptyNames[i]);
-        if (ef && ef == newFrame) {
-          // only substitute in known "coin" contexts (PlayLayer or
-          // EffectGameObject)
-          for (auto node = static_cast<CCNode *>(this); node;
-               node = node->getParent()) {
-            if (typeinfo_cast<PlayLayer *>(node) ||
-                typeinfo_cast<EffectGameObject *>(node)) {
-              // build RL empty animation and apply it to this sprite
-              CCAnimation *emptyAnim = CCAnimation::create();
-              CCSpriteFrame *firstEmpty = nullptr;
-              const char *emptyNames[4] = {
-                  "RL_BlueCoinEmpty1.png"_spr, "RL_BlueCoinEmpty2.png"_spr,
-                  "RL_BlueCoinEmpty3.png"_spr, "RL_BlueCoinEmpty4.png"_spr};
-              for (int ei = 0; ei < 4; ++ei) {
-                auto ef2 = CCSpriteFrameCache::sharedSpriteFrameCache()
-                               ->spriteFrameByName(emptyNames[ei]);
-                if (!ef2)
-                  continue;
-                if (!firstEmpty)
-                  firstEmpty = ef2;
-                emptyAnim->addSpriteFrame(ef2);
-              }
-
-              if (emptyAnim->getFrames() &&
-                  emptyAnim->getFrames()->count() > 0) {
-                emptyAnim->setDelayPerUnit(0.10f);
-                this->stopAllActions();
-                if (firstEmpty)
-                  CCSprite::setDisplayFrame(firstEmpty);
-                this->runAction(
-                    CCRepeatForever::create(CCAnimate::create(emptyAnim)));
-                this->setColor({255, 255, 255});
-                this->setID("rl-blue-coin");
-                return;
-              }
-
-              break; // matched context but no RL empty frames available
-            }
-          }
-        }
-      }
-    }
-
     if (this->getID() == "rl-blue-coin") {
       if (!newFrame) {
         auto frame =
@@ -331,7 +283,134 @@ class $modify(CCSprite) {
       }
       return;
     }
-
     CCSprite::setDisplayFrame(newFrame);
+  }
+};
+
+class $modify(GameObject) {
+  void playDestroyObjectAnim(GJBaseGameLayer *b) {
+    if (g_isRatedLayout && this->m_objectID == USER_COIN) {
+      log::debug("GameObjectCoin: playDestroyObjectAnim (rated layout) for {}",
+                 this);
+
+      // resolve which coin index this GameObject represents by sorting all
+      // USER_COIN objects by their X position (closest to 0 == index 1)
+      int coinIndexForThis = -1;
+      std::vector<GameObject *> userCoins;
+      if (auto playLayer = PlayLayer::get()) {
+        if (playLayer->m_objects) {
+          for (unsigned int i = 0; i < playLayer->m_objects->count(); ++i) {
+            auto obj =
+                static_cast<CCNode *>(playLayer->m_objects->objectAtIndex(i));
+            if (auto go = typeinfo_cast<GameObject *>(obj)) {
+              if (go->m_objectID == USER_COIN)
+                userCoins.push_back(go);
+            }
+          }
+        }
+      }
+      std::sort(userCoins.begin(), userCoins.end(),
+                [](GameObject *a, GameObject *b) {
+                  return a->getPositionX() < b->getPositionX();
+                });
+      for (size_t i = 0; i < userCoins.size(); ++i) {
+        if (userCoins[i] == this) {
+          coinIndexForThis = (int)i + 1;
+          break;
+        }
+      }
+      if (coinIndexForThis == -1)
+        coinIndexForThis = 1;
+
+      // determine local collected state for this coin (true -> EMPTY)
+      bool coinCollectedLocal = false;
+      if (auto pl = PlayLayer::get()) {
+        std::string coinKey = pl->m_level->getCoinKey(coinIndexForThis);
+        coinCollectedLocal =
+            GameStatsManager::sharedState()->hasPendingUserCoin(
+                coinKey.c_str());
+      }
+
+      log::debug("GameObjectCoin: coinIndexForThis={} collectedLocal={}",
+                 coinIndexForThis, coinCollectedLocal);
+
+      // snapshot direct children of the parent
+      CCNode *parent = this->getParent();
+      std::vector<CCNode *> beforeChildren;
+      if (parent && parent->getChildren()) {
+        auto ch = parent->getChildren();
+        for (unsigned int i = 0; i < ch->count(); ++i)
+          beforeChildren.push_back(static_cast<CCNode *>(ch->objectAtIndex(i)));
+      }
+
+      GameObject::playDestroyObjectAnim(b);
+
+      if (parent && typeinfo_cast<CCNodeContainer *>(parent) &&
+          parent->getChildren()) {
+        auto ch = parent->getChildren();
+        for (unsigned int i = 0; i < ch->count(); ++i) {
+          auto node = static_cast<CCNode *>(ch->objectAtIndex(i));
+
+          // skip nodes that existed before the call
+          bool existed = false;
+          for (auto &n : beforeChildren) {
+            if (n == node) {
+              existed = true;
+              break;
+            }
+          }
+          if (existed)
+            continue;
+
+          std::vector<CCNode *> stack{node};
+          while (!stack.empty()) {
+            auto cur = stack.back();
+            stack.pop_back();
+            if (!cur)
+              continue;
+            if (auto cs = typeinfo_cast<CCSprite *>(cur)) {
+              log::debug("GameObjectCoin: tagged destroy-effect CCSprite {}",
+                         static_cast<void *>(cs));
+
+              // build and run the RL animation that matches collected state
+              const char *namesBlue[4] = {"RL_BlueCoin1.png"_spr,
+                                          "RL_BlueCoin2.png"_spr,
+                                          "RL_BlueCoin3.png"_spr,
+                                          "RL_BlueCoin4.png"_spr};
+              const char *namesEmpty[4] = {"RL_BlueCoinEmpty1.png"_spr,
+                                           "RL_BlueCoinEmpty2.png"_spr,
+                                           "RL_BlueCoinEmpty3.png"_spr,
+                                           "RL_BlueCoinEmpty4.png"_spr};
+
+              CCAnimation *anim = CCAnimation::create();
+              CCSpriteFrame *firstFrame = nullptr;
+              auto &srcNames = coinCollectedLocal ? namesEmpty : namesBlue;
+              for (int fi = 0; fi < 4; ++fi) {
+                if (auto f = CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(srcNames[fi])) {
+                  if (!firstFrame) firstFrame = f;
+                  anim->addSpriteFrame(f);
+                }
+              }
+
+              if (anim->getFrames() && anim->getFrames()->count() > 0) {
+                anim->setDelayPerUnit(0.10f);
+                if (firstFrame) cs->setDisplayFrame(firstFrame);
+                cs->runAction(CCRepeatForever::create(CCAnimate::create(anim)));
+                cs->setColor({255, 255, 255});
+                cs->setID("rl-blue-coin");
+              }
+            }
+            if (auto cch = cur->getChildren()) {
+              for (unsigned int j = 0; j < cch->count(); ++j)
+                stack.push_back(static_cast<CCNode *>(cch->objectAtIndex(j)));
+            }
+          }
+        }
+      }
+
+      return;
+    }
+
+    GameObject::playDestroyObjectAnim(b);
   }
 };
