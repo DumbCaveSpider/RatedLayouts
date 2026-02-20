@@ -40,7 +40,7 @@ class $modify(EffectGameObject) {
     this->m_addToNodeContainer = true;
 
     // okay this sucks but legit fetching this three times (or how many coins in
-    // the level) is ass
+    // the level) is ass but im tired doing this code so this becomes redunt for now
     auto url =
         fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId);
     Ref<EffectGameObject> selfRef = this;
@@ -65,7 +65,7 @@ class $modify(EffectGameObject) {
           }
 
           auto json = jsonRes.unwrap();
-          bool coinVerified = json["coinVerified"].asBool().unwrapOrDefault();
+          bool coinVerified = json["coinVerified"].asBool().unwrapOr(false);
 
           // persist server-side flag for later checks and only proceed if
           // true
@@ -371,9 +371,6 @@ class $modify(GameObject) {
             if (!cur)
               continue;
             if (auto cs = typeinfo_cast<CCSprite *>(cur)) {
-              log::debug("GameObjectCoin: tagged destroy-effect CCSprite {}",
-                         static_cast<void *>(cs));
-
               // build and run the RL animation that matches collected state
               const char *namesBlue[4] = {
                   "RL_BlueCoin1.png"_spr, "RL_BlueCoin2.png"_spr,

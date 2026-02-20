@@ -19,6 +19,7 @@
 - Added **Ruby Collectables** for playing Rated Layouts. (Thanks to [Darkore](user:3595559) for the Ruby texture design!)
 - Fixed the Leaderboard and added refresh button to manually refresh the leaderboard data.
 - Tweak the **Event Layouts** with the new sprite title and improved the UI.
+- Added working animated **Blue Coins Sprites** in the levels
 - Added Indicators for Top 3 players in the Leaderboard Layer.
 - Layout that is Rated by RobTop will automatically gets unrated.
 - Change the sprites to be in a spritesheet.
