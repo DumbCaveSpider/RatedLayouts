@@ -183,29 +183,39 @@ class $modify(EffectGameObject) {
           // represents
           int coinIndexForThis = -1;
 
-          // Primary: search PlayLayer->m_objects (contains GameObject /
-          // EffectGameObject instances)
+          std::vector<EffectGameObject *> userCoins;
           if (auto playLayer = PlayLayer::get()) {
             if (playLayer->m_objects) {
-              int seen = 0;
               for (unsigned int i = 0; i < playLayer->m_objects->count(); ++i) {
                 auto obj = static_cast<CCNode *>(
                     playLayer->m_objects->objectAtIndex(i));
                 auto eo = typeinfo_cast<EffectGameObject *>(obj);
-                if (!eo)
-                  continue;
-                if (eo->m_objectID != USER_COIN)
-                  continue;
-                ++seen; // coin index among USER_COIN objects
-                if (eo == selfRef.operator->()) {
-                  coinIndexForThis = seen; // found exact instance
-                  log::debug("GameObjectCoin: resolved coin index={} by "
-                             "scanning m_objects",
-                             coinIndexForThis);
-                  break;
+                if (eo && eo->m_objectID == USER_COIN) {
+                  userCoins.push_back(eo);
                 }
               }
             }
+          }
+
+          // sort coins by their X position
+          std::sort(userCoins.begin(), userCoins.end(),
+                    [](EffectGameObject *a, EffectGameObject *b) {
+                      return a->getPositionX() < b->getPositionX();
+                    });
+
+          for (size_t i = 0; i < userCoins.size(); ++i) {
+            if (userCoins[i] == selfRef.operator->()) {
+              coinIndexForThis = i + 1; // 1-indexed
+              log::debug("GameObjectCoin: resolved coin index={} by position",
+                         coinIndexForThis);
+              break;
+            }
+          }
+
+          if (coinIndexForThis == -1) {
+            log::warn("GameObjectCoin: could not resolve coin index for this "
+                      "instance; defaulting to 1");
+            coinIndexForThis = 1;
           }
 
           // query collected state for the resolved coin index and apply exactly
