@@ -8,7 +8,6 @@
 using namespace geode::prelude;
 
 const int USER_COIN = 1329;
-const ccColor3B BRONZE_COLOR = ccColor3B{255, 175, 75};
 bool g_isRatedLayout = false;
 
 // Replace coin visuals when GameObjects are set up
@@ -40,7 +39,8 @@ class $modify(EffectGameObject) {
     this->m_addToNodeContainer = true;
 
     // okay this sucks but legit fetching this three times (or how many coins in
-    // the level) is ass but im tired doing this code so this becomes redunt for now
+    // the level) is ass but im tired doing this code so this becomes redunt for
+    // now
     auto url =
         fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId);
     Ref<EffectGameObject> selfRef = this;
