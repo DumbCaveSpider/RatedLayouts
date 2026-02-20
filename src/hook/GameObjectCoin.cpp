@@ -1,8 +1,9 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/CCSprite.hpp>
 #include <Geode/modify/EffectGameObject.hpp>
-#include <vector>
 #include <algorithm>
+#include <limits>
+#include <vector>
 
 using namespace geode::prelude;
 
@@ -35,6 +36,7 @@ class $modify(EffectGameObject) {
     }
 
     int levelId = playLayer->m_level->m_levelID;
+    this->m_addToNodeContainer = true;
 
     auto url =
         fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId);
@@ -42,7 +44,7 @@ class $modify(EffectGameObject) {
     auto fields = m_fields;
     m_fields->m_fetchTask.spawn(
         web::WebRequest().get(url),
-        [selfRef, fields, levelId](web::WebResponse res) {
+        [this, selfRef, fields, levelId](web::WebResponse res) {
           if (!selfRef)
             return;
 
@@ -61,6 +63,12 @@ class $modify(EffectGameObject) {
 
           auto json = jsonRes.unwrap();
           bool coinVerified = json["coinVerified"].asBool().unwrapOrDefault();
+
+          // persist server-side flag for later checks and only proceed if true
+          m_fields->m_coinVerified = coinVerified;
+          if (!coinVerified) {
+            return; // do not apply custom blue/empty animations
+          }
 
           // coinVerified == true -> use RL_BlueCoin frames only (no fallback)
           CCAnimation *blueAnim = CCAnimation::create();
@@ -91,7 +99,6 @@ class $modify(EffectGameObject) {
           if (!haveAnim) {
             log::warn("GameObjectCoin: no RL_BlueCoin frames available — "
                       "leaving default coin");
-            selfRef->m_addToNodeContainer = true;
             return;
           }
 
@@ -99,31 +106,43 @@ class $modify(EffectGameObject) {
 
           // build empty animation (used when engine shows the "empty" secret
           // frame — e.g. coin already collected)
-          CCAnimation* emptyAnim = CCAnimation::create();
-          CCSpriteFrame* firstEmpty = nullptr;
-          const char* emptyNames[4] = {"RL_BlueCoinEmpty1.png"_spr, "RL_BlueCoinEmpty2.png"_spr, "RL_BlueCoinEmpty3.png"_spr, "RL_BlueCoinEmpty4.png"_spr};
+          CCAnimation *emptyAnim = CCAnimation::create();
+          CCSpriteFrame *firstEmpty = nullptr;
+          const char *emptyNames[4] = {
+              "RL_BlueCoinEmpty1.png"_spr, "RL_BlueCoinEmpty2.png"_spr,
+              "RL_BlueCoinEmpty3.png"_spr, "RL_BlueCoinEmpty4.png"_spr};
           for (int fi = 0; fi < 4; ++fi) {
-            CCSpriteFrame* f = CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(emptyNames[fi]);
+            CCSpriteFrame *f =
+                CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(
+                    emptyNames[fi]);
             if (!f) {
-              log::warn("GameObjectCoin: missing RL empty frame {} — skipping", emptyNames[fi]);
+              log::warn("GameObjectCoin: missing RL empty frame {} — skipping",
+                        emptyNames[fi]);
               continue;
             }
-            if (!firstEmpty) firstEmpty = f;
+            if (!firstEmpty)
+              firstEmpty = f;
             emptyAnim->addSpriteFrame(f);
           }
           emptyAnim->setDelayPerUnit(0.10f);
 
           // helper: detect engine "empty" secret frames by pointer equality
-          auto isEngineEmptyFrame = [](CCSprite* cs) -> bool {
-            if (!cs) return false;
+          auto isEngineEmptyFrame = [](CCSprite *cs) -> bool {
+            if (!cs)
+              return false;
             auto curTex = cs->getTexture();
             auto curRect = cs->getTextureRect();
-            if (!curTex) return false;
+            if (!curTex)
+              return false;
 
-            const char* engineEmptyNames[4] = {"secretCoin_2_b_01_001.png", "secretCoin_2_b_01_002.png", "secretCoin_2_b_01_003.png", "secretCoin_2_b_01_004.png"};
+            const char *engineEmptyNames[4] = {
+                "secretCoin_2_b_01_001.png", "secretCoin_2_b_01_002.png",
+                "secretCoin_2_b_01_003.png", "secretCoin_2_b_01_004.png"};
             for (int i = 0; i < 4; ++i) {
-              auto ef = CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(engineEmptyNames[i]);
-              if (!ef) continue;
+              auto ef = CCSpriteFrameCache::sharedSpriteFrameCache()
+                            ->spriteFrameByName(engineEmptyNames[i]);
+              if (!ef)
+                continue;
               if (ef->getTexture() == curTex) {
                 // compare rects too for exact match
                 if (ef->getRect().equals(curRect))
@@ -133,8 +152,9 @@ class $modify(EffectGameObject) {
             return false;
           };
 
-          auto applyBlueAnimTo = [blueAnim, firstFrame](CCSprite* cs) {
-            if (!cs) return;
+          auto applyBlueAnimTo = [blueAnim, firstFrame](CCSprite *cs) {
+            if (!cs)
+              return;
             cs->stopAllActions();
 
             cs->setDisplayFrame(firstFrame);
@@ -145,11 +165,13 @@ class $modify(EffectGameObject) {
             cs->setID("rl-blue-coin");
           };
 
-          auto applyEmptyAnimTo = [emptyAnim, firstEmpty](CCSprite* cs) {
-            if (!cs) return;
+          auto applyEmptyAnimTo = [emptyAnim, firstEmpty](CCSprite *cs) {
+            if (!cs)
+              return;
             cs->stopAllActions();
 
-            if (firstEmpty) cs->setDisplayFrame(firstEmpty);
+            if (firstEmpty)
+              cs->setDisplayFrame(firstEmpty);
             auto animate = CCAnimate::create(emptyAnim);
             cs->runAction(CCRepeatForever::create(animate));
 
@@ -157,112 +179,102 @@ class $modify(EffectGameObject) {
             cs->setID("rl-blue-coin");
           };
 
-          // determine which of the three level coins this EffectGameObject represents
+          // determine which of the three level coins this EffectGameObject
+          // represents
           int coinIndexForThis = -1;
 
-          // Primary: search PlayLayer->m_objects (contains GameObject / EffectGameObject instances)
-          if (auto playLayerPtr = PlayLayer::get()) {
-            if (playLayerPtr->m_objects) {
+          // Primary: search PlayLayer->m_objects (contains GameObject /
+          // EffectGameObject instances)
+          if (auto playLayer = PlayLayer::get()) {
+            if (playLayer->m_objects) {
               int seen = 0;
-              for (unsigned int i = 0; i < playLayerPtr->m_objects->count(); ++i) {
-                auto obj = static_cast<CCNode *>(playLayerPtr->m_objects->objectAtIndex(i));
+              for (unsigned int i = 0; i < playLayer->m_objects->count(); ++i) {
+                auto obj = static_cast<CCNode *>(
+                    playLayer->m_objects->objectAtIndex(i));
                 auto eo = typeinfo_cast<EffectGameObject *>(obj);
-                if (!eo) continue;
-                if (eo->m_objectID != USER_COIN) continue;
+                if (!eo)
+                  continue;
+                if (eo->m_objectID != USER_COIN)
+                  continue;
                 ++seen; // coin index among USER_COIN objects
                 if (eo == selfRef.operator->()) {
                   coinIndexForThis = seen; // found exact instance
-                  log::debug("GameObjectCoin: resolved coin index={} by scanning m_objects", coinIndexForThis);
+                  log::debug("GameObjectCoin: resolved coin index={} by "
+                             "scanning m_objects",
+                             coinIndexForThis);
                   break;
                 }
               }
             }
           }
 
-          // Secondary: position-based nearest USER_COIN in m_objects (robust fallback)
-          if (coinIndexForThis == -1) {
-            if (auto playLayerPtr = PlayLayer::get(); playLayerPtr && playLayerPtr->m_objects && selfRef) {
-              float bestDistSq = std::numeric_limits<float>::infinity();
-              int seen = 0;
-              int bestIndex = -1;
-              for (unsigned int i = 0; i < playLayerPtr->m_objects->count(); ++i) {
-                auto obj = static_cast<CCNode *>(playLayerPtr->m_objects->objectAtIndex(i));
-                auto eo = typeinfo_cast<EffectGameObject *>(obj);
-                if (!eo) continue;
-                if (eo->m_objectID != USER_COIN) continue;
-                ++seen;
-                auto dx = eo->getPositionX() - selfRef->getPositionX();
-                auto dy = eo->getPositionY() - selfRef->getPositionY();
-                auto d2 = dx * dx + dy * dy;
-                if (d2 < bestDistSq) {
-                  bestDistSq = d2;
-                  bestIndex = seen;
-                }
-              }
-              if (bestIndex != -1) {
-                coinIndexForThis = bestIndex;
-                log::debug("GameObjectCoin: resolved coin index={} by nearest-position fallback (dist2={:.1f})", coinIndexForThis, bestDistSq);
-              }
-            }
-          }
-
-          // Final fallback: default to 1 and emit a warning
-          if (coinIndexForThis == -1) {
-            if (selfRef) {
-              log::warn("GameObjectCoin: couldn't determine coin index for effect at pos ({:.1f},{:.1f}) - defaulting to 1", selfRef->getPositionX(), selfRef->getPositionY());
-            } else {
-              log::warn("GameObjectCoin: couldn't determine coin index for effect - defaulting to 1");
-            }
-            coinIndexForThis = 1;
-          }
-
-          // query collected state for the resolved coin index and apply exactly once
-          std::string coinKey = PlayLayer::get()->m_level->getCoinKey(coinIndexForThis);
-          bool coinCollectedLocal = GameStatsManager::sharedState()->hasPendingUserCoin(coinKey.c_str());
+          // query collected state for the resolved coin index and apply exactly
+          // once
+          std::string coinKey =
+              PlayLayer::get()->m_level->getCoinKey(coinIndexForThis);
+          bool coinCollectedLocal =
+              GameStatsManager::sharedState()->hasPendingUserCoin(
+                  coinKey.c_str());
 
           if (auto asSprite = typeinfo_cast<CCSprite *>(selfRef.operator->())) {
             if (coinCollectedLocal) {
-              log::debug("GameObjectCoin: applying EMPTY animation to coinIndex={} (collectedLocal={})", coinIndexForThis, coinCollectedLocal);
+              log::debug("GameObjectCoin: applying EMPTY animation to "
+                         "coinIndex={} (collectedLocal={})",
+                         coinIndexForThis, coinCollectedLocal);
               applyEmptyAnimTo(asSprite);
             } else {
-              log::debug("GameObjectCoin: applying BLUE animation to coinIndex={} (collectedLocal={})", coinIndexForThis, coinCollectedLocal);
+              log::debug("GameObjectCoin: applying BLUE animation to "
+                         "coinIndex={} (collectedLocal={})",
+                         coinIndexForThis, coinCollectedLocal);
               applyBlueAnimTo(asSprite);
             }
           }
-
-          selfRef->m_addToNodeContainer = true;
         });
   }
 };
 
 class $modify(CCSprite) {
-
   void setDisplayFrame(CCSpriteFrame *newFrame) {
     if (newFrame) {
-      const char *engineEmptyNames[4] = {"secretCoin_2_b_01_001.png"_spr, "secretCoin_2_b_01_002.png"_spr, "secretCoin_2_b_01_003.png"_spr, "secretCoin_2_b_01_004.png"_spr};
+      const char *engineEmptyNames[4] = {
+          "secretCoin_2_b_01_001.png"_spr, "secretCoin_2_b_01_002.png"_spr,
+          "secretCoin_2_b_01_003.png"_spr, "secretCoin_2_b_01_004.png"_spr};
       for (int i = 0; i < 4; ++i) {
-        auto ef = CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(engineEmptyNames[i]);
+        auto ef =
+            CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(
+                engineEmptyNames[i]);
         if (ef && ef == newFrame) {
-          // only substitute in known "coin" contexts (PlayLayer or EffectGameObject)
-          for (auto node = static_cast<CCNode *>(this); node; node = node->getParent()) {
-            if (typeinfo_cast<PlayLayer *>(node) || typeinfo_cast<EffectGameObject *>(node)) {
+          // only substitute in known "coin" contexts (PlayLayer or
+          // EffectGameObject)
+          for (auto node = static_cast<CCNode *>(this); node;
+               node = node->getParent()) {
+            if (typeinfo_cast<PlayLayer *>(node) ||
+                typeinfo_cast<EffectGameObject *>(node)) {
               // build RL empty animation and apply it to this sprite
               CCAnimation *emptyAnim = CCAnimation::create();
               CCSpriteFrame *firstEmpty = nullptr;
-              const char *emptyNames[4] = {"RL_BlueCoinEmpty1.png"_spr, "RL_BlueCoinEmpty2.png"_spr, "RL_BlueCoinEmpty3.png"_spr, "RL_BlueCoinEmpty4.png"_spr};
+              const char *emptyNames[4] = {
+                  "RL_BlueCoinEmpty1.png"_spr, "RL_BlueCoinEmpty2.png"_spr,
+                  "RL_BlueCoinEmpty3.png"_spr, "RL_BlueCoinEmpty4.png"_spr};
               for (int ei = 0; ei < 4; ++ei) {
-                auto ef2 = CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(emptyNames[ei]);
-                if (!ef2) continue;
-                if (!firstEmpty) firstEmpty = ef2;
+                auto ef2 = CCSpriteFrameCache::sharedSpriteFrameCache()
+                               ->spriteFrameByName(emptyNames[ei]);
+                if (!ef2)
+                  continue;
+                if (!firstEmpty)
+                  firstEmpty = ef2;
                 emptyAnim->addSpriteFrame(ef2);
               }
 
-              if (emptyAnim->getFrames() && emptyAnim->getFrames()->count() > 0) {
+              if (emptyAnim->getFrames() &&
+                  emptyAnim->getFrames()->count() > 0) {
                 emptyAnim->setDelayPerUnit(0.10f);
                 this->stopAllActions();
-                if (firstEmpty) CCSprite::setDisplayFrame(firstEmpty);
-                this->runAction(CCRepeatForever::create(CCAnimate::create(emptyAnim)));
-                this->setColor({255,255,255});
+                if (firstEmpty)
+                  CCSprite::setDisplayFrame(firstEmpty);
+                this->runAction(
+                    CCRepeatForever::create(CCAnimate::create(emptyAnim)));
+                this->setColor({255, 255, 255});
                 this->setID("rl-blue-coin");
                 return;
               }
@@ -288,8 +300,9 @@ class $modify(CCSprite) {
       // allow the frame only if it matches one of the RL_BlueCoin or
       const char *rlNames[4] = {"RL_BlueCoin1.png"_spr, "RL_BlueCoin2.png"_spr,
                                 "RL_BlueCoin3.png"_spr, "RL_BlueCoin4.png"_spr};
-      const char *rlEmptyNames[4] = {"RL_BlueCoinEmpty1.png"_spr, "RL_BlueCoinEmpty2.png"_spr,
-                                     "RL_BlueCoinEmpty3.png"_spr, "RL_BlueCoinEmpty4.png"_spr};
+      const char *rlEmptyNames[4] = {
+          "RL_BlueCoinEmpty1.png"_spr, "RL_BlueCoinEmpty2.png"_spr,
+          "RL_BlueCoinEmpty3.png"_spr, "RL_BlueCoinEmpty4.png"_spr};
       for (int i = 0; i < 4; ++i) {
         auto rf =
             CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(
@@ -298,8 +311,9 @@ class $modify(CCSprite) {
           CCSprite::setDisplayFrame(newFrame);
           return;
         }
-        auto ef = CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(
-            rlEmptyNames[i]);
+        auto ef =
+            CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(
+                rlEmptyNames[i]);
         if (ef && ef->getTexture() == newFrame->getTexture()) {
           CCSprite::setDisplayFrame(newFrame);
           return;
