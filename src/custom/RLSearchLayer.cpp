@@ -469,8 +469,74 @@ void RLSearchLayer::onRandomButton(CCObject *sender) {
   item->setEnabled(false);
 
   Ref<RLSearchLayer> self = this;
-  m_searchTask.spawn(
-      web::WebRequest().get("https://gdrate.arcticwoof.xyz/getRandomLevel"),
+
+  // build query params from the currently selected toggles
+  std::vector<int> selectedRatings;
+  if (m_demonModeActive) {
+    std::vector<int> demonRatings = {10, 15, 20, 25, 30};
+    for (int i = 0; i < static_cast<int>(m_demonSelected.size()); ++i) {
+      if (m_demonSelected[i] && i < static_cast<int>(demonRatings.size()))
+        selectedRatings.push_back(demonRatings[i]);
+    }
+  } else {
+    for (int gi = 0; gi < static_cast<int>(m_difficultySelected.size()); ++gi) {
+      if (!m_difficultySelected[gi])
+        continue;
+      if (gi >= static_cast<int>(m_difficultyGroups.size()))
+        continue;
+      for (auto r : m_difficultyGroups[gi])
+        selectedRatings.push_back(r);
+    }
+  }
+
+  std::sort(selectedRatings.begin(), selectedRatings.end());
+  selectedRatings.erase(
+      std::unique(selectedRatings.begin(), selectedRatings.end()),
+      selectedRatings.end());
+
+  std::string difficultyParam;
+  for (size_t i = 0; i < selectedRatings.size(); ++i) {
+    if (i)
+      difficultyParam += ",";
+    difficultyParam += numToString(selectedRatings[i]);
+  }
+
+  std::vector<std::pair<std::string, std::string>> params;
+  if (!difficultyParam.empty())
+    params.emplace_back("difficulty", difficultyParam);
+  if (m_platformerActive)
+    params.emplace_back("platformer", "1");
+  if (m_classicActive)
+    params.emplace_back("classic", "1");
+  if (m_featuredActive)
+    params.emplace_back("featured", "1");
+  if (m_epicActive)
+    params.emplace_back("epic", "1");
+  if (m_legendaryActive)
+    params.emplace_back("legendary", "1");
+  if (m_awardedActive)
+    params.emplace_back("awarded", "1");
+  if (m_completedActive)
+    params.emplace_back("completed", "1");
+  if (m_uncompletedActive)
+    params.emplace_back("uncompleted", "1");
+  if (m_oldestActive)
+    params.emplace_back("oldest", "1");
+  if (m_coinsVerifiedActive)
+    params.emplace_back("coins", "1");
+  params.emplace_back("accountId", numToString(GJAccountManager::get()->m_accountID));
+
+  std::string url = "https://gdrate.arcticwoof.xyz/getRandomLevel";
+  if (!params.empty()) {
+    url += "?";
+    for (size_t i = 0; i < params.size(); ++i) {
+      if (i)
+        url += "&";
+      url += params[i].first + "=" + params[i].second;
+    }
+  }
+
+  m_searchTask.spawn(web::WebRequest().get(url.c_str()),
       [self, item](web::WebResponse const &res) {
         if (!self)
           return;

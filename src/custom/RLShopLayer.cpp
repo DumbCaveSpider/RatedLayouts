@@ -112,7 +112,7 @@ bool RLShopLayer::init() {
   }();
 
   int signIndex =
-      signGen.generate<int>(0, static_cast<int>(signFrames.size() - 1));
+      signGen.generate<int>(0, static_cast<int>(signFrames.size()));
   auto signSpr =
       CCSprite::createWithSpriteFrameName(signFrames[signIndex].c_str());
   if (signSpr) {
