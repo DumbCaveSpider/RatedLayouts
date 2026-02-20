@@ -39,6 +39,8 @@ class $modify(EffectGameObject) {
     int levelId = playLayer->m_level->m_levelID;
     this->m_addToNodeContainer = true;
 
+    // okay this sucks but legit fetching this three times (or how many coins in
+    // the level) is ass
     auto url =
         fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId);
     Ref<EffectGameObject> selfRef = this;
@@ -65,13 +67,14 @@ class $modify(EffectGameObject) {
           auto json = jsonRes.unwrap();
           bool coinVerified = json["coinVerified"].asBool().unwrapOrDefault();
 
-          // persist server-side flag for later checks and only proceed if true
+          // persist server-side flag for later checks and only proceed if
+          // true
           m_fields->m_coinVerified = coinVerified;
           if (!coinVerified) {
             return; // do not apply custom blue/empty animations
           }
 
-          g_isRatedLayout = true;
+          g_isRatedLayout = coinVerified;
 
           // coinVerified == true -> use RL_BlueCoin frames only (no fallback)
           CCAnimation *blueAnim = CCAnimation::create();
@@ -81,8 +84,8 @@ class $modify(EffectGameObject) {
               "RL_BlueCoin3.png"_spr, "RL_BlueCoin4.png"_spr};
 
           for (int fi = 0; fi < 4; ++fi) {
-            // ONLY load RL frames directly; do not fallback to secret names or
-            // raw addImage here
+            // ONLY load RL frames directly; do not fallback to secret names
+            // or raw addImage here
             CCSpriteFrame *f =
                 CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(
                     blueNames[fi]);
@@ -221,8 +224,8 @@ class $modify(EffectGameObject) {
             coinIndexForThis = 1;
           }
 
-          // query collected state for the resolved coin index and apply exactly
-          // once
+          // query collected state for the resolved coin index and apply
+          // exactly once
           std::string coinKey =
               PlayLayer::get()->m_level->getCoinKey(coinIndexForThis);
           bool coinCollectedLocal =
@@ -293,8 +296,7 @@ class $modify(GameObject) {
       log::debug("GameObjectCoin: playDestroyObjectAnim (rated layout) for {}",
                  this);
 
-      // resolve which coin index this GameObject represents by sorting all
-      // USER_COIN objects by their X position (closest to 0 == index 1)
+      // coin from close to x position of 0 is first coin
       int coinIndexForThis = -1;
       std::vector<GameObject *> userCoins;
       if (auto playLayer = PlayLayer::get()) {
@@ -315,14 +317,14 @@ class $modify(GameObject) {
                 });
       for (size_t i = 0; i < userCoins.size(); ++i) {
         if (userCoins[i] == this) {
-          coinIndexForThis = (int)i + 1;
+          coinIndexForThis = static_cast<int>(i + 1);
           break;
         }
       }
       if (coinIndexForThis == -1)
         coinIndexForThis = 1;
 
-      // determine local collected state for this coin (true -> EMPTY)
+      // determine local collected state for this coin
       bool coinCollectedLocal = false;
       if (auto pl = PlayLayer::get()) {
         std::string coinKey = pl->m_level->getCoinKey(coinIndexForThis);
@@ -373,28 +375,29 @@ class $modify(GameObject) {
                          static_cast<void *>(cs));
 
               // build and run the RL animation that matches collected state
-              const char *namesBlue[4] = {"RL_BlueCoin1.png"_spr,
-                                          "RL_BlueCoin2.png"_spr,
-                                          "RL_BlueCoin3.png"_spr,
-                                          "RL_BlueCoin4.png"_spr};
-              const char *namesEmpty[4] = {"RL_BlueCoinEmpty1.png"_spr,
-                                           "RL_BlueCoinEmpty2.png"_spr,
-                                           "RL_BlueCoinEmpty3.png"_spr,
-                                           "RL_BlueCoinEmpty4.png"_spr};
+              const char *namesBlue[4] = {
+                  "RL_BlueCoin1.png"_spr, "RL_BlueCoin2.png"_spr,
+                  "RL_BlueCoin3.png"_spr, "RL_BlueCoin4.png"_spr};
+              const char *namesEmpty[4] = {
+                  "RL_BlueCoinEmpty1.png"_spr, "RL_BlueCoinEmpty2.png"_spr,
+                  "RL_BlueCoinEmpty3.png"_spr, "RL_BlueCoinEmpty4.png"_spr};
 
               CCAnimation *anim = CCAnimation::create();
               CCSpriteFrame *firstFrame = nullptr;
               auto &srcNames = coinCollectedLocal ? namesEmpty : namesBlue;
               for (int fi = 0; fi < 4; ++fi) {
-                if (auto f = CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(srcNames[fi])) {
-                  if (!firstFrame) firstFrame = f;
+                if (auto f = CCSpriteFrameCache::sharedSpriteFrameCache()
+                                 ->spriteFrameByName(srcNames[fi])) {
+                  if (!firstFrame)
+                    firstFrame = f;
                   anim->addSpriteFrame(f);
                 }
               }
 
               if (anim->getFrames() && anim->getFrames()->count() > 0) {
-                anim->setDelayPerUnit(0.10f);
-                if (firstFrame) cs->setDisplayFrame(firstFrame);
+                anim->setDelayPerUnit(0.05f);
+                if (firstFrame)
+                  cs->setDisplayFrame(firstFrame);
                 cs->runAction(CCRepeatForever::create(CCAnimate::create(anim)));
                 cs->setColor({255, 255, 255});
                 cs->setID("rl-blue-coin");
@@ -407,7 +410,6 @@ class $modify(GameObject) {
           }
         }
       }
-
       return;
     }
 
