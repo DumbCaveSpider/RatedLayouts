@@ -844,7 +844,7 @@ void RLModRatePopup::onSubmitButton(CCObject *sender) {
   if (m_notesInput) {
     auto noteStr = m_notesInput->getString();
     if (!noteStr.empty()) {
-      jsonBody["note"] = noteStr;
+      jsonBody["note"] = std::string(noteStr);
     }
   }
 
@@ -1185,7 +1185,7 @@ void RLModRatePopup::onSuggestButton(CCObject *sender) {
   if (m_notesInput) {
     auto noteStr = m_notesInput->getString();
     if (!noteStr.empty()) {
-      jsonBody["note"] = noteStr;
+      jsonBody["note"] = std::string(noteStr);
     }
   }
 
