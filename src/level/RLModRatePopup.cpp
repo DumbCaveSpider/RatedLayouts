@@ -43,6 +43,7 @@ bool RLModRatePopup::init() {
   m_isRejected = false;
   m_levelId = -1;
   m_accountId = 0;
+  m_targetAccountId = 0;
   m_difficultyInput = nullptr;
   m_featuredValueInput = nullptr;
   m_verifiedToggleItem = nullptr;
@@ -51,7 +52,10 @@ bool RLModRatePopup::init() {
   // get the level ID ya
   if (m_level) {
     m_levelId = m_level->m_levelID;
+    m_levelName = m_level->m_levelName;
+    m_creatorName = m_level->m_creatorName;
     m_accountId = m_level->m_accountID;
+    m_targetAccountId = m_level->m_accountID;
   }
 
   // title
@@ -213,12 +217,14 @@ bool RLModRatePopup::init() {
     modActionMenu->addChild(unrateButtonItem);
 
     // suggest button for admin
-    auto suggestSpr = ButtonSprite::create("Suggest", 80, true, "goldFont.fnt",
-                                           "GJ_button_01.png", 30.f, 1.f);
-    auto suggestButtonItem = CCMenuItemSpriteExtra::create(
-        suggestSpr, this, menu_selector(RLModRatePopup::onSuggestButton));
-    suggestButtonItem->setID("suggest-button");
-    modActionMenu->addChild(suggestButtonItem);
+    if (PopupRole::Dev != m_role) {
+      auto suggestSpr = ButtonSprite::create(
+          "Suggest", 80, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
+      auto suggestButtonItem = CCMenuItemSpriteExtra::create(
+          suggestSpr, this, menu_selector(RLModRatePopup::onSuggestButton));
+      suggestButtonItem->setID("suggest-button");
+      modActionMenu->addChild(suggestButtonItem);
+    }
   }
 
   m_mainLayer->addChild(modActionMenu);
@@ -450,6 +456,7 @@ void RLModRatePopup::onInfoButton(CCObject *sender) {
   jsonBody["argonToken"] =
       Mod::get()->getSavedValue<std::string>("argon_token");
   jsonBody["levelId"] = m_levelId;
+  jsonBody["targetAccountId"] = m_targetAccountId;
 
   auto postReq = web::WebRequest();
   postReq.bodyJSON(jsonBody);
@@ -493,30 +500,33 @@ void RLModRatePopup::onInfoButton(CCObject *sender) {
         bool userSuggested = json["userSuggested"].asBool().unwrapOrDefault();
         bool userRejected = json["userRejected"].asBool().unwrapOrDefault();
         bool isBanned = json["isBanned"].asBool().unwrapOrDefault();
+        bool creatorBanned = json["creatorBanned"].asBool().unwrapOrDefault();
 
-        std::string infoText =
-            fmt::format("## __Your Moderation Info__\n"
-                        "### You have {}</c>\n"
-                        "### You have {}</c>\n"
-                        "\r\n\r\n---\r\n\r\n"
-                        "## __Other Moderation Stats__\n"
-                        "### <cl>Average Difficulty:</c> {:.1f}\n"
-                        "### <cg>Total Suggested:</c> {}\n"
-                        "### <co>Total Suggested Featured:</c> {}\n"
-                        "### <cp>Total Suggested Epic:</c> {}\n"
-                        "### <cf>Total Suggested Legendary:</c> {}\n"
-                        "### <cr>Total Rejected:</c> {}\n"
-                        "\r\n\r\n---\r\n\r\n"
-                        "## __Global Moderation Info__\n"
-                        "### <cy>Featured Score:</c> {}\n"
-                        "### Level is {}</c>\n",
-                        userSuggested ? "<cg>suggested</c> this level"
-                                      : "<co>not suggested</c> this level",
-                        userRejected ? "<cr>rejected</c> this level"
-                                     : "<co>not rejected</c> this level",
-                        averageDifficulty, suggestedTotal, suggestedFeatured,
-                        suggestedEpic, suggestedLegendary, featuredScore,
-                        rejectedTotal, isBanned ? "<cr>Banned</c>" : "<cg>Not Banned</c>");
+        std::string infoText = fmt::format(
+            "## __Your Moderation Info__\n"
+            "### You have {}</c>\n"
+            "### You have {}</c>\n"
+            "\r\n\r\n---\r\n\r\n"
+            "## __Other Moderation Stats__\n"
+            "### <cl>Average Difficulty:</c> {:.1f}\n"
+            "### <cg>Total Suggested:</c> {}\n"
+            "### <co>Total Suggested Featured:</c> {}\n"
+            "### <cp>Total Suggested Epic:</c> {}\n"
+            "### <cf>Total Suggested Legendary:</c> {}\n"
+            "### <cr>Total Rejected:</c> {}\n"
+            "\r\n\r\n---\r\n\r\n"
+            "## __Global Moderation Info__\n"
+            "### <cy>Featured Score:</c> {}\n"
+            "### Level: <cc>{}</c> is {}</c>\n"
+            "### Creator: <cc>{}</c> is {}</c>\n",
+            userSuggested ? "<cg>suggested</c> this level"
+                          : "<co>not suggested</c> this level",
+            userRejected ? "<cr>rejected</c> this level"
+                         : "<co>not rejected</c> this level",
+            averageDifficulty, suggestedTotal, suggestedFeatured, suggestedEpic,
+            suggestedLegendary, featuredScore, rejectedTotal, self->m_levelName,
+            isBanned ? "<cr>Banned</c>" : "<cg>Not Banned</c>", self->m_creatorName,
+            creatorBanned ? "<cr>Banned</c>" : "<cg>Not Banned</c>");
 
         MDPopup::create("Mod Level Info", infoText, "OK")->show();
         // enable the button again
@@ -545,7 +555,7 @@ void RLModRatePopup::onUnbanLevelButton(CCObject *sender) {
   jsonBody["argonToken"] = token;
   jsonBody["levelId"] = m_levelId;
 
-  log::info("Sending request: {}", jsonBody.dump());
+  log::debug("Sending request: {}", jsonBody.dump());
 
   auto postReq = web::WebRequest();
   postReq.bodyJSON(jsonBody);
@@ -613,7 +623,7 @@ void RLModRatePopup::onBanLevelButton(CCObject *sender) {
         jsonBody["argonToken"] = token;
         jsonBody["levelId"] = m_levelId;
 
-        log::info("Sending request: {}", jsonBody.dump());
+        log::debug("Sending request: {}", jsonBody.dump());
 
         auto postReq = web::WebRequest();
         postReq.bodyJSON(jsonBody);
@@ -682,7 +692,7 @@ void RLModRatePopup::onDeleteSendsButton(CCObject *sender) {
         jsonBody["argonToken"] = token;
         jsonBody["targetLevelId"] = m_levelId;
 
-        log::info("Sending request: {}", jsonBody.dump());
+        log::debug("Sending request: {}", jsonBody.dump());
 
         auto postReq = web::WebRequest();
         postReq.bodyJSON(jsonBody);
@@ -739,7 +749,7 @@ void RLModRatePopup::onUnsendButton(CCObject *sender) {
   jsonBody["accountId"] = GJAccountManager::get()->m_accountID;
   jsonBody["argonToken"] = token;
   jsonBody["targetLevelId"] = m_levelId;
-  log::info("Sending request: {}", jsonBody.dump());
+  log::debug("Sending request: {}", jsonBody.dump());
   auto postReq = web::WebRequest();
   postReq.bodyJSON(jsonBody);
   Ref<RLModRatePopup> self = this;
@@ -879,7 +889,7 @@ void RLModRatePopup::onSubmitButton(CCObject *sender) {
     }
   }
 
-  log::info("Sending request: {}", jsonBody.dump());
+  log::debug("Sending request: {}", jsonBody.dump());
 
   auto postReq = web::WebRequest();
   postReq.bodyJSON(jsonBody);

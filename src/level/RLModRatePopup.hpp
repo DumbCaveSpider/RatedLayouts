@@ -49,7 +49,10 @@ class RLModRatePopup : public geode::Popup {
       CCMenuItemSpriteExtra* m_submitButtonItem;
       bool m_isRejected;
       int m_levelId;
+      std::string m_levelName;
+      std::string m_creatorName;
       int m_accountId;
+      int m_targetAccountId;
       async::TaskHolder<web::WebResponse> m_getModLevelTask;
       async::TaskHolder<web::WebResponse> m_setRateTask;
       async::TaskHolder<web::WebResponse> m_setUnrateTask;

@@ -143,8 +143,12 @@ class $modify(EffectGameObject) {
       }
       std::sort(userCoins.begin(), userCoins.end(),
                 [](EffectGameObject *a, EffectGameObject *b) {
-                  return std::abs(a->getPositionX()) <
-                         std::abs(b->getPositionX());
+                  // sort by distance from origin furthest coin will be last
+                  float ax = a->getPositionX();
+                  float ay = a->getPositionY();
+                  float bx = b->getPositionX();
+                  float by = b->getPositionY();
+                  return (ax * ax + ay * ay) < (bx * bx + by * by);
                 });
 
       for (size_t i = 0; i < userCoins.size(); ++i) {
@@ -226,8 +230,12 @@ class $modify(GameObject) {
       }
       std::sort(userCoins.begin(), userCoins.end(),
                 [](GameObject *a, GameObject *b) {
-                  return std::abs(a->getPositionX()) <
-                         std::abs(b->getPositionX());
+                  // sort by distance from origin furthest coin will be last
+                  float ax = a->getPositionX();
+                  float ay = a->getPositionY();
+                  float bx = b->getPositionX();
+                  float by = b->getPositionY();
+                  return (ax * ax + ay * ay) < (bx * bx + by * by);
                 });
       for (size_t i = 0; i < userCoins.size(); ++i) {
         if (userCoins[i] == this) {
