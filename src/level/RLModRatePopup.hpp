@@ -44,6 +44,7 @@ class RLModRatePopup : public geode::Popup {
       geode::TextInput* m_featuredScoreInput;
       geode::TextInput* m_featuredValueInput;
       geode::TextInput* m_difficultyInput;
+      geode::TextInput* m_notesInput;
       int m_selectedRating;
       CCMenuItemSpriteExtra* m_submitButtonItem;
       bool m_isRejected;

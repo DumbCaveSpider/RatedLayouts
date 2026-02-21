@@ -136,6 +136,7 @@ void RLGauntletLevelsLayer::onLevelDetailsFetched(matjson::Value const &json) {
   }
 
   createLevelButtons(json, m_gauntletId);
+  this->refreshCompletionCache();
 }
 
 void RLGauntletLevelsLayer::createLevelButtons(matjson::Value const &levelsData,
@@ -276,7 +277,7 @@ void RLGauntletLevelsLayer::createLevelButtons(matjson::Value const &levelsData,
         auto storedAll = glm->getStoredOnlineLevels(m_levelsSearchKey.c_str());
         if (storedAll && storedAll->count() > 0) {
           for (unsigned int si = 0; si < storedAll->count(); ++si) {
-            auto g = static_cast<GJGameLevel *>(storedAll->objectAtIndex(si));
+            auto g = static_cast<GJGameLevel *>(storedAll->objectAtIndex(si)); // press "g"
             if (g && static_cast<int>(g->m_levelID) == levelId) {
               isCompleted =
                   GameStatsManager::sharedState()->hasCompletedLevel(g);
@@ -450,6 +451,7 @@ void RLGauntletLevelsLayer::createLevelButtons(matjson::Value const &levelsData,
     }
 
     m_pendingButtons.clear();
+    this->refreshCompletionCache();
   }
 }
 
@@ -457,6 +459,7 @@ void RLGauntletLevelsLayer::onEnter() {
   CCLayer::onEnter();
   this->setTouchEnabled(true);
   this->scheduleUpdate();
+  this->refreshCompletionCache();
 }
 
 void RLGauntletLevelsLayer::onGauntletClick(CCObject *sender) {
