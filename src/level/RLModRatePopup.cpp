@@ -1,5 +1,7 @@
 #include "RLModRatePopup.hpp"
 #include <Geode/Geode.hpp>
+#include <fmt/format.h>
+#include <string>
 
 using namespace geode::prelude;
 
@@ -216,15 +218,12 @@ bool RLModRatePopup::init() {
     unrateButtonItem->setPosition({centerX, 0});
     modActionMenu->addChild(unrateButtonItem);
 
-    // suggest button for admin
-    if (PopupRole::Dev != m_role) {
-      auto suggestSpr = ButtonSprite::create(
-          "Suggest", 80, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
-      auto suggestButtonItem = CCMenuItemSpriteExtra::create(
-          suggestSpr, this, menu_selector(RLModRatePopup::onSuggestButton));
-      suggestButtonItem->setID("suggest-button");
-      modActionMenu->addChild(suggestButtonItem);
-    }
+    auto suggestSpr = ButtonSprite::create("Suggest", 80, true, "goldFont.fnt",
+                                           "GJ_button_01.png", 30.f, 1.f);
+    auto suggestButtonItem = CCMenuItemSpriteExtra::create(
+        suggestSpr, this, menu_selector(RLModRatePopup::onSuggestButton));
+    suggestButtonItem->setID("suggest-button");
+    modActionMenu->addChild(suggestButtonItem);
   }
 
   m_mainLayer->addChild(modActionMenu);
@@ -497,36 +496,123 @@ void RLModRatePopup::onInfoButton(CCObject *sender) {
             json["suggestedLegendary"].asInt().unwrapOrDefault();
         int featuredScore = json["featuredScore"].asInt().unwrapOrDefault();
         int rejectedTotal = json["rejectedTotal"].asInt().unwrapOrDefault();
+        int suggestDifficulty =
+            json["suggestDifficulty"].asInt().unwrapOrDefault();
+        int suggestFeatured = json["suggestFeatured"].asInt().unwrapOrDefault();
         bool userSuggested = json["userSuggested"].asBool().unwrapOrDefault();
         bool userRejected = json["userRejected"].asBool().unwrapOrDefault();
         bool isBanned = json["isBanned"].asBool().unwrapOrDefault();
         bool creatorBanned = json["creatorBanned"].asBool().unwrapOrDefault();
 
+        std::string difficultyName;
+        switch (suggestDifficulty) {
+        case 1:
+          difficultyName = "Auto";
+          break;
+        case 2:
+          difficultyName = "Easy";
+          break;
+        case 3:
+          difficultyName = "Normal";
+          break;
+        case 4:
+        case 5:
+          difficultyName = "Hard";
+          break;
+        case 6:
+        case 7:
+          difficultyName = "Harder";
+          break;
+        case 8:
+        case 9:
+          difficultyName = "Insane";
+          break;
+        case 10:
+          difficultyName = "Easy Demon";
+          break;
+        case 15:
+          difficultyName = "Medium Demon";
+
+          break;
+        case 20:
+          difficultyName = "Hard Demon";
+          break;
+        case 25:
+          difficultyName = "Insane Demon";
+          break;
+        case 30:
+          difficultyName = "Extreme Demon";
+          break;
+        default:
+          difficultyName = "NA";
+          break;
+        }
+        std::string featuredName;
+        switch (suggestFeatured) {
+        case 0:
+          featuredName = "Base Rate";
+          break;
+        case 1:
+          featuredName = "Featured";
+          break;
+        case 2:
+          featuredName = "Epic";
+          break;
+        case 3:
+          featuredName = "Legendary";
+          break;
+        default:
+          featuredName = "NA";
+        }
+        std::string suggestDifficultyStr =
+            suggestDifficulty > 0
+                ? fmt::format("{} ({})", difficultyName, suggestDifficulty)
+                : "N/A";
+        std::string suggestedFeaturedStr =
+            suggestFeatured >= 0 ? featuredName : "N/A";
+        std::string userActionStr =
+            fmt::format("You have <co>not rejected/suggested</c> <cc>{}</c>",
+                        self->m_levelName);
+        if (userSuggested) {
+          userActionStr = fmt::format(
+              "You previously <cg>suggested</c> <cc>{}</c> "
+              "for <cs>{}</c> difficulty "
+              "and <cs>{}</c> rate",
+              self->m_levelName, suggestDifficultyStr, suggestedFeaturedStr);
+        } else if (userRejected) {
+          userActionStr = fmt::format(
+              "You previously <cr>rejected</c> <cc>{}</c>", self->m_levelName);
+        }
+        std::string isBannedStr =
+            isBanned
+                ? fmt::format("<cc>{}</c> is <cr>Level Banned</c>", self->m_levelName)
+                : fmt::format("<cc>{}</c> is <cg>Not Level banned</c>",
+                              self->m_levelName);
+        std::string creatorBannedStr =
+            creatorBanned
+                ? fmt::format("<cc>{}</c> is <cr>Creator Banned</c>",
+                              self->m_creatorName)
+                : fmt::format("<cc>{}</c> is <cg>Not Creator banned</c>",
+                              self->m_creatorName);
         std::string infoText = fmt::format(
-            "## __Your Moderation Info__\n"
-            "### You have {}</c>\n"
-            "### You have {}</c>\n"
+            "## Your Moderation Info\n"
+            "### {}\n"
             "\r\n\r\n---\r\n\r\n"
-            "## __Other Moderation Stats__\n"
+            "## Level Sends/Suggests Info\n"
             "### <cl>Average Difficulty:</c> {:.1f}\n"
-            "### <cg>Total Suggested:</c> {}\n"
+            "### <cg>Total Combined Suggested:</c> {}\n"
             "### <co>Total Suggested Featured:</c> {}\n"
             "### <cp>Total Suggested Epic:</c> {}\n"
             "### <cf>Total Suggested Legendary:</c> {}\n"
             "### <cr>Total Rejected:</c> {}\n"
             "\r\n\r\n---\r\n\r\n"
-            "## __Global Moderation Info__\n"
+            "## Global Moderation Info\n"
             "### <cy>Featured Score:</c> {}\n"
-            "### Level: <cc>{}</c> is {}</c>\n"
-            "### Creator: <cc>{}</c> is {}</c>\n",
-            userSuggested ? "<cg>suggested</c> this level"
-                          : "<co>not suggested</c> this level",
-            userRejected ? "<cr>rejected</c> this level"
-                         : "<co>not rejected</c> this level",
-            averageDifficulty, suggestedTotal, suggestedFeatured, suggestedEpic,
-            suggestedLegendary, featuredScore, rejectedTotal, self->m_levelName,
-            isBanned ? "<cr>Banned</c>" : "<cg>Not Banned</c>", self->m_creatorName,
-            creatorBanned ? "<cr>Banned</c>" : "<cg>Not Banned</c>");
+            "### {}\n"
+            "### {}\n",
+            userActionStr, averageDifficulty, suggestedTotal, suggestedFeatured,
+            suggestedEpic, suggestedLegendary, rejectedTotal, featuredScore,
+            isBannedStr, creatorBannedStr);
 
         MDPopup::create("Mod Level Info", infoText, "OK")->show();
         // enable the button again
@@ -1310,8 +1396,8 @@ void RLModRatePopup::onToggleFeatured(CCObject *sender) {
     }
   }
 
-  // Only modify preview coins for non-Dev users. Dev users should not see/hide
-  // preview coins.
+  // Only modify preview coins for non-Dev users. Dev users should not
+  // see/hide preview coins.
   if (m_role != PopupRole::Dev) {
     auto existingCoin = m_difficultyContainer->getChildByID("featured-coin");
     auto existingEpicCoin =

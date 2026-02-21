@@ -111,8 +111,7 @@ bool RLShopLayer::init() {
     return g;
   }();
 
-  int signIndex =
-      signGen.generate<int>(0, static_cast<int>(signFrames.size()));
+  int signIndex = signGen.generate<int>(0, static_cast<int>(signFrames.size()));
   auto signSpr =
       CCSprite::createWithSpriteFrameName(signFrames[signIndex].c_str());
   if (signSpr) {
@@ -199,7 +198,7 @@ bool RLShopLayer::init() {
                  {19, 12500, 26209086, "Niki2025"},
                  {20, 27500, 36519986, "NullJuicecd"},
                  {21, 27500, 36519986, "NullJuicecd"},
-                 {22, 20000, 24448008, "hexz347"},
+                 {22, 20000, 24448008, "Hexz"},
                  {23, 57500, 7689052, "ArcticWoof"},
                  {24, 10000, 15289357, "Landon72"},
                  {25, 12340, 15289357, "Landon72"},
@@ -223,7 +222,11 @@ bool RLShopLayer::init() {
                  {43, 10000, 11827369, "Froose"},
                  {44, 14000, 25479036, "KetazonerLop"},
                  {45, 64115, 13803757, "FireExegd"},
-                 {46, 20000, 22572488, "Junotrion"}};
+                 {46, 20000, 22572488, "Junotrion"},
+                 {47, 15700, 25699352, "Wearows"},
+                 {48, 15000, 11306436, "Potalcium"},
+                 {49, 10000, 12206936, "RalingUwU"},
+                 {50, 25000, 1975253, "Dasshu"}};
   m_shopRow1->setAnchorPoint({0.5f, 0.5f});
   m_shopRow2->setAnchorPoint({0.5f, 0.5f});
 
