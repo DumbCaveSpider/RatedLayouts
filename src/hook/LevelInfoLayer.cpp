@@ -510,14 +510,16 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                       CurrencySpriteType::Star, 0,
                       difficultySprite->getPosition(),
                       CurrencyRewardType::Default, 0.0, 1.0)) {
-
+                bool playSound = false;
                 if (rewardValue > 0) {
                   if (isPlat) {
                     rewardLayer->m_stars = 0;
                     rewardLayer->incrementStarsCount(displayReward);
+                    playSound = true;
                   } else {
                     rewardLayer->m_moons = 0;
                     rewardLayer->incrementMoonsCount(displayReward);
+                    playSound = true;
                   }
                 }
 
@@ -525,6 +527,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   if (rewardLayer->m_diamondsLabel) {
                     rewardLayer->m_diamonds = 0;
                     rewardLayer->incrementDiamondsCount(rubies);
+                    playSound = true;
                     int newTotal = rubies + remainingRubies;
                     log::info("Adding {} rubies to {}", remainingRubies,
                               rubies);
@@ -639,13 +642,12 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                   rewardLayer->m_diamondsSprite->setDisplayFrame(
                       rubyDisplayFrame);
                 }
-
+                if (playSound) {
+                  // @geode-ignore(unknown-resource)
+                  FMODAudioEngine::sharedEngine()->playEffect("gold02.ogg");
+                }
                 layerRef->addChild(rewardLayer, 100);
-                // @geode-ignore(unknown-resource)
-                FMODAudioEngine::sharedEngine()->playEffect("gold02.ogg");
-              }
-
-              else {
+              } else {
                 log::info("Reward animation disabled");
                 Notification::create(
                     "Received " + numToString(difficulty) + " " + reward + "!",
