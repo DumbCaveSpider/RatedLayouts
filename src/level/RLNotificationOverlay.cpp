@@ -164,8 +164,7 @@ void RLNotificationOverlay::callRateNotification(float dt) {
         if (newRate.present) {
           if (newRate.levelId != currentLatestLevelId) {
             Ref<RLNotificationOverlay> self = this;
-            Loader::get()->queueInMainThread([self, newRate]() {
-              if (!self) return;
+            if (self) {
               auto alert = RLNotificationAlert::create(
                   "New Rated Layout", newRate.levelName, newRate.difficulty,
                   newRate.featured, newRate.levelId, newRate.accountName,
@@ -175,7 +174,7 @@ void RLNotificationOverlay::callRateNotification(float dt) {
                 Mod::get()->setSavedValue<int>("latestNotifiedRateLevelId",
                                                newRate.levelId);
               }
-            });
+            }
           } else {
             log::info("No new rate notifications");
           }
@@ -183,8 +182,7 @@ void RLNotificationOverlay::callRateNotification(float dt) {
         if (newEvent.present) {
           if (newEvent.levelId != currentLatestEventId) {
             Ref<RLNotificationOverlay> self = this;
-            Loader::get()->queueInMainThread([self, newEvent]() {
-              if (!self) return;
+            if (self) {
               auto alert = RLNotificationAlert::create(
                   fmt::format("New {} Layout", newEvent.eventType),
                   newEvent.levelName, newEvent.difficulty, newEvent.featured,
@@ -195,7 +193,7 @@ void RLNotificationOverlay::callRateNotification(float dt) {
                 Mod::get()->setSavedValue<int>("latestNotifiedRateEventId",
                                                newEvent.levelId);
               }
-            });
+            }
           } else {
             log::info("No new event notifications");
           }
