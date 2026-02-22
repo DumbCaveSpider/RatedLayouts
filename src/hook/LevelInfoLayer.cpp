@@ -6,9 +6,9 @@
 #include <cmath>
 
 #include "../custom/RLAchievements.hpp"
-#include "../utils/RubyUtils.hpp"
 #include "../level/RLCommunityVotePopup.hpp"
 #include "../level/RLModRatePopup.hpp"
+#include "../utils/RubyUtils.hpp"
 
 using namespace geode::prelude;
 using namespace ratedlayouts;
@@ -143,18 +143,15 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
     log::info("Level download finished, fetching rating data...");
 
     // Fetch rating data from server
-    int levelId = this->m_level->m_levelID;
+    int levelId = this->m_level ? this->m_level->m_levelID : 0;
     log::info("Fetching rating data for level ID: {}", levelId);
 
-    auto getReq = web::WebRequest();
     Ref<RLLevelInfoLayer> layerRef = this;
-    auto difficultySprite = layerRef->getChildByID("difficulty-sprite");
 
     auto url =
         fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId);
     auto req = web::WebRequest();
-    async::spawn(req.get(url), [layerRef,
-                                difficultySprite](web::WebResponse response) {
+    async::spawn(req.get(url), [layerRef](web::WebResponse response) {
       log::info("Received rating response from server");
 
       if (!layerRef) {
@@ -178,7 +175,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
 
       // Process the response immediately
       if (layerRef) {
-        layerRef->processLevelRating(json, layerRef, difficultySprite, true);
+        layerRef->processLevelRating(json, layerRef, true);
         if (!isSuggested) {
           layerRef->repositionRubyUI();
           layerRef->addOrUpdateRubyUI(
@@ -187,19 +184,23 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
       }
 
       // if level is rated, check via checkRated endpoint
-      if (layerRef->m_level->m_stars > 0) {
+      if (layerRef->m_level && layerRef->m_level->m_stars > 0) {
         layerRef->checkRated(layerRef->m_level->m_levelID);
       }
     });
   }
   void processLevelRating(const matjson::Value &json,
                           Ref<RLLevelInfoLayer> layerRef,
-                          CCNode *difficultySprite, bool forceShow = false) {
+                          bool forceShow = false) {
     if (!layerRef)
       return;
     int difficulty = json["difficulty"].asInt().unwrapOrDefault();
     int featured = json["featured"].asInt().unwrapOrDefault();
     bool showCommunity = forceShow;
+    CCNode *difficultySprite = nullptr;
+    if (layerRef) {
+      difficultySprite = layerRef->getChildByID("difficulty-sprite");
+    }
 
     // helper to remove existing button
     auto removeExistingCommunityBtn = [layerRef]() {
@@ -341,7 +342,8 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
     log::info("difficulty: {}, featured: {}", difficulty, featured);
 
     // check if the level needs to submit completion reward if completed
-    if (GameStatsManager::sharedState()->hasCompletedOnlineLevel(
+    if (layerRef->m_level &&
+        GameStatsManager::sharedState()->hasCompletedOnlineLevel(
             layerRef->m_level->m_levelID)) {
       log::info("Level is completed, submitting completion reward");
 
@@ -409,8 +411,12 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
 
       m_fields->m_submitTask.spawn(
           submitReq.post("https://gdrate.arcticwoof.xyz/submitComplete"),
-          [layerRef, difficulty, levelId,
-           difficultySprite](web::WebResponse submitResponse) {
+          [layerRef, difficulty, levelId](web::WebResponse submitResponse) {
+            // re-fetch sprite here in case the layer changed/destroyed
+            CCNode *difficultySprite = nullptr;
+            if (layerRef) {
+              difficultySprite = layerRef->getChildByID("difficulty-sprite");
+            }
             log::info("Received submitComplete response for level ID: {}",
                       levelId);
 
@@ -439,121 +445,130 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             log::info("submitComplete success: {}, response stars: {}", success,
                       responseStars);
 
+            if (responseStars == 30 || responsePlanets == 30) {
+              RLAchievements::onReward("misc_extreme");
+            }
+
+            bool isPlat = false;
+            if (layerRef && layerRef->m_level)
+              isPlat = layerRef->m_level->isPlatformer();
+            log::info("submitComplete values - stars: {}, planets: {}",
+                      responseStars, responsePlanets);
+            int displayReward = (isPlat ? (responsePlanets - difficulty)
+                                        : (responseStars - difficulty));
+
+            // Check previous totals and trigger achievements if increased
+            int sparks = Mod::get()->getSavedValue<int>("stars", 0);
+            int planets = Mod::get()->getSavedValue<int>("planets", 0);
+
+            if (isPlat) {
+              RLAchievements::onUpdated(RLAchievements::Collectable::Planets,
+                                        planets, responsePlanets);
+            } else {
+              RLAchievements::onUpdated(RLAchievements::Collectable::Sparks,
+                                        sparks, responseStars);
+            }
+
+            // Also check current totals for retroactive awards
+            RLAchievements::checkAll(RLAchievements::Collectable::Sparks,
+                                     responseStars);
+            RLAchievements::checkAll(RLAchievements::Collectable::Planets,
+                                     responsePlanets);
+            int rewardValue = 0;
             if (success) {
-              if (responseStars == 0 && responsePlanets == 0) {
-                log::warn("No stars or planets rewarded, possibly already "
-                          "rewarded before");
-                return;
-              }
-
-              if (responseStars == 30 || responsePlanets == 30) {
-                RLAchievements::onReward("misc_extreme");
-              }
-
-              bool isPlat = false;
-              if (layerRef && layerRef->m_level)
-                isPlat = layerRef->m_level->isPlatformer();
-              log::info("submitComplete values - stars: {}, planets: {}",
-                        responseStars, responsePlanets);
-              int displayReward = (isPlat ? (responsePlanets - difficulty)
-                                          : (responseStars - difficulty));
-
-              // Check previous totals and trigger achievements if increased
-              int oldStars = Mod::get()->getSavedValue<int>("stars", 0);
-              int oldPlanets = Mod::get()->getSavedValue<int>("planets", 0);
-              int responseAmount = isPlat ? responsePlanets : responseStars;
-              int delta = responseAmount - (isPlat ? oldPlanets : oldStars);
-              int newAmount = (isPlat ? oldPlanets : oldStars) + delta;
-
-              if (delta > 0) {
-                log::info("submitComplete awarded {} {} (old={}, new={})",
-                          delta, (isPlat ? "planets" : "spark(s)"),
-                          (isPlat ? oldPlanets : oldStars), responseAmount);
-                if (isPlat) {
-                  RLAchievements::onUpdated(
-                      RLAchievements::Collectable::Planets, oldPlanets,
-                      responsePlanets);
-                } else {
-                  RLAchievements::onUpdated(RLAchievements::Collectable::Sparks,
-                                            oldStars, responseStars);
-                }
-              }
-
-              // Also check current totals for retroactive awards
-              RLAchievements::checkAll(RLAchievements::Collectable::Sparks,
-                                       responseStars);
-              RLAchievements::checkAll(RLAchievements::Collectable::Planets,
-                                       responsePlanets);
-
-              // persist returned totals
+              rewardValue = difficulty;
               if (isPlat) {
+                log::info("Display planets: {} - {} = {}", responsePlanets,
+                          difficulty, displayReward);
                 Mod::get()->setSavedValue<int>("planets", responsePlanets);
               } else {
+                log::info("Display stars: {} - {} = {}", responseStars,
+                          difficulty, displayReward);
                 Mod::get()->setSavedValue<int>("stars", responseStars);
               }
+            } else {
+              rewardValue = 0;
+            }
 
-              std::string medSprite =
-                  isPlat ? "RL_planetMed.png"_spr : "RL_starMed.png"_spr;
-              std::string reward = isPlat ? "planets" : "sparks";
+            int rubies = Mod::get()->getSavedValue<int>("rubies");
 
-              if (!Mod::get()->getSettingValue<bool>(
-                      "disableRewardAnimation")) {
-                // use helper to obtain ruby totals/collected/remaining
-                auto rubyInfo =
-                    computeRubyInfo(layerRef->m_level, difficulty);
-                int remainingRubies = rubyInfo.remaining;
-                int calcAtPercent = rubyInfo.calcAtPercent;
+            std::string medSprite =
+                isPlat ? "RL_planetMed.png"_spr : "RL_starMed.png"_spr;
+            std::string reward = isPlat ? "planets" : "sparks";
 
-                // create reward layer and include remaining rubies in the
-                // diamonds slot so they appear in the animation
-                if (auto rewardLayer = CurrencyRewardLayer::create(
-                        0, isPlat ? difficulty : 0, isPlat ? 0 : difficulty,
-                        remainingRubies, CurrencySpriteType::Star, 0,
-                        CurrencySpriteType::Star, 0,
-                        difficultySprite->getPosition(),
-                        CurrencyRewardType::Default, 0.0, 1.0)) {
+            if (!Mod::get()->getSettingValue<bool>("disableRewardAnimation")) {
+              // use helper to obtain ruby totals/collected/remaining
+              auto rubyInfo = computeRubyInfo(layerRef->m_level, difficulty);
+              int remainingRubies = rubyInfo.remaining;
+              int calcAtPercent = rubyInfo.calcAtPercent;
+              log::debug("Ruby info - remaining: {}, calcAtPercent: {} for "
+                         "difficulty {}",
+                         remainingRubies, calcAtPercent, difficulty);
+              // create reward layer and include remaining rubies in the
+              // diamonds slot so they appear in the animation
+              if (auto rewardLayer = CurrencyRewardLayer::create(
+                      0, isPlat ? rewardValue : 0, isPlat ? 0 : rewardValue,
+                      remainingRubies, CurrencySpriteType::Star, 0,
+                      CurrencySpriteType::Star, 0,
+                      difficultySprite->getPosition(),
+                      CurrencyRewardType::Default, 0.0, 1.0)) {
+
+                if (rewardValue > 0) {
                   if (isPlat) {
                     rewardLayer->m_stars = 0;
-                    rewardLayer->incrementStarsCount(newAmount);
+                    rewardLayer->incrementStarsCount(displayReward);
                   } else {
                     rewardLayer->m_moons = 0;
-                    rewardLayer->incrementMoonsCount(newAmount);
+                    rewardLayer->incrementMoonsCount(displayReward);
                   }
+                }
 
-                  // If rubies are present for this level and not already
-                  // collected, show them in the diamonds slot (label/frame)
-                  if (remainingRubies > 0) {
-                    if (rewardLayer->m_diamondsLabel) {
-                      rewardLayer->m_diamonds = 0;
-                      rewardLayer->incrementDiamondsCount(
-                          Mod::get()->getSavedValue<int>("rubies"));
-                    }
+                if (remainingRubies > 0) {
+                  if (rewardLayer->m_diamondsLabel) {
+                    rewardLayer->m_diamonds = 0;
+                    rewardLayer->incrementDiamondsCount(rubies);
+                    int newTotal = rubies + remainingRubies;
+                    log::info("Adding {} rubies to {}", remainingRubies,
+                              rubies);
+                    Mod::get()->setSavedValue<int>("rubies", newTotal);
                   }
+                }
 
-                  auto texture = CCTextureCache::sharedTextureCache()->addImage(
-                      isPlat ? "RL_planetBig.png"_spr : "RL_starBig.png"_spr,
-                      false);
-                  auto displayFrame = CCSpriteFrame::createWithTexture(
-                      texture, {{0, 0}, texture->getContentSize()});
+                std::string frameName =
+                    isPlat ? "RL_planetBig.png"_spr : "RL_starBig.png"_spr;
+                auto displayFrame =
+                    CCSpriteFrameCache::sharedSpriteFrameCache()
+                        ->spriteFrameByName((frameName).c_str());
+                CCTexture2D *texture = nullptr;
+                if (!displayFrame) {
+                  texture = CCTextureCache::sharedTextureCache()->addImage(
+                      (frameName).c_str(), false);
+                  if (texture) {
+                    displayFrame = CCSpriteFrame::createWithTexture(
+                        texture, {{0, 0}, texture->getContentSize()});
+                  }
+                } else {
+                  texture = displayFrame->getTexture();
+                }
 
-                  // setup ruby display frame (for diamond repurposing)
-                  std::string rubyFrameName = "RL_bigRuby.png"_spr;
-                  auto rubyDisplayFrame =
-                      CCSpriteFrameCache::sharedSpriteFrameCache()
-                          ->spriteFrameByName((rubyFrameName).c_str());
-                  CCTexture2D *rubyTexture = nullptr;
-                  if (!rubyDisplayFrame) {
-                    rubyTexture =
-                        CCTextureCache::sharedTextureCache()->addImage(
-                            (rubyFrameName).c_str(), false);
-                    if (rubyTexture) {
-                      rubyDisplayFrame = CCSpriteFrame::createWithTexture(
-                          rubyTexture, {{0, 0}, rubyTexture->getContentSize()});
-                    }
+                std::string rubyFrameName = "RL_bigRuby.png"_spr;
+                auto rubyDisplayFrame =
+                    CCSpriteFrameCache::sharedSpriteFrameCache()
+                        ->spriteFrameByName((rubyFrameName).c_str());
+                CCTexture2D *rubyTexture = nullptr;
+                if (!rubyDisplayFrame) {
+                  rubyTexture = CCTextureCache::sharedTextureCache()->addImage(
+                      (rubyFrameName).c_str(), false);
+                  if (rubyTexture) {
+                    rubyDisplayFrame = CCSpriteFrame::createWithTexture(
+                        rubyTexture, {{0, 0}, rubyTexture->getContentSize()});
                   } else {
-                    rubyTexture = rubyDisplayFrame->getTexture();
+                    log::warn("Failed to load ruby texture");
                   }
-
+                } else {
+                  rubyTexture = rubyDisplayFrame->getTexture();
+                }
+                if (displayReward > 0) {
                   if (isPlat) {
                     if (rewardLayer->m_starsSprite)
                       rewardLayer->m_starsSprite->setDisplayFrame(displayFrame);
@@ -562,57 +577,61 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                       rewardLayer->m_moonsSprite->setDisplayFrame(displayFrame);
                   }
                   // set batch-node texture for primary reward (star/planet)
-                  if (rewardLayer->m_currencyBatchNode)
+                  if (rewardLayer->m_currencyBatchNode && texture)
                     rewardLayer->m_currencyBatchNode->setTexture(texture);
+                }
 
-                  if (rubyDisplayFrame && rubyTexture &&
-                      rewardLayer->m_currencyBatchNode) {
-                    rewardLayer->m_currencyBatchNode->setTexture(rubyTexture);
+                if (rubyDisplayFrame && rubyTexture &&
+                    rewardLayer->m_currencyBatchNode) {
+                  rewardLayer->m_currencyBatchNode->setTexture(rubyTexture);
+                }
+
+                for (auto sprite :
+                     CCArrayExt<CurrencySprite>(rewardLayer->m_objects)) {
+                  if (!sprite)
+                    continue;
+                  if (sprite->m_burstSprite)
+                    sprite->m_burstSprite->setVisible(false);
+                  if (auto child = sprite->getChildByIndex(0)) {
+                    child->setVisible(false);
                   }
 
-                  for (auto sprite :
-                       CCArrayExt<CurrencySprite>(rewardLayer->m_objects)) {
-                    if (!sprite)
-                      continue;
-                    if (sprite->m_burstSprite)
-                      sprite->m_burstSprite->setVisible(false);
-                    if (auto child = sprite->getChildByIndex(0)) {
-                      child->setVisible(false);
-                    }
-
-                    // default star/moon frames
-                    if (sprite->m_spriteType ==
-                        (isPlat ? CurrencySpriteType::Star
-                                : CurrencySpriteType::Moon)) {
+                  // default star/moon frames
+                  if (sprite->m_spriteType ==
+                      (isPlat ? CurrencySpriteType::Star
+                              : CurrencySpriteType::Moon)) {
+                    if (displayFrame) {
                       sprite->setDisplayFrame(displayFrame);
                     }
+                  }
 
-                    // diamond slot: show ruby frame when available
-                    if (sprite->m_spriteType == CurrencySpriteType::Diamond) {
-                      if (rubyDisplayFrame) {
-                        if (rubyTexture && rewardLayer->m_currencyBatchNode) {
-                          rewardLayer->m_currencyBatchNode->setTexture(
-                              rubyTexture);
-                        }
-                        sprite->setDisplayFrame(rubyDisplayFrame);
+                  // diamond slot: show ruby frame when available
+                  if (sprite->m_spriteType == CurrencySpriteType::Diamond) {
+                    if (rubyDisplayFrame) {
+                      if (rubyTexture && rewardLayer->m_currencyBatchNode) {
+                        rewardLayer->m_currencyBatchNode->setTexture(
+                            rubyTexture);
                       }
+                      sprite->setDisplayFrame(rubyDisplayFrame);
                     }
                   }
-
-                  // also update diamonds sprite/frame if applicable
-                  if (rewardLayer->m_diamondsSprite && rubyDisplayFrame) {
-                    if (rubyTexture && rewardLayer->m_currencyBatchNode) {
-                      rewardLayer->m_currencyBatchNode->setTexture(rubyTexture);
-                    }
-                    rewardLayer->m_diamondsSprite->setDisplayFrame(
-                        rubyDisplayFrame);
-                  }
-
-                  layerRef->addChild(rewardLayer, 100);
-                  // @geode-ignore(unknown-resource)
-                  FMODAudioEngine::sharedEngine()->playEffect("gold02.ogg");
                 }
-              } else {
+
+                // also update diamonds sprite/frame if applicable
+                if (rewardLayer->m_diamondsSprite && rubyDisplayFrame) {
+                  if (rubyTexture && rewardLayer->m_currencyBatchNode) {
+                    rewardLayer->m_currencyBatchNode->setTexture(rubyTexture);
+                  }
+                  rewardLayer->m_diamondsSprite->setDisplayFrame(
+                      rubyDisplayFrame);
+                }
+
+                layerRef->addChild(rewardLayer, 100);
+                // @geode-ignore(unknown-resource)
+                FMODAudioEngine::sharedEngine()->playEffect("gold02.ogg");
+              }
+
+              else {
                 log::info("Reward animation disabled");
                 Notification::create(
                     "Received " + numToString(difficulty) + " " + reward + "!",
@@ -622,107 +641,17 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                     // @geode-ignore(unknown-resource)
                     "gold02.ogg");
                 // do the fake reward circle wave effect
-                auto fakeCircleWave =
-                    CCCircleWave::create(10.f, 110.f, 0.5f, false);
-                fakeCircleWave->m_color = ccWHITE;
-                fakeCircleWave->setPosition(difficultySprite->getPosition());
-                layerRef->addChild(fakeCircleWave, 1);
+                if (difficultySprite) {
+                  auto fakeCircleWave =
+                      CCCircleWave::create(10.f, 110.f, 0.5f, false);
+                  fakeCircleWave->m_color = ccWHITE;
+                  fakeCircleWave->setPosition(difficultySprite->getPosition());
+                  if (layerRef)
+                    layerRef->addChild(fakeCircleWave, 1);
+                }
               }
             } else {
               log::warn("level already completed and rewarded beforehand");
-              // still check for uncollected rubies and show a ruby-only
-              // reward animation if applicable
-              auto rubyInfo =
-                  computeRubyInfo(layerRef->m_level, difficulty, levelId);
-              int remainingRubies = rubyInfo.remaining;
-              int calcAtPercent = rubyInfo.calcAtPercent;
-
-              if (remainingRubies > 0) {
-                log::info("Level already rewarded but {} rubies remain for "
-                          "level {}. Showing ruby reward animation.",
-                          remainingRubies, levelId);
-
-                // check for rubies to collect
-                if (auto rewardLayer = CurrencyRewardLayer::create(
-                        0, 0, 0, remainingRubies, CurrencySpriteType::Star, 0,
-                        CurrencySpriteType::Star, 0,
-                        layerRef->m_orbsIcon->getPosition(),
-                        CurrencyRewardType::Default, 0.0, 1.0)) {
-                  if (rewardLayer->m_diamondsLabel) {
-                    rewardLayer->m_diamonds = 0;
-                    rewardLayer->incrementDiamondsCount(
-                        Mod::get()->getSavedValue<int>("rubies"));
-                  }
-
-                  // setup ruby frame for diamond slot
-                  std::string rubyFrameName = "RL_bigRuby.png"_spr;
-                  auto rubyDisplayFrame =
-                      CCSpriteFrameCache::sharedSpriteFrameCache()
-                          ->spriteFrameByName((rubyFrameName).c_str());
-                  CCTexture2D *rubyTexture = nullptr;
-                  if (!rubyDisplayFrame) {
-                    rubyTexture =
-                        CCTextureCache::sharedTextureCache()->addImage(
-                            (rubyFrameName).c_str(), false);
-                    if (rubyTexture) {
-                      rubyDisplayFrame = CCSpriteFrame::createWithTexture(
-                          rubyTexture, {{0, 0}, rubyTexture->getContentSize()});
-                    }
-                  } else {
-                    rubyTexture = rubyDisplayFrame->getTexture();
-                  }
-
-                  if (rewardLayer->m_diamondsSprite && rubyDisplayFrame) {
-                    rewardLayer->m_diamondsSprite->setDisplayFrame(
-                        rubyDisplayFrame);
-                  }
-
-                  if (rubyDisplayFrame && rubyTexture &&
-                      rewardLayer->m_currencyBatchNode) {
-                    rewardLayer->m_currencyBatchNode->setTexture(rubyTexture);
-                  }
-
-                  // replace burst/collect sprites with ruby frame if available
-                  if (rewardLayer->m_objects && rubyDisplayFrame) {
-                    for (auto sprite :
-                         CCArrayExt<CurrencySprite>(rewardLayer->m_objects)) {
-                      if (!sprite)
-                        continue;
-                      if (sprite->m_burstSprite)
-                        sprite->m_burstSprite->setVisible(false);
-                      if (auto childNode = sprite->getChildByIndex(0))
-                        childNode->setVisible(false);
-                      sprite->setDisplayFrame(rubyDisplayFrame);
-                    }
-                  }
-
-                  // ensure other visuals are present but don't change
-                  // stars/moons
-                  layerRef->addChild(rewardLayer, 100);
-                  FMODAudioEngine::sharedEngine()->playEffect(
-                      // @geode-ignore(unknown-resource)
-                      "gold02.ogg");
-
-                  // persist collected rubies so this level cannot be
-                  // re-rewarded
-                  int newCollected = rubyInfo.collected + remainingRubies;
-                  if (newCollected > rubyInfo.total)
-                    newCollected = rubyInfo.total;
-                  if (persistCollectedRubies(levelId, rubyInfo.total,
-                                                 newCollected)) {
-                    int oldGlobal = Mod::get()->getSavedValue<int>("rubies", 0);
-                    Mod::get()->setSavedValue<int>("rubies",
-                                                   oldGlobal + remainingRubies);
-                    log::debug("Persisted rubies_collected.json for level {} "
-                               "(collected={})",
-                               levelId, newCollected);
-                  } else {
-                    log::warn(
-                        "Failed to persist rubies_collected.json for level {}",
-                        levelId);
-                  }
-                }
-              }
             }
           });
     }
@@ -1302,7 +1231,8 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
     auto callFunc = CCCallFunc::create(
         layerRef, callfunc_selector(RLLevelInfoLayer::repositionRLStars));
     auto sequence = CCSequence::create(delayAction, callFunc, nullptr);
-    layerRef->runAction(sequence);
+    if (layerRef)
+      layerRef->runAction(sequence);
     log::debug("repositionRLStars callback scheduled");
   }
 
@@ -1379,7 +1309,8 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             static_cast<CCMenu *>(rightMenuNode)->addChild(commBtnItem);
             static_cast<CCMenu *>(rightMenuNode)->updateLayout();
 
-            // Reactivate immediately if it should be enabled according to data
+            // Reactivate immediately if it should be enabled according to
+            // data
             if (!shouldDisable) {
               auto commSpriteColor =
                   CCSprite::createWithSpriteFrameName("RL_commVote01.png"_spr);
@@ -1714,7 +1645,8 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
       auto callFunc = CCCallFunc::create(
           layerRef, callfunc_selector(RLLevelInfoLayer::repositionRLStars));
       auto sequence = CCSequence::create(delayAction, callFunc, nullptr);
-      layerRef->runAction(sequence);
+      if (layerRef)
+        layerRef->runAction(sequence);
       log::debug("levelUpdateFinished: repositionRLStars callback "
                  "scheduled");
     }
@@ -1817,9 +1749,10 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
           float labelY = starIcon->getPositionY();
           log::info("Repositioning star label to ({}, {})", labelX, labelY);
           starLabel->setPosition({labelX, labelY});
-          if (GameStatsManager::sharedState()->hasCompletedOnlineLevel(
+          if (this->m_level &&
+              GameStatsManager::sharedState()->hasCompletedOnlineLevel(
                   this->m_level->m_levelID)) {
-            if (this->m_level && this->m_level->isPlatformer()) {
+            if (this->m_level->isPlatformer()) {
               starLabel->setColor({255, 160, 0}); // orange
             } else {
               starLabel->setColor({0, 150, 255}); // cyan
@@ -2170,8 +2103,8 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
               return;
             }
 
-            // If server returned non-ok, its okay, just remove existing data...
-            // sob
+            // If server returned non-ok, its okay, just remove existing
+            // data... sob
             if (!response.ok()) {
               if (response.code() == 404) {
                 auto difficultySprite =
@@ -2261,9 +2194,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             }
 
             // Update the display with latest data
-            layerRef->processLevelRating(
-                json, layerRef, layerRef->getChildByID("difficulty-sprite"),
-                true);
+            layerRef->processLevelRating(json, layerRef, true);
           });
     }
   }

@@ -340,15 +340,15 @@ class $modify(EndLevelLayer) {
                         ->show();
                     return;
                   }
-                  int displayStars = isPlat ? (responsePlanets - starReward)
+                  int displayReward = isPlat ? (responsePlanets - starReward)
                                             : (responseStars - starReward);
                   if (isPlat) {
                     log::info("Display planets: {} - {} = {}", responsePlanets,
-                              starReward, displayStars);
+                              starReward, displayReward);
                     Mod::get()->setSavedValue<int>("planets", responsePlanets);
                   } else {
                     log::info("Display stars: {} - {} = {}", responseStars,
-                              starReward, displayStars);
+                              starReward, displayReward);
                     Mod::get()->setSavedValue<int>("stars", responseStars);
                   }
 
@@ -400,7 +400,7 @@ class $modify(EndLevelLayer) {
                   difficultyLabel->runAction(
                       CCFadeIn::create(fadeAction->getDuration()));
 
-                  int difficultyForRubies = starReward; // same as difficulty
+                  int difficultyForRubies = displayReward; // same as difficulty
                   auto rubyInfo =
                       computeRubyInfo(level, difficultyForRubies);
                   int totalRuby = rubyInfo.total;
@@ -470,15 +470,12 @@ class $modify(EndLevelLayer) {
                       // display the calculated stars
                       if (isPlat) {
                         rewardLayer->m_stars = 0;
-                        rewardLayer->incrementStarsCount(displayStars);
+                        rewardLayer->incrementStarsCount(displayReward);
                       } else {
                         rewardLayer->m_moons = 0;
-                        rewardLayer->incrementMoonsCount(displayStars);
+                        rewardLayer->incrementMoonsCount(displayReward);
                       }
 
-                      // If rubies were awarded, use the diamonds slot on the
-                      // reward layer to show rubies and replace diamond
-                      // sprite with ruby sprite (display shows percent total)
                       if (remainingRubies > 0) {
                         if (rewardLayer->m_diamondsLabel) {
                           rewardLayer->m_diamonds = 0;
