@@ -8,26 +8,30 @@
 using namespace geode::prelude;
 
 const int USER_COIN = 1329;
+bool g_verifiedCoins = false;
 
 // callback receives `true` only if request succeeded and coinVerified was true
 static void fetchCoinVerified(int levelId, std::function<void(bool)> cb) {
-    static async::TaskHolder<web::WebResponse> s_task;
-    // cancel any previous request for freshness
-    s_task.cancel();
-    auto url = fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId);
-    s_task.spawn(web::WebRequest().get(url), [cb](web::WebResponse res) {
-        if (!res.ok()) {
-            cb(false);
-            return;
-        }
-        auto jsonRes = res.json();
-        if (!jsonRes) {
-            cb(false);
-            return;
-        }
-        bool coinVerified = jsonRes.unwrap()["coinVerified"].asBool().unwrapOr(false);
-        cb(coinVerified);
-    });
+  static async::TaskHolder<web::WebResponse> s_task;
+  // cancel any previous request for freshness
+  g_verifiedCoins = false;
+  s_task.cancel();
+  auto url =
+      fmt::format("https://gdrate.arcticwoof.xyz/fetch?levelId={}", levelId);
+  s_task.spawn(web::WebRequest().get(url), [cb](web::WebResponse res) {
+    if (!res.ok()) {
+      cb(false);
+      return;
+    }
+    auto jsonRes = res.json();
+    if (!jsonRes) {
+      cb(false);
+      return;
+    }
+    bool coinVerified =
+        jsonRes.unwrap()["coinVerified"].asBool().unwrapOr(false);
+    cb(coinVerified);
+  });
 }
 
 // Replace coin visuals when GameObjects are set up
@@ -43,7 +47,8 @@ class $modify(EffectGameObject) {
       return;
 
     auto playLayer = PlayLayer::get();
-    if (!playLayer || !playLayer->m_level || playLayer->m_level->m_levelID == 0) {
+    if (!playLayer || !playLayer->m_level ||
+        playLayer->m_level->m_levelID == 0) {
       return;
     }
     // ensure the custom sprite animations are added to the node container
@@ -56,13 +61,13 @@ class $modify(EffectGameObject) {
     static CCSpriteFrame *emptyFirst = nullptr;
     if (!blueAnim) {
       blueAnim = CCAnimation::create();
-      const char *blueNames[4] = {"RL_BlueCoin1.png"_spr,
-                                  "RL_BlueCoin2.png"_spr,
-                                  "RL_BlueCoin3.png"_spr,
-                                  "RL_BlueCoin4.png"_spr};
+      const char *blueNames[4] = {
+          "RL_BlueCoin1.png"_spr, "RL_BlueCoin2.png"_spr,
+          "RL_BlueCoin3.png"_spr, "RL_BlueCoin4.png"_spr};
       for (int fi = 0; fi < 4; ++fi) {
-        auto f = CCSpriteFrameCache::sharedSpriteFrameCache()
-                     ->spriteFrameByName(blueNames[fi]);
+        auto f =
+            CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(
+                blueNames[fi]);
         if (!f) {
           log::warn("GameObjectCoin: missing RL frame {} — skipping",
                     blueNames[fi]);
@@ -77,13 +82,13 @@ class $modify(EffectGameObject) {
     }
     if (!emptyAnim) {
       emptyAnim = CCAnimation::create();
-      const char *emptyNames[4] = {"RL_BlueCoinEmpty1.png"_spr,
-                                   "RL_BlueCoinEmpty2.png"_spr,
-                                   "RL_BlueCoinEmpty3.png"_spr,
-                                   "RL_BlueCoinEmpty4.png"_spr};
+      const char *emptyNames[4] = {
+          "RL_BlueCoinEmpty1.png"_spr, "RL_BlueCoinEmpty2.png"_spr,
+          "RL_BlueCoinEmpty3.png"_spr, "RL_BlueCoinEmpty4.png"_spr};
       for (int fi = 0; fi < 4; ++fi) {
-        auto f = CCSpriteFrameCache::sharedSpriteFrameCache()
-                     ->spriteFrameByName(emptyNames[fi]);
+        auto f =
+            CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(
+                emptyNames[fi]);
         if (!f) {
           log::warn("GameObjectCoin: missing RL empty frame {} — skipping",
                     emptyNames[fi]);
@@ -121,7 +126,8 @@ class $modify(EffectGameObject) {
     // perform remote check, then apply animation only if verified
     int levelId = playLayer->m_level->m_levelID;
     Ref<EffectGameObject> selfRef = this;
-    fetchCoinVerified(levelId, [selfRef, applyBlueAnimTo, applyEmptyAnimTo](bool coinVerified) {
+    fetchCoinVerified(levelId, [selfRef, applyBlueAnimTo,
+                                applyEmptyAnimTo](bool coinVerified) {
       if (!selfRef || !coinVerified)
         return;
 
@@ -133,8 +139,8 @@ class $modify(EffectGameObject) {
       std::vector<EffectGameObject *> userCoins;
       if (playLayer2->m_objects) {
         for (unsigned int i = 0; i < playLayer2->m_objects->count(); ++i) {
-          auto obj = static_cast<CCNode *>(
-              playLayer2->m_objects->objectAtIndex(i));
+          auto obj =
+              static_cast<CCNode *>(playLayer2->m_objects->objectAtIndex(i));
           auto eo = typeinfo_cast<EffectGameObject *>(obj);
           if (eo && eo->m_objectID == USER_COIN) {
             userCoins.push_back(eo);
@@ -154,13 +160,16 @@ class $modify(EffectGameObject) {
       for (size_t i = 0; i < userCoins.size(); ++i) {
         int index = static_cast<int>(i + 1);
         std::string coinKey = playLayer2->m_level->getCoinKey(index);
-        bool collected =
-            GameStatsManager::sharedState()->hasPendingUserCoin(coinKey.c_str());
+        bool collected = GameStatsManager::sharedState()->hasPendingUserCoin(
+            coinKey.c_str());
         if (auto cs = typeinfo_cast<CCSprite *>(userCoins[i])) {
-          if (collected)
+          if (collected) {
             applyEmptyAnimTo(cs);
-          else
+            g_verifiedCoins = true;
+          } else {
             applyBlueAnimTo(cs);
+            g_verifiedCoins = true;
+          }
         }
       }
     });
@@ -212,118 +221,123 @@ class $modify(CCSprite) {
 
 class $modify(GameObject) {
   void playDestroyObjectAnim(GJBaseGameLayer *b) {
-    if (this->m_objectID == USER_COIN) {
-      // determine index by sorting all user coins by distance to x=0
-      int coinIndexForThis = -1;
-      std::vector<GameObject *> userCoins;
-      if (auto playLayer = PlayLayer::get()) {
-        if (playLayer->m_objects) {
-          for (unsigned int i = 0; i < playLayer->m_objects->count(); ++i) {
-            auto obj =
-                static_cast<CCNode *>(playLayer->m_objects->objectAtIndex(i));
-            if (auto go = typeinfo_cast<GameObject *>(obj)) {
-              if (go->m_objectID == USER_COIN)
-                userCoins.push_back(go);
+    if (g_verifiedCoins) {
+      // destroy animation instead of the normal one
+      if (this->m_objectID == USER_COIN) {
+        // determine index by sorting all user coins by distance to x=0
+        int coinIndexForThis = -1;
+        std::vector<GameObject *> userCoins;
+        if (auto playLayer = PlayLayer::get()) {
+          if (playLayer->m_objects) {
+            for (unsigned int i = 0; i < playLayer->m_objects->count(); ++i) {
+              auto obj =
+                  static_cast<CCNode *>(playLayer->m_objects->objectAtIndex(i));
+              if (auto go = typeinfo_cast<GameObject *>(obj)) {
+                if (go->m_objectID == USER_COIN)
+                  userCoins.push_back(go);
+              }
             }
           }
         }
-      }
-      std::sort(userCoins.begin(), userCoins.end(),
-                [](GameObject *a, GameObject *b) {
-                  // sort by distance from origin furthest coin will be last
-                  float ax = a->getPositionX();
-                  float ay = a->getPositionY();
-                  float bx = b->getPositionX();
-                  float by = b->getPositionY();
-                  return (ax * ax + ay * ay) < (bx * bx + by * by);
-                });
-      for (size_t i = 0; i < userCoins.size(); ++i) {
-        if (userCoins[i] == this) {
-          coinIndexForThis = static_cast<int>(i + 1);
-          break;
-        }
-      }
-      if (coinIndexForThis == -1)
-        coinIndexForThis = 1;
-
-      bool coinCollectedLocal = false;
-      if (auto pl = PlayLayer::get()) {
-        std::string coinKey = pl->m_level->getCoinKey(coinIndexForThis);
-        coinCollectedLocal =
-            GameStatsManager::sharedState()->hasPendingUserCoin(
-                coinKey.c_str());
-      }
-
-      log::debug("GameObjectCoin: coinIndexForThis={} collectedLocal={}",
-                 coinIndexForThis, coinCollectedLocal);
-
-      // snapshot direct children of the parent
-      CCNode *parent = this->getParent();
-      std::vector<CCNode *> beforeChildren;
-      if (parent && parent->getChildren()) {
-        auto ch = parent->getChildren();
-        for (unsigned int i = 0; i < ch->count(); ++i)
-          beforeChildren.push_back(static_cast<CCNode *>(ch->objectAtIndex(i)));
-      }
-
-      GameObject::playDestroyObjectAnim(b);
-
-      if (parent && typeinfo_cast<CCNodeContainer *>(parent) &&
-          parent->getChildren()) {
-        auto ch = parent->getChildren();
-        for (unsigned int i = 0; i < ch->count(); ++i) {
-          auto node = static_cast<CCNode *>(ch->objectAtIndex(i));
-
-          // skip nodes that existed before the call
-          bool existed = false;
-          for (auto &n : beforeChildren) {
-            if (n == node) {
-              existed = true;
-              break;
-            }
+        std::sort(userCoins.begin(), userCoins.end(),
+                  [](GameObject *a, GameObject *b) {
+                    // sort by distance from origin furthest coin will be last
+                    float ax = a->getPositionX();
+                    float ay = a->getPositionY();
+                    float bx = b->getPositionX();
+                    float by = b->getPositionY();
+                    return (ax * ax + ay * ay) < (bx * bx + by * by);
+                  });
+        for (size_t i = 0; i < userCoins.size(); ++i) {
+          if (userCoins[i] == this) {
+            coinIndexForThis = static_cast<int>(i + 1);
+            break;
           }
-          if (existed)
-            continue;
+        }
+        if (coinIndexForThis == -1)
+          coinIndexForThis = 1;
 
-          std::vector<CCNode *> stack{node};
-          while (!stack.empty()) {
-            auto cur = stack.back();
-            stack.pop_back();
-            if (!cur)
+        bool coinCollectedLocal = false;
+        if (auto pl = PlayLayer::get()) {
+          std::string coinKey = pl->m_level->getCoinKey(coinIndexForThis);
+          coinCollectedLocal =
+              GameStatsManager::sharedState()->hasPendingUserCoin(
+                  coinKey.c_str());
+        }
+
+        log::debug("GameObjectCoin: coinIndexForThis={} collectedLocal={}",
+                   coinIndexForThis, coinCollectedLocal);
+
+        // snapshot direct children of the parent
+        CCNode *parent = this->getParent();
+        std::vector<CCNode *> beforeChildren;
+        if (parent && parent->getChildren()) {
+          auto ch = parent->getChildren();
+          for (unsigned int i = 0; i < ch->count(); ++i)
+            beforeChildren.push_back(
+                static_cast<CCNode *>(ch->objectAtIndex(i)));
+        }
+
+        GameObject::playDestroyObjectAnim(b);
+
+        if (parent && typeinfo_cast<CCNodeContainer *>(parent) &&
+            parent->getChildren()) {
+          auto ch = parent->getChildren();
+          for (unsigned int i = 0; i < ch->count(); ++i) {
+            auto node = static_cast<CCNode *>(ch->objectAtIndex(i));
+
+            // skip nodes that existed before the call
+            bool existed = false;
+            for (auto &n : beforeChildren) {
+              if (n == node) {
+                existed = true;
+                break;
+              }
+            }
+            if (existed)
               continue;
-            if (auto cs = typeinfo_cast<CCSprite *>(cur)) {
-              // build and run the RL animation that matches collected state
-              const char *namesBlue[4] = {
-                  "RL_BlueCoin1.png"_spr, "RL_BlueCoin2.png"_spr,
-                  "RL_BlueCoin3.png"_spr, "RL_BlueCoin4.png"_spr};
-              const char *namesEmpty[4] = {
-                  "RL_BlueCoinEmpty1.png"_spr, "RL_BlueCoinEmpty2.png"_spr,
-                  "RL_BlueCoinEmpty3.png"_spr, "RL_BlueCoinEmpty4.png"_spr};
 
-              CCAnimation *anim = CCAnimation::create();
-              CCSpriteFrame *firstFrame = nullptr;
-              auto &srcNames = coinCollectedLocal ? namesEmpty : namesBlue;
-              for (int fi = 0; fi < 4; ++fi) {
-                if (auto f = CCSpriteFrameCache::sharedSpriteFrameCache()
-                                 ->spriteFrameByName(srcNames[fi])) {
-                  if (!firstFrame)
-                    firstFrame = f;
-                  anim->addSpriteFrame(f);
+            std::vector<CCNode *> stack{node};
+            while (!stack.empty()) {
+              auto cur = stack.back();
+              stack.pop_back();
+              if (!cur)
+                continue;
+              if (auto cs = typeinfo_cast<CCSprite *>(cur)) {
+                // build and run the RL animation that matches collected state
+                const char *namesBlue[4] = {
+                    "RL_BlueCoin1.png"_spr, "RL_BlueCoin2.png"_spr,
+                    "RL_BlueCoin3.png"_spr, "RL_BlueCoin4.png"_spr};
+                const char *namesEmpty[4] = {
+                    "RL_BlueCoinEmpty1.png"_spr, "RL_BlueCoinEmpty2.png"_spr,
+                    "RL_BlueCoinEmpty3.png"_spr, "RL_BlueCoinEmpty4.png"_spr};
+
+                CCAnimation *anim = CCAnimation::create();
+                CCSpriteFrame *firstFrame = nullptr;
+                auto &srcNames = coinCollectedLocal ? namesEmpty : namesBlue;
+                for (int fi = 0; fi < 4; ++fi) {
+                  if (auto f = CCSpriteFrameCache::sharedSpriteFrameCache()
+                                   ->spriteFrameByName(srcNames[fi])) {
+                    if (!firstFrame)
+                      firstFrame = f;
+                    anim->addSpriteFrame(f);
+                  }
+                }
+
+                if (anim->getFrames() && anim->getFrames()->count() > 0) {
+                  anim->setDelayPerUnit(0.05f);
+                  if (firstFrame)
+                    cs->setDisplayFrame(firstFrame);
+                  cs->runAction(
+                      CCRepeatForever::create(CCAnimate::create(anim)));
+                  cs->setColor({255, 255, 255});
+                  cs->setID("rl-blue-coin");
                 }
               }
-
-              if (anim->getFrames() && anim->getFrames()->count() > 0) {
-                anim->setDelayPerUnit(0.05f);
-                if (firstFrame)
-                  cs->setDisplayFrame(firstFrame);
-                cs->runAction(CCRepeatForever::create(CCAnimate::create(anim)));
-                cs->setColor({255, 255, 255});
-                cs->setID("rl-blue-coin");
+              if (auto cch = cur->getChildren()) {
+                for (unsigned int j = 0; j < cch->count(); ++j)
+                  stack.push_back(static_cast<CCNode *>(cch->objectAtIndex(j)));
               }
-            }
-            if (auto cch = cur->getChildren()) {
-              for (unsigned int j = 0; j < cch->count(); ++j)
-                stack.push_back(static_cast<CCNode *>(cch->objectAtIndex(j)));
             }
           }
         }
