@@ -496,16 +496,14 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                 isPlat ? "RL_planetMed.png"_spr : "RL_starMed.png"_spr;
             std::string reward = isPlat ? "planets" : "sparks";
 
+            auto rubyInfo = computeRubyInfo(layerRef->m_level, difficulty);
+            int remainingRubies = rubyInfo.remaining;
+            int calcAtPercent = rubyInfo.calcAtPercent;
+
             if (!Mod::get()->getSettingValue<bool>("disableRewardAnimation")) {
-              // use helper to obtain ruby totals/collected/remaining
-              auto rubyInfo = computeRubyInfo(layerRef->m_level, difficulty);
-              int remainingRubies = rubyInfo.remaining;
-              int calcAtPercent = rubyInfo.calcAtPercent;
               log::debug("Ruby info - remaining: {}, calcAtPercent: {} for "
                          "difficulty {}",
                          remainingRubies, calcAtPercent, difficulty);
-              // create reward layer and include remaining rubies in the
-              // diamonds slot so they appear in the animation
               if (auto rewardLayer = CurrencyRewardLayer::create(
                       0, isPlat ? rewardValue : 0, isPlat ? 0 : rewardValue,
                       remainingRubies, CurrencySpriteType::Star, 0,
@@ -531,6 +529,22 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                     log::info("Adding {} rubies to {}", remainingRubies,
                               rubies);
                     Mod::get()->setSavedValue<int>("rubies", newTotal);
+
+                    // persist collected amount locally
+                    int oldCollected = rubyInfo.collected;
+                    int newCollected = oldCollected + remainingRubies;
+                    if (newCollected > rubyInfo.total)
+                      newCollected = rubyInfo.total;
+                    bool wrote = persistCollectedRubies(levelId, rubyInfo.total,
+                                                        newCollected);
+                    if (!wrote) {
+                      log::warn(
+                          "Failed to write rubies_collected.json: level {}",
+                          levelId);
+                    } else {
+                      log::debug("Updated Rubies Collection: {} collected: {}",
+                                 levelId, newCollected);
+                    }
                   }
                 }
 
@@ -640,6 +654,26 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                 FMODAudioEngine::sharedEngine()->playEffect(
                     // @geode-ignore(unknown-resource)
                     "gold02.ogg");
+
+                // apply ruby award even when animation is disabled
+                if (remainingRubies > 0) {
+                  int newTotal = rubies + remainingRubies;
+                  Mod::get()->setSavedValue<int>("rubies", newTotal);
+                  int oldCollected = rubyInfo.collected;
+                  int newCollected = oldCollected + remainingRubies;
+                  if (newCollected > rubyInfo.total)
+                    newCollected = rubyInfo.total;
+                  bool wrote = persistCollectedRubies(levelId, rubyInfo.total,
+                                                      newCollected);
+                  if (!wrote) {
+                    log::warn("Failed to write rubies_collected.json: level {}",
+                              levelId);
+                  } else {
+                    log::debug("Updated Rubies Collection: {} collected: {}",
+                               levelId, newCollected);
+                  }
+                }
+
                 // do the fake reward circle wave effect
                 if (difficultySprite) {
                   auto fakeCircleWave =
