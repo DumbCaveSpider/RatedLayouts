@@ -83,7 +83,7 @@ void RLAchievements::init() {
                 {"misc_begin", "It Rating Out Time", "Play a Rated Layout for the first time", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
                 {"misc_news", "Layouts Out Loud", "Check the Rated Layouts Announcement", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
                 {"misc_credits", "Our Beautiful Team", "View the Rated Layouts Credits", RLAchievements::Collectable::Misc, 1, "RL_creditsIcon.png"_spr},
-                {"misc_event", "Eventful Layouts", "Play the current Event Layouts", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
+                {"misc_ruby", "Cha-ching!", "Purchase your first cosmetic in the Ruby Shop", RLAchievements::Collectable::Misc, 1, "RL_rubiesIcon.png"_spr},
                 {"misc_leaderboard", "Best of the Best", "Be on the Leaderboard", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
                 {"misc_custom_bg", "Personal Stylist", "Set a Custom Background or Ground", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
                 {"misc_creator_1", "A Fellow Creator", "Talk to the Layout Creator for the first time", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},

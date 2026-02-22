@@ -550,7 +550,7 @@ void RLModRatePopup::onInfoButton(CCObject *sender) {
         std::string featuredName;
         switch (suggestFeatured) {
         case 0:
-          featuredName = "Base Rate";
+          featuredName = "Base";
           break;
         case 1:
           featuredName = "Featured";

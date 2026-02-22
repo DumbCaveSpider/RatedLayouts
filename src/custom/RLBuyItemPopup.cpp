@@ -1,5 +1,6 @@
 #include "RLBuyItemPopup.hpp"
 #include "../utils/RLNameplateItem.hpp"
+#include "RLAchievements.hpp"
 #include "RLShopLayer.hpp"
 #include "ccTypes.h"
 #include <Geode/binding/UploadActionPopup.hpp>
@@ -212,6 +213,7 @@ void RLBuyItemPopup::onBuy(CCObject *sender) {
   // persist ownership to owned_items.json
   if (RLNameplateItem::markOwned(m_itemId)) {
     FMODAudioEngine::sharedEngine()->playEffect("geode.loader/newNotif01.ogg");
+    RLAchievements::onReward("misc_ruby");
 
     // update popup UI to reflect owned state
     if (m_statusLabel) {

@@ -6,10 +6,7 @@
 #include <Geode/modify/LevelBrowserLayer.hpp>
 #include <Geode/modify/LevelInfoLayer.hpp>
 #include <Geode/modify/ProfilePage.hpp>
-#include <chrono>
 #include <cstdio>
-#include <iomanip>
-#include <sstream>
 
 using namespace geode::prelude;
 
@@ -48,6 +45,7 @@ bool RLEventLayouts::init() {
 
   float startY = contentSize.height - 87.f;
   float rowSpacing = 90.f;
+  
 
   // info button on main layer
   auto infoSpr = CCSprite::createWithSpriteFrameName("RL_info01.png"_spr);
