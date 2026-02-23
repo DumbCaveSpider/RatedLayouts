@@ -32,21 +32,9 @@ class RLCreatorLayer : public CCLayer {
       void onSecretDialogueButton(CCObject* sender);
       void onSupporterButton(CCObject* sender);
 
-      MenuGameLayer* m_menuLayer = nullptr;
-      std::vector<CCSprite*> m_bgDecorations;
-      float m_decoGridX = 30.f;
-      float m_decoGridY = 30.f;
-      int m_decoCols = 0;
-      int m_decoRows = 0;
-      CCNode* m_floorContainer = nullptr;
-      std::vector<CCSprite*> m_floorTiles;
-      float m_bgSpeed = 40.f;     // pixels per second
-      float m_groundSpeed = 150.f; // pixels per second
-
       // news / announcement UI
       CCMenuItemSpriteExtra* m_newsIconBtn = nullptr;
       CCSprite* m_newsBadge = nullptr;
-      void update(float dt) override;
 
       // labels for mod info
       CCLabelBMFont* m_modStatusLabel = nullptr;

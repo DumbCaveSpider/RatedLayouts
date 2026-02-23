@@ -171,40 +171,6 @@ void RLLeaderboardLayer::onInfoButton(CCObject *sender) {
       ->show();
 }
 
-void RLLeaderboardLayer::update(float dt) {
-  if (m_bgTiles.size()) {
-    float move = m_bgSpeed * dt;
-    int num = static_cast<int>(m_bgTiles.size());
-    for (auto spr : m_bgTiles) {
-      if (!spr)
-        continue;
-      float tileW = spr->getContentSize().width;
-      float x = spr->getPositionX();
-      x -= move;
-      if (x <= -tileW) {
-        x += tileW * num;
-      }
-      spr->setPositionX(x);
-    }
-  }
-
-  if (m_groundTiles.size()) {
-    float move = m_groundSpeed * dt;
-    int num = static_cast<int>(m_groundTiles.size());
-    for (auto spr : m_groundTiles) {
-      if (!spr)
-        continue;
-      float tileW = spr->getContentSize().width;
-      float x = spr->getPositionX();
-      x -= move;
-      if (x <= -tileW) {
-        x += tileW * num;
-      }
-      spr->setPositionX(x);
-    }
-  }
-}
-
 void RLLeaderboardLayer::onAccountClicked(CCObject *sender) {
   auto button = static_cast<CCMenuItem *>(sender);
   int accountId = button->getTag();

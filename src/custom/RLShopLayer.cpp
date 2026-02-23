@@ -223,10 +223,13 @@ bool RLShopLayer::init() {
                  {44, 14000, 25479036, "KetazonerLop"},
                  {45, 64115, 13803757, "FireExegd"},
                  {46, 20000, 22572488, "Junotrion"},
-                 {47, 15700, 25699352, "Wearows"},
+                 {47, 11000, 20181394, "BeeKreeperGD"},
                  {48, 15000, 11306436, "Potalcium"},
                  {49, 10000, 12206936, "RalingUwU"},
-                 {50, 25000, 1975253, "Dasshu"}};
+                 {50, 25000, 1975253, "Dasshu"},
+                 {51, 11000, 25595533, "Monochromasity"},
+                 {52, 20000, 19509094, "Liberia"},
+                 {53, 20000, 7824770, "Chaken"}};
   m_shopRow1->setAnchorPoint({0.5f, 0.5f});
   m_shopRow2->setAnchorPoint({0.5f, 0.5f});
 

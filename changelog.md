@@ -1,3 +1,10 @@
+# v0.4.1-beta.1
+
+- Bump to Geode v5.0.0 stable
+- Added **Community Vote Leaderboard** to show the top voters in the community vote. (Found in the Community Vote popup)
+- Fixed the crash relating to entering the level info screen.
+- Improved the Moderator Popup UI
+
 # v0.4.0-beta.1
 
 - Ported to Geode v5.0.0

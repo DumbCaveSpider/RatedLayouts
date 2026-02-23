@@ -677,34 +677,6 @@ void RLCreatorLayer::onSentLayouts(CCObject *sender) {
   CCDirector::sharedDirector()->pushScene(transitionFade);
 }
 
-void RLCreatorLayer::update(float dt) {
-  // MenuGameLayer handles background animation/scrolling
-
-  // GJGroundLayer handles its own scrolling/animation
-
-  // move background decorations (same speed as ground)
-  if (!m_bgDecorations.empty()) {
-    float move = m_groundSpeed * dt;
-    auto winSize = CCDirector::sharedDirector()->getWinSize();
-    for (auto spr : m_bgDecorations) {
-      if (!spr)
-        continue;
-      float w = spr->getContentSize().width;
-      float x = spr->getPositionX();
-      x -= move;
-      if (x <= -w) {
-        // wrap by columns so sprite stays in grid alignment
-        int cols =
-            m_decoCols
-                ? m_decoCols
-                : static_cast<int>(ceil(winSize.width / m_decoGridX)) + 2;
-        x += cols * m_decoGridX;
-      }
-      spr->setPositionX(x);
-    }
-  }
-}
-
 void RLCreatorLayer::onLeaderboard(CCObject *sender) {
   auto leaderboardLayer = RLLeaderboardLayer::create();
   auto scene = CCScene::create();
