@@ -61,10 +61,7 @@ bool RLModRatePopup::init() {
   }
 
   // title
-  auto titleLabel = CCLabelBMFont::create(m_title.c_str(), "bigFont.fnt");
-  titleLabel->setPosition({m_mainLayer->getContentSize().width / 2,
-                           m_mainLayer->getContentSize().height - 20});
-  m_mainLayer->addChild(titleLabel);
+  setTitle(m_title.c_str(), "bigFont.fnt");
 
   // normal and demon buttons
   m_normalButtonsContainer = CCMenu::create();

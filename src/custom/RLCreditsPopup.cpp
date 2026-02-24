@@ -117,7 +117,7 @@ bool RLCreditsPopup::init() {
           tableCell->setContentSize({340.f, 30.f});
           auto label =
               CCLabelBMFont::create(std::string{text}.c_str(), "bigFont.fnt");
-          label->setScale(0.6f);
+          label->setScale(0.4f);
           // center the label in the cell
           label->setAnchorPoint({0.5f, 0.5f});
           const float contentW = tableCell->getContentSize().width;
@@ -126,22 +126,37 @@ bool RLCreditsPopup::init() {
 
           tableCell->addChild(label);
 
-          // badge sprite on the left of the label (if any)
-          CCSprite* headerBadge = nullptr;
-          if (text == "Layout Admins")
-            headerBadge = CCSprite::createWithSpriteFrameName("RL_badgeAdmin01.png"_spr);
-          else if (text == "Layout Moderators")
-            headerBadge = CCSprite::createWithSpriteFrameName("RL_badgeMod01.png"_spr);
+          // badge sprite on the left of the label
+          CCSprite *headerBadge = nullptr;
+          if (text == "Platformer Layout Admins")
+            headerBadge = CCSprite::createWithSpriteFrameName(
+                "RL_badgePlatAdmin01.png"_spr);
+          else if (text == "Platformer Layout Moderators")
+            headerBadge = CCSprite::createWithSpriteFrameName(
+                "RL_badgePlatMod01.png"_spr);
+          else if (text == "Leaderboard Moderators")
+            headerBadge =
+                CCSprite::createWithSpriteFrameName("RL_badgelbMod01.png"_spr);
+          else if (text.find("Admin") != std::string::npos)
+            headerBadge =
+                CCSprite::createWithSpriteFrameName("RL_badgeAdmin01.png"_spr);
+          else if (text.find("Moderator") != std::string::npos)
+            headerBadge =
+                CCSprite::createWithSpriteFrameName("RL_badgeMod01.png"_spr);
           else if (text == "Layout Supporters")
-            headerBadge = CCSprite::createWithSpriteFrameName("RL_badgeSupporter.png"_spr);
+            headerBadge = CCSprite::createWithSpriteFrameName(
+                "RL_badgeSupporter.png"_spr);
           else if (text == "Layout Boosters")
-            headerBadge = CCSprite::createWithSpriteFrameName("RL_badgeBooster.png"_spr);
+            headerBadge =
+                CCSprite::createWithSpriteFrameName("RL_badgeBooster.png"_spr);
           const float gap = 8.f;
           float labelWidth = label->getContentSize().width * label->getScale();
           if (headerBadge) {
             headerBadge->setScale(0.9f);
-            float badgeWidth = headerBadge->getContentSize().width * headerBadge->getScale();
-            float badgeX = labelX - (labelWidth / 2.f) - gap - (badgeWidth / 2.f);
+            float badgeWidth =
+                headerBadge->getContentSize().width * headerBadge->getScale();
+            float badgeX =
+                labelX - (labelWidth / 2.f) - gap - (badgeWidth / 2.f);
             headerBadge->setPosition({badgeX, 15.f});
             tableCell->addChild(headerBadge);
           }
@@ -157,36 +172,48 @@ bool RLCreditsPopup::init() {
             auto headerTopDivider = CCSprite::create();
             headerTopDivider->setTextureRect(
                 CCRectMake(0, 0, tableCell->getContentSize().width, dividerH));
-            headerTopDivider->setPosition({tableCell->getContentSize().width / 2.f, topY});
+            headerTopDivider->setPosition(
+                {tableCell->getContentSize().width / 2.f, topY});
             headerTopDivider->setColor({0, 0, 0});
             headerTopDivider->setOpacity(80);
             tableCell->addChild(headerTopDivider, 2);
           }
 
           auto headerDivider = CCSprite::create();
-          headerDivider->setTextureRect(CCRectMake(0, 0, tableCell->getContentSize().width, dividerH));
-          headerDivider->setPosition({tableCell->getContentSize().width / 2.f, bottomY});
+          headerDivider->setTextureRect(
+              CCRectMake(0, 0, tableCell->getContentSize().width, dividerH));
+          headerDivider->setPosition(
+              {tableCell->getContentSize().width / 2.f, bottomY});
           headerDivider->setColor({0, 0, 0});
           headerDivider->setOpacity(80);
           tableCell->addChild(headerDivider, 2);
 
           auto headerMenu = CCMenu::create();
           headerMenu->setPosition({0, 0});
-          auto infoSpr = CCSprite::createWithSpriteFrameName("RL_info01.png"_spr);
+          auto infoSpr =
+              CCSprite::createWithSpriteFrameName("RL_info01.png"_spr);
           infoSpr->setScale(0.4f);
-          auto infoBtn = CCMenuItemSpriteExtra::create(infoSpr, self, menu_selector(RLCreditsPopup::onHeaderInfo));
+          auto infoBtn = CCMenuItemSpriteExtra::create(
+              infoSpr, self, menu_selector(RLCreditsPopup::onHeaderInfo));
           int infoTag = 0;
-          if (text == "Layout Admins")
-            infoTag = 1;
-          else if (text == "Layout Moderators")
-            infoTag = 2;
-          else if (text == "Layout Supporters")
+          if (text == "Layout Supporters")
             infoTag = 3;
           else if (text == "Layout Boosters")
             infoTag = 4;
+          else if (text == "Classic Layout Admins")
+            infoTag = 5;
+          else if (text == "Classic Layout Moderators")
+            infoTag = 6;
+          else if (text == "Platformer Layout Admins")
+            infoTag = 7;
+          else if (text == "Platformer Layout Moderators")
+            infoTag = 8;
+          else if (text == "Leaderboard Moderators")
+            infoTag = 9;
           infoBtn->setTag(infoTag);
           // place next to label
-          float infoWidth = infoSpr->getContentSize().width * infoSpr->getScale();
+          float infoWidth =
+              infoSpr->getContentSize().width * infoSpr->getScale();
           float infoX = labelX + (labelWidth / 2.f) + gap + (infoWidth / 2.f);
           infoBtn->setPosition({infoX, 15.f});
           headerMenu->addChild(infoBtn);
@@ -196,7 +223,8 @@ bool RLCreditsPopup::init() {
         };
 
         auto addPlayer = [&](const matjson::Value &userVal, bool isAdmin,
-                             bool isMod, bool isBooster, bool isSupporter) {
+                             bool isMod, bool isBooster, bool isSupporter,
+                             bool isPlat, bool isLeaderboard) {
           if (!userVal.isObject())
             return;
 
@@ -211,15 +239,25 @@ bool RLCreditsPopup::init() {
           auto cell = TableViewCell::create();
           cell->setContentSize({340.f, 50.f});
 
-          // color bg ass
+          // color background according to role subtype
           auto bgSprite = CCSprite::create();
           bgSprite->setTextureRect(CCRectMake(0, 0, 340.f, 50.f));
           bgSprite->setPosition({170.f, 25.f});
           bgSprite->setOpacity(120);
           if (isAdmin) {
-            bgSprite->setColor({ 245, 107, 107 });
+            if (isPlat) {
+              bgSprite->setColor({255, 160, 0}); // orange for plat admin
+            } else {
+              bgSprite->setColor({245, 107, 107}); // red for classic admin
+            }
           } else if (isMod) {
-            bgSprite->setColor({81, 147, 248});
+            if (isLeaderboard) {
+              bgSprite->setColor({120, 220, 120}); // green for leaderboard mod
+            } else if (isPlat) {
+              bgSprite->setColor({0, 200, 200}); // cyan for plat mod
+            } else {
+              bgSprite->setColor({81, 147, 248}); // blue for classic mod
+            }
           } else if (isBooster) {
             bgSprite->setColor({148, 93, 255});
           } else if (isSupporter) {
@@ -255,25 +293,45 @@ bool RLCreditsPopup::init() {
           content->addChild(cell);
         };
 
-        if (json.contains("admins") && json["admins"].isArray()) {
-          addHeader("Layout Admins");
-          auto admins = json["admins"].asArray().unwrap();
-          for (auto &val : admins)
-            addPlayer(val, true, false, false, false);
+        if (json.contains("classicAdmins") && json["classicAdmins"].isArray()) {
+          addHeader("Classic Layout Admins");
+          auto arr = json["classicAdmins"].asArray().unwrap();
+          for (auto &val : arr)
+            addPlayer(val, true, false, false, false, false, false);
         }
-
-        if (json.contains("moderators") && json["moderators"].isArray()) {
-          addHeader("Layout Moderators");
-          auto mods = json["moderators"].asArray().unwrap();
-          for (auto &val : mods)
-            addPlayer(val, false, true, false, false);
+        if (json.contains("classicModerators") &&
+            json["classicModerators"].isArray()) {
+          addHeader("Classic Layout Moderators");
+          auto arr = json["classicModerators"].asArray().unwrap();
+          for (auto &val : arr)
+            addPlayer(val, false, true, false, false, false, false);
+        }
+        if (json.contains("platAdmins") && json["platAdmins"].isArray()) {
+          addHeader("Platformer Layout Admins");
+          auto arr = json["platAdmins"].asArray().unwrap();
+          for (auto &val : arr)
+            addPlayer(val, true, false, false, false, true, false);
+        }
+        if (json.contains("platModerators") &&
+            json["platModerators"].isArray()) {
+          addHeader("Platformer Layout Moderators");
+          auto arr = json["platModerators"].asArray().unwrap();
+          for (auto &val : arr)
+            addPlayer(val, false, true, false, false, true, false);
+        }
+        if (json.contains("leaderboardModerators") &&
+            json["leaderboardModerators"].isArray()) {
+          addHeader("Leaderboard Moderators");
+          auto arr = json["leaderboardModerators"].asArray().unwrap();
+          for (auto &val : arr)
+            addPlayer(val, false, true, false, false, false, true);
         }
 
         if (json.contains("supporters") && json["supporters"].isArray()) {
           addHeader("Layout Supporters");
           auto sup = json["supporters"].asArray().unwrap();
           for (auto &val : sup) {
-            addPlayer(val, false, false, false, true);
+            addPlayer(val, false, false, false, true, false, false);
           }
         }
 
@@ -281,7 +339,7 @@ bool RLCreditsPopup::init() {
           addHeader("Layout Boosters");
           auto boosters = json["boosters"].asArray().unwrap();
           for (auto &val : boosters) {
-            addPlayer(val, false, false, true, false);
+            addPlayer(val, false, false, true, false, false, false);
           }
         }
         content->updateLayout();
@@ -329,36 +387,60 @@ void RLCreditsPopup::onHeaderInfo(CCObject *sender) {
     return;
   int tag = btn->getTag();
   switch (tag) {
-  case 1: // Admins
-    FLAlertLayer::create(
-        "Layout Admin",
-        "<cr>Layout Admin</c> can <cd>rate layout levels for Rated "
-        "Layouts</c> and <cy>manages Featured Layouts</c> and <cg>Event Layouts.</c>",
-        "OK")
-        ->show();
-    break;
-  case 2: // Moderators
-    FLAlertLayer::create(
-        "Layout Moderator",
-        "<cb>Layout Moderator</c> can <cl>suggest layout levels for Rated "
-        "Layouts</c> and <co>moderate the leaderboard.</c>",
-        "OK")
-        ->show();
-    break;
   case 3: // Supporters
     FLAlertLayer::create(
         "Layout Supporter",
-        "<cp>Layout Supporter</c> are those who have supported development of <cl>Rated "
+        "<cp>Layout Supporter</c> are those who have supported development of "
+        "<cl>Rated "
         "Layouts</c> through <cp>Ko-fi</c> membership donation.",
         "OK")
         ->show();
     break;
   case 4: // Boosters
-    FLAlertLayer::create("Layout Booster",
-                         "<ca>Layout Booster</c> are those who boosted the <cl>Rated "
-                         "Layouts Discord server</c>, they also have the same "
-                         "benefits as <cp>Layout Supporter</c>.",
+    FLAlertLayer::create(
+        "Layout Booster",
+        "<ca>Layout Booster</c> are those who boosted the <cl>Rated "
+        "Layouts Discord server</c>, they also have the same "
+        "benefits as <cp>Layout Supporter</c>.",
+        "OK")
+        ->show();
+    break;
+  case 5: // Classic Admins
+    FLAlertLayer::create(
+        "Classic Layout Admin",
+        "<cr>Classic Layout Admin</c> has the same abilities to rate "
+        "<cc>classic levels</c> of <cl>Rated Layouts</c>.",
+        "OK")
+        ->show();
+    break;
+  case 6: // Classic Mods
+    FLAlertLayer::create("Classic Layout Mod",
+                         "<cb>Classic Layout Moderator</c> can suggest levels "
+                         "for classic layouts.",
                          "OK")
+        ->show();
+    break;
+  case 7: // Plat Admins
+    FLAlertLayer::create(
+        "Platformer Layout Admin",
+        "<cr>Platformer Layout Admin</c> has the same abilities to rate "
+        "<cc>platformer levels</c> of <cl>Rated Layouts</c>.",
+        "OK")
+        ->show();
+    break;
+  case 8: // Plat Mods
+    FLAlertLayer::create("Platformer Layout Mod",
+                         "<cb>Platformer Layout Mod</c> can suggest levels for "
+                         "<cc>platformer layouts</c>.",
+                         "OK")
+        ->show();
+    break;
+  case 9: // Leaderboard Mods
+    FLAlertLayer::create(
+        "Leaderboard Mod",
+        "<cb>Leaderboard Mod</c> is responsible for <co>managing and "
+        "moderating the leaderboard</c> section of <cl>Rated Layouts</c>.",
+        "OK")
         ->show();
     break;
   default:

@@ -1,4 +1,5 @@
 #include <Geode/Geode.hpp>
+#include <Geode/binding/FLAlertLayer.hpp>
 #include <Geode/modify/GameLevelManager.hpp>
 #include <Geode/modify/LevelInfoLayer.hpp>
 #include <Geode/utils/async.hpp>
@@ -83,8 +84,11 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
     log::debug("isPlatformer = {}, starRatings = {}, legitCompleted = {}",
                isPlatformer, starRatings, legitCompleted);
 
-    int userRole = Mod::get()->getSavedValue<int>("role");
-    if (userRole == 1 || userRole == 2) {
+    bool isClassicMod = Mod::get()->getSavedValue<bool>("isClassicMod");
+    bool isClassicAdmin = Mod::get()->getSavedValue<bool>("isClassicAdmin");
+    bool isPlatMod = Mod::get()->getSavedValue<bool>("isPlatMod");
+    bool isPlatAdmin = Mod::get()->getSavedValue<bool>("isPlatAdmin");
+    if (isClassicMod || isClassicAdmin || isPlatMod || isPlatAdmin) {
       // add a role button for send/rate
       auto iconSprite =
           CCSprite::createWithSpriteFrameName("RL_starBig.png"_spr);
@@ -92,6 +96,8 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
       CCSprite *devButtonSprite = nullptr;
 
       if (starRatings != 0) {
+        if (isClassicMod || isClassicAdmin) {
+        }
         modButtonSprite =
             CCSpriteGrayscale::createWithSpriteFrameName("RL_starBig.png"_spr);
         auto roleButtonSpr = CircleButtonSprite::create(
@@ -100,21 +106,45 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             roleButtonSpr, this, menu_selector(RLLevelInfoLayer::onRoleButton));
         roleButtonItem->setID("role-button");
         leftMenu->addChild(roleButtonItem);
-      } else {
-        modButtonSprite =
-            CCSprite::createWithSpriteFrameName("RL_starBig.png"_spr);
+      } else if (isPlatMod || isPlatAdmin) {
+        modButtonSprite = CCSpriteGrayscale::createWithSpriteFrameName(
+            "RL_planetBig.png"_spr);
         auto roleButtonSpr = CircleButtonSprite::create(
-            modButtonSprite, CircleBaseColor::Cyan, CircleBaseSize::Medium);
+            modButtonSprite, CircleBaseColor::Gray, CircleBaseSize::Medium);
         auto roleButtonItem = CCMenuItemSpriteExtra::create(
             roleButtonSpr, this, menu_selector(RLLevelInfoLayer::onRoleButton));
         roleButtonItem->setID("role-button");
-
         leftMenu->addChild(roleButtonItem);
+      } else {
+        if (isClassicMod || isClassicAdmin) {
+          modButtonSprite =
+              CCSprite::createWithSpriteFrameName("RL_starBig.png"_spr);
+          auto roleButtonSpr = CircleButtonSprite::create(
+              modButtonSprite, CircleBaseColor::Cyan, CircleBaseSize::Medium);
+          auto roleButtonItem = CCMenuItemSpriteExtra::create(
+              roleButtonSpr, this,
+              menu_selector(RLLevelInfoLayer::onRoleButton));
+          roleButtonItem->setID("role-button");
+          leftMenu->addChild(roleButtonItem);
+        } else if (isPlatMod || isPlatAdmin) {
+          modButtonSprite =
+              CCSprite::createWithSpriteFrameName("RL_planetBig.png"_spr);
+          auto roleButtonSpr = CircleButtonSprite::create(
+              modButtonSprite, CircleBaseColor::Cyan, CircleBaseSize::Medium);
+          auto roleButtonItem = CCMenuItemSpriteExtra::create(
+              roleButtonSpr, this,
+              menu_selector(RLLevelInfoLayer::onRoleButton));
+          roleButtonItem->setID("role-button");
+          leftMenu->addChild(roleButtonItem);
+        }
       }
 
-      // this is like robtop dev button but only for me
-      if (GJAccountManager::sharedState()->m_accountID == DEV_ACCOUNTID) {
-        devButtonSprite =
+    }
+
+    leftMenu->updateLayout();
+
+    if (GJAccountManager::sharedState()->m_accountID == DEV_ACCOUNTID) {
+        auto devButtonSprite =
             CCSprite::createWithSpriteFrameName("RL_starBig.png"_spr);
         devButtonSprite->setColor({255, 255, 0});
         auto devButtonSpr = CircleButtonSprite::create(
@@ -124,10 +154,8 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             devButtonSpr, this, menu_selector(RLLevelInfoLayer::onDevButton));
         devButtonItem->setID("dev-button");
         leftMenu->addChild(devButtonItem);
-      }
+        leftMenu->updateLayout();
     }
-
-    leftMenu->updateLayout();
 
     // If the level is already downloaded
     if (this->m_level && !this->m_level->m_levelString.empty()) {
@@ -243,11 +271,14 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
         }
 
         // Mods/Admins can always vote regardless of percentages
-        int userRole = Mod::get()->getSavedValue<int>("role");
-        if (userRole == 1 || userRole == 2) {
+        bool isClassicMod = Mod::get()->getSavedValue<bool>("isClassicMod");
+        bool isClassicAdmin = Mod::get()->getSavedValue<bool>("isClassicAdmin");
+        bool isPlatMod = Mod::get()->getSavedValue<bool>("isPlatMod");
+        bool isPlatAdmin = Mod::get()->getSavedValue<bool>("isPlatAdmin");
+        if (isClassicMod || isClassicAdmin || isPlatMod || isPlatAdmin) {
           shouldDisable = false;
-          log::debug("Community vote enabled due to role override (role={})",
-                     userRole);
+          log::debug(
+              "Community vote enabled due to role override (classic/plat)");
         }
 
         // if the level is platformer
@@ -309,11 +340,14 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
           shouldDisable = !(normalPct >= 20 || practicePct >= 80);
         }
 
-        int userRole = Mod::get()->getSavedValue<int>("role");
-        if (userRole == 1 || userRole == 2) {
+        bool isClassicMod = Mod::get()->getSavedValue<bool>("isClassicMod");
+        bool isClassicAdmin = Mod::get()->getSavedValue<bool>("isClassicAdmin");
+        bool isPlatMod = Mod::get()->getSavedValue<bool>("isPlatMod");
+        bool isPlatAdmin = Mod::get()->getSavedValue<bool>("isPlatAdmin");
+        if (isClassicMod || isClassicAdmin || isPlatMod || isPlatAdmin) {
           shouldDisable = false;
-          log::debug("Community vote enabled due to role override (role={})",
-                     userRole);
+          log::debug(
+              "Community vote enabled due to role override (classic/plat)");
         }
 
         auto rightMenuNode2 = layerRef->getChildByID("right-side-menu");
@@ -1319,11 +1353,19 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
         }
 
         // Mods/Admins can always vote regardless of percentages
-        int userRole = Mod::get()->getSavedValue<int>("role");
-        if (userRole == 1 || userRole == 2) {
+        int isClassicMod = Mod::get()->getSavedValue<int>("isClassicMod");
+        int isClassicAdmin = Mod::get()->getSavedValue<int>("isClassicAdmin");
+        int isPlatMod = Mod::get()->getSavedValue<int>("isPlatMod");
+        int isPlatAdmin = Mod::get()->getSavedValue<int>("isPlatAdmin");
+        if (isClassicMod == 1 || isClassicAdmin == 1) {
           shouldDisable = false;
           log::debug("Community vote enabled due to role override (role={})",
-                     userRole);
+                     isClassicMod == 1 ? "isClassicMod" : "isClassicAdmin");
+        }
+        if (isPlatMod == 1 || isPlatAdmin == 1) {
+          shouldDisable = false;
+          log::debug("Community vote enabled due to role override (role={})",
+                     isPlatMod == 1 ? "isPlatMod" : "isPlatAdmin");
         }
 
         auto commSpriteGray = CCSpriteGrayscale::createWithSpriteFrameName(
@@ -1381,11 +1423,17 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
           shouldDisable = !(normalPct >= 20 || practicePct >= 80);
         }
 
-        int userRole = Mod::get()->getSavedValue<int>("role");
-        if (userRole == 1 || userRole == 2) {
+        bool isClassicMod = Mod::get()->getSavedValue<bool>("isClassicMod");
+        bool isClassicAdmin = Mod::get()->getSavedValue<bool>("isClassicAdmin");
+        bool isPlatMod = Mod::get()->getSavedValue<bool>("isPlatMod");
+        bool isPlatAdmin = Mod::get()->getSavedValue<bool>("isPlatAdmin");
+        if (isClassicMod || isClassicAdmin || isPlatMod || isPlatAdmin) {
           shouldDisable = false;
           log::debug("Community vote enabled due to role override (role={})",
-                     userRole);
+                     isClassicMod     ? "isClassicMod"
+                     : isClassicAdmin ? "isClassicAdmin"
+                     : isPlatMod      ? "isPlatMod"
+                                      : "isPlatAdmin");
         }
 
         auto rightMenuNode2 = layerRef->getChildByID("right-side-menu");
@@ -1713,24 +1761,62 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
       return;
     }
 
-    int userRole = Mod::get()->getSavedValue<int>("role");
-    if (userRole != 1 && userRole != 2) {
-      requestStatus(GJAccountManager::get()->m_accountID);
-      return;
+    bool isClassicMod = Mod::get()->getSavedValue<bool>("isClassicMod");
+    bool isClassicAdmin = Mod::get()->getSavedValue<bool>("isClassicAdmin");
+    bool isPlatMod = Mod::get()->getSavedValue<bool>("isPlatMod");
+    bool isPlatAdmin = Mod::get()->getSavedValue<bool>("isPlatAdmin");
+
+    int userRole = 0;
+    if (isClassicMod) {
+      userRole = 1;
+    } else if (isClassicAdmin) {
+      userRole = 2;
+    } else if (isPlatMod) {
+      userRole = 3;
+    } else if (isPlatAdmin) {
+      userRole = 4;
     }
 
-    if (userRole == 1) {
-      log::info("Role button clicked as Mod");
+    if (userRole == 1 && !isPlatformer) {
+      log::info("Role button clicked as Classic Mod");
+      auto popup =
+          RLModRatePopup::create(RLModRatePopup::PopupRole::Mod,
+                                 "Mod: Suggest Classic Layout", this->m_level);
+      if (popup)
+        popup->show();
+    } else if (userRole == 2 && !isPlatformer) {
+      log::info("Role button clicked as Classic Admin");
+      auto popup =
+          RLModRatePopup::create(RLModRatePopup::PopupRole::Admin,
+                                 "Admin: Rate Classic Layout", this->m_level);
+      if (popup)
+        popup->show();
+    } else if (userRole == 3 && isPlatformer) {
+      log::info("Role button clicked as Plat Mod");
       auto popup = RLModRatePopup::create(RLModRatePopup::PopupRole::Mod,
-                                          "Mod: Suggest Layout", this->m_level);
+                                          "Mod: Suggest Platformer Layout",
+                                          this->m_level);
       if (popup)
         popup->show();
-    } else if (userRole == 2) {
-      log::info("Role button clicked as Admin");
+    } else if (userRole == 4 && isPlatformer) {
+      log::info("Role button clicked as Plat Admin");
       auto popup = RLModRatePopup::create(RLModRatePopup::PopupRole::Admin,
-                                          "Admin: Rate Layout", this->m_level);
+                                          "Admin: Rate Platformer Layout",
+                                          this->m_level);
       if (popup)
         popup->show();
+    } else {
+      std::string desc;
+      if (isPlatformer) {
+        desc = "You need to be a <cc>Platformer Layout Moderator</c> or "
+               "<cr>Platformer Layout Admin</c> to access this panel on this "
+               "level.";
+      } else {
+        desc = "You need to be a <cc>Classic Layout Moderator</c> or "
+               "<cr>Classic Layout Admin</c> to access this panel on this "
+               "level.";
+      }
+      FLAlertLayer::create("Incorrect Permission", desc.c_str(), "OK")->show();
     }
   }
 
@@ -1740,11 +1826,13 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
     bool shouldDisable = true;
     shouldDisable = !(normalPct >= 20 || practicePct >= 80);
 
-    int userRole = Mod::get()->getSavedValue<int>("role");
-    if (userRole == 1 || userRole == 2) {
+    bool isClassicMod = Mod::get()->getSavedValue<bool>("isClassicMod");
+    bool isClassicAdmin = Mod::get()->getSavedValue<bool>("isClassicAdmin");
+    bool isPlatMod = Mod::get()->getSavedValue<bool>("isPlatMod");
+    bool isPlatAdmin = Mod::get()->getSavedValue<bool>("isPlatAdmin");
+    if (isClassicMod || isClassicAdmin || isPlatMod || isPlatAdmin) {
       shouldDisable = false;
-      log::debug("Community vote enabled due to role override (role={})",
-                 userRole);
+      log::debug("Community vote enabled due to role override (classic/plat)");
     }
 
     if (shouldDisable) {
@@ -2000,18 +2088,22 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                 }
 
                 auto json = jsonRes.unwrap();
-                int role = json["role"].asInt().unwrapOrDefault();
+                // parse server role booleans instead of legacy integer
+                bool isClassicMod =
+                    json["isClassicMod"].asBool().unwrapOrDefault();
+                bool isClassicAdmin =
+                    json["isClassicAdmin"].asBool().unwrapOrDefault();
+                bool isPlatMod = json["isPlatMod"].asBool().unwrapOrDefault();
+                bool isPlatAdmin =
+                    json["isPlatAdmin"].asBool().unwrapOrDefault();
 
-                // role check lol
-                if (role == 1) {
-                  log::info("User has mod role");
-                  Mod::get()->setSavedValue<int>("role", role);
-                } else if (role == 2) {
-                  log::info("User has admin role. Enable featured layouts");
-                  Mod::get()->setSavedValue<int>("role", role);
-                } else {
-                  Mod::get()->setSavedValue<int>("role", 0);
-                }
+                Mod::get()->setSavedValue<bool>("isClassicMod", isClassicMod);
+                Mod::get()->setSavedValue<bool>("isClassicAdmin",
+                                                isClassicAdmin);
+                Mod::get()->setSavedValue<bool>("isPlatMod", isPlatMod);
+                Mod::get()->setSavedValue<bool>("isPlatAdmin", isPlatAdmin);
+                // legacy value cleared
+                Mod::get()->setSavedValue<int>("role", 0);
 
                 // Refresh the community vote button immediately so role
                 // overrides take effect

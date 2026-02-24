@@ -44,11 +44,16 @@ class $modify(RLPlayLayer, PlayLayer) {
         auto jsonRes = resp.json();
         if (jsonRes) {
           log::info("Level {} identified as a rated layout (fetch OK)", lvlId);
-          self->m_fields->m_isRatedLayout = true;
         }
         auto json = jsonRes.unwrap();
         auto difficulty = json["difficulty"].asInt().unwrapOr(0);
+        auto isSuggested = json["isSuggested"].asBool().unwrapOr(false);
         self->m_fields->m_levelDifficulty = difficulty;
+
+        if (!isSuggested) {
+          log::debug("Level {} is a rated layout", lvlId);
+          self->m_fields->m_isRatedLayout = true;
+        }
 
         auto savePath = dirs::getModsSaveDir() / Mod::get()->getID() /
                         "rubies_collected.json";

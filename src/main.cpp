@@ -1,3 +1,4 @@
+#include "Geode/loader/Mod.hpp"
 #include "custom/RLAchievements.hpp"
 #include <Geode/DefaultInclude.hpp>
 #include <Geode/Geode.hpp>
@@ -103,96 +104,55 @@ class $modify(SupportLayer) {
                   }
 
                   auto json = jsonRes.unwrap();
-                  int role = json["role"].asInt().unwrapOrDefault();
-                  Mod::get()->setSavedValue<int>("role", role);
-                  if (role == 1) {
+                  bool isClassicMod =
+                      json["isClassicMod"].asBool().unwrapOrDefault();
+                  bool isClassicAdmin =
+                      json["isClassicAdmin"].asBool().unwrapOrDefault();
+                  bool isLeaderboardMod =
+                      json["isLeaderboardMod"].asBool().unwrapOrDefault();
+                  bool isPlatMod = json["isPlatMod"].asBool().unwrapOrDefault();
+                  bool isPlatAdmin =
+                      json["isPlatAdmin"].asBool().unwrapOrDefault();
+
+                  Mod::get()->setSavedValue<bool>("isClassicMod", isClassicMod);
+                  Mod::get()->setSavedValue<bool>("isClassicAdmin",
+                                                  isClassicAdmin);
+                  Mod::get()->setSavedValue<bool>("isLeaderboardMod",
+                                                  isLeaderboardMod);
+                  Mod::get()->setSavedValue<bool>("isPlatMod", isPlatMod);
+                  Mod::get()->setSavedValue<bool>("isPlatAdmin", isPlatAdmin);
+
+                  if (isClassicMod) {
                     log::info("Granted Layout Mod role");
-                    upopup->showSuccessMessage("Granted Layout Mod.");
-                    RLAchievements::onReward("misc_moderator");
-                  } else if (role == 2) {
+                    upopup->showSuccessMessage("Granted Classic Layout Mod.");
+                  } else if (isClassicAdmin) {
                     log::info("Granted Layout Admin role");
-                    upopup->showSuccessMessage("Granted Layout Admin.");
+                    upopup->showSuccessMessage("Granted Classic Layout Admin.");
+                  } else if (isLeaderboardMod) {
+                    log::info("Granted Leaderboard Layout Mod role");
+                    upopup->showSuccessMessage(
+                        "Granted Leaderboard Layout Mod.");
+                  } else if (isPlatMod) {
+                    log::info("Granted Platformer Layout Mod role");
+                    upopup->showSuccessMessage(
+                        "Granted Platformer Layout Mod.");
+                  } else if (isPlatAdmin) {
+                    log::info("Granted Platformer Admin role");
+                    upopup->showSuccessMessage(
+                        "Granted Platformer Layout Admin.");
                   } else {
                     upopup->showFailMessage("Nothing Happened.");
+                  }
+
+                  if (isClassicMod || isPlatMod || isLeaderboardMod) {
+                    RLAchievements::onReward("misc_moderator");
                   }
                 });
           } else {
             auto err = res.unwrapErr();
             log::warn("Auth failed: {}", err);
-
-            // If account data is invalid, attempt interactive auth as a
-            // fallback
-            if (err.find("Invalid account data") != std::string::npos) {
-              log::info("Falling back to interactive auth due to invalid "
-                        "account data");
-              argon::AuthOptions options;
-              options.progress = [](argon::AuthProgress progress) {
-                log::debug("auth progress: {}",
-                           argon::authProgressToString(progress));
-              };
-
-              m_fields->m_authTask.spawn(
-                  argon::startAuth(std::move(options)),
-                  [self, upopup, this](Result<std::string> res2) {
-                    if (!self || !upopup)
-                      return;
-                    if (res2.isOk()) {
-                      auto token = std::move(res2).unwrap();
-                      log::debug("token obtained (fallback): {}", token);
-                      Mod::get()->setSavedValue("argon_token", token);
-                      // Trigger same access check as above
-                      matjson::Value jsonBody = matjson::Value::object();
-                      jsonBody["argonToken"] = token;
-                      jsonBody["accountId"] =
-                          GJAccountManager::get()->m_accountID;
-
-                      auto postReq = web::WebRequest();
-                      postReq.bodyJSON(jsonBody);
-
-                      m_fields->m_getAccessTask.spawn(
-                          postReq.post(
-                              "https://gdrate.arcticwoof.xyz/getAccess"),
-                          [self, upopup, this](web::WebResponse response) {
-                            if (!self || !upopup)
-                              return;
-                            if (!response.ok()) {
-                              log::warn("Server returned non-ok status: {}",
-                                        response.code());
-                              upopup->showFailMessage(getResponseFailMessage(
-                                  response, "Failed! Try again later."));
-                              return;
-                            }
-                            auto jsonRes = response.json();
-                            if (!jsonRes) {
-                              log::warn("Failed to parse JSON response");
-                              return;
-                            }
-                            auto json = jsonRes.unwrap();
-                            int role = json["role"].asInt().unwrapOrDefault();
-                            Mod::get()->setSavedValue<int>("role", role);
-                            if (role == 1) {
-                              upopup->showSuccessMessage("Granted Layout Mod.");
-                              RLAchievements::onReward("misc_moderator");
-                            } else if (role == 2) {
-                              upopup->showSuccessMessage(
-                                  "Granted Layout Admin.");
-                            } else {
-                              upopup->showFailMessage("Nothing Happened.");
-                            }
-                          });
-                    } else {
-                      log::warn("Interactive auth also failed: {}",
-                                res2.unwrapErr());
-                      Notification::create(res2.unwrapErr(),
-                                           NotificationIcon::Error)
-                          ->show();
-                      argon::clearToken();
-                    }
-                  });
-            } else {
-              Notification::create(err, NotificationIcon::Error)->show();
-              argon::clearToken();
-            }
+            Notification::create(err, NotificationIcon::Error)->show();
+            argon::clearToken();
           }
         });
   }

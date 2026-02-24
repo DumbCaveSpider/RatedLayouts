@@ -5,12 +5,18 @@ using namespace geode::prelude;
 
 class $modify(RLCommentCell, CommentCell) {
   struct Fields {
-    int role = 0;
     int stars = 0;
     int planets = 0;
     bool supporter = false;
     bool booster = false;
     int nameplate = 0;
+
+    bool isClassicMod = false;
+    bool isClassicAdmin = false;
+    bool isLeaderboardMod = false;
+    bool isPlatMod = false;
+    bool isPlatAdmin = false;
+
     async::TaskHolder<web::WebResponse> m_fetchTask;
     ~Fields() { m_fetchTask.cancel(); }
   };
@@ -32,7 +38,10 @@ class $modify(RLCommentCell, CommentCell) {
   }
 
   void applyCommentTextColor(int accountId) {
-    if (m_fields->role == 0 && !m_fields->supporter) {
+    // nothing to do if user has no special state
+    if (!m_fields->supporter && !m_fields->isClassicMod &&
+        !m_fields->isClassicAdmin && !m_fields->isLeaderboardMod &&
+        !m_fields->isPlatMod && !m_fields->isPlatAdmin && !m_fields->booster) {
       return;
     }
 
@@ -41,21 +50,33 @@ class $modify(RLCommentCell, CommentCell) {
       return;
     }
 
-    ccColor3B color;
-    if (m_fields->supporter) {
-      color = {255, 187, 255}; // supporter color
+    ccColor3B color = {255, 255, 255}; // default white
+    // choose highest-priority role for color
+    if (accountId == 7689052) {
+      color = {150, 255, 255}; // ArcticWoof cyan
+    } else if (m_fields->isClassicAdmin) {
+      color = {255, 120, 120}; // bright red
+    } else if (m_fields->isPlatAdmin) {
+      color = {255, 235, 161}; // bright orange
+    } else if (m_fields->isLeaderboardMod) {
+      color = {183, 255, 183}; // bright green
+    } else if (m_fields->isClassicMod) {
+      color = {120, 200, 255}; // bright blue
+    } else if (m_fields->isPlatMod) {
+      color = {234, 255, 143}; // bright cyan
+    } else if (m_fields->supporter) {
+      color = {255, 200, 255}; // bright pink
     } else if (m_fields->booster) {
-      color = {187, 214, 255}; // booster color
-    } else if (accountId == 7689052) {
-      color = {150, 255, 255}; // ArcticWoof
-    } else if (m_fields->role == 1) {
-      color = {156, 187, 255}; // mod comment color
-    } else if (m_fields->role == 2) {
-      color = {255, 187, 187}; // admin comment color
+      color = {200, 200, 255}; // light purple
     }
 
     log::debug("Applying comment text color for role: {} in {} mode",
-               m_fields->role, m_compactMode ? "compact" : "non-compact");
+               m_fields->isClassicAdmin ? "admin"
+               : m_fields->isClassicMod ? "mod"
+               : m_fields->supporter    ? "supporter"
+               : m_fields->booster      ? "booster"
+                                        : "normal",
+               m_compactMode ? "compact" : "non-compact");
 
     // check for prevter.comment_emojis custom text area first (comment reloaded
     // mod)
@@ -137,19 +158,37 @@ class $modify(RLCommentCell, CommentCell) {
           log::debug("Profile not found on server for {}", accountId);
           if (!cellRef)
             return;
-          cellRef->m_fields->role = 0;
+
           cellRef->m_fields->stars = 0;
+          cellRef->m_fields->isClassicMod = false;
+          cellRef->m_fields->isClassicAdmin = false;
+          cellRef->m_fields->isLeaderboardMod = false;
+          cellRef->m_fields->isPlatMod = false;
+          cellRef->m_fields->isPlatAdmin = false;
 
           // remove any role badges if present (very unlikely scenario lol)
           if (cellRef->m_mainLayer) {
-            if (auto userNameMenu = typeinfo_cast<CCMenu *>(
+            if (auto userNameMenu = static_cast<CCMenu *>(
                     cellRef->m_mainLayer->getChildByIDRecursive(
                         "username-menu"))) {
               if (auto owner =
                       userNameMenu->getChildByID("rl-comment-owner-badge"))
                 owner->removeFromParent();
-              if (auto mod = userNameMenu->getChildByID("rl-comment-mod-badge"))
-                mod->removeFromParent();
+              if (auto badge = userNameMenu->getChildByID(
+                      "rl-comment-classic-admin-badge"))
+                badge->removeFromParent();
+              if (auto badge = userNameMenu->getChildByID(
+                      "rl-comment-classic-mod-badge"))
+                badge->removeFromParent();
+              if (auto badge =
+                      userNameMenu->getChildByID("rl-comment-lb-mod-badge"))
+                badge->removeFromParent();
+              if (auto badge =
+                      userNameMenu->getChildByID("rl-comment-plat-admin-badge"))
+                badge->removeFromParent();
+              if (auto badge =
+                      userNameMenu->getChildByID("rl-comment-plat-mod-badge"))
+                badge->removeFromParent();
               if (auto admin =
                       userNameMenu->getChildByID("rl-comment-admin-badge"))
                 admin->removeFromParent();
@@ -171,19 +210,31 @@ class $modify(RLCommentCell, CommentCell) {
       }
 
       auto json = jsonRes.unwrap();
-      int role = json["role"].asInt().unwrapOrDefault();
       int stars = json["stars"].asInt().unwrapOrDefault();
       int planets = json["planets"].asInt().unwrapOrDefault();
       bool isSupporter = json["isSupporter"].asBool().unwrapOrDefault();
       bool isBooster = json["isBooster"].asBool().unwrapOrDefault();
       int nameplate = json["nameplate"].asInt().unwrapOrDefault();
 
-      if (role == 0 && stars == 0 && planets == 0) {
+      // new role flags returned from server
+      bool isClassicMod = json["isClassicMod"].asBool().unwrapOrDefault();
+      bool isClassicAdmin = json["isClassicAdmin"].asBool().unwrapOrDefault();
+      bool isLeaderboardMod =
+          json["isLeaderboardMod"].asBool().unwrapOrDefault();
+      bool isPlatMod = json["isPlatMod"].asBool().unwrapOrDefault();
+      bool isPlatAdmin = json["isPlatAdmin"].asBool().unwrapOrDefault();
+
+      if (stars == 0 && planets == 0 && !isClassicMod && !isClassicAdmin &&
+          !isLeaderboardMod && !isPlatMod && !isPlatAdmin) {
         log::debug("User {} has no role/stars/planets", accountId);
         if (!cellRef)
           return;
-        cellRef->m_fields->role = 0;
         cellRef->m_fields->stars = 0;
+        cellRef->m_fields->isClassicMod = false;
+        cellRef->m_fields->isClassicAdmin = false;
+        cellRef->m_fields->isLeaderboardMod = false;
+        cellRef->m_fields->isPlatMod = false;
+        cellRef->m_fields->isPlatAdmin = false;
         // remove any role badges and glow only if UI exists
         if (cellRef->m_mainLayer) {
           if (auto userNameMenu = typeinfo_cast<CCMenu *>(
@@ -192,6 +243,21 @@ class $modify(RLCommentCell, CommentCell) {
             if (auto owner =
                     userNameMenu->getChildByID("rl-comment-owner-badge"))
               owner->removeFromParent();
+            if (auto badge = userNameMenu->getChildByID(
+                    "rl-comment-classic-admin-badge"))
+              badge->removeFromParent();
+            if (auto badge =
+                    userNameMenu->getChildByID("rl-comment-classic-mod-badge"))
+              badge->removeFromParent();
+            if (auto badge =
+                    userNameMenu->getChildByID("rl-comment-lb-mod-badge"))
+              badge->removeFromParent();
+            if (auto badge =
+                    userNameMenu->getChildByID("rl-comment-plat-admin-badge"))
+              badge->removeFromParent();
+            if (auto badge =
+                    userNameMenu->getChildByID("rl-comment-plat-mod-badge"))
+              badge->removeFromParent();
             if (auto mod = userNameMenu->getChildByID("rl-comment-mod-badge"))
               mod->removeFromParent();
             if (auto admin =
@@ -208,7 +274,8 @@ class $modify(RLCommentCell, CommentCell) {
       }
 
       // nameplate thing
-      if (cellRef->m_backgroundLayer && nameplate != 0 && !Mod::get()->getSettingValue<bool>("disableNameplateInComment")) {
+      if (cellRef->m_backgroundLayer && nameplate != 0 &&
+          !Mod::get()->getSettingValue<bool>("disableNameplateInComment")) {
         auto nameplateSpr = CCSprite::createWithSpriteFrameName(
             fmt::format("nameplate_{}.png"_spr, nameplate).c_str());
         if (cellRef->m_compactMode) {
@@ -227,17 +294,23 @@ class $modify(RLCommentCell, CommentCell) {
         }
       }
 
-      cellRef->m_fields->role = role;
       cellRef->m_fields->stars = stars;
       cellRef->m_fields->planets = planets;
       cellRef->m_fields->supporter = isSupporter;
       cellRef->m_fields->booster = isBooster;
-      log::debug("User comment role: {} supporter={} stars={} planets={} "
-                 "nameplate={}",
-                 role, isSupporter, stars, planets, nameplate);
+      cellRef->m_fields->isClassicMod = isClassicMod;
+      cellRef->m_fields->isClassicAdmin = isClassicAdmin;
+      cellRef->m_fields->isLeaderboardMod = isLeaderboardMod;
+      cellRef->m_fields->isPlatMod = isPlatMod;
+      cellRef->m_fields->isPlatAdmin = isPlatAdmin;
 
-      log::debug("User comment role: {} supporter={}", role,
-                 cellRef->m_fields->supporter);
+      log::debug("User comment supporter={}, booster={}, classicMod={}, "
+                 "classicAdmin={}, leaderboardMod={}, platMod={}, platAdmin={}",
+                 cellRef->m_fields->supporter, cellRef->m_fields->booster,
+                 cellRef->m_fields->isClassicMod,
+                 cellRef->m_fields->isClassicAdmin,
+                 cellRef->m_fields->isLeaderboardMod,
+                 cellRef->m_fields->isPlatMod, cellRef->m_fields->isPlatAdmin);
 
       cellRef->loadBadgeForComment(accountId);
       cellRef->applyCommentTextColor(accountId);
@@ -263,51 +336,79 @@ class $modify(RLCommentCell, CommentCell) {
       log::warn("username-menu not found in comment cell");
       return;
     }
-    // Avoid creating duplicate badges if one already exists
     if (accountId == 7689052) { // ArcticWoof
-      if (!userNameMenu->getChildByID("rl-comment-owner-badge")) {
+      if (!userNameMenu->getChildByID("rl-comment-owner-badge:200")) {
         auto ownerBadgeSprite =
             CCSprite::createWithSpriteFrameName("RL_badgeOwner.png"_spr);
         ownerBadgeSprite->setScale(0.7f);
-        ownerBadgeSprite->setID("rl-comment-owner-badge");
+        ownerBadgeSprite->setID("rl-comment-owner-badge:200");
         userNameMenu->addChild(ownerBadgeSprite);
       }
-    } else if (m_fields->role == 1) { // mod
-      if (!userNameMenu->getChildByID("rl-comment-mod-badge")) {
-        auto modBadgeSprite =
-            CCSprite::createWithSpriteFrameName("RL_badgeMod01.png"_spr);
-        modBadgeSprite->setScale(0.7f);
-        modBadgeSprite->setID("rl-comment-mod-badge");
-        userNameMenu->addChild(modBadgeSprite);
-      }
-    } else if (m_fields->role == 2) {
-      if (!userNameMenu->getChildByID("rl-comment-admin-badge")) {
+    }
+    if (m_fields->isClassicAdmin) {
+      if (!userNameMenu->getChildByID("rl-comment-classic-admin-badge:100")) {
         auto adminBadgeSprite =
             CCSprite::createWithSpriteFrameName("RL_badgeAdmin01.png"_spr);
         adminBadgeSprite->setScale(0.7f);
-        adminBadgeSprite->setID("rl-comment-admin-badge");
+        adminBadgeSprite->setID("rl-comment-classic-admin-badge:100");
         userNameMenu->addChild(adminBadgeSprite);
+      }
+    }
+    if (m_fields->isClassicMod) {
+      if (!userNameMenu->getChildByID("rl-comment-classic-mod-badge:99")) {
+        auto modBadgeSprite =
+            CCSprite::createWithSpriteFrameName("RL_badgeMod01.png"_spr);
+        modBadgeSprite->setScale(0.7f);
+        modBadgeSprite->setID("rl-comment-classic-mod-badge:99");
+        userNameMenu->addChild(modBadgeSprite);
+      }
+    }
+    if (m_fields->isLeaderboardMod) {
+      if (!userNameMenu->getChildByID("rl-comment-lb-mod-badge:98")) {
+        auto modBadgeSprite =
+            CCSprite::createWithSpriteFrameName("RL_badgelbMod01.png"_spr);
+        modBadgeSprite->setScale(0.7f);
+        modBadgeSprite->setID("rl-comment-lb-mod-badge:98");
+        userNameMenu->addChild(modBadgeSprite);
+      }
+    }
+    if (m_fields->isPlatAdmin) {
+      if (!userNameMenu->getChildByID("rl-comment-plat-admin-badge:100")) {
+        auto adminBadgeSprite =
+            CCSprite::createWithSpriteFrameName("RL_badgePlatAdmin01.png"_spr);
+        adminBadgeSprite->setScale(0.7f);
+        adminBadgeSprite->setID("rl-comment-plat-admin-badge:100");
+        userNameMenu->addChild(adminBadgeSprite);
+      }
+    }
+    if (m_fields->isPlatMod) {
+      if (!userNameMenu->getChildByID("rl-comment-plat-mod-badge:99")) {
+        auto modBadgeSprite =
+            CCSprite::createWithSpriteFrameName("RL_badgePlatMod01.png"_spr);
+        modBadgeSprite->setScale(0.7f);
+        modBadgeSprite->setID("rl-comment-plat-mod-badge:99");
+        userNameMenu->addChild(modBadgeSprite);
       }
     }
 
     // supporter badge
     if (m_fields->supporter) {
-      if (!userNameMenu->getChildByID("rl-comment-supporter-badge")) {
+      if (!userNameMenu->getChildByID("rl-comment-supporter-badge:95")) {
         auto supporterSprite =
             CCSprite::createWithSpriteFrameName("RL_badgeSupporter.png"_spr);
         supporterSprite->setScale(0.7f);
-        supporterSprite->setID("rl-comment-supporter-badge");
+        supporterSprite->setID("rl-comment-supporter-badge:95");
         userNameMenu->addChild(supporterSprite);
       }
     }
 
     // booster badge
     if (m_fields->booster) {
-      if (!userNameMenu->getChildByID("rl-comment-booster-badge")) {
+      if (!userNameMenu->getChildByID("rl-comment-booster-badge:95")) {
         auto boosterSprite =
             CCSprite::createWithSpriteFrameName("RL_badgeBooster.png"_spr);
         boosterSprite->setScale(0.7f);
-        boosterSprite->setID("rl-comment-booster-badge");
+        boosterSprite->setID("rl-comment-booster-badge:95");
         userNameMenu->addChild(boosterSprite);
       }
     }

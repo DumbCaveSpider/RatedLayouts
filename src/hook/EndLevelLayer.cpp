@@ -405,19 +405,18 @@ class $modify(EndLevelLayer) {
                       computeRubyInfo(level, difficultyForRubies);
                   int totalRuby = rubyInfo.total;
                   int collected = rubyInfo.collected;
-                  int remaining = rubyInfo.remaining;
+                  int remainingRubies = rubyInfo.remaining;
                   int calcAtPercent = rubyInfo.calcAtPercent;
                   int awardableByPercent =
                       std::max(0, calcAtPercent - collected);
-                  int remainingRubies = remaining;
                   int percent = level ? level->m_normalPercent : 0;
 
                   log::debug(
                       "Computed rubies for end-level reward: total={}, "
                       "collected={}, percent={}, calcAtPercent={}, "
-                      "awardableByPercent={}, remaining={}, remainingRubies={}",
+                      "awardableByPercent={}, remainingRubies={}",
                       totalRuby, collected, percent, calcAtPercent,
-                      awardableByPercent, remaining, remainingRubies);
+                      awardableByPercent, remainingRubies);
 
                   if (remainingRubies > 0) {
                     auto rubyPop = CCSprite::createWithSpriteFrameName(

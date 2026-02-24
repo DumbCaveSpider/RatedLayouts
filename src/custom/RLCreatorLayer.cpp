@@ -345,7 +345,13 @@ bool RLCreatorLayer::init() {
   infoMenu->addChild(shopBtn);
 
   // button bob
-  if (Mod::get()->getSavedValue<int>("role") >= 1) {
+  bool isClassicMod = Mod::get()->getSavedValue<bool>("isClassicMod");
+  bool isClassicAdmin = Mod::get()->getSavedValue<bool>("isClassicAdmin");
+  bool isPlatMod = Mod::get()->getSavedValue<bool>("isPlatMod");
+  bool isPlatAdmin = Mod::get()->getSavedValue<bool>("isPlatAdmin");
+  bool isLeaderboardMod = Mod::get()->getSavedValue<bool>("isLeaderboardMod");
+  if (isClassicMod || isClassicAdmin || isPlatMod || isPlatAdmin ||
+      isLeaderboardMod) {
     auto addDiagloueBtnSpr =
         CCSprite::createWithSpriteFrameName("RL_bobBtn01.png"_spr);
     addDiagloueBtnSpr->setScale(0.7f);

@@ -9,13 +9,13 @@
 #include "../player/RLUserControl.hpp"
 #include "GUI/CCControlExtension/CCScale9Sprite.h"
 #include "Geode/cocos/label_nodes/CCLabelBMFont.h"
+#include "Geode/loader/Mod.hpp"
 #include "Geode/ui/BasedButtonSprite.hpp"
 
 using namespace geode::prelude;
 
 class $modify(RLProfilePage, ProfilePage) {
   struct Fields {
-    int role = 0;
     int accountId = 0;
     bool isSupporter = false;
     bool isBooster = false;
@@ -24,6 +24,13 @@ class $modify(RLProfilePage, ProfilePage) {
     int m_planets = 0;
     int m_stars = 0;
     int m_coins = 0;
+
+    // new role flags parsed from profile JSON
+    bool isClassicMod = false;
+    bool isClassicAdmin = false;
+    bool isLeaderboardMod = false;
+    bool isPlatMod = false;
+    bool isPlatAdmin = false;
 
     async::TaskHolder<web::WebResponse> m_profileTask;
     async::TaskHolder<Result<std::string>> m_authTask;
@@ -248,8 +255,9 @@ class $modify(RLProfilePage, ProfilePage) {
       rlButtonsMenu->addChild(rlStatsBtn);
     }
 
-    // if u are mod or admin, show manage button
-    if (Mod::get()->getSavedValue<int>("role") >= 1) {
+    // if u are leaderboard mod show the manage button to manage your
+    // leaderboard entries
+    if (Mod::get()->getSavedValue<bool>("isLeaderboardMod")) {
       if (!rlButtonsMenu->getChildByID("rl-manage-btn")) {
         auto modUserSpr =
             CCSprite::createWithSpriteFrameName("RL_badgeMod01.png"_spr);
@@ -450,26 +458,33 @@ class $modify(RLProfilePage, ProfilePage) {
           int points = json["points"].asInt().unwrapOrDefault();
           int stars = json["stars"].asInt().unwrapOrDefault();
           int coins = json["coins"].asInt().unwrapOrDefault();
-          int role = json["role"].asInt().unwrapOrDefault();
           int planets = json["planets"].asInt().unwrapOrDefault();
           bool isSupporter = json["isSupporter"].asBool().unwrapOrDefault();
           bool isBooster = json["isBooster"].asBool().unwrapOrDefault();
+          // new flags
+          bool isClassicMod = json["isClassicMod"].asBool().unwrapOrDefault();
+          bool isClassicAdmin = json["isClassicAdmin"].asBool().unwrapOrDefault();
+          bool isLeaderboardMod =
+              json["isLeaderboardMod"].asBool().unwrapOrDefault();
+          bool isPlatMod = json["isPlatMod"].asBool().unwrapOrDefault();
+          bool isPlatAdmin = json["isPlatAdmin"].asBool().unwrapOrDefault();
 
           pageRef->m_fields->m_stars = stars;
           pageRef->m_fields->m_planets = planets;
           pageRef->m_fields->m_points = points;
           pageRef->m_fields->m_coins = coins;
 
-          pageRef->m_fields->role = role;
           pageRef->m_fields->isSupporter = isSupporter;
           pageRef->m_fields->isBooster = isBooster;
 
-          if (pageRef->m_ownProfile) {
-            Mod::get()->setSavedValue("role", pageRef->m_fields->role);
-          }
+          pageRef->m_fields->isClassicMod = isClassicMod;
+          pageRef->m_fields->isClassicAdmin = isClassicAdmin;
+          pageRef->m_fields->isLeaderboardMod = isLeaderboardMod;
+          pageRef->m_fields->isPlatMod = isPlatMod;
+          pageRef->m_fields->isPlatAdmin = isPlatAdmin;
 
-          // show mod button if mod or admin
-          if (Mod::get()->getSavedValue<int>("role") >= 1) {
+          // show mod button if leaderboard mod
+          if (Mod::get()->getSavedValue<bool>("isLeaderboardMod")) {
             if (auto rlButtonsMenu =
                     pageRef->getChildByIDRecursive("rl-buttons-menu")) {
               // no recreate the manage button if it already exists
@@ -490,37 +505,52 @@ class $modify(RLProfilePage, ProfilePage) {
           }
 
           // add badge to the username-menu
-          CCMenu *usernameMenu = typeinfo_cast<CCMenu *>(
+          CCMenu *usernameMenu = static_cast<CCMenu *>(
               pageRef->m_mainLayer->getChildByIDRecursive("username-menu"));
-          CCLabelBMFont *usernameLabel = typeinfo_cast<CCLabelBMFont *>(
-              usernameMenu->getChildByIDRecursive("username-label"));
-          bool hasBadge = false;
           if (usernameMenu) {
             // if user is arcticwoof
             if (pageRef->m_accountID == 7689052) {
-              if (!usernameMenu->getChildByID("rl-profile-owner-badge")) {
+              if (!usernameMenu->getChildByID("rl-profile-owner-badge:200")) {
                 auto ownerBadgeSprite = CCSprite::createWithSpriteFrameName(
                     "RL_badgeOwner.png"_spr);
-                ownerBadgeSprite->setID("rl-profile-owner-badge");
+                ownerBadgeSprite->setID("rl-profile-owner-badge:200");
                 usernameMenu->addChild(ownerBadgeSprite);
-                hasBadge = true;
               }
-              // if user is admin
-            } else if (!usernameMenu->getChildByID("rl-profile-admin-badge") &&
-                       pageRef->m_fields->role == 2) {
+            }
+            if (!usernameMenu->getChildByID("rl-profile-classic-admin-badge:100") &&
+                pageRef->m_fields->isClassicAdmin) {
               auto adminBadgeSprite = CCSprite::createWithSpriteFrameName(
                   "RL_badgeAdmin01.png"_spr);
-              adminBadgeSprite->setID("rl-profile-admin-badge");
+              adminBadgeSprite->setID("rl-profile-classic-admin-badge:100");
               usernameMenu->addChild(adminBadgeSprite);
-              hasBadge = true;
-              // if user is mod
-            } else if (!usernameMenu->getChildByID("rl-profile-mod-badge") &&
-                       pageRef->m_fields->role == 1) {
+            }
+            if (!usernameMenu->getChildByID("rl-profile-classic-mod-badge:99") &&
+                pageRef->m_fields->isClassicMod) {
               auto modBadgeSprite =
                   CCSprite::createWithSpriteFrameName("RL_badgeMod01.png"_spr);
-              modBadgeSprite->setID("rl-profile-mod-badge");
+              modBadgeSprite->setID("rl-profile-classic-mod-badge:99");
               usernameMenu->addChild(modBadgeSprite);
-              hasBadge = true;
+            }
+            if (!usernameMenu->getChildByID("rl-profile-lb-mod-badge:98") &&
+                pageRef->m_fields->isLeaderboardMod) {
+              auto modBadgeSprite =
+                  CCSprite::createWithSpriteFrameName("RL_badgelbMod01.png"_spr);
+              modBadgeSprite->setID("rl-profile-lb-mod-badge:98");
+              usernameMenu->addChild(modBadgeSprite);
+            }
+            if (!usernameMenu->getChildByID("rl-profile-plat-admin-badge:100") &&
+                pageRef->m_fields->isPlatAdmin) {
+              auto adminBadgeSprite = CCSprite::createWithSpriteFrameName(
+                  "RL_badgePlatAdmin01.png"_spr);
+              adminBadgeSprite->setID("rl-profile-plat-admin-badge:100");
+              usernameMenu->addChild(adminBadgeSprite);
+            }
+            if (!usernameMenu->getChildByID("rl-profile-plat-mod-badge:99") &&
+                pageRef->m_fields->isPlatMod) {
+              auto modBadgeSprite = CCSprite::createWithSpriteFrameName(
+                  "RL_badgePlatMod01.png"_spr);
+              modBadgeSprite->setID("rl-profile-plat-mod-badge:99");
+              usernameMenu->addChild(modBadgeSprite);
             }
             // if user is supporter
             if (pageRef->m_fields->isSupporter &&
@@ -529,7 +559,6 @@ class $modify(RLProfilePage, ProfilePage) {
                   "RL_badgeSupporter.png"_spr);
               supporterSprite->setID("rl-profile-supporter-badge");
               usernameMenu->addChild(supporterSprite);
-              hasBadge = true;
             }
 
             // if user is booster
@@ -539,13 +568,7 @@ class $modify(RLProfilePage, ProfilePage) {
                   "RL_badgeBooster.png"_spr);
               boosterSprite->setID("rl-profile-booster-badge");
               usernameMenu->addChild(boosterSprite);
-              hasBadge = true;
             }
-          }
-
-          // if the badge exists
-          if (hasBadge && usernameMenu) {
-            usernameMenu->setPositionX(usernameMenu->getPositionX() - 10.f);
             usernameMenu->updateLayout();
           }
 
@@ -578,7 +601,8 @@ class $modify(RLProfilePage, ProfilePage) {
           // Handle creator points
           if (auto rlStatsMenu =
                   pageRef->getChildByIDRecursive("rl-stats-menu")) {
-            if (pageRef->m_fields->m_points > 0 && !Mod::get()->getSettingValue<bool>("disableCreatorPoints")) {
+            if (pageRef->m_fields->m_points > 0 &&
+                !Mod::get()->getSettingValue<bool>("disableCreatorPoints")) {
               if (!rlStatsMenu->getChildByIDRecursive("rl-points-entry")) {
                 auto pointsEntry = pageRef->createStatEntry(
                     "rl-points-entry", "rl-points-label",
@@ -604,7 +628,8 @@ class $modify(RLProfilePage, ProfilePage) {
   }
 
   void onUserManage(CCObject *sender) {
-    if (Mod::get()->getSavedValue<int>("role") < 1) {
+    // only leaderboard moderators may manage users
+    if (!Mod::get()->getSavedValue<bool>("isLeaderboardMod")) {
       Notification::create("You don't have permission to manage users.",
                            NotificationIcon::Error)
           ->show();
