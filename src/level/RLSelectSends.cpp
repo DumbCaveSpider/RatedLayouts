@@ -7,6 +7,8 @@
 
 using namespace geode::prelude;
 
+const int DEV_ACCOUNTID = 7689052;
+
 RLSelectSends *RLSelectSends::create() {
   auto ret = new RLSelectSends();
 
@@ -37,18 +39,21 @@ bool RLSelectSends::init() {
                                     menu_selector(RLSelectSends::onAllSends));
   showAllBtn->setPosition({50.f, 50.f});
   buttonMenu->addChild(showAllBtn);
-  auto threePlusBtn = CCMenuItemSpriteExtra::create(
-      ButtonSprite::create("3+ Sents"), this,
-      menu_selector(RLSelectSends::onThreePlusSends));
-  threePlusBtn->setPosition({160.f, 20.f});
-  buttonMenu->addChild(threePlusBtn);
+  if (Mod::get()->getSavedValue<bool>("isClassicAdmin") ||
+      Mod::get()->getSavedValue<bool>("isPlatAdmin") ||
+      GJAccountManager::sharedState()->m_accountID == DEV_ACCOUNTID) {
+    auto threePlusBtn = CCMenuItemSpriteExtra::create(
+        ButtonSprite::create("3+ Sents"), this,
+        menu_selector(RLSelectSends::onThreePlusSends));
+    threePlusBtn->setPosition({160.f, 20.f});
+    buttonMenu->addChild(threePlusBtn);
 
-  auto legendaryBtn = CCMenuItemSpriteExtra::create(
-      ButtonSprite::create("Legendary Sents"), this,
-      menu_selector(RLSelectSends::onLegendarySends));
-  legendaryBtn->setPosition({270.f, 50.f});
-  buttonMenu->addChild(legendaryBtn);
-
+    auto legendaryBtn = CCMenuItemSpriteExtra::create(
+        ButtonSprite::create("Legendary Sents"), this,
+        menu_selector(RLSelectSends::onLegendarySends));
+    legendaryBtn->setPosition({270.f, 50.f});
+    buttonMenu->addChild(legendaryBtn);
+  }
   auto mostBtn =
       CCMenuItemSpriteExtra::create(ButtonSprite::create("Most Sents"), this,
                                     menu_selector(RLSelectSends::onMostSents));

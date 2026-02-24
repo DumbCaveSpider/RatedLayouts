@@ -673,7 +673,10 @@ void RLCreatorLayer::onFeaturedLayouts(CCObject *sender) {
 
 void RLCreatorLayer::onSentLayouts(CCObject *sender) {
   if (Mod::get()->getSavedValue<bool>("isClassicAdmin") ||
-      Mod::get()->getSavedValue<bool>("isPlatAdmin") || GJAccountManager::sharedState()->m_accountID == DEV_ACCOUNTID) {
+      Mod::get()->getSavedValue<bool>("isPlatAdmin") ||
+      Mod::get()->getSavedValue<bool>("isClassicMod") ||
+      Mod::get()->getSavedValue<bool>("isPlatMod") ||
+      GJAccountManager::sharedState()->m_accountID == DEV_ACCOUNTID) {
     auto selectPopup = RLSelectSends::create();
     selectPopup->show();
     return;
