@@ -7,9 +7,11 @@
   - **Classic Layout Admin** badge for admins who can suggest/rate classic rated layouts.
   - **Leaderboard Layout Moderator** badge for moderators who can moderate the leaderboard.
 - Added **Badge API** back as a dependency
-- Added **Most Sends** for Admins and Mods in the Sent Layouts section.
+- Added **Most Sents and Least Sents** for Admins and Mods in the Sent Layouts section.
 - Added **Classic & Platformer** filters on the Sent Layouts section.
 - Added More **Nameplates**
+- Added seperate timer for the **Event Layouts**
+- Added Additional tools for **Leaderboard Layout Mods**
 - Fixed issue where rubies isn't rewarded correctly at the End Level Layer.
 - Fixed issue where the **Disable Reward Animation** option isn't applying on rubies collection.
 - Fixed issue with the Menu Buttons in the **Profile Page** got cut off.

@@ -14,4 +14,5 @@ protected:
   void onThreePlusSends(CCObject *sender);
   void onLegendarySends(CCObject *sender);
   void onMostSents(CCObject *sender);
+  void onLeastSents(CCObject *sender);
 };

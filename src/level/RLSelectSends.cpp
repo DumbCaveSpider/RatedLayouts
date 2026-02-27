@@ -22,7 +22,7 @@ RLSelectSends *RLSelectSends::create() {
 };
 
 bool RLSelectSends::init() {
-  if (!Popup::init(300.f, 180.f, "square01_001.png"))
+  if (!Popup::init(300.f, 220.f, "square01_001.png"))
     return false;
 
   auto buttonMenu = CCMenu::create();
@@ -59,6 +59,13 @@ bool RLSelectSends::init() {
                                     menu_selector(RLSelectSends::onMostSents));
   mostBtn->setPosition({160.f, 80.f});
   buttonMenu->addChild(mostBtn);
+
+  // least sents button
+  auto leastBtn = CCMenuItemSpriteExtra::create(
+      ButtonSprite::create("Least Sents"), this,
+      menu_selector(RLSelectSends::onLeastSents));
+  leastBtn->setPosition({270.f, 20.f});
+  buttonMenu->addChild(leastBtn);
 
   m_mainLayer->addChild(buttonMenu);
   buttonMenu->updateLayout();
@@ -110,6 +117,18 @@ void RLSelectSends::onMostSents(CCObject *sender) {
   params.emplace_back("type", "6");
   auto browserLayer = RLLevelBrowserLayer::create(
       RLLevelBrowserLayer::Mode::Sent, params, "Most Sent Layouts");
+  auto scene = CCScene::create();
+  scene->addChild(browserLayer);
+  auto transitionFade = CCTransitionFade::create(0.5f, scene);
+  CCDirector::sharedDirector()->pushScene(transitionFade);
+  this->onClose(sender);
+}
+
+void RLSelectSends::onLeastSents(CCObject *sender) {
+  RLLevelBrowserLayer::ParamList params;
+  params.emplace_back("type", "7");
+  auto browserLayer = RLLevelBrowserLayer::create(
+      RLLevelBrowserLayer::Mode::Sent, params, "Least Sent Layouts");
   auto scene = CCScene::create();
   scene->addChild(browserLayer);
   auto transitionFade = CCTransitionFade::create(0.5f, scene);

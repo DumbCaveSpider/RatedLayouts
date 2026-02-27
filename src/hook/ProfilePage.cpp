@@ -7,6 +7,7 @@
 #include "../custom/RLLevelBrowserLayer.hpp"
 #include "../player/RLDifficultyTotalPopup.hpp"
 #include "../player/RLUserControl.hpp"
+#include "../player/RLUserLevelControl.hpp"
 #include "Geode/cocos/label_nodes/CCLabelBMFont.h"
 #include "Geode/loader/Mod.hpp"
 #include "Geode/ui/BasedButtonSprite.hpp"
@@ -230,7 +231,6 @@ class $modify(RLProfilePage, ProfilePage) {
                                    ->setAxisAlignment(AxisAlignment::Center)
                                    ->setGrowCrossAxis(false));
       m_mainLayer->addChild(rlButtonsMenu, 10);
-
     }
 
     // view stats
@@ -251,16 +251,28 @@ class $modify(RLProfilePage, ProfilePage) {
 
     // if u are leaderboard mod show the manage button to manage your
     // leaderboard entries
-    if (Mod::get()->getSavedValue<bool>("isLeaderboardMod") || GJAccountManager::sharedState()->m_accountID == DEV_ACCOUNTID) {
+    if (Mod::get()->getSavedValue<bool>("isLeaderboardMod") ||
+        GJAccountManager::sharedState()->m_accountID == DEV_ACCOUNTID) {
       if (!rlButtonsMenu->getChildByID("rl-manage-btn")) {
         auto modUserSpr =
-            CCSprite::createWithSpriteFrameName("RL_badgeMod01.png"_spr);
+            CCSprite::createWithSpriteFrameName("RL_badgelbMod01.png"_spr);
         auto modUserButton = EditorButtonSprite::create(
             modUserSpr, EditorBaseColor::LightBlue, EditorBaseSize::Normal);
         auto modUserBtnItem = CCMenuItemSpriteExtra::create(
             modUserButton, this, menu_selector(RLProfilePage::onUserManage));
         modUserBtnItem->setID("rl-manage-btn");
         rlButtonsMenu->addChild(modUserBtnItem);
+      }
+      if (!rlButtonsMenu->getChildByID("rl-manage-level-btn")) {
+        auto manageLevelSpr =
+            CCSprite::createWithSpriteFrameName("RL_badgeMod01.png"_spr);
+        auto manageLevelButton = EditorButtonSprite::create(
+            manageLevelSpr, EditorBaseColor::LightBlue, EditorBaseSize::Normal);
+        auto manageLevelBtnItem = CCMenuItemSpriteExtra::create(
+            manageLevelButton, this,
+            menu_selector(RLProfilePage::onUserManageLevel));
+        manageLevelBtnItem->setID("rl-manage-level-btn");
+        rlButtonsMenu->addChild(manageLevelBtnItem);
       }
     }
 
@@ -478,14 +490,15 @@ class $modify(RLProfilePage, ProfilePage) {
           pageRef->m_fields->isPlatMod = isPlatMod;
           pageRef->m_fields->isPlatAdmin = isPlatAdmin;
 
-          // show mod button if leaderboard mod
-          if (Mod::get()->getSavedValue<bool>("isLeaderboardMod")) {
+          // show mod button if leaderboard mod or dev
+          if (Mod::get()->getSavedValue<bool>("isLeaderboardMod") ||
+              GJAccountManager::sharedState()->m_accountID == DEV_ACCOUNTID) {
             if (auto rlButtonsMenu =
                     pageRef->getChildByIDRecursive("rl-buttons-menu")) {
               // no recreate the manage button if it already exists
               if (!rlButtonsMenu->getChildByID("rl-manage-btn")) {
                 auto modUserSpr = CCSprite::createWithSpriteFrameName(
-                    "RL_badgeMod01.png"_spr);
+                    "RL_badgelbMod01.png"_spr);
                 auto modUserButton = EditorButtonSprite::create(
                     modUserSpr, EditorBaseColor::LightBlue,
                     EditorBaseSize::Normal);
@@ -494,6 +507,19 @@ class $modify(RLProfilePage, ProfilePage) {
                     menu_selector(RLProfilePage::onUserManage));
                 modUserBtnItem->setID("rl-manage-btn");
                 rlButtonsMenu->addChild(modUserBtnItem);
+                rlButtonsMenu->updateLayout();
+              }
+              if (!rlButtonsMenu->getChildByID("rl-manage-level-btn")) {
+                auto manageLevelSpr = CCSprite::createWithSpriteFrameName(
+                    "RL_badgeMod01.png"_spr);
+                auto manageLevelButton = EditorButtonSprite::create(
+                    manageLevelSpr, EditorBaseColor::LightBlue,
+                    EditorBaseSize::Normal);
+                auto manageLevelBtnItem = CCMenuItemSpriteExtra::create(
+                    manageLevelButton, pageRef,
+                    menu_selector(RLProfilePage::onUserManageLevel));
+                manageLevelBtnItem->setID("rl-manage-level-btn");
+                rlButtonsMenu->addChild(manageLevelBtnItem);
                 rlButtonsMenu->updateLayout();
               }
             }
@@ -683,7 +709,7 @@ class $modify(RLProfilePage, ProfilePage) {
     case 8: // Plat Mods
       FLAlertLayer::create(
           "Platformer Layout Mod",
-          "<cb>Platformer Layout Mod</c> can suggest levels for "
+          "<cb>Platformer Layout Moderator</c> can suggest levels for "
           "<cc>platformer layouts</c> to <cr>Platformer Layout Admins</c>.",
           "OK")
           ->show();
@@ -691,7 +717,8 @@ class $modify(RLProfilePage, ProfilePage) {
     case 9: // Leaderboard Mods
       FLAlertLayer::create(
           "LB Layout Mod",
-          "<cb>Leaderboard Layout Mod</c> is responsible for <co>managing and "
+          "<cb>Leaderboard Layout Moderator</c> is responsible for "
+          "<co>managing and "
           "moderating the leaderboard</c> section of <cl>Rated Layouts</c>.",
           "OK")
           ->show();
@@ -713,7 +740,8 @@ class $modify(RLProfilePage, ProfilePage) {
 
   void onUserManage(CCObject *sender) {
     // only leaderboard moderators may manage users
-    if (!Mod::get()->getSavedValue<bool>("isLeaderboardMod") && GJAccountManager::sharedState()->m_accountID != DEV_ACCOUNTID) {
+    if (!Mod::get()->getSavedValue<bool>("isLeaderboardMod") &&
+        GJAccountManager::sharedState()->m_accountID != DEV_ACCOUNTID) {
       Notification::create("You don't have permission to manage users.",
                            NotificationIcon::Error)
           ->show();
@@ -722,6 +750,20 @@ class $modify(RLProfilePage, ProfilePage) {
     int accountId = m_fields->accountId;
     auto userControl = RLUserControl::create(accountId);
     userControl->show();
+  }
+
+  void onUserManageLevel(CCObject *sender) {
+    // only leaderboard moderators may manage levels
+    if (!Mod::get()->getSavedValue<bool>("isLeaderboardMod") &&
+        GJAccountManager::sharedState()->m_accountID != DEV_ACCOUNTID) {
+      Notification::create("You don't have permission to manage levels.",
+                           NotificationIcon::Error)
+          ->show();
+      return;
+    }
+    int accountId = m_fields->accountId;
+    auto levelControl = RLUserLevelControl::create(accountId);
+    levelControl->show();
   }
 
   void onPlanetsClicked(CCObject *sender) {

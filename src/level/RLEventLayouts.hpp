@@ -24,6 +24,7 @@ private:
     LevelCell *levelCell = nullptr;
     LevelCell *platLevelCell = nullptr;
     CCLabelBMFont *timerLabel = nullptr;
+    CCLabelBMFont *platTimerLabel = nullptr;
 
     int accountId = -1;
     int levelId = -1;

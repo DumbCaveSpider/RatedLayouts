@@ -9,7 +9,6 @@ using namespace geode::prelude;
 
 class RLUserControl : public geode::Popup {
      public:
-      static RLUserControl* create();
       static RLUserControl* create(int accountId);
       ~RLUserControl() {
             m_profileTask.cancel();

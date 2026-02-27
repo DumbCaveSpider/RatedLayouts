@@ -1839,6 +1839,11 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
       log::debug("Community vote enabled due to role override (classic/plat)");
     }
 
+    if (this->m_level->isPlatformer()) {
+      shouldDisable = false;
+      log::debug("Community vote enabled due to level being a Platformer");
+    }
+
     if (shouldDisable) {
       log::info("Community vote button clicked!");
       FLAlertLayer::create(

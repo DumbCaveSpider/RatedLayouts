@@ -26,18 +26,6 @@ static std::string getResponseFailMessage(web::WebResponse const &response,
 
 const int DEV_ACCOUNT_ID = 7689052;
 
-RLUserControl *RLUserControl::create() {
-  auto ret = new RLUserControl();
-
-  if (ret && ret->init()) {
-    ret->autorelease();
-    return ret;
-  }
-
-  delete ret;
-  return nullptr;
-};
-
 RLUserControl *RLUserControl::create(int accountId) {
   auto ret = new RLUserControl();
   ret->m_targetAccountId = accountId;
@@ -66,9 +54,9 @@ bool RLUserControl::init() {
   auto usernameLabel = CCLabelBMFont::create(
       ("Target: " + username).c_str(), "bigFont.fnt",
       m_mainLayer->getContentSize().width - 40, kCCTextAlignmentCenter);
-  usernameLabel->setPosition({m_mainLayer->getContentSize().width / 2,
-                              m_mainLayer->getContentSize().height - 40});
-  usernameLabel->setScale(0.7f);
+  usernameLabel->setPosition({m_title->getPositionX(),
+                             m_title->getPositionY() - 20});
+  usernameLabel->setScale(m_title->getScale());
   m_mainLayer->addChild(usernameLabel);
 
   auto optionsMenu = CCMenu::create();
@@ -119,7 +107,7 @@ bool RLUserControl::init() {
 
   // Creator banned action button
   auto [bannedSpr, bannedBtn] = makeActionButton(
-      "Creator Banned", menu_selector(RLUserControl::onOptionAction));
+      "Creator Ban", menu_selector(RLUserControl::onOptionAction));
   bannedBtn->setVisible(false);
   bannedBtn->setEnabled(false);
   optionsMenu->addChild(bannedBtn);
@@ -690,7 +678,7 @@ void RLUserControl::onOptionAction(CCObject *sender) {
         actionDesc =
             newDesired ? "set report blacklist" : "remove report blacklist";
       } else if (key == "bannedCreator") {
-        actionDesc = newDesired ? "set creator banned" : "remove creator ban";
+        actionDesc = newDesired ? "set creator ban" : "remove creator ban";
       } else {
         actionDesc = newDesired ? "apply this change" : "remove this change";
       }
@@ -761,7 +749,7 @@ void RLUserControl::setOptionState(const std::string &key, bool desired,
         text = "Remove Creator Ban";
         bg = "GJ_button_02.png";
       } else {
-        text = "Set Creator Banned";
+        text = "Set Creator Ban";
         bg = "GJ_button_01.png";
       }
     }

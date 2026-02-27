@@ -47,7 +47,6 @@ bool RLEventLayouts::init() {
 
   float startY = contentSize.height - 87.f;
   float rowSpacing = 90.f;
-  
 
   // info button on main layer
   auto infoSpr = CCSprite::createWithSpriteFrameName("RL_info01.png"_spr);
@@ -79,8 +78,24 @@ bool RLEventLayouts::init() {
     bgSprite->setPosition({container->getContentSize().width / 2.f,
                            container->getContentSize().height / 2.f});
     container->addChild(bgSprite, -1);
-  }
 
+    auto clip = CCClippingNode::create();
+    clip->setStencil(bgSprite);
+    clip->setAlphaThreshold(0.1f);
+    clip->setPosition({0, 0});
+    container->addChild(clip, -1);
+
+    // spark bg (classic) clipped to stencil
+    auto sparkSprite =
+        CCSprite::createWithSpriteFrameName("RL_starBig.png"_spr);
+    if (sparkSprite) {
+      sparkSprite->setScale(3.f);
+      sparkSprite->setOpacity(100);
+      sparkSprite->setPosition(
+          {40.f, container->getContentSize().height / 2.f});
+      clip->addChild(sparkSprite, 1);
+    }
+  }
   m_sections[idx].container = container;
   const float containerTopY = 145.f;
   container->setPosition({22, containerTopY});
@@ -114,6 +129,22 @@ bool RLEventLayouts::init() {
     platBg->setPosition({platContainer->getContentSize().width / 2.f,
                          platContainer->getContentSize().height / 2.f});
     platContainer->addChild(platBg, -1);
+  }
+  auto platClip = CCClippingNode::create();
+  platClip->setStencil(platBg);
+  platClip->setPosition({0, 0});
+  platClip->setAlphaThreshold(0.1f);
+  platContainer->addChild(platClip, -1);
+
+  // spark bg (classic) clipped to stencil
+  auto planetSprite =
+      CCSprite::createWithSpriteFrameName("RL_planetBig.png"_spr);
+  if (planetSprite) {
+    planetSprite->setScale(3.f);
+    planetSprite->setOpacity(100);
+    planetSprite->setPosition(
+        {40.f, platContainer->getContentSize().height / 2.f});
+    platClip->addChild(planetSprite, 1);
   }
   m_sections[idx].platContainer = platContainer;
 
@@ -149,15 +180,31 @@ bool RLEventLayouts::init() {
                             m_mainLayer->getContentSize().height - 15.f});
   m_mainLayer->addChild(headerLabel, 3);
 
-  // timer label
-  std::vector<std::string> timerPrefixes = {"Next Daily in ", "Next Weekly in ",
-                                            "Next Monthly in "};
+  // timer label prefixes (include Classic/Platformer qualifiers)
+  std::vector<std::string> classicPrefixes = {"Next Daily Classic in ",
+                                              "Next Weekly Classic in ",
+                                              "Next Monthly Classic in "};
+  std::vector<std::string> platPrefixes = {"Next Daily Platformer in ",
+                                           "Next Weekly Platformer in ",
+                                           "Next Monthly Platformer in "};
+  // primary timer (main layout)
   auto timerLabel = CCLabelBMFont::create(
-      (timerPrefixes[idx] + "--:--:--:--").c_str(), "bigFont.fnt");
-  timerLabel->setPosition({m_mainLayer->getContentSize().width / 2.f, 15.f});
+      (classicPrefixes[idx] + "--:--:--:--").c_str(), "bigFont.fnt");
+  timerLabel->setPosition({m_mainLayer->getContentSize().width / 2.f, 30.f});
   timerLabel->setScale(0.4f);
+  timerLabel->setColor({0, 200, 255});
   m_mainLayer->addChild(timerLabel);
   m_sections[idx].timerLabel = timerLabel;
+
+  // secondary timer (platformer layout)
+  auto platTimerLabel = CCLabelBMFont::create(
+      (platPrefixes[idx] + "--:--:--:--").c_str(), "bigFont.fnt");
+  platTimerLabel->setPosition(
+      {m_mainLayer->getContentSize().width / 2.f, 15.f});
+  platTimerLabel->setScale(0.4f);
+  platTimerLabel->setColor({255, 200, 0});
+  m_mainLayer->addChild(platTimerLabel);
+  m_sections[idx].platTimerLabel = platTimerLabel;
 
   // safe button
   auto safeMenu = CCMenu::create();
@@ -217,6 +264,16 @@ bool RLEventLayouts::init() {
           self->m_sections[idx].levelId = levelId;
           self->m_sections[idx].secondsLeft =
               obj["secondsLeft"].as<int>().unwrapOrDefault();
+          // refresh main timer label now that we have a value
+          const std::vector<std::string> classicPrefixes = {
+              "Next Daily Classic in ", "Next Weekly Classic in ",
+              "Next Monthly Classic in "};
+          if (self->m_sections[idx].timerLabel) {
+            self->m_sections[idx].timerLabel->setString(
+                (classicPrefixes[idx] + formatTime(static_cast<long>(
+                                            self->m_sections[idx].secondsLeft)))
+                    .c_str());
+          }
 
           // if we already have the full GJGameLevel cached, populate the
           if (auto glm = GameLevelManager::sharedState()) {
@@ -383,12 +440,21 @@ bool RLEventLayouts::init() {
                 }
               }
             }
-            std::vector<std::string> timerPrefixes = {
-                "Next Daily in ", "Next Weekly in ", "Next Monthly in "};
+            std::vector<std::string> classicPrefixes = {
+                "Next Daily Classic in ", "Next Weekly Classic in ",
+                "Next Monthly Classic in "};
+            std::vector<std::string> platPrefixes = {
+                "Next Daily Platformer in ", "Next Weekly Platformer in ",
+                "Next Monthly Platformer in "};
             if (sec->timerLabel)
               sec->timerLabel->setString(
-                  (timerPrefixes[idx] +
+                  (classicPrefixes[idx] +
                    formatTime(static_cast<long>(sec->secondsLeft)))
+                      .c_str());
+            if (sec->platTimerLabel)
+              sec->platTimerLabel->setString(
+                  (platPrefixes[idx] +
+                   formatTime(static_cast<long>(sec->platSecondsLeft)))
                       .c_str());
           };
         });
@@ -428,8 +494,12 @@ void RLEventLayouts::onInfo(CCObject *sender) {
 }
 
 void RLEventLayouts::update(float dt) {
-  std::vector<std::string> timerPrefixes = {"Next Daily in ", "Next Weekly in ",
-                                            "Next Monthly in "};
+  std::vector<std::string> classicPrefixes = {"Next Daily Classic in ",
+                                              "Next Weekly Classic in ",
+                                              "Next Monthly Classic in "};
+  std::vector<std::string> platPrefixes = {"Next Daily Platformer in ",
+                                           "Next Weekly Platformer in ",
+                                           "Next Monthly Platformer in "};
   int idx = static_cast<int>(this->m_eventType);
   if (idx < 0 || idx >= 3)
     return;
@@ -439,9 +509,18 @@ void RLEventLayouts::update(float dt) {
     if (sec.secondsLeft < 0)
       sec.secondsLeft = 0;
   }
+  if (sec.platSecondsLeft > 0) {
+    sec.platSecondsLeft -= dt;
+    if (sec.platSecondsLeft < 0)
+      sec.platSecondsLeft = 0;
+  }
   if (sec.timerLabel)
     sec.timerLabel->setString(
-        (timerPrefixes[idx] + formatTime(static_cast<long>(sec.secondsLeft)))
+        (classicPrefixes[idx] + formatTime(static_cast<long>(sec.secondsLeft)))
+            .c_str());
+  if (sec.platTimerLabel)
+    sec.platTimerLabel->setString(
+        (platPrefixes[idx] + formatTime(static_cast<long>(sec.platSecondsLeft)))
             .c_str());
 
   // check whether the level was stored yet and populate LevelCells when
