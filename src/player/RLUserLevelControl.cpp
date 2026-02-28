@@ -31,6 +31,7 @@ bool RLUserLevelControl::init() {
     return false;
   setTitle("Rated Layouts User Level Mod Panel");
   addSideArt(m_mainLayer, SideArt::All, SideArtStyle::PopupGold, false);
+  m_noElasticity = true;
 
   // show target user's name in title if possible
   std::string username =

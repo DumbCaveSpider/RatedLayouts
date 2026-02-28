@@ -1,6 +1,7 @@
 #include "RLModRatePopup.hpp"
 #include "Geode/ui/Popup.hpp"
 #include <Geode/Geode.hpp>
+#include <Geode/binding/ButtonSprite.hpp>
 #include <Geode/ui/NineSlice.hpp>
 #include <fmt/format.h>
 #include <string>
@@ -126,7 +127,7 @@ bool RLModRatePopup::init() {
 
     // add reject
     {
-      auto rejectBg = CCSprite::create("GJ_button_06.png");
+      auto rejectBg = CCSprite::create("GJ_button_04.png");
       auto rejectLabel = CCLabelBMFont::create("-", "bigFont.fnt");
       rejectLabel->setScale(0.75f);
       rejectLabel->setPosition(rejectBg->getContentSize() / 2);
@@ -352,9 +353,20 @@ bool RLModRatePopup::init() {
         menu_selector(RLModRatePopup::onDeleteSendsButton));
     if (deleteSendBtn) {
       deleteSendBtn->setPosition(
-          {m_mainLayer->getContentSize().width - 80.f, 80});
+          {m_mainLayer->getContentSize().width - 80.f, 40});
       deleteSendBtn->setID("delete-sends-button");
       m_buttonMenu->addChild(deleteSendBtn);
+    }
+
+    // dev-only reject toggle button
+    auto rejectSpr = ButtonSprite::create("Reject", 80, true, "goldFont.fnt",
+                                          "GJ_button_04.png", 30.f, 1.f);
+    auto rejectBtn = CCMenuItemSpriteExtra::create(
+        rejectSpr, this, menu_selector(RLModRatePopup::onRejectButton));
+    if (rejectBtn) {
+      rejectBtn->setPosition({m_mainLayer->getContentSize().width - 80.f, 80});
+      rejectBtn->setID("reject-button-dev");
+      m_buttonMenu->addChild(rejectBtn);
     }
 
     auto banSpr = ButtonSprite::create("Ban", 80, true, "goldFont.fnt",
@@ -1083,7 +1095,7 @@ void RLModRatePopup::onUnrateButton(CCObject *sender) {
             auto rejectBtnItem =
                 static_cast<CCMenuItemSpriteExtra *>(rejectBtn);
             auto rejectBg =
-                CCSprite::createWithSpriteFrameName("GJ_button_06.png");
+                CCSprite::createWithSpriteFrameName("GJ_button_04.png");
             auto rejectLabel = CCLabelBMFont::create("-", "bigFont.fnt");
             rejectLabel->setScale(0.75f);
             rejectLabel->setPosition(rejectBg->getContentSize() / 2);
@@ -1191,7 +1203,21 @@ void RLModRatePopup::onRejectButton(CCObject *sender) {
   if (!btn)
     return;
 
-  // reset previously selected rating's background
+  if (m_role == PopupRole::Dev) {
+    m_isRejected = !m_isRejected;
+    if (m_isRejected) {
+      auto rejectBtn = ButtonSprite::create("Reject", 80, true, "goldFont.fnt",
+                                            "GJ_button_02.png", 30.f, 1.f);
+      btn->setNormalImage(rejectBtn);
+    } else {
+      auto rejectBtn = ButtonSprite::create("Reject", 80, true, "goldFont.fnt",
+                                            "GJ_button_04.png", 30.f, 1.f);
+      btn->setNormalImage(rejectBtn);
+    }
+    return;
+  }
+
+  // clear any previously selected rating button
   if (m_selectedRating != -1) {
     CCMenu *prevContainer = (m_selectedRating <= 9) ? m_normalButtonsContainer
                                                     : m_demonButtonsContainer;
@@ -1212,7 +1238,7 @@ void RLModRatePopup::onRejectButton(CCObject *sender) {
   }
 
   // set this button to selected style
-  auto selectedBg = CCSprite::create("GJ_button_01.png");
+  auto selectedBg = CCSprite::create("GJ_button_06.png");
   auto selectedLabel = CCLabelBMFont::create("-", "bigFont.fnt");
   selectedLabel->setPosition(selectedBg->getContentSize() / 2);
   selectedLabel->setScale(0.75f);
@@ -1230,7 +1256,7 @@ void RLModRatePopup::onRejectButton(CCObject *sender) {
     m_submitButtonItem->setEnabled(false);
   }
 
-  // update difficulty UI to neutral (0 => NA)
+  // update difficulty preview to neutral
   updateDifficultySprite(0);
 }
 
@@ -1402,7 +1428,7 @@ void RLModRatePopup::onToggleFeatured(CCObject *sender) {
         m_normalButtonsContainer->getChildByID("rating-button-reject");
     if (rejectBtn) {
       auto rejectBtnItem = static_cast<CCMenuItemSpriteExtra *>(rejectBtn);
-      auto rejectBg = CCSprite::create("GJ_button_06.png");
+      auto rejectBg = CCSprite::create("GJ_button_04.png");
       auto rejectLabel = CCLabelBMFont::create("-", "bigFont.fnt");
       rejectLabel->setScale(0.75f);
       rejectLabel->setPosition(rejectBg->getContentSize() / 2);
@@ -1471,8 +1497,8 @@ void RLModRatePopup::onToggleFeatured(CCObject *sender) {
 
       // If featured was toggled on and there's no legendary active, re-enable
       // submit
-      if (m_submitButtonItem && m_role != PopupRole::Mod &&
-          m_isFeatured && !m_isLegendary && !m_isRejected) {
+      if (m_submitButtonItem && m_role != PopupRole::Mod && m_isFeatured &&
+          !m_isLegendary && !m_isRejected) {
         auto enabledSpr = ButtonSprite::create("Rate", 80, true, "goldFont.fnt",
                                                "GJ_button_01.png", 30.f, 1.f);
         m_submitButtonItem->setNormalImage(enabledSpr);
@@ -1523,7 +1549,7 @@ void RLModRatePopup::onToggleLegendary(CCObject *sender) {
         m_normalButtonsContainer->getChildByID("rating-button-reject");
     if (rejectBtn) {
       auto rejectBtnItem = static_cast<CCMenuItemSpriteExtra *>(rejectBtn);
-      auto rejectBg = CCSprite::create("GJ_button_06.png");
+      auto rejectBg = CCSprite::create("GJ_button_04.png");
       auto rejectLabel = CCLabelBMFont::create("-", "bigFont.fnt");
       rejectLabel->setScale(0.75f);
       rejectLabel->setPosition(rejectBg->getContentSize() / 2);
@@ -1636,7 +1662,7 @@ void RLModRatePopup::onToggleEpicFeatured(CCObject *sender) {
         m_normalButtonsContainer->getChildByID("rating-button-reject");
     if (rejectBtn) {
       auto rejectBtnItem = static_cast<CCMenuItemSpriteExtra *>(rejectBtn);
-      auto rejectBg = CCSprite::create("GJ_button_06.png");
+      auto rejectBg = CCSprite::create("GJ_button_04.png");
       auto rejectLabel = CCLabelBMFont::create("-", "bigFont.fnt");
       rejectLabel->setScale(0.75f);
       rejectLabel->setPosition(rejectBg->getContentSize() / 2);
@@ -1695,8 +1721,8 @@ void RLModRatePopup::onToggleEpicFeatured(CCObject *sender) {
 
       // If epic was toggled on and there's no legendary active, re-enable
       // submit
-      if (m_submitButtonItem && m_role != PopupRole::Mod && m_isEpicFeatured && !m_isLegendary &&
-          !m_isRejected) {
+      if (m_submitButtonItem && m_role != PopupRole::Mod && m_isEpicFeatured &&
+          !m_isLegendary && !m_isRejected) {
         auto enabledSpr = ButtonSprite::create("Rate", 80, true, "goldFont.fnt",
                                                "GJ_button_01.png", 30.f, 1.f);
         m_submitButtonItem->setNormalImage(enabledSpr);
@@ -1761,7 +1787,7 @@ void RLModRatePopup::onRatingButton(CCObject *sender) {
         m_normalButtonsContainer->getChildByID("rating-button-reject");
     if (rejectBtn) {
       auto rejectBtnItem = static_cast<CCMenuItemSpriteExtra *>(rejectBtn);
-      auto rejectBg = CCSprite::create("GJ_button_06.png");
+      auto rejectBg = CCSprite::create("GJ_button_04.png");
       auto rejectLabel = CCLabelBMFont::create("-", "bigFont.fnt");
       rejectLabel->setScale(0.75f);
       rejectLabel->setPosition(rejectBg->getContentSize() / 2);

@@ -25,6 +25,7 @@ class $modify(RLProfilePage, ProfilePage) {
     int m_planets = 0;
     int m_stars = 0;
     int m_coins = 0;
+    int m_votes = 0;
 
     // new role flags parsed from profile JSON
     bool isClassicMod = false;
@@ -37,6 +38,13 @@ class $modify(RLProfilePage, ProfilePage) {
     async::TaskHolder<Result<std::string>> m_authTask;
     bool m_profileInFlight = false;
     int m_profileForAccount = -1;
+
+    CCMenu *m_rlButtonsMenu = nullptr;
+    CCMenu *m_arrowMenu = nullptr;
+    NineSlice *m_rlButtonBg = nullptr;
+    CCMenu *m_rlStatsMenu = nullptr;
+    CCMenuItemSpriteExtra *m_rlToggleArrow = nullptr;
+    bool m_rlMenuVisible = false;
 
     ~Fields() {
       m_profileTask.cancel();
@@ -162,59 +170,113 @@ class $modify(RLProfilePage, ProfilePage) {
     }
 
     // Ensure the menu and surrounding layout are updated when data changes
-    rlStatsMenu->updateLayout();
+    if (auto rlStatsMenu = getChildByIDRecursive("rl-stats-menu"))
+      rlStatsMenu->updateLayout();
     if (auto rlButtonsMenu = getChildByIDRecursive("rl-buttons-menu"))
       rlButtonsMenu->updateLayout();
   }
 
-  bool init(int accountID, bool ownProfile) {
-    if (!ProfilePage::init(accountID, ownProfile))
-      return false;
-
-    if (auto statsMenu = m_mainLayer->getChildByID("stats-menu")) {
-      statsMenu->updateLayout();
-    }
-
-    if (Mod::get()->getSettingValue<bool>("disableRLMenu")) {
-      if (auto rlButtonBG = this->getChildByID("rl-button-bg")) {
-        rlButtonBG->removeFromParent();
-      }
-      if (auto rlButtonsMenu = this->getChildByID("rl-buttons-menu")) {
-        rlButtonsMenu->removeFromParent();
-      }
-      return true;
-    }
-
-    // create the rl buttons menu at the side
-    auto rlButtonsMenu = CCMenu::create();
-    rlButtonsMenu->setID("rl-buttons-menu");
-    rlButtonsMenu->setPosition(
-        {m_mainLayer->getContentSize().width / 2.f + 250.f,
-         m_mainLayer->getContentSize().height / 2.f});
-    rlButtonsMenu->setContentSize({32.f, 100.f});
-
-    // Arrange buttons vertically in a centered column
-    rlButtonsMenu->setLayout(ColumnLayout::create()
-                                 ->setGap(6.f)
-                                 ->setAxisAlignment(AxisAlignment::Center)
-                                 ->setGrowCrossAxis(false));
-
-    m_mainLayer->addChild(rlButtonsMenu, 10);
-
-    if (rlButtonsMenu) {
-      auto rlButtonBg = NineSlice::create("GJ_square02.png");
-      rlButtonBg->setContentSize(rlButtonsMenu->getContentSize() +
-                                 CCSize(10.f, 10.f));
-      rlButtonBg->setPosition(rlButtonsMenu->getPosition());
-      rlButtonBg->setID("rl-button-bg");
-      m_mainLayer->addChild(rlButtonBg, 9);
-    }
-
-    return true;
-  }
-
   void loadPageFromUserInfo(GJUserScore *score) {
     ProfilePage::loadPageFromUserInfo(score);
+
+    // recreate the rl button menu every time we load a profile to ensure it's
+    // in a clean state and
+    if (m_fields->m_rlButtonBg != nullptr) {
+      m_fields->m_rlButtonBg->removeFromParent();
+      m_fields->m_arrowMenu->removeFromParent();
+      m_fields->m_arrowMenu = nullptr;
+      m_fields->m_rlButtonBg = nullptr;
+      m_fields->m_rlMenuVisible = false;
+      m_fields->m_rlStatsMenu->removeFromParent();
+      m_fields->m_rlStatsMenu = nullptr;
+    }
+
+    if (!Mod::get()->getSettingValue<bool>("disableRLMenu")) {
+
+      auto winSize = CCDirector::sharedDirector()->getWinSize();
+      m_fields->m_rlButtonBg = NineSlice::create("GJ_square02.png");
+      m_fields->m_rlButtonBg->setContentSize({42.f, 110.f});
+      m_fields->m_rlButtonBg->setPosition(
+          {winSize.width + m_fields->m_rlButtonBg->getContentSize().width +
+               8.f / 2.f,
+           winSize.height / 2.f});
+      m_fields->m_rlButtonBg->setID("rl-button-bg");
+
+      m_fields->m_rlButtonsMenu = CCMenu::create();
+      m_fields->m_rlButtonsMenu->setID("rl-buttons-menu");
+      m_fields->m_rlButtonsMenu->setContentSize({32.f, 100.f});
+      m_fields->m_rlButtonsMenu->setPosition(
+          {m_fields->m_rlButtonBg->getContentSize().width / 2.f,
+           m_fields->m_rlButtonBg->getContentSize().height / 2.f});
+      m_fields->m_rlButtonsMenu->setLayout(
+          ColumnLayout::create()
+              ->setGap(6.f)
+              ->setAxisAlignment(AxisAlignment::Center)
+              ->setGrowCrossAxis(false));
+
+      m_mainLayer->addChild(m_fields->m_rlButtonBg, 9);
+      m_fields->m_rlButtonBg->addChild(m_fields->m_rlButtonsMenu, 1);
+
+      // create toggle arrow button
+
+      auto arrowSpr =
+          CCSprite::createWithSpriteFrameName("RL_arrow_01.png"_spr);
+      auto arrowBtn = CCMenuItemSpriteExtra::create(
+          arrowSpr, this, menu_selector(RLProfilePage::onToggleRLMenu));
+      m_fields->m_rlToggleArrow = arrowBtn;
+      m_fields->m_arrowMenu = CCMenu::create(arrowBtn, nullptr);
+      m_fields->m_arrowMenu->setPosition({0, 0});
+      m_fields->m_arrowMenu->setID("rl-toggle-menu");
+      m_mainLayer->addChild(m_fields->m_arrowMenu, 10);
+      // position at right edge
+      float arrowW = arrowSpr->getContentSize().width;
+      arrowBtn->setPosition(
+          {winSize.width - arrowW / 2 - 4, winSize.height / 2});
+
+      // view stats
+      if (GJAccountManager::sharedState()->m_accountID != 0) {
+        auto rlViewSpr =
+            CCSprite::createWithSpriteFrameName("RL_starBig.png"_spr);
+        auto rlStatsSprOff = EditorButtonSprite::create(
+            rlViewSpr, EditorBaseColor::Gray, EditorBaseSize::Normal);
+        auto rlStatsSprOn = EditorButtonSprite::create(
+            rlViewSpr, EditorBaseColor::LightBlue, EditorBaseSize::Normal);
+
+        auto rlStatsBtn = CCMenuItemToggler::create(
+            rlStatsSprOff, rlStatsSprOn, this,
+            menu_selector(RLProfilePage::onStatsSwitcher));
+        rlStatsBtn->setID("rl-stats-btn");
+        m_fields->m_rlButtonsMenu->addChild(rlStatsBtn);
+      }
+
+      // if u are leaderboard mod show the manage button to manage your
+      // leaderboard entries
+      if (Mod::get()->getSavedValue<bool>("isLeaderboardMod") ||
+          GJAccountManager::sharedState()->m_accountID == DEV_ACCOUNTID) {
+        if (!m_fields->m_rlButtonsMenu->getChildByID("rl-manage-btn")) {
+          auto modUserSpr =
+              CCSprite::createWithSpriteFrameName("RL_badgelbMod01.png"_spr);
+          auto modUserButton = EditorButtonSprite::create(
+              modUserSpr, EditorBaseColor::LightBlue, EditorBaseSize::Normal);
+          auto modUserBtnItem = CCMenuItemSpriteExtra::create(
+              modUserButton, this, menu_selector(RLProfilePage::onUserManage));
+          modUserBtnItem->setID("rl-manage-btn");
+          m_fields->m_rlButtonsMenu->addChild(modUserBtnItem);
+        }
+        if (!m_fields->m_rlButtonsMenu->getChildByID("rl-manage-level-btn")) {
+          auto manageLevelSpr =
+              CCSprite::createWithSpriteFrameName("RL_badgeMod01.png"_spr);
+          auto manageLevelButton = EditorButtonSprite::create(
+              manageLevelSpr, EditorBaseColor::LightBlue,
+              EditorBaseSize::Normal);
+          auto manageLevelBtnItem = CCMenuItemSpriteExtra::create(
+              manageLevelButton, this,
+              menu_selector(RLProfilePage::onUserManageLevel));
+          manageLevelBtnItem->setID("rl-manage-level-btn");
+          m_fields->m_rlButtonsMenu->addChild(manageLevelBtnItem);
+        }
+      }
+    }
 
     auto statsMenu = m_mainLayer->getChildByID("stats-menu");
     if (!statsMenu) {
@@ -222,87 +284,19 @@ class $modify(RLProfilePage, ProfilePage) {
       return;
     }
 
-    if (Mod::get()->getSettingValue<bool>("disableRLMenu"))
-      return;
-
-    if (auto rlStatsBtnFound = getChildByIDRecursive("rl-stats-btn"))
-      rlStatsBtnFound->removeFromParent();
-    if (auto rlStatsMenuFound = getChildByIDRecursive("rl-stats-menu"))
-      rlStatsMenuFound->removeFromParent();
-
-    auto rlButtonsMenu = m_mainLayer->getChildByID("rl-buttons-menu");
-    if (!rlButtonsMenu) {
-      log::warn("rl-buttons-menu not found — recreating");
-      // Recreate the buttons menu so the page shows correctly
-      rlButtonsMenu = CCMenu::create();
-      rlButtonsMenu->setID("rl-buttons-menu");
-      rlButtonsMenu->setPosition(
-          {m_mainLayer->getContentSize().width / 2.f + 250.f,
-           m_mainLayer->getContentSize().height / 2.f});
-      rlButtonsMenu->setContentSize({32.f, 100.f});
-      rlButtonsMenu->setLayout(ColumnLayout::create()
-                                   ->setGap(6.f)
-                                   ->setAxisAlignment(AxisAlignment::Center)
-                                   ->setGrowCrossAxis(false));
-      m_mainLayer->addChild(rlButtonsMenu, 10);
-    }
-
-    // view stats
-    if (GJAccountManager::sharedState()->m_accountID != 0) {
-      auto rlViewSpr =
-          CCSprite::createWithSpriteFrameName("RL_starBig.png"_spr);
-      auto rlStatsSprOff = EditorButtonSprite::create(
-          rlViewSpr, EditorBaseColor::Gray, EditorBaseSize::Normal);
-      auto rlStatsSprOn = EditorButtonSprite::create(
-          rlViewSpr, EditorBaseColor::LightBlue, EditorBaseSize::Normal);
-
-      auto rlStatsBtn = CCMenuItemToggler::create(
-          rlStatsSprOff, rlStatsSprOn, this,
-          menu_selector(RLProfilePage::onStatsSwitcher));
-      rlStatsBtn->setID("rl-stats-btn");
-      rlButtonsMenu->addChild(rlStatsBtn);
-    }
-
-    // if u are leaderboard mod show the manage button to manage your
-    // leaderboard entries
-    if (Mod::get()->getSavedValue<bool>("isLeaderboardMod") ||
-        GJAccountManager::sharedState()->m_accountID == DEV_ACCOUNTID) {
-      if (!rlButtonsMenu->getChildByID("rl-manage-btn")) {
-        auto modUserSpr =
-            CCSprite::createWithSpriteFrameName("RL_badgelbMod01.png"_spr);
-        auto modUserButton = EditorButtonSprite::create(
-            modUserSpr, EditorBaseColor::LightBlue, EditorBaseSize::Normal);
-        auto modUserBtnItem = CCMenuItemSpriteExtra::create(
-            modUserButton, this, menu_selector(RLProfilePage::onUserManage));
-        modUserBtnItem->setID("rl-manage-btn");
-        rlButtonsMenu->addChild(modUserBtnItem);
-      }
-      if (!rlButtonsMenu->getChildByID("rl-manage-level-btn")) {
-        auto manageLevelSpr =
-            CCSprite::createWithSpriteFrameName("RL_badgeMod01.png"_spr);
-        auto manageLevelButton = EditorButtonSprite::create(
-            manageLevelSpr, EditorBaseColor::LightBlue, EditorBaseSize::Normal);
-        auto manageLevelBtnItem = CCMenuItemSpriteExtra::create(
-            manageLevelButton, this,
-            menu_selector(RLProfilePage::onUserManageLevel));
-        manageLevelBtnItem->setID("rl-manage-level-btn");
-        rlButtonsMenu->addChild(manageLevelBtnItem);
-      }
-    }
-
-    auto rlStatsMenu = CCMenu::create();
-    rlStatsMenu->setID("rl-stats-menu");
-    rlStatsMenu->setContentSize(statsMenu->getContentSize());
+    m_fields->m_rlStatsMenu = CCMenu::create();
+    m_fields->m_rlStatsMenu->setID("rl-stats-menu");
+    m_fields->m_rlStatsMenu->setContentSize(statsMenu->getContentSize());
 
     auto row = RowLayout::create();
     row->setAxisAlignment(AxisAlignment::Center);
     row->setCrossAxisAlignment(AxisAlignment::Center);
     row->setGap(4.f);
-    rlStatsMenu->setLayout(row);
+    m_fields->m_rlStatsMenu->setLayout(row);
 
-    rlStatsMenu->setAnchorPoint({0.5f, 0.5f});
+    m_fields->m_rlStatsMenu->setAnchorPoint({0.5f, 0.5f});
 
-    rlStatsMenu->setPositionY(245.f);
+    m_fields->m_rlStatsMenu->setPositionY(245.f);
 
     auto starsText = GameToolbox::pointsToString(m_fields->m_stars);
     auto planetsText = GameToolbox::pointsToString(m_fields->m_planets);
@@ -320,9 +314,9 @@ class $modify(RLProfilePage, ProfilePage) {
                         GameToolbox::pointsToString(m_fields->m_coins),
                         "RL_BlueCoinSmall.png"_spr, nullptr);
 
-    rlStatsMenu->addChild(starsEntry);
-    rlStatsMenu->addChild(planetsEntry);
-    rlStatsMenu->addChild(coinsEntry);
+    m_fields->m_rlStatsMenu->addChild(starsEntry);
+    m_fields->m_rlStatsMenu->addChild(planetsEntry);
+    m_fields->m_rlStatsMenu->addChild(coinsEntry);
 
     if (m_fields->m_points > 0) {
       auto pointsEntry =
@@ -330,22 +324,25 @@ class $modify(RLProfilePage, ProfilePage) {
                           GameToolbox::pointsToString(m_fields->m_points),
                           "RL_blueprintPoint01.png"_spr,
                           menu_selector(RLProfilePage::onLayoutPointsClicked));
-      rlStatsMenu->addChild(pointsEntry);
+      m_fields->m_rlStatsMenu->addChild(pointsEntry);
     }
 
-    rlStatsMenu->setVisible(false);
+    m_fields->m_rlStatsMenu->setVisible(false);
     statsMenu->setVisible(true);
 
-    m_mainLayer->addChild(rlStatsMenu);
+    m_mainLayer->addChild(m_fields->m_rlStatsMenu);
 
     if (score) {
       this->fetchProfileData(score->m_accountID);
     }
 
-    rlStatsMenu->updateLayout();
+    if (auto rlStatsMenu = getChildByIDRecursive("rl-stats-menu"))
+      rlStatsMenu->updateLayout();
 
     statsMenu->updateLayout();
-    rlButtonsMenu->updateLayout();
+    if (m_fields->m_rlButtonsMenu) {
+      m_fields->m_rlButtonsMenu->updateLayout();
+    }
   }
 
   void onStatsSwitcher(CCObject *sender) {
@@ -373,6 +370,38 @@ class $modify(RLProfilePage, ProfilePage) {
       if (auto m = typeinfo_cast<CCMenu *>(rlStatsMenu))
         m->setEnabled(false);
     }
+  }
+
+  void onToggleRLMenu(CCObject *sender) {
+    if (!m_fields->m_rlButtonBg)
+      return;
+    auto winSize = CCDirector::sharedDirector()->getWinSize();
+    float bgW = m_fields->m_rlButtonBg->getContentSize().width + 8.f;
+    float arrowW = 0.f;
+    if (m_fields->m_rlToggleArrow) {
+      arrowW =
+          m_fields->m_rlToggleArrow->getNormalImage()->getContentSize().width;
+    }
+
+    bool showing = m_fields->m_rlMenuVisible;
+    float targetBgX =
+        showing ? winSize.width + bgW / 2 : winSize.width - bgW / 2;
+    float targetArrowX = showing ? (winSize.width - arrowW / 2 - 4)
+                                 : (winSize.width - bgW - arrowW / 2 - 8);
+
+    auto moveBg = CCEaseBackOut::create(
+        CCMoveTo::create(0.3f, {targetBgX, winSize.height / 2}));
+    m_fields->m_rlButtonBg->runAction(moveBg);
+    if (m_fields->m_rlToggleArrow) {
+      auto moveArrow = CCEaseBackOut::create(
+          CCMoveTo::create(0.3f, {targetArrowX, winSize.height / 2}));
+      m_fields->m_rlToggleArrow->runAction(moveArrow);
+      if (auto sprite = static_cast<CCSprite *>(
+              m_fields->m_rlToggleArrow->getNormalImage())) {
+        sprite->setFlipX(!showing);
+      }
+    }
+    m_fields->m_rlMenuVisible = !showing;
   }
 
   void fetchProfileData(int accountId) {
@@ -464,7 +493,14 @@ class $modify(RLProfilePage, ProfilePage) {
           log::info("Received response from server");
 
           if (!response.ok()) {
-            log::warn("Server returned non-ok status: {}", response.code());
+            log::warn("{}: user doesn't exists in rated layouts",
+                      response.code());
+
+            if (pageRef->m_fields->m_rlToggleArrow) {
+              pageRef->m_fields->m_rlToggleArrow->setEnabled(false);
+              pageRef->m_fields->m_rlToggleArrow->setOpacity(100);
+            }
+
             return;
           }
 
@@ -479,6 +515,7 @@ class $modify(RLProfilePage, ProfilePage) {
           int stars = json["stars"].asInt().unwrapOrDefault();
           int coins = json["coins"].asInt().unwrapOrDefault();
           int planets = json["planets"].asInt().unwrapOrDefault();
+          int votes = json["votes"].asInt().unwrapOrDefault();
           bool isSupporter = json["isSupporter"].asBool().unwrapOrDefault();
           bool isBooster = json["isBooster"].asBool().unwrapOrDefault();
           // new flags
@@ -494,6 +531,7 @@ class $modify(RLProfilePage, ProfilePage) {
           pageRef->m_fields->m_planets = planets;
           pageRef->m_fields->m_points = points;
           pageRef->m_fields->m_coins = coins;
+          pageRef->m_fields->m_votes = votes;
 
           pageRef->m_fields->isSupporter = isSupporter;
           pageRef->m_fields->isBooster = isBooster;
@@ -640,6 +678,8 @@ class $modify(RLProfilePage, ProfilePage) {
                                      pageRef->m_fields->m_points);
             RLAchievements::checkAll(RLAchievements::Collectable::Coins,
                                      pageRef->m_fields->m_coins);
+            RLAchievements::checkAll(RLAchievements::Collectable::Votes,
+                                     pageRef->m_fields->m_votes);
           }
 
           // Handle creator points

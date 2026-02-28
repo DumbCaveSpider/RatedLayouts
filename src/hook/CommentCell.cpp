@@ -25,12 +25,10 @@ class $modify(RLCommentCell, CommentCell) {
     CommentCell::loadFromComment(comment);
 
     if (!comment) {
-      log::warn("Comment is null");
       return;
     }
 
     if (m_accountComment) {
-      log::warn("skipped account comment");
       return;
     }
 

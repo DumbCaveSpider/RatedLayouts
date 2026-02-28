@@ -23,13 +23,19 @@ bool RLCreditsPopup::init() {
   setTitle("Rated Layouts Credits");
 
   auto scrollLayer = ScrollLayer::create({340.f, 195.f});
-  scrollLayer->setPosition({20.f, 23.f});
+  scrollLayer->setPosition({15.f, 23.f});
   m_mainLayer->addChild(scrollLayer);
   addListBorders(m_mainLayer,
-                 {m_mainLayer->getContentSize().width / 2,
+                 {m_mainLayer->getContentSize().width / 2 - 5.f,
                   m_mainLayer->getContentSize().height / 2 - 5.f},
                  {340.f, 195.f});
   m_scrollLayer = scrollLayer;
+
+  auto scrollbar = Scrollbar::create(m_scrollLayer);
+  scrollbar->setPosition({m_mainLayer->getContentSize().width - 14.f,
+                          (m_mainLayer->getContentSize().height / 2.f) - 5.f});
+  scrollbar->setScale(0.9f);
+  m_mainLayer->addChild(scrollbar);
 
   // info button
   auto infoSpr = CCSprite::createWithSpriteFrameName("RL_info01.png"_spr);

@@ -22,55 +22,65 @@ RLSelectSends *RLSelectSends::create() {
 };
 
 bool RLSelectSends::init() {
-  if (!Popup::init(300.f, 220.f, "square01_001.png"))
+  if (!Popup::init(230.f, 220.f, "square01_001.png"))
     return false;
 
-  auto buttonMenu = CCMenu::create();
-  buttonMenu->setContentSize({m_mainLayer->getContentSize().width - 10,
-                              m_mainLayer->getContentSize().height - 10});
-  buttonMenu->setPosition(m_mainLayer->getContentSize() / 2);
-  buttonMenu->setLayout(ColumnLayout::create()
-                            ->setGap(10.f)
-                            ->setAxisAlignment(AxisAlignment::Center)
-                            ->setAxisReverse(true));
+  // kill the close button
+  if (auto closeBtn = this->m_closeBtn) {
+    closeBtn->removeFromParent();
+  }
 
-  auto showAllBtn =
-      CCMenuItemSpriteExtra::create(ButtonSprite::create("All Sent"), this,
-                                    menu_selector(RLSelectSends::onAllSends));
+  m_buttonMenu->setLayout(ColumnLayout::create()
+                              ->setGap(10.f)
+                              ->setAxisAlignment(AxisAlignment::Center)
+                              ->setAxisReverse(true));
+
+  auto showAllBtn = CCMenuItemSpriteExtra::create(
+      ButtonSprite::create("Newest Sent", 180, true, "goldFont.fnt",
+                           "GJ_button_01.png", 30.f, 1.f),
+      this, menu_selector(RLSelectSends::onAllSends));
   showAllBtn->setPosition({50.f, 50.f});
-  buttonMenu->addChild(showAllBtn);
+  showAllBtn->m_scaleMultiplier = 1.05f;
+  m_buttonMenu->addChild(showAllBtn);
+
+  auto mostBtn = CCMenuItemSpriteExtra::create(
+      ButtonSprite::create("Most Sents", 180, true, "goldFont.fnt",
+                           "GJ_button_01.png", 30.f, 1.f),
+      this, menu_selector(RLSelectSends::onMostSents));
+  mostBtn->setPosition({160.f, 80.f});
+  mostBtn->m_scaleMultiplier = 1.05f;
+  m_buttonMenu->addChild(mostBtn);
+
+  // least sents button
+  auto leastBtn = CCMenuItemSpriteExtra::create(
+      ButtonSprite::create("Least Sents", 180, true, "goldFont.fnt",
+                           "GJ_button_01.png", 30.f, 1.f),
+      this, menu_selector(RLSelectSends::onLeastSents));
+  leastBtn->setPosition({270.f, 20.f});
+  leastBtn->m_scaleMultiplier = 1.05f;
+  m_buttonMenu->addChild(leastBtn);
+
   if (Mod::get()->getSavedValue<bool>("isClassicAdmin") ||
       Mod::get()->getSavedValue<bool>("isPlatAdmin") ||
       GJAccountManager::sharedState()->m_accountID == DEV_ACCOUNTID) {
     auto threePlusBtn = CCMenuItemSpriteExtra::create(
-        ButtonSprite::create("3+ Sents"), this,
-        menu_selector(RLSelectSends::onThreePlusSends));
+        ButtonSprite::create("3+ Sents", 180, true, "goldFont.fnt",
+                             "geode.loader/GE_button_01.png", 30.f, 1.f),
+        this, menu_selector(RLSelectSends::onThreePlusSends));
     threePlusBtn->setPosition({160.f, 20.f});
-    buttonMenu->addChild(threePlusBtn);
+    threePlusBtn->m_scaleMultiplier = 1.05f;
+    m_buttonMenu->addChild(threePlusBtn);
 
     auto legendaryBtn = CCMenuItemSpriteExtra::create(
-        ButtonSprite::create("Legendary Sents"), this,
-        menu_selector(RLSelectSends::onLegendarySends));
+        ButtonSprite::create("Legendary Sents", 180, true, "goldFont.fnt",
+                             "geode.loader/GE_button_01.png", 30.f, 1.f),
+        this, menu_selector(RLSelectSends::onLegendarySends));
     legendaryBtn->setPosition({270.f, 50.f});
-    buttonMenu->addChild(legendaryBtn);
+    legendaryBtn->m_scaleMultiplier = 1.05f;
+    m_buttonMenu->addChild(legendaryBtn);
   }
-  auto mostBtn =
-      CCMenuItemSpriteExtra::create(ButtonSprite::create("Most Sents"), this,
-                                    menu_selector(RLSelectSends::onMostSents));
-  mostBtn->setPosition({160.f, 80.f});
-  buttonMenu->addChild(mostBtn);
 
-  // least sents button
-  auto leastBtn = CCMenuItemSpriteExtra::create(
-      ButtonSprite::create("Least Sents"), this,
-      menu_selector(RLSelectSends::onLeastSents));
-  leastBtn->setPosition({270.f, 20.f});
-  buttonMenu->addChild(leastBtn);
-
-  m_mainLayer->addChild(buttonMenu);
-  buttonMenu->updateLayout();
-
-  m_buttonMenu = nullptr; // no need xd
+  m_buttonMenu->updateLayout();
 
   return true;
 }
@@ -79,7 +89,7 @@ void RLSelectSends::onAllSends(CCObject *sender) {
   RLLevelBrowserLayer::ParamList params;
   params.emplace_back("type", "1");
   auto browserLayer = RLLevelBrowserLayer::create(
-      RLLevelBrowserLayer::Mode::Sent, params, "Sent Layouts");
+      RLLevelBrowserLayer::Mode::Sent, params, "Newest Sent Layouts");
   auto scene = CCScene::create();
   scene->addChild(browserLayer);
   auto transitionFade = CCTransitionFade::create(0.5f, scene);

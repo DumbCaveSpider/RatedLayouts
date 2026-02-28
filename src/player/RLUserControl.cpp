@@ -46,6 +46,7 @@ bool RLUserControl::init() {
     return false;
   setTitle("Rated Layouts User Mod Panel");
   addSideArt(m_mainLayer, SideArt::All, SideArtStyle::PopupGold, false);
+  m_noElasticity = true;
 
   std::string username =
       GameLevelManager::get()->tryGetUsername(m_targetAccountId);
