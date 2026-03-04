@@ -46,6 +46,14 @@ bool RLLeaderboardLayer::init() {
   scrollLayer->setPosition({0, 0});
   listLayer->addChild(scrollLayer);
 
+  if (!Mod::get()->getSettingValue<bool>("disableScrollbar")) {
+    auto scrollBar = Scrollbar::create(scrollLayer);
+    scrollBar->setPosition({listLayer->getContentSize().width + 24.f,
+                            listLayer->getContentSize().height / 2});
+    scrollBar->setContentHeight(listLayer->getContentSize().height - 20);
+    listLayer->addChild(scrollBar, 10);
+  }
+
   auto contentLayer = scrollLayer->m_contentLayer;
   if (contentLayer) {
     auto layout = ColumnLayout::create();

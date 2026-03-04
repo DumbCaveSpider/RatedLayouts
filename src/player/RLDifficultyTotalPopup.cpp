@@ -236,9 +236,16 @@ bool RLDifficultyTotalPopup::init() {
   m_coinRankLabel = CCLabelBMFont::create("-", "goldFont.fnt");
   m_coinRankLabel->setScale(0.4f);
   m_coinRankLabel->setAnchorPoint({1.f, .5f});
-  m_coinRankLabel->setPosition({contentSize.width - 10.f, 35.f});
+  m_coinRankLabel->setPosition({contentSize.width - 10.f, 30.f});
   m_coinRankLabel->setVisible(false);
   m_mainLayer->addChild(m_coinRankLabel);
+
+  m_voteRankLabel = CCLabelBMFont::create("-", "goldFont.fnt");
+  m_voteRankLabel->setScale(0.4f);
+  m_voteRankLabel->setAnchorPoint({1.f, .5f});
+  m_voteRankLabel->setPosition({contentSize.width - 10.f, 45.f});
+  m_voteRankLabel->setVisible(false);
+  m_mainLayer->addChild(m_voteRankLabel);
 
   if (m_mode == Mode::Planets) {
     setTitle("Rated Layouts Platformer: -");
@@ -320,6 +327,7 @@ bool RLDifficultyTotalPopup::init() {
         // player's rank
         int position = json["position"].asInt().unwrapOrDefault();
         int coinRank = json["coinRank"].asInt().unwrapOrDefault();
+        int voteRank = json["voteRank"].asInt().unwrapOrDefault();
         std::string titlePrefix =
             self->m_mode == RLDifficultyTotalPopup::Mode::Planets
                 ? "Rated Layouts Platformer: "
@@ -329,8 +337,13 @@ bool RLDifficultyTotalPopup::init() {
                 .c_str());
         if (self->m_rankLabel) {
           if (position > 0) {
-            self->m_rankLabel->setString(
-                (std::string("Global Rank: ") + numToString(position)).c_str());
+            self->m_mode == Mode::Planets
+                ? self->m_rankLabel->setString(
+                      (std::string("Platformer Rank: ") + numToString(position))
+                          .c_str())
+                : self->m_rankLabel->setString(
+                      (std::string("Classic Rank: ") + numToString(position))
+                          .c_str());
             self->m_rankLabel->setVisible(true);
           } else {
             self->m_rankLabel->setVisible(false);
@@ -344,6 +357,16 @@ bool RLDifficultyTotalPopup::init() {
             self->m_coinRankLabel->setVisible(true);
           } else {
             self->m_coinRankLabel->setVisible(false);
+          }
+        }
+        // vote rank
+        if (self->m_voteRankLabel) {
+          if (voteRank > 0) {
+            self->m_voteRankLabel->setString(
+                (std::string("Vote Rank: ") + numToString(voteRank)).c_str());
+            self->m_voteRankLabel->setVisible(true);
+          } else {
+            self->m_voteRankLabel->setVisible(false);
           }
         }
 

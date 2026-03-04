@@ -1,5 +1,6 @@
 #include "RLShopLayer.hpp"
 #include "../utils/RLNameplateItem.hpp"
+#include "Geode/cocos/sprite_nodes/CCSprite.h"
 #include "Geode/ui/General.hpp"
 #include "Geode/ui/Layout.hpp"
 #include "Geode/ui/Popup.hpp"
@@ -60,20 +61,16 @@ bool RLShopLayer::init() {
 
   // layout creator (clickable)
   auto gm = GameManager::sharedState();
-  auto layoutCreator = SimplePlayer::create(275);
-  layoutCreator->updatePlayerFrame(275, IconType::Cube);
-  layoutCreator->setColors(gm->colorForIdx(6), gm->colorForIdx(3));
-  layoutCreator->setGlowOutline(gm->colorForIdx(1));
-  layoutCreator->setScale(2.5f);
+  auto shopkeeperIcon =
+      CCSprite::createWithSpriteFrameName("RL_arcticwoof.png"_spr);
+  shopkeeperIcon->setScale(2.f);
 
-  auto layoutCreatorItem = CCMenuItemSpriteExtra::create(
-      layoutCreator, this, menu_selector(RLShopLayer::onLayoutCreator));
-  layoutCreatorItem->setPosition(
-      {winSize.width / 2 - 120, winSize.height / 2 + 60});
-  layoutCreatorItem->setContentSize({80, 80});
-  layoutCreatorItem->m_scaleMultiplier = 1.02;
-  layoutCreator->setPosition(layoutCreatorItem->getContentSize() / 2);
-  menu->addChild(layoutCreatorItem);
+  auto shopkeeperItem = CCMenuItemSpriteExtra::create(
+      shopkeeperIcon, this, menu_selector(RLShopLayer::onLayoutCreator));
+  shopkeeperItem->setPosition(
+      {winSize.width / 2 - 120, winSize.height / 2 + 65});
+  shopkeeperItem->m_scaleMultiplier = 1.02;
+  menu->addChild(shopkeeperItem);
 
   // ruby counter label
   auto rubyLabel =
@@ -346,46 +343,55 @@ void RLShopLayer::onLayoutCreator(CCObject *sender) {
   log::debug("Random value: {}, raw: {}", v, raw);
   switch (v) {
   case 1:
-    response =
-        "Welcome to <cr>my shop</c>! I have the best <cg>nameplates</c> in the "
-        "business!";
+    response = "I got all of the <cg>nameplates</c> in stock!";
     break;
   case 2:
-    response = "Come back later when you get a little more "
-               "hmm... <d050><cg>Richer</c>!";
+    response = "What about that guy? <cl>Well he kinda run away when I "
+               "arrived</c>, odd fella but oh well...";
     break;
   case 3:
-    response = "These are very <cg>high quality nameplates</c>, you know! "
-               "<d050><cy>Not like those </c><cr>cheap ones</c>!";
+    response = "The plushies are <cr>NOT FOR SALE</c>. I just keep them here "
+               "because they are cute.";
     break;
   case 4:
-    response =
-        "So this weird kid <cl>Darkore</c> hook up this sweet tunes on my "
-        "<cr>shop</c>. <cp>I love it</c>!";
+    response = "<cl>Darkore</c>, that werid kid that put this <cg>awesome "
+               "music</c> in the shop? Truely peak bud :)";
     break;
   case 5:
-    response = "I really need to put a better <cg>security</c> on my shop.";
+    response = "Someone must have break into the <cg>front door</c> while "
+               "<cl>I was away...</c>";
     break;
   case 6:
-    response = "Stop bothering me and play some <cl>layouts</c>!";
+    response = "Are you gonna buy something? <cy>Or just keep annoying me?</c>";
     break;
   case 7:
-    response = "I heard if you <cg>buy all the nameplates</c>, <cy>something "
-               "special happens...</c>";
+    response = "Stop spread rumors about <cg>buying every nameplate</c>, "
+               "there's legit <cr>nothing happen when you do >:(</c>";
     break;
   case 8:
-    response = "Got my new <cp>plushies</c> next to me! They are so cute!";
+    response = "Still making more <cg>nameplates</c> coming. My <cl>delivery "
+               "got delayed</c>...";
     break;
   default:
-    response = "Can I help you?";
+    response = "Sorry <cy>I can't talk right now</c>, I'm busy counting my "
+               "<cr>rubies</c> :3";
     break;
   }
-  dialogObj = DialogObject::create("Layout Creator", response.c_str(), 28, 1.f,
+  dialogObj = DialogObject::create("ArcticWoof", response.c_str(), 1, 1.f,
                                    false, ccWHITE);
 
   auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 2);
   dialog->addToMainScene();
   dialog->animateInRandomSide();
+
+  dialog->m_characterSprite->setVisible(
+      false); // i was gonna be fancy and use cctexturecache thingy but didnt
+              // work so just did hacky way
+  auto awSprite =
+      CCSprite::createWithSpriteFrameName("RL_dialogIconAW.png"_spr);
+  awSprite->setPosition(dialog->m_characterSprite->getPosition());
+  dialog->m_mainLayer->addChild(awSprite, 1);
+  dialog->m_characterSprite->removeFromParent();
 }
 
 void RLShopLayer::onBuyItem(CCObject *sender) {

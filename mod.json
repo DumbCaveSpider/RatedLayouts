@@ -48,6 +48,10 @@
 		"jouca.badgesapi": {
 			"version": ">=v1.4.1",
 			"required": true
+		},
+		"capeling.garage-stats-menu": {
+			"version": ">=v1.0.0",
+			"required": true
 		}
 	},
 	"links": {
@@ -176,6 +180,12 @@
 			"type": "bool",
 			"default": false,
 			"description": "Disable the Rated Layouts stats menu button in the Profile Page."
+		},
+		"disableScrollbar": {
+			"name": "Disable Scrollbar",
+			"type": "bool",
+			"default": false,
+			"description": "Disable the scrollbar in Rated Layouts leaderboards and level browser."
 		},
 		"disableRewardAnimation": {
 			"name": "Disable Reward Animation",

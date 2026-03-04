@@ -20,6 +20,7 @@ class RLDifficultyTotalPopup : public geode::Popup {
       CCLabelBMFont* m_resultsLabel = nullptr;
       CCLabelBMFont* m_rankLabel = nullptr;
       CCLabelBMFont* m_coinRankLabel = nullptr;
+      CCLabelBMFont* m_voteRankLabel = nullptr;
       LoadingSpinner* m_spinner = nullptr;
       CCMenu* m_facesContainer = nullptr;
       RowLayout* m_facesLayout = nullptr;

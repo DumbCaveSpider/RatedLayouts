@@ -96,6 +96,13 @@ bool RLLevelBrowserLayer::init(GJSearchObject *object) {
   m_listLayer->addChild(scrollLayer);
   m_scrollLayer = scrollLayer;
 
+  if (!Mod::get()->getSettingValue<bool>("disableScrollbar")) {
+    auto scrollBar = Scrollbar::create(scrollLayer);
+    scrollBar->setPosition({LIST_SIZE.width + 24.f, LIST_SIZE.height / 2});
+    scrollBar->setContentHeight(LIST_SIZE.height - 20);
+    m_listLayer->addChild(scrollBar, 10);
+  }
+
   auto contentLayer = scrollLayer->m_contentLayer;
   if (contentLayer) {
     auto layout = ColumnLayout::create();

@@ -90,6 +90,10 @@ class $modify(RLProfilePage, ProfilePage) {
       fallbackSpr->setVisible(false);
       iconBtn = CCMenuItemSpriteExtra::create(fallbackSpr, this, iconCallback);
     }
+  
+    if (!iconCallback) {
+      iconBtn->setEnabled(false);
+    }
 
     auto ls = label->getScaledContentSize();
     auto is = iconBtn->getScaledContentSize();
