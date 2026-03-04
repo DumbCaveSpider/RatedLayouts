@@ -395,9 +395,8 @@ void RLShopLayer::onLayoutCreator(CCObject *sender) {
                "<cg>effort on it</c>...";
     break;
   case 13:
-    response =
-        "I heard <cl>someone</c> is trying to <cg>break into the shop</cg> "
-        "to steal my <cr>precious nameplates</c>, but I don't know who...";
+    response = "Did you know that you can get <cr>free rubies!</c> Tell me and "
+               "I'll <cg>give you a hint</c> on how to get them :P";
     break;
   case 14:
     response = "Would you want to buy my entire shop for <cg>$100k?</c> I know "
