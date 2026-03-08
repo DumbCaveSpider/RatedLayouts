@@ -220,8 +220,17 @@ bool RLModRatePopup::init() {
   unsendButtonItem->setID("unsend-button");
   modActionMenu->addChild(unsendButtonItem);
 
+  if (m_role == PopupRole::Admin || m_role == PopupRole::Dev) {
+    auto legacySpr = ButtonSprite::create("Legacy", 80, true, "goldFont.fnt",
+                                          "GJ_button_01.png", 30.f, 1.f);
+    auto legacyBtn = CCMenuItemSpriteExtra::create(
+        legacySpr, this, menu_selector(RLModRatePopup::onLegacyButton));
+    legacyBtn->setID("legacy-button");
+    modActionMenu->addChild(legacyBtn);
+  }
+
   // unrate and suggest buttons (only for admins)
-  if (userRole == 2) {
+  if (m_role == PopupRole::Admin || m_role == PopupRole::Dev) {
     auto unrateSpr = ButtonSprite::create("Unrate", 80, true, "goldFont.fnt",
                                           "GJ_button_01.png", 30.f, 1.f);
     auto unrateButtonItem = CCMenuItemSpriteExtra::create(
@@ -392,7 +401,7 @@ bool RLModRatePopup::init() {
   }
 
   // Admin-only event buttons: daily / weekly / monthly
-  if (userRole == 2) {
+  if (m_role == PopupRole::Admin || m_role == PopupRole::Dev) {
     // positions near the right side, stacked vertically
     float eventX = m_mainLayer->getContentSize().width;
     float eventYStart = 110.f;
@@ -693,6 +702,72 @@ void RLModRatePopup::onUnbanLevelButton(CCObject *sender) {
                     getResponseFailMessage(response, "Failed to unban level."));
               }
             });
+      });
+}
+
+void RLModRatePopup::onLegacyButton(CCObject *sender) {
+  // send current difficulty/featured/note to mark legacy
+  auto popup = UploadActionPopup::create(nullptr, "Marking legacy...");
+  popup->show();
+  int accountId = GJAccountManager::get()->m_accountID;
+  auto token = Mod::get()->getSavedValue<std::string>("argon_token");
+  if (token.empty()) {
+    popup->showFailMessage("Token not found");
+    return;
+  }
+  int difficulty = 0;
+  if (m_role == PopupRole::Dev && m_difficultyInput) {
+    difficulty = numFromString<int>(m_difficultyInput->getString()).unwrapOr(0);
+  } else {
+    difficulty = m_selectedRating > 0 ? m_selectedRating : 0;
+  }
+  int featured = 0;
+  if (m_role == PopupRole::Dev && m_featuredValueInput) {
+    featured = numFromString<int>(m_featuredValueInput->getString()).unwrapOr(0);
+  } else {
+    if (m_isFeatured) featured = 1;
+    else if (m_isEpicFeatured) featured = 2;
+    else if (m_isLegendary) featured = 3;
+  }
+  std::string note;
+  if (m_notesInput) note = m_notesInput->getString();
+
+  matjson::Value body = matjson::Value::object();
+  body["accountId"] = accountId;
+  body["argonToken"] = token;
+  body["levelId"] = m_levelId;
+  body["difficulty"] = difficulty;
+  body["featured"] = featured;
+  body["isPlat"] = m_level->isPlatformer();
+  if (!note.empty())
+    body["note"] = note;
+
+  auto req = web::WebRequest();
+  req.bodyJSON(body);
+  Ref<RLModRatePopup> self = this;
+  Ref<UploadActionPopup> upopup = popup;
+  m_setLegacyTask.spawn(
+      req.post("https://gdrate.arcticwoof.xyz/setLegacy"),
+      [self, upopup](web::WebResponse response) {
+        if (!self || !upopup)
+          return;
+        if (!response.ok()) {
+          upopup->showFailMessage(getResponseFailMessage(
+              response, "Failed to mark legacy"));
+          return;
+        }
+        auto jsonRes = response.json();
+        if (!jsonRes) {
+          upopup->showFailMessage("Invalid server response");
+          return;
+        }
+        auto json = jsonRes.unwrap();
+        bool success = json["success"].asBool().unwrapOrDefault();
+        if (success) {
+          upopup->showSuccessMessage("Marked as legacy");
+        } else {
+          upopup->showFailMessage("Server refused legacy flag");
+        }
       });
 }
 

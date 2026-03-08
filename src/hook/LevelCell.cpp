@@ -1,4 +1,5 @@
 #include "../custom/RLLevelBrowserLayer.hpp"
+#include "../level/RLLegacyPopup.hpp"
 #include <Geode/Geode.hpp>
 #include <Geode/modify/LevelCell.hpp>
 #include <Geode/utils/async.hpp>
@@ -10,7 +11,7 @@ extern const std::string legendaryPString;
 extern const std::string mythicPString;
 extern const std::string epicPString;
 
-class $modify(LevelCell) {
+class $modify(RLLevelCell, LevelCell) {
   struct Fields {
     std::optional<matjson::Value> m_pendingJson;
     int m_pendingLevelId = 0;
@@ -145,6 +146,14 @@ class $modify(LevelCell) {
     if (!difficultySprite) {
       log::warn("difficulty-sprite not found");
       return;
+    }
+
+    if (auto existingLegacy =
+            difficultySprite->getChildByID("rl-legacy-info-menu")) {
+      existingLegacy->setPosition({0, 0});
+      existingLegacy->setContentSize(
+          {difficultyContainer->getContentSize().width,
+           difficultyContainer->getContentSize().height});
     }
 
     difficultySprite->setPositionY(5);
@@ -795,6 +804,7 @@ class $modify(LevelCell) {
 
           auto json = jsonRes.unwrap();
           int difficulty = json["difficulty"].asInt().unwrapOr(0);
+          bool isLegacy = json["legacy"].asBool().unwrapOr(false);
 
           if (!cellRef)
             return;
@@ -803,6 +813,43 @@ class $modify(LevelCell) {
           if (this->m_level->m_stars > 0 && difficulty > 0) {
             checkRated(this->m_level->m_levelID);
             return;
+          }
+
+          // if this rating came from the legacy system, add a small info button
+          if (isLegacy) {
+            auto difficultyContainer =
+                this->m_mainLayer->getChildByID("difficulty-container");
+            auto difficultySprite =
+                difficultyContainer
+                    ? difficultyContainer->getChildByID("difficulty-sprite")
+                    : nullptr;
+
+            if (difficultySprite) {
+              if (auto existing =
+                      difficultySprite->getChildByID("rl-legacy-info-menu")) {
+                existing->setPosition({0, 0});
+                existing->removeFromParent();
+              }
+
+              auto infoSpr =
+                  CCSprite::createWithSpriteFrameName("RL_info01.png"_spr);
+              infoSpr->setScale(0.3f);
+
+              auto infoBtn = CCMenuItemSpriteExtra::create(
+                  infoSpr, this, menu_selector(RLLevelCell::onLegacyInfo));
+              infoBtn->setID("rl-legacy-info-btn");
+              infoBtn->setPosition(
+                  {difficultySprite->getContentSize().width - 10,
+                   difficultySprite->getContentSize().height - 10});
+
+              auto infoMenu = CCMenu::createWithItem(infoBtn);
+              infoMenu->setID("rl-legacy-info-menu");
+              infoMenu->setPosition({0, 0});
+              infoMenu->setContentSize(
+                  {difficultySprite->getContentSize().width,
+                   difficultySprite->getContentSize().height});
+              difficultySprite->addChild(infoMenu, 100);
+            }
           }
 
           if (this->m_mainLayer && this->m_level &&
@@ -819,6 +866,15 @@ class $modify(LevelCell) {
         });
 
     return;
+  }
+
+  void onLegacyInfo(CCObject *sender) {
+    if (!this->m_level)
+      return;
+    auto popup = RLLegacyPopup::create(this->m_level);
+    if (popup) {
+      popup->show();
+    }
   }
 
   void onEnter() {

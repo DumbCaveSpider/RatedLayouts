@@ -9,6 +9,7 @@
 
 #include "../custom/RLAchievements.hpp"
 #include "../level/RLCommunityVotePopup.hpp"
+#include "../level/RLLegacyPopup.hpp"
 #include "../level/RLModRatePopup.hpp"
 #include "../utils/RubyUtils.hpp"
 #include "Geode/cocos/textures/CCTexture2D.h"
@@ -97,7 +98,9 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
       CCSprite *modButtonSprite = nullptr;
       CCSprite *devButtonSprite = nullptr;
 
-      if (starRatings != 0 || m_level->m_accountID == GJAccountManager::sharedState()->m_accountID) {
+      if (starRatings != 0 ||
+          m_level->m_accountID ==
+              GJAccountManager::sharedState()->m_accountID) {
         if (isClassicMod || isClassicAdmin) {
           modButtonSprite = CCSpriteGrayscale::createWithSpriteFrameName(
               "RL_starBig.png"_spr);
@@ -203,11 +206,12 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
 
       auto json = jsonRes.unwrap();
       bool isSuggested = json["isSuggested"].asBool().unwrapOrDefault();
+      bool isLegacy = json["legacy"].asBool().unwrapOrDefault();
 
       // Process the response immediately
       if (layerRef) {
         layerRef->processLevelRating(json, layerRef);
-        if (!isSuggested) {
+        if (!isSuggested && !isLegacy) {
           layerRef->repositionRubyUI();
           layerRef->addOrUpdateRubyUI(
               layerRef, json["difficulty"].asInt().unwrapOrDefault());
@@ -226,9 +230,17 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
       return;
     int difficulty = json["difficulty"].asInt().unwrapOrDefault();
     int featured = json["featured"].asInt().unwrapOrDefault();
+    bool isLegacy = json["legacy"].asBool().unwrapOrDefault();
     CCNode *difficultySprite = nullptr;
     if (layerRef) {
       difficultySprite = layerRef->getChildByID("difficulty-sprite");
+      if (difficultySprite) {
+        auto existingLegacy =
+            difficultySprite->getChildByID("rl-legacy-info-menu");
+        if (existingLegacy) {
+          existingLegacy->setPosition({0, 0});
+        }
+      }
     }
 
     // helper to remove existing button
@@ -366,8 +378,35 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
         }
       }
     } else {
-      // already rated / not suggested
       removeExistingCommunityBtn();
+    }
+
+    // if this rating came from the legacy system, add a small info button
+    if (isLegacy) {
+      // don't recreate if already present
+      if (difficultySprite &&
+          !difficultySprite->getChildByID("rl-legacy-info-menu")) {
+        auto infoSpr = CCSprite::createWithSpriteFrameName("RL_info01.png"_spr);
+        infoSpr->setScale(0.3f);
+
+        auto infoBtn = CCMenuItemSpriteExtra::create(
+            infoSpr, layerRef, menu_selector(RLLevelInfoLayer::onLegacyInfo));
+        infoBtn->setID("rl-legacy-info-btn");
+        // shift button further down for non-demon difficulties (1–9)
+        float yPos = difficultySprite->getContentSize().height - 10;
+        if (difficulty > 0 && difficulty < 10) {
+          yPos -= 10.f;
+        }
+        infoBtn->setPosition(
+            {difficultySprite->getContentSize().width - 10, yPos});
+
+        auto infoMenu = CCMenu::createWithItem(infoBtn);
+        infoMenu->setID("rl-legacy-info-menu");
+        infoMenu->setPosition({0, 0});
+        infoMenu->setContentSize({difficultySprite->getContentSize().width,
+                                  difficultySprite->getContentSize().height});
+        difficultySprite->addChild(infoMenu, 100);
+      }
     }
 
     // If no difficulty rating, nothing to apply
@@ -1858,6 +1897,13 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
     }
   }
 
+  void onLegacyInfo(CCObject *sender) {
+    auto popup = RLLegacyPopup::create(this->m_level);
+    if (popup) {
+      popup->show();
+    }
+  }
+
   void onCommunityVote(CCObject *sender) {
     int normalPct = this->m_level->m_normalPercent;
     int practicePct = this->m_level->m_practicePercent;
@@ -2299,9 +2345,10 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             auto json = response.json().unwrap();
 
             bool isSuggested = json["isSuggested"].asBool().unwrapOrDefault();
+            bool isLegacy = json["legacy"].asBool().unwrapOrDefault();
             int difficulty = json["difficulty"].asInt().unwrapOrDefault();
 
-            if (!isSuggested) {
+            if (!isSuggested && !isLegacy && difficulty > 0) {
               layerRef->addOrUpdateRubyUI(layerRef, difficulty);
             }
 
@@ -2317,6 +2364,11 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                     difficultySprite->getChildByID("rl-star-label");
                 if (starLabel)
                   starLabel->removeFromParent();
+                // remove legacy info button if it was added
+                auto legacyMenu =
+                    difficultySprite->getChildByID("rl-legacy-info-menu");
+                if (legacyMenu)
+                  legacyMenu->removeFromParent();
 
                 // revert any applied difficulty Y offset and coin shifts
                 if (layerRef->m_fields->m_originalYSaved) {

@@ -60,6 +60,7 @@ private:
   async::TaskHolder<web::WebResponse> m_unsendTask;
   async::TaskHolder<web::WebResponse> m_banLevelTask;
   async::TaskHolder<web::WebResponse> m_unbanLevelTask;
+  async::TaskHolder<web::WebResponse> m_setLegacyTask;
   bool init() override;
   void onRateButton(CCObject *sender);
   void onUnrateButton(CCObject *sender);
@@ -75,6 +76,7 @@ private:
   void onUnsendButton(CCObject *sender);
   void onSetEventButton(CCObject *sender);
   void onToggleLegendary(CCObject *sender);
+  void onLegacyButton(CCObject *sender);
   void onToggleEpicFeatured(CCObject *sender);
   void onDifficultySpriteClicked(CCObject *sender);
   void updateDifficultySprite(int rating);
