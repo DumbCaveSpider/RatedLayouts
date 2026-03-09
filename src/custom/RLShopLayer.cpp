@@ -232,7 +232,7 @@ bool RLShopLayer::init() {
                  {56, 15000, 16200929, "GMDJoshie"},
                  {57, 10000, 23697591, "CroumbLaGouche"},
                  {58, 12250, 20554174, "mihmihmihmihmih"},
-                 {59, 10807, 13457772, "Darkore"},
+                 {59, 10807, 3595559, "Darkore"},
                  {60, 737000, 7824770, "Chaken"},
                  {61, 12500, 37794277, "YoussefCreator"},
                  {62, 12026, 29512374, "ScottFLikes699"},
