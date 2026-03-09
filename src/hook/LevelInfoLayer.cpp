@@ -2145,7 +2145,9 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
 
     // reposition (cleared state) and then fetch fresh data to re-apply rating
     this->repositionRLStars();
+    this->repositionRubyUI();
     this->fetchRLLevelInfo();
+    
   }
 
   void checkRated(int levelId) {
