@@ -2,7 +2,7 @@
 
 - Added **Community Vote Leaderboard** to show the top voters in the community vote. (Found in the Community Vote popup)
 - Added info button on the difficulty sprite for levels marked as legacy (clickable for more information)
-- Added **Legacy Rated Layout** popup (RLLegacyPopup) that displays extra details and the difficulty sprite when the info button is clicked
+- Added **Legacy Rated Layout** popup that displays extra details and the difficulty sprite when the info button is clicked
 - Added **Disable Stats Menu Animation** option in the mod settings
 - Added **Moderators Notes** section in the level info layer to show any notes from moderators about the level
 - Added **Vote Count** in the Profile Page.

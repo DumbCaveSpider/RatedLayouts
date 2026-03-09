@@ -118,10 +118,6 @@ bool RLNotificationAlert::init(std::string const &title,
     featuredCoin =
         CCSprite::createWithSpriteFrameName("RL_legendaryFeaturedCoin.png"_spr);
     break;
-  case 4:
-    featuredCoin =
-        CCSprite::createWithSpriteFrameName("RL_mythicFeaturedCoin.png"_spr);
-    break;
   }
 
   if (featuredCoin) {

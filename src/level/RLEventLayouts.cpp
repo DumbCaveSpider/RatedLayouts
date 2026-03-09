@@ -14,7 +14,6 @@ using namespace geode::prelude;
 
 extern const std::string epicPString;
 extern const std::string legendaryPString;
-extern const std::string mythicPString;
 
 // helper prototypes
 static std::string formatTime(long seconds);

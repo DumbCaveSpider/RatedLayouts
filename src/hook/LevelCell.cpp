@@ -8,7 +8,6 @@
 using namespace geode::prelude;
 
 extern const std::string legendaryPString;
-extern const std::string mythicPString;
 extern const std::string epicPString;
 
 class $modify(RLLevelCell, LevelCell) {
@@ -30,6 +29,9 @@ class $modify(RLLevelCell, LevelCell) {
     int difficulty = json["difficulty"].asInt().unwrapOrDefault();
     int featured = json["featured"].asInt().unwrapOrDefault();
     int score = json["featuredScore"].asInt().unwrapOrDefault();
+    bool isLegacy = json["legacy"].asBool().unwrapOrDefault();
+    bool isRated = json["rated"].asBool().unwrapOrDefault();
+    bool grayRing = (isLegacy && !isRated);
 
     log::debug("difficulty: {}, featured: {}, score: {}", difficulty, featured,
                score);
@@ -352,7 +354,7 @@ class $modify(RLLevelCell, LevelCell) {
       }
 
       // Update featured coin visibility (support featured types: 1=featured,
-      // 2=epic, 3=legendary, 4=mythic)
+      // 2=epic, 3=legendary)
       {
         auto featuredCoin = difficultySprite->getChildByID("featured-coin");
         auto epicFeaturedCoin =
@@ -372,7 +374,10 @@ class $modify(RLLevelCell, LevelCell) {
             mythicFeaturedCoin->removeFromParent();
           if (!featuredCoin) {
             auto newFeaturedCoin =
-                CCSprite::createWithSpriteFrameName("RL_featuredCoin.png"_spr);
+                grayRing ? CCSpriteGrayscale::createWithSpriteFrameName(
+                               "RL_featuredCoin.png"_spr)
+                         : CCSprite::createWithSpriteFrameName(
+                               "RL_featuredCoin.png"_spr);
             if (newFeaturedCoin) {
               newFeaturedCoin->setPosition(
                   {difficultySprite->getContentSize().width / 2,
@@ -390,8 +395,11 @@ class $modify(RLLevelCell, LevelCell) {
           if (mythicFeaturedCoin)
             mythicFeaturedCoin->removeFromParent();
           if (!epicFeaturedCoin) {
-            auto newEpicCoin = CCSprite::createWithSpriteFrameName(
-                "RL_epicFeaturedCoin.png"_spr);
+            auto newEpicCoin =
+                grayRing ? CCSpriteGrayscale::createWithSpriteFrameName(
+                               "RL_epicFeaturedCoin.png"_spr)
+                         : CCSprite::createWithSpriteFrameName(
+                               "RL_epicFeaturedCoin.png"_spr);
             if (newEpicCoin) {
               newEpicCoin->setPosition(
                   {difficultySprite->getContentSize().width / 2,
@@ -428,8 +436,11 @@ class $modify(RLLevelCell, LevelCell) {
           if (mythicFeaturedCoin)
             mythicFeaturedCoin->removeFromParent();
           if (!legendaryFeaturedCoin) {
-            auto newLegendaryCoin = CCSprite::createWithSpriteFrameName(
-                "RL_legendaryFeaturedCoin.png"_spr);
+            auto newLegendaryCoin =
+                grayRing ? CCSpriteGrayscale::createWithSpriteFrameName(
+                               "RL_legendaryFeaturedCoin.png"_spr)
+                         : CCSprite::createWithSpriteFrameName(
+                               "RL_legendaryFeaturedCoin.png"_spr);
             if (newLegendaryCoin) {
               newLegendaryCoin->setPosition(
                   {difficultySprite->getContentSize().width / 2,
@@ -464,49 +475,6 @@ class $modify(RLLevelCell, LevelCell) {
               }
             }
           }
-        } else if (featured == 4) {
-          // mythic
-          if (featuredCoin)
-            featuredCoin->removeFromParent();
-          if (epicFeaturedCoin)
-            epicFeaturedCoin->removeFromParent();
-          if (legendaryFeaturedCoin)
-            legendaryFeaturedCoin->removeFromParent();
-          if (!mythicFeaturedCoin) {
-            auto newMythicCoin = CCSprite::createWithSpriteFrameName(
-                "RL_mythicFeaturedCoin.png"_spr);
-            if (newMythicCoin) {
-              newMythicCoin->setPosition(
-                  {difficultySprite->getContentSize().width / 2,
-                   difficultySprite->getContentSize().height / 2});
-              newMythicCoin->setID("mythic-featured-coin");
-              difficultySprite->addChild(newMythicCoin, -1);
-
-              // particle mythic ring
-              const std::string &pString = mythicPString;
-              if (!pString.empty()) {
-                if (auto existingP =
-                        newMythicCoin->getChildByID("rating-particles")) {
-                  existingP->removeFromParent();
-                }
-                ParticleStruct pStruct;
-                GameToolbox::particleStringToStruct(pString, pStruct);
-                CCParticleSystemQuad *particle =
-                    GameToolbox::particleFromStruct(pStruct, nullptr, false);
-                if (particle) {
-                  newMythicCoin->addChild(particle, 1);
-                  particle->resetSystem();
-                  particle->setPosition(newMythicCoin->getContentSize() / 2.f);
-                  particle->setID("rating-particles"_spr);
-                  particle->update(0.15f);
-                  particle->update(0.15f);
-                  particle->update(0.15f);
-                  particle->update(0.15f);
-                  particle->update(0.15f);
-                }
-              }
-            }
-          }
         } else {
           if (featuredCoin)
             featuredCoin->removeFromParent();
@@ -514,8 +482,6 @@ class $modify(RLLevelCell, LevelCell) {
             epicFeaturedCoin->removeFromParent();
           if (legendaryFeaturedCoin)
             legendaryFeaturedCoin->removeFromParent();
-          if (mythicFeaturedCoin)
-            mythicFeaturedCoin->removeFromParent();
         }
 
         // ensure particles exist for existing epic/legendary/mythic coins (if
@@ -556,30 +522,6 @@ class $modify(RLLevelCell, LevelCell) {
                   particle->resetSystem();
                   particle->setPosition(
                       legendaryFeaturedCoin->getContentSize() / 2.f);
-                  particle->setID("rating-particles"_spr);
-                  particle->update(0.15f);
-                  particle->update(0.15f);
-                  particle->update(0.15f);
-                  particle->update(0.15f);
-                  particle->update(0.15f);
-                }
-              }
-            }
-          }
-        } else if (featured == 4) {
-          if (mythicFeaturedCoin) {
-            if (!mythicFeaturedCoin->getChildByID("rating-particles")) {
-              const std::string &pString = mythicPString;
-              if (!pString.empty()) {
-                ParticleStruct pStruct;
-                GameToolbox::particleStringToStruct(pString, pStruct);
-                CCParticleSystemQuad *particle =
-                    GameToolbox::particleFromStruct(pStruct, nullptr, false);
-                if (particle) {
-                  mythicFeaturedCoin->addChild(particle, 1);
-                  particle->resetSystem();
-                  particle->setPosition(mythicFeaturedCoin->getContentSize() /
-                                        2.f);
                   particle->setID("rating-particles"_spr);
                   particle->update(0.15f);
                   particle->update(0.15f);

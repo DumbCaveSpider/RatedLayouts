@@ -24,11 +24,6 @@ extern const std::string legendaryPString =
     "3a13a90a40a10a0a15a15a0a0a0a0a0a0a6a3a0a0a0.313726a0a0."
     "615686a0a1a0a1a0a2a1a0a0a0.882353a0a0.878431a0a1a0a1a0a0.3a0a0."
     "2a0a0a0a0a0a0a0a0a2a1a0a0a1a138a0a0a0a0a0a0a0a0a0a0a0a0a0a0";
-extern const std::string mythicPString =
-    "30,2065,2,435,3,75,155,1,156,2,145,30a-1a2a0."
-    "3a36a90a40a12a0a15a15a0a0a0a0a0a0a5a3a0a0a0.85098a0a0.807843a0a0."
-    "0196078a0a1a0a3a1a0a0a0.988235a0a0.862745a0a0.592157a0a1a0a0.3a0a0."
-    "2a0a0a0a0a0a0a0a0a2a1a0a0a1a5a0a0a0a0a0a0a0a0a0a0a0a0a0a0";
 extern const std::string epicPString =
     "30,2065,2,435,3,75,155,1,156,2,145,30a-1a2a0."
     "3a36a90a40a12a0a15a15a0a0a0a0a0a0a5a3a0a0a0.741176a0a0."
@@ -40,11 +35,6 @@ const std::string legendaryTitlePString =
     "1a90a180a8a0a100a10a0a0a0a0a0a0a20a10a0a0a0.313726a0a0."
     "615686a0a1a0a1a0a10a5a0a0a0.882353a0a0.878431a0a1a0a1a0a0.3a0a0."
     "2a0a0a0a0a0a0a0a0a2a1a0a0a1a25a0a0a0a0a0a0a0a0a0a0a0a0a0a0,211,1";
-const std::string mythicTitlePString =
-    "30,2065,2,345,3,75,155,1,156,2,145,60a-1a1a0.3a-"
-    "1a90a180a10a0a100a10a0a0a0a0a0a0a10a10a0a0a1a0a0.862745a0a0."
-    "588235a0a1a0a1a5a0a0a1a0a1a0a0.784314a0a1a0a0.3a0a0."
-    "2a0a0a0a0a0a0a0a0a2a1a0a0a1a173a0a0a0a0a0a0a0a0a0a0a0a0a0a0,211,1";
 
 // most of the code here are just repositioning the stars and coins to fit the
 // new difficulty icon its very messy, yes but it just works do please clean up
@@ -225,12 +215,17 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
     });
   }
   void processLevelRating(const matjson::Value &json,
-                          Ref<RLLevelInfoLayer> layerRef) {
+                          Ref<RLLevelInfoLayer> layerRef,
+                          bool grayRing = false) {
     if (!layerRef)
       return;
     int difficulty = json["difficulty"].asInt().unwrapOrDefault();
     int featured = json["featured"].asInt().unwrapOrDefault();
     bool isLegacy = json["legacy"].asBool().unwrapOrDefault();
+    bool isRated = json["rated"].asBool().unwrapOrDefault();
+
+    if (!grayRing) // this is just a fallback lol
+      grayRing = (isLegacy && !isRated);
     CCNode *difficultySprite = nullptr;
     if (layerRef) {
       difficultySprite = layerRef->getChildByID("difficulty-sprite");
@@ -394,9 +389,6 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
         infoBtn->setID("rl-legacy-info-btn");
         // shift button further down for non-demon difficulties (1–9)
         float yPos = difficultySprite->getContentSize().height - 20;
-        if (difficulty > 0 && difficulty < 10) {
-          yPos -= 10.f;
-        }
         infoBtn->setPosition(
             {difficultySprite->getContentSize().width - 20, yPos});
 
@@ -1003,16 +995,13 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
       }
     }
 
-    // Update featured coin visibility (1=featured, 2=epic, 3=legendary,
-    // 4=mythic)
+    // Update featured coin visibility (1=featured, 2=epic, 3=legendary)
     if (difficultySprite2) {
       auto featuredCoin = difficultySprite2->getChildByID("featured-coin");
       auto epicFeaturedCoin =
           difficultySprite2->getChildByID("epic-featured-coin");
       auto legendaryFeaturedCoin =
           difficultySprite2->getChildByID("legendary-featured-coin");
-      auto mythicFeaturedCoin =
-          difficultySprite2->getChildByID("mythic-featured-coin");
 
       if (featured == 1) {
         // ensure other types removed
@@ -1020,8 +1009,6 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
           epicFeaturedCoin->removeFromParent();
         if (legendaryFeaturedCoin)
           legendaryFeaturedCoin->removeFromParent();
-        if (mythicFeaturedCoin)
-          mythicFeaturedCoin->removeFromParent();
         if (!featuredCoin) {
           auto newFeaturedCoin =
               CCSprite::createWithSpriteFrameName("RL_featuredCoin.png"_spr);
@@ -1037,8 +1024,6 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
           featuredCoin->removeFromParent();
         if (legendaryFeaturedCoin)
           legendaryFeaturedCoin->removeFromParent();
-        if (mythicFeaturedCoin)
-          mythicFeaturedCoin->removeFromParent();
         if (!epicFeaturedCoin) {
           auto newEpicCoin = CCSprite::createWithSpriteFrameName(
               "RL_epicFeaturedCoin.png"_spr);
@@ -1075,11 +1060,12 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
           featuredCoin->removeFromParent();
         if (epicFeaturedCoin)
           epicFeaturedCoin->removeFromParent();
-        if (mythicFeaturedCoin)
-          mythicFeaturedCoin->removeFromParent();
         if (!legendaryFeaturedCoin) {
-          auto newLegendaryCoin = CCSprite::createWithSpriteFrameName(
-              "RL_legendaryFeaturedCoin.png"_spr);
+          auto newLegendaryCoin =
+              grayRing ? CCSpriteGrayscale::createWithSpriteFrameName(
+                             "RL_legendaryFeaturedCoin.png"_spr)
+                       : CCSprite::createWithSpriteFrameName(
+                             "RL_legendaryFeaturedCoin.png"_spr);
           newLegendaryCoin->setPosition(
               {difficultySprite2->getContentSize().width / 2,
                difficultySprite2->getContentSize().height / 2});
@@ -1110,46 +1096,6 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             }
           }
         }
-      } else if (featured == 4) {
-        if (featuredCoin)
-          featuredCoin->removeFromParent();
-        if (epicFeaturedCoin)
-          epicFeaturedCoin->removeFromParent();
-        if (legendaryFeaturedCoin)
-          legendaryFeaturedCoin->removeFromParent();
-        if (!mythicFeaturedCoin) {
-          auto newMythicCoin = CCSprite::createWithSpriteFrameName(
-              "RL_mythicFeaturedCoin.png"_spr);
-          newMythicCoin->setPosition(
-              {difficultySprite2->getContentSize().width / 2,
-               difficultySprite2->getContentSize().height / 2});
-          newMythicCoin->setID("mythic-featured-coin");
-          difficultySprite2->addChild(newMythicCoin, -1);
-
-          // add particle on top of mythic ring
-          const std::string &pString = mythicPString;
-          if (!pString.empty()) {
-            if (auto existingP =
-                    newMythicCoin->getChildByID("rating-particles")) {
-              existingP->removeFromParent();
-            }
-            ParticleStruct pStruct;
-            GameToolbox::particleStringToStruct(pString, pStruct);
-            CCParticleSystemQuad *particle =
-                GameToolbox::particleFromStruct(pStruct, nullptr, false);
-            if (particle) {
-              newMythicCoin->addChild(particle, 1);
-              particle->resetSystem();
-              particle->setPosition(newMythicCoin->getContentSize() / 2.f);
-              particle->setID("rating-particles"_spr);
-              particle->update(0.15f);
-              particle->update(0.15f);
-              particle->update(0.15f);
-              particle->update(0.15f);
-              particle->update(0.15f);
-            }
-          }
-        }
       } else {
         if (featuredCoin)
           featuredCoin->removeFromParent();
@@ -1157,8 +1103,6 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
           epicFeaturedCoin->removeFromParent();
         if (legendaryFeaturedCoin)
           legendaryFeaturedCoin->removeFromParent();
-        if (mythicFeaturedCoin)
-          mythicFeaturedCoin->removeFromParent();
       }
 
       {
@@ -1186,41 +1130,6 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                 }
 
                 const std::string &pString = legendaryTitlePString;
-                if (!pString.empty()) {
-                  ParticleStruct pStruct;
-                  GameToolbox::particleStringToStruct(pString, pStruct);
-                  CCParticleSystemQuad *particle =
-                      GameToolbox::particleFromStruct(pStruct, nullptr, false);
-                  if (particle) {
-                    particle->setID("title-particles"_spr);
-                    particle->setPosition(titleLabel->getPosition());
-                    layerRef->addChild(particle, 10);
-                    particle->resetSystem();
-                    particle->update(0.15f);
-                    particle->update(0.15f);
-                    particle->update(0.15f);
-                  }
-                }
-              }
-            }
-          }
-        } else if (featured == 4) {
-          if (titleLabel) {
-            titleLabel->stopActionByTag(0xF00D);
-            auto tintUp = CCTintTo::create(1.f, 255, 220, 150);
-            auto tintDown = CCTintTo::create(1.f, 255, 255, 200);
-            auto seq = CCSequence::create(tintUp, tintDown, nullptr);
-            auto repeat = CCRepeatForever::create(seq);
-            repeat->setTag(0xF00D);
-            titleLabel->runAction(repeat);
-
-            if (!Mod::get()->getSettingValue<bool>("disableParticles")) {
-              if (layerRef) {
-                if (auto existing = layerRef->getChildByID("title-particles")) {
-                  existing->removeFromParent();
-                }
-
-                const std::string &pString = mythicTitlePString;
                 if (!pString.empty()) {
                   ParticleStruct pStruct;
                   GameToolbox::particleStringToStruct(pString, pStruct);
@@ -1281,30 +1190,6 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                 legendaryFeaturedCoin->addChild(particle, 1);
                 particle->resetSystem();
                 particle->setPosition(legendaryFeaturedCoin->getContentSize() /
-                                      2.f);
-                particle->setID("rating-particles"_spr);
-                particle->update(0.15f);
-                particle->update(0.15f);
-                particle->update(0.15f);
-                particle->update(0.15f);
-                particle->update(0.15f);
-              }
-            }
-          }
-        }
-      } else if (featured == 4) {
-        if (mythicFeaturedCoin) {
-          if (!mythicFeaturedCoin->getChildByID("rating-particles")) {
-            const std::string &pString = mythicPString;
-            if (!pString.empty()) {
-              ParticleStruct pStruct;
-              GameToolbox::particleStringToStruct(pString, pStruct);
-              CCParticleSystemQuad *particle =
-                  GameToolbox::particleFromStruct(pStruct, nullptr, false);
-              if (particle) {
-                mythicFeaturedCoin->addChild(particle, 1);
-                particle->resetSystem();
-                particle->setPosition(mythicFeaturedCoin->getContentSize() /
                                       2.f);
                 particle->setID("rating-particles"_spr);
                 particle->update(0.15f);
@@ -1703,7 +1588,6 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
       auto epicFeatureCoin = sprite->getChildByID("epic-featured-coin");
       auto legendaryFeatureCoin =
           sprite->getChildByID("legendary-featured-coin");
-      auto mythicFeatureCoin = sprite->getChildByID("mythic-featured-coin");
       float cx = difficultySprite->getContentSize().width / 2;
       float cy = difficultySprite->getContentSize().height / 2;
       if (featureCoin)
@@ -1712,8 +1596,6 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
         epicFeatureCoin->setPosition({cx, cy});
       if (legendaryFeatureCoin)
         legendaryFeatureCoin->setPosition({cx, cy});
-      if (mythicFeatureCoin)
-        mythicFeatureCoin->setPosition({cx, cy});
 
       // Handle pulsing title for legendary featured
       {
@@ -1741,41 +1623,6 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                 }
 
                 const std::string &pString = legendaryTitlePString;
-                if (!pString.empty()) {
-                  ParticleStruct pStruct;
-                  GameToolbox::particleStringToStruct(pString, pStruct);
-                  CCParticleSystemQuad *particle =
-                      GameToolbox::particleFromStruct(pStruct, nullptr, false);
-                  if (particle) {
-                    particle->setID("title-particles"_spr);
-                    particle->setPosition(titleLabel->getPosition());
-                    layerRef->addChild(particle, 10);
-                    particle->resetSystem();
-                    particle->update(0.15f);
-                    particle->update(0.15f);
-                    particle->update(0.15f);
-                  }
-                }
-              }
-            }
-          }
-        } else if (featured == 4) {
-          if (titleLabel) {
-            titleLabel->stopActionByTag(0xF00D);
-            auto tintUp = CCTintTo::create(1.0f, 255, 220, 150);
-            auto tintDown = CCTintTo::create(1.0f, 255, 255, 200);
-            auto seq = CCSequence::create(tintUp, tintDown, nullptr);
-            auto repeat = CCRepeatForever::create(seq);
-            repeat->setTag(0xF00D);
-            titleLabel->runAction(repeat);
-
-            if (!Mod::get()->getSettingValue<bool>("disableParticles")) {
-              if (layerRef) {
-                if (auto existing = layerRef->getChildByID("title-particles")) {
-                  existing->removeFromParent();
-                }
-
-                const std::string &pString = mythicTitlePString;
                 if (!pString.empty()) {
                   ParticleStruct pStruct;
                   GameToolbox::particleStringToStruct(pString, pStruct);
@@ -2233,10 +2080,6 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
           difficultySpriteNode->getChildByID("legendary-featured-coin");
       if (legendaryFeaturedCoin)
         legendaryFeaturedCoin->removeFromParent();
-      auto mythicFeaturedCoin =
-          difficultySpriteNode->getChildByID("mythic-featured-coin");
-      if (mythicFeaturedCoin)
-        mythicFeaturedCoin->removeFromParent();
 
       // reset difficulty frame and revert any applied offsets
       auto sprite = static_cast<GJDifficultySprite *>(difficultySpriteNode);

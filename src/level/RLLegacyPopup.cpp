@@ -90,14 +90,12 @@ void RLLegacyPopup::updateFromJson(const matjson::Value &json) {
     case 3:
       frameName = "RL_legendaryFeaturedCoin.png"_spr;
       break;
-    case 4:
-      frameName = "RL_mythicFeaturedCoin.png"_spr;
-      break;
     default:
       break;
     }
     if (!frameName.empty()) {
-      m_featuredRing = CCSprite::createWithSpriteFrameName(frameName.c_str());
+      m_featuredRing =
+          CCSpriteGrayscale::createWithSpriteFrameName(frameName.c_str());
       if (m_featuredRing && m_diffSprite) {
         m_featuredRing->setPosition(
             {m_diffSprite->getContentSize().width / 2,
@@ -150,7 +148,7 @@ bool RLLegacyPopup::init() {
     m_mainLayer->addChild(m_rewardIcon, 1);
   }
   m_rewardLabel = CCLabelBMFont::create("0", "bigFont.fnt");
-  if (m_rewardLabel && m_diffSprite) {
+  if (m_rewardLabel && m_diffSprite && m_rewardIcon) {
     m_rewardLabel->setScale(0.6f);
     m_rewardLabel->setAnchorPoint({0.f, 0.5f});
     m_rewardLabel->setPosition({m_rewardIcon->getContentSize().width + 5.f,
@@ -161,8 +159,9 @@ bool RLLegacyPopup::init() {
   // delete button only visible by admins
   bool isClassicAdmin = Mod::get()->getSavedValue<bool>("isClassicAdmin");
   bool isPlatAdmin = Mod::get()->getSavedValue<bool>("isPlatAdmin");
-  if ((isClassicAdmin && !m_level->isPlatformer()) ||
-      (isPlatAdmin && m_level->isPlatformer())) {
+  bool isPlat = m_level ? m_level->isPlatformer() : false;
+  if ((isClassicAdmin && !isPlat) ||
+      (isPlatAdmin && isPlat)) {
     auto deleteSpr = ButtonSprite::create("Delete", 50, true, "goldFont.fnt",
                                           "GJ_button_06.png", 20.f, 1.f);
     auto deleteBtn = CCMenuItemSpriteExtra::create(
@@ -235,25 +234,30 @@ bool RLLegacyPopup::init() {
 void RLLegacyPopup::onInfoButton(CCObject *sender) {
   MDPopup::create(
       "Legacy Rated Layouts",
-      "<cl>Legacy Rated Layouts</c> are layouts that was <cg>rated</c> before "
-      "the <cr>changed of the rating standards</c>.\n\nThis allows the users "
-      "to "
-      "know as of why this layout was <cr>unrated</c> provided by the "
-      "<cr>Layout Admins</c> with explaination of its unrated nature.\n\n"
-      "The purpose of <cl>Legacy Rated Layouts</c> is to be "
-      "<cg>transparent</c> about the reason of being unrated to avoid any form "
-      "of confusion of it's unrated nature as we continue to <cc>change the "
-      "rating standards</c>.\n\n"
-      "These layouts <co>does not reward the creator any Blueprint Points</c> "
-      "and doesn't appear in the <cy>Rated Layouts Browser</c> but still "
-      "reward anyone beating this layout <cl>Sparks</c> or <co>Planets</c> and "
-      "<cr>Rubies</c>.\n\n"
-      "\r\n\r\n---\r\n\r\n"
-      "## Note about Legacy Rated Layouts:\n\n"
-      "<cl>Legacy Rated Layouts</c> are only applied if is "
-      "unrated from the "
-      "<cr>standards changes</c>, not <cy>when it was unrated due to issues "
-      "within the level itself</c>.",
+      "<cl>**Legacy Rated Layouts**</c> is a <cg>special rating tier "
+      "dedicated</c> to "
+      "layouts that got <co>rated before the standards and rating system "
+      "change</c> "
+      "proposed by the <cr>new three classic admins</c> "
+      "([Sokuto](user:9135587), [ATXM](user:10092120) & [qoid](user:13603703)) "
+      "back in <cg>**February "
+      "2026**</c>.\n\n"
+      "This <cg>rating tier</c> is <cl>reserved for layouts</c> that are "
+      "<cc>affected by the "
+      "latest standards and criterias</c> required to get a rate. This feature "
+      "is "
+      "<cg>added in order to prevent confusion</c> or <co>false reports from "
+      "new players</c> "
+      "of the mod and serve as a <cf>respect for players who have previously "
+      "beaten</c> the <cl>affected layouts</c>.\n\n"
+      "This <cg>special rating tier</c> cannot be <co>awarded to layouts "
+      "rated</c> after the change of <cc>standards and criterias</c>.\n\n"
+      "These rating tier <co>does not give Blueprint Points</c> to the "
+      "creator of this layout but still "
+      "given the <cl>legacy rated</c> in the "
+      "respect of the players who <cl>beaten these layouts</c> before the "
+      "change of "
+      "the <cc>rating system</c>.\n\n",
       "OK")
       ->show();
 }
