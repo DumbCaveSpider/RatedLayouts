@@ -173,71 +173,7 @@ bool RLShopLayer::init() {
   m_shopRow1 = rowH();
   m_shopRow2 = rowH();
 
-  // remind myself to add these things as it is very important
-  m_shopItems = {{1, 15000, 29153807, "Artyxlr"},
-                 {2, 11300, 20493315, "MajStr113gd"},
-                 {3, 10000, 29960249, "DaRealSkellyGuy"},
-                 {4, 10000, 14922106, "Ayeah755"},
-                 {5, 15000, 4882817, "bonneville1"},
-                 {6, 50000, 29153807, "Artyxlr"},
-                 {7, 10000, 29960249, "DaRealSkellyGuy"},
-                 {8, 12500, 11827369, "Froose"},
-                 {9, 13125, 19304186, "DarkFeind"},
-                 {10, 14700, 26139147, "NitzFoxcrak"},
-                 {11, 12000, 13733061, "F1regek"},
-                 {12, 12000, 15289357, "Landon72"},
-                 {13, 20000, 3595559, "Darkore"},
-                 {14, 10000, 24877069, "abbaba"},
-                 {15, 10000, 24877069, "abbaba"},
-                 {16, 10000, 24877069, "abbaba"},
-                 {17, 10000, 24877069, "abbaba"},
-                 {18, 12500, 26209086, "Niki2025"},
-                 {19, 12500, 26209086, "Niki2025"},
-                 {20, 27500, 36519986, "NullJuicecd"},
-                 {21, 27500, 36519986, "NullJuicecd"},
-                 {22, 20000, 24448008, "Hexz"},
-                 {23, 57500, 7689052, "ArcticWoof"},
-                 {24, 10000, 15289357, "Landon72"},
-                 {25, 12340, 15289357, "Landon72"},
-                 {26, 30000, 5354634, "stkyc"},
-                 {27, 15000, 5354634, "stkyc"},
-                 {28, 10000, 4882817, "bonneville1"},
-                 {29, 15000, 16737398, "Hydraniac"},
-                 {30, 29032, 21389, "Enlightenment"},
-                 {31, 10000, 15289357, "Landon72"},
-                 {32, 10000, 15289357, "Landon72"},
-                 {33, 29032, 21389, "Enlightenment"},
-                 {34, 12500, 14881095, "sebtheboi"},
-                 {35, 10000, 21213401, "Flyingfish9"},
-                 {36, 11000, 21213401, "Flyingfish9"},
-                 {37, 12500, 21213401, "Flyingfish9"},
-                 {38, 10500, 25552964, "DestructionEToH"},
-                 {39, 11240, 37401841, "MunchyBob"},
-                 {40, 65000, 7689052, "ArcticWoof"},
-                 {41, 15000, 5354634, "stkyc"},
-                 {42, 10000, 5354634, "stkyc"},
-                 {43, 10000, 11827369, "Froose"},
-                 {44, 14000, 25479036, "KetazonerLop"},
-                 {45, 64115, 13803757, "FireExegd"},
-                 {46, 20000, 22572488, "Junotrion"},
-                 {47, 11000, 20181394, "BeeKreeperGD"},
-                 {48, 15000, 11306436, "Potalcium"},
-                 {49, 10000, 12206936, "RalingUwU"},
-                 {50, 25000, 1975253, "Dasshu"},
-                 {51, 11000, 25595533, "Monochromasity"},
-                 {52, 20000, 19509094, "Liberia"},
-                 {53, 20000, 7824770, "Chaken"},
-                 {54, 10000, 35607668, "bocaj583"},
-                 {55, 20000, 5354634, "stkyc"},
-                 {56, 15000, 16200929, "GMDJoshie"},
-                 {57, 10000, 23697591, "CroumbLaGouche"},
-                 {58, 12250, 20554174, "mihmihmihmihmih"},
-                 {59, 10807, 3595559, "Darkore"},
-                 {60, 737000, 7824770, "Chaken"},
-                 {61, 12500, 37794277, "YoussefCreator"},
-                 {62, 12026, 29512374, "ScottFLikes699"},
-                 {63, 10000, 27206145, "MegaGDashYT"},
-                 {64, 12500, 37794277, "YoussefCreator"}};
+  m_shopItems.clear();
   m_shopRow1->setAnchorPoint({0.5f, 0.5f});
   m_shopRow2->setAnchorPoint({0.5f, 0.5f});
 
@@ -256,51 +192,43 @@ bool RLShopLayer::init() {
   deckSpr->addChild(m_shopRow2, 1);
 
   // pagination controls
-  const int perPage = 8;
-  int totalPages = std::max(
-      1, static_cast<int>((m_shopItems.size() + perPage - 1) / perPage));
+  m_pageLabel = CCLabelBMFont::create("", "goldFont.fnt");
+  if (m_pageLabel) {
+    m_pageLabel->setScale(0.5f);
+    m_pageLabel->setPosition({shopMenu->getPositionX(), 3.f});
+    m_pageLabel->setAnchorPoint({0.5f, 0.f});
+    deckSpr->addChild(m_pageLabel, 2);
+  }
 
-  if (totalPages > 1) {
-    // page indicator label (placed inside deckSpr so coords are local)
-    m_pageLabel = CCLabelBMFont::create("", "goldFont.fnt");
-    if (m_pageLabel) {
-      m_pageLabel->setScale(0.5f);
-      m_pageLabel->setPosition({shopMenu->getPositionX(), 3.f});
-      m_pageLabel->setAnchorPoint({0.5f, 0.f});
-      deckSpr->addChild(m_pageLabel, 2);
-    }
+  // pagination menu thingy
+  auto pageMenu = CCMenu::create();
+  pageMenu->setPosition({0, 0});
+  pageMenu->setContentSize(deckSpr->getContentSize());
+  deckSpr->addChild(pageMenu, 2);
 
-    // pagenation menu thingy
-    auto pageMenu = CCMenu::create();
-    pageMenu->setPosition({0, 0});
-    pageMenu->setContentSize(deckSpr->getContentSize());
-    deckSpr->addChild(pageMenu, 2);
-
-    auto prevSpr = CCSprite::createWithSpriteFrameName("GJ_arrow_01_001.png");
-    if (prevSpr) {
-      m_prevPageBtn = CCMenuItemSpriteExtra::create(
-          prevSpr, this, menu_selector(RLShopLayer::onPrevPage));
-      if (m_prevPageBtn) {
-        m_prevPageBtn->setPosition(
-            {-10, pageMenu->getContentSize().height / 2});
-        pageMenu->addChild(m_prevPageBtn);
-      }
-    }
-
-    auto nextSpr = CCSprite::createWithSpriteFrameName("GJ_arrow_01_001.png");
-    nextSpr->setFlipX(true);
-    if (nextSpr) {
-      m_nextPageBtn = CCMenuItemSpriteExtra::create(
-          nextSpr, this, menu_selector(RLShopLayer::onNextPage));
-      if (m_nextPageBtn) {
-        m_nextPageBtn->setPosition({pageMenu->getContentSize().width + 10,
-                                    pageMenu->getContentSize().height / 2});
-        pageMenu->addChild(m_nextPageBtn);
-      }
+  auto prevSpr = CCSprite::createWithSpriteFrameName("GJ_arrow_01_001.png");
+  if (prevSpr) {
+    m_prevPageBtn = CCMenuItemSpriteExtra::create(
+        prevSpr, this, menu_selector(RLShopLayer::onPrevPage));
+    if (m_prevPageBtn) {
+      m_prevPageBtn->setPosition({-10, pageMenu->getContentSize().height / 2});
+      pageMenu->addChild(m_prevPageBtn);
     }
   }
 
-  updateShopPage();
+  auto nextSpr = CCSprite::createWithSpriteFrameName("GJ_arrow_01_001.png");
+  nextSpr->setFlipX(true);
+  if (nextSpr) {
+    m_nextPageBtn = CCMenuItemSpriteExtra::create(
+        nextSpr, this, menu_selector(RLShopLayer::onNextPage));
+    if (m_nextPageBtn) {
+      m_nextPageBtn->setPosition({pageMenu->getContentSize().width + 10,
+                                  pageMenu->getContentSize().height / 2});
+      pageMenu->addChild(m_nextPageBtn);
+    }
+  }
+
+  loadShopPage(0);
 
   shopMenu->updateLayout();
   deckSpr->addChild(shopMenu);
@@ -437,7 +365,7 @@ void RLShopLayer::onBuyItem(CCObject *sender) {
 
   // open buy popup with creator/price information
   RLBuyItemPopup::create(info.index, info.creatorId, info.creatorUsername,
-                         info.value, this)
+                         info.iconUrl, info.value, this)
       ->show();
 }
 
@@ -510,31 +438,21 @@ void RLShopLayer::onUnequipNameplate(CCObject *sender) {
 }
 
 void RLShopLayer::updateShopPage() {
-  const int perPage = 8;
-  int totalItems = static_cast<int>(m_shopItems.size());
-  int totalPages =
-      std::max(1, static_cast<int>((totalItems + perPage - 1) / perPage));
-  if (m_shopPage < 0)
-    m_shopPage = 0;
-  if (m_shopPage >= totalPages)
-    m_shopPage = totalPages - 1;
-
-  // clear rows
+  // clear rows first
   if (m_shopRow1)
     m_shopRow1->removeAllChildrenWithCleanup(true);
   if (m_shopRow2)
     m_shopRow2->removeAllChildrenWithCleanup(true);
 
-  int start = m_shopPage * perPage;
-  int end = std::min(start + perPage, totalItems);
-  for (int i = start; i < end; ++i) {
+  // add current items
+  int totalItems = static_cast<int>(m_shopItems.size());
+  for (int i = 0; i < totalItems; ++i) {
     const auto &s = m_shopItems[i];
-    auto item =
-        RLNameplateItem::create(s.idx, s.price, s.creatorId, s.creatorUsername,
-                                this, menu_selector(RLShopLayer::onBuyItem));
+    auto item = RLNameplateItem::create(s.idx, s.price, s.creatorId,
+                                        s.creatorUsername, s.iconUrl, this,
+                                        menu_selector(RLShopLayer::onBuyItem));
     item->setTag(s.idx);
-    int localIndex = i - start;
-    if (localIndex < 4) {
+    if (i < 4) {
       m_shopRow1->addChild(item);
     } else {
       m_shopRow2->addChild(item);
@@ -549,15 +467,15 @@ void RLShopLayer::updateShopPage() {
   // update page UI
   if (m_pageLabel) {
     m_pageLabel->setString(
-        fmt::format("{}/{}", m_shopPage + 1, totalPages).c_str());
+        fmt::format("{}/{}", m_shopPage + 1, m_totalPages).c_str());
   }
   if (m_prevPageBtn) {
     m_prevPageBtn->setEnabled(m_shopPage > 0);
     m_prevPageBtn->setOpacity(m_shopPage > 0 ? 255 : 120);
   }
   if (m_nextPageBtn) {
-    m_nextPageBtn->setEnabled(m_shopPage < totalPages - 1);
-    m_nextPageBtn->setOpacity(m_shopPage < totalPages - 1 ? 255 : 120);
+    m_nextPageBtn->setEnabled(m_shopPage < m_totalPages - 1);
+    m_nextPageBtn->setOpacity(m_shopPage < m_totalPages - 1 ? 255 : 120);
   }
 
   // ensure parent recomputes layout
@@ -578,25 +496,74 @@ void RLShopLayer::refreshRubyLabel() {
 
 void RLShopLayer::onPrevPage(CCObject *sender) {
   if (m_shopPage > 0) {
-    m_shopPage--;
-    updateShopPage();
+    loadShopPage(m_shopPage - 1);
   }
 }
 
 void RLShopLayer::onNextPage(CCObject *sender) {
-  const int perPage = 8;
-  int totalItems = static_cast<int>(m_shopItems.size());
-  int totalPages =
-      std::max(1, static_cast<int>((totalItems + perPage - 1) / perPage));
-  if (m_shopPage < totalPages - 1) {
-    m_shopPage++;
-    updateShopPage();
+  if (m_shopPage < m_totalPages - 1) {
+    loadShopPage(m_shopPage + 1);
   }
 }
 
 void RLShopLayer::keyBackClicked() {
   CCDirector::sharedDirector()->popSceneWithTransition(
       0.5f, PopTransition::kPopTransitionFade);
+}
+
+void RLShopLayer::loadShopPage(int page) {
+  m_shopPage = page;
+  matjson::Value body = matjson::Value::object();
+  body["page"] = page + 1;
+  body["amount"] = 8;
+
+  auto req = web::WebRequest();
+  req.bodyJSON(body);
+
+  Ref<RLShopLayer> self = this;
+  async::spawn(
+      req.post("https://gdrate.arcticwoof.xyz/getNameplates"),
+      [self](web::WebResponse res) {
+        if (!self)
+          return;
+        if (!res.ok()) {
+          log::warn("Failed to fetch nameplates: {}", res.code());
+          Notification::create("Failed to load shop", NotificationIcon::Warning)
+              ->show();
+          return;
+        }
+        auto jsonRes = res.json();
+        if (!jsonRes) {
+          Notification::create("Invalid server response",
+                               NotificationIcon::Warning)
+              ->show();
+          return;
+        }
+        auto json = jsonRes.unwrap();
+        self->m_shopItems.clear();
+
+        // server may return object with nameplates/items array or raw array
+        if (json.isObject()) {
+          auto itemsVal =
+              json.contains("nameplates") ? json["nameplates"] : json["items"];
+          if (itemsVal.isArray()) {
+            auto arr = itemsVal.asArray().unwrap();
+            for (auto &it : arr) {
+              ShopItem si;
+              si.idx = it["index"].asInt().unwrapOrDefault();
+              si.price = it["price"].asInt().unwrapOrDefault();
+              si.creatorId = it["accountId"].asInt().unwrapOrDefault();
+              si.creatorUsername =
+                  it["username"].asString().unwrapOrDefault();
+              si.iconUrl = "https://gdrate.arcticwoof.xyz" + it["url"].asString().unwrapOrDefault();
+
+              self->m_shopItems.push_back(si);
+            }
+          }
+          self->m_totalPages = json["totalPages"].asInt().unwrapOrDefault();
+        }
+        self->updateShopPage();
+      });
 }
 
 void RLShopLayer::onResetRubies(CCObject *sender) {

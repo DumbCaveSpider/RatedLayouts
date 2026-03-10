@@ -251,12 +251,10 @@ void RLLegacyPopup::onInfoButton(CCObject *sender) {
       "beaten</c> the <cl>affected layouts</c>.\n\n"
       "This <cg>special rating tier</c> cannot be <co>awarded to layouts "
       "rated</c> after the change of <cc>standards and criterias</c>.\n\n"
-      "These rating tier <co>does not give Blueprint Points</c> to the "
-      "creator of this layout but still "
-      "given the <cl>legacy rated</c> in the "
-      "respect of the players who <cl>beaten these layouts</c> before the "
-      "change of "
-      "the <cc>rating system</c>.\n\n"
+      "Creator with a <cc>Legacy Rate</c> will only receive <cl>1 Blueprint "
+      "Points only</c> regardless it's <cy>featured value</c>, and any layouts that "
+      "is <cl>Layout Rated</c> with <cc>Legacy Rate</c> will only count the "
+      "<cl>Blueprint Points</c> based of the <cg>normal Layout Rated</c>.\n\n"
       "<co>Sparks/Planets</c> that are <cc>grayscaled</c> are layouts that is "
       "<cr>not rated</c> but is a <cl>legacy rate</c>.",
       "OK")

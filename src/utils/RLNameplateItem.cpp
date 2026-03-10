@@ -8,17 +8,31 @@ namespace ratedlayouts {
 std::map<int, RLNameplateInfo> RLNameplateItem::s_items;
 
 CCMenuItemSpriteExtra *
-RLNameplateItem::create(int index, int value, int creatorId,
-                        const std::string &creatorUsername, CCObject *target,
-                        SEL_MenuHandler selector) {
-  auto iconName = fmt::format("icon_{}.png"_spr, index);
-
-  auto iconSpr = CCSprite::createWithSpriteFrameName(iconName.c_str());
-  if (!iconSpr)
-    iconSpr = CCSprite::createWithSpriteFrameName("RL_bob.png"_spr);
+RLNameplateItem::create(
+    int index,
+    int value,
+    int creatorId,
+    const std::string &creatorUsername,
+    const std::string &iconUrl,
+    CCObject *target,
+    SEL_MenuHandler selector) {
+  // create icon either from URL or fallback sprite frame
+  CCSprite *iconSpr = nullptr;
+  if (!iconUrl.empty()) {
+    // lazy load remote image
+    auto lazy = LazySprite::create({40, 40}, true);
+    lazy->loadFromUrl(iconUrl, CCImage::kFmtPng, true);
+    lazy->setAutoResize(true);
+    iconSpr = lazy;
+  } else {
+    auto iconName = fmt::format("icon_{}.png"_spr, index);
+    iconSpr = CCSprite::createWithSpriteFrameName(iconName.c_str());
+    if (!iconSpr)
+      iconSpr = CCSprite::createWithSpriteFrameName("RL_bob.png"_spr);
+  }
 
   auto texSize = iconSpr->getTextureRect().size;
-  float width = std::max(texSize.width, 64.f);
+  float width = std::max(texSize.width, 56.f);
   float height = texSize.height + 26.f; // room for price label
 
   // container node used as the menu item's normal image
@@ -33,7 +47,7 @@ RLNameplateItem::create(int index, int value, int creatorId,
   auto priceLabel = CCLabelBMFont::create(
       owned ? "Owned" : fmt::format("{}", value).c_str(), "bigFont.fnt");
   priceLabel->setScale(0.4f);
-  priceLabel->setPosition({width / 2.f - 6.f, 13.f});
+  priceLabel->setPosition({width / 2.f - 6.f, -5.f});
   if (owned) {
     priceLabel->setColor({120, 255, 140});
     priceLabel->setPosition({width / 2.f, 13.f});
@@ -58,9 +72,16 @@ RLNameplateItem::create(int index, int value, int creatorId,
   item->setTag(index);
 
   // register metadata for lookup
-  s_items[index] = RLNameplateInfo{index, value, creatorId, creatorUsername};
+  RLNameplateInfo info;
+  info.index = index;
+  info.value = value;
+  info.creatorId = creatorId;
+  info.creatorUsername = creatorUsername;
+  info.iconUrl = iconUrl;
+  s_items[index] = info;
   return item;
 }
+
 
 bool RLNameplateItem::getInfo(int index, RLNameplateInfo &out) {
   auto it = s_items.find(index);

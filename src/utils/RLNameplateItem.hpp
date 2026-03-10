@@ -13,14 +13,19 @@ struct RLNameplateInfo {
   int value = 0;     // cost in rubies
   int creatorId = 0; // account id
   std::string creatorUsername;
+  std::string iconUrl; // remote icon path
 };
 
 class RLNameplateItem {
 public:
-  static CCMenuItemSpriteExtra *create(int index, int value, int creatorId,
-                                       const std::string &creatorUsername,
-                                       CCObject *target,
-                                       SEL_MenuHandler selector);
+  static CCMenuItemSpriteExtra *create(
+      int index,
+      int value,
+      int creatorId,
+      const std::string &creatorUsername,
+      const std::string &iconUrl,
+      CCObject *target,
+      SEL_MenuHandler selector);
 
   static bool getInfo(int index, RLNameplateInfo &out);
 

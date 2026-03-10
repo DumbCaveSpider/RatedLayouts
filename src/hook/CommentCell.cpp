@@ -275,21 +275,32 @@ class $modify(RLCommentCell, CommentCell) {
       // nameplate thing
       if (cellRef->m_backgroundLayer && nameplate != 0 &&
           !Mod::get()->getSettingValue<bool>("disableNameplateInComment")) {
-        auto nameplateSpr = CCSprite::createWithSpriteFrameName(
-            fmt::format("nameplate_{}.png"_spr, nameplate).c_str());
+        std::string url = fmt::format(
+            "https://gdrate.arcticwoof.xyz/nameplates/banner/nameplate_{}.png",
+            nameplate);
         if (cellRef->m_compactMode) {
-          nameplateSpr->setPosition(
-              {cellRef->m_backgroundLayer->getContentSize().width / 2,
-               cellRef->m_backgroundLayer->getContentSize().height / 2});
-          nameplateSpr->setScale(0.925f);
+          auto lazy = LazySprite::create(
+              {cellRef->m_backgroundLayer->getScaledContentSize()},
+              true);
+          lazy->loadFromUrl(url, CCImage::kFmtPng, true);
+          lazy->setAutoResize(true);
+          lazy->setPosition(
+              {cellRef->m_backgroundLayer->getScaledContentSize().width / 2,
+               cellRef->m_backgroundLayer->getScaledContentSize().height / 2});
           cellRef->m_backgroundLayer->setOpacity(150);
-          cellRef->m_backgroundLayer->addChild(nameplateSpr, -1);
+          cellRef->m_backgroundLayer->addChild(lazy, -1);
         } else {
-          nameplateSpr->setScale(2.f);
-          nameplateSpr->setPosition(
-              {-20, cellRef->m_backgroundLayer->getContentSize().height / 2});
+          auto lazy = LazySprite::create(
+              {cellRef->m_backgroundLayer->getScaledContentSize() +
+                              CCSize(425, 425)},
+              true);
+          lazy->loadFromUrl(url, CCImage::kFmtPng, true);
+          lazy->setAutoResize(true);
+          lazy->setPosition(
+              {-20,
+               cellRef->m_backgroundLayer->getScaledContentSize().height / 2});
           cellRef->m_backgroundLayer->setOpacity(150);
-          cellRef->m_backgroundLayer->addChild(nameplateSpr, -1);
+          cellRef->m_backgroundLayer->addChild(lazy, -1);
         }
       }
 

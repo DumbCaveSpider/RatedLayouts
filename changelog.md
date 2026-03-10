@@ -14,6 +14,7 @@
 - Improved the **Credits Popup**
 - Improved **Moderator Panel** with additional tools and information for moderators and admins.
 - Tweaked the **User Moderator Panel** permissions and access.
+- Nameplates are now **Server-sided** to reduce the mod size and allow more nameplates to be added without needing to update the mod.
 - More nameplates!
 
 # v0.4.2-beta.1

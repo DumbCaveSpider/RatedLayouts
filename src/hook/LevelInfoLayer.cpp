@@ -876,11 +876,10 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
       // grayscale if the rating is legacy but unrated (grayRing)
       if (layerRef && layerRef->m_level && layerRef->m_level->isPlatformer()) {
         if (grayRing) {
-          starIcon =
-              CCSpriteGrayscale::createWithSpriteFrameName("RL_planetSmall.png"_spr);
+          starIcon = CCSpriteGrayscale::createWithSpriteFrameName(
+              "RL_planetSmall.png"_spr);
           if (!starIcon)
-            starIcon =
-                CCSpriteGrayscale::create("RL_planetMed.png"_spr);
+            starIcon = CCSpriteGrayscale::create("RL_planetMed.png"_spr);
         } else {
           starIcon =
               CCSprite::createWithSpriteFrameName("RL_planetSmall.png"_spr);
@@ -891,9 +890,11 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
       }
       if (!starIcon) {
         if (grayRing) {
-          starIcon = CCSpriteGrayscale::createWithSpriteFrameName("RL_starSmall.png"_spr);
+          starIcon = CCSpriteGrayscale::createWithSpriteFrameName(
+              "RL_starSmall.png"_spr);
         } else {
-          starIcon = CCSprite::createWithSpriteFrameName("RL_starSmall.png"_spr);
+          starIcon =
+              CCSprite::createWithSpriteFrameName("RL_starSmall.png"_spr);
         }
       }
       if (starIcon) {
@@ -1025,8 +1026,10 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
           legendaryFeaturedCoin->removeFromParent();
         if (!featuredCoin) {
           auto newFeaturedCoin =
-              grayRing ? CCSpriteGrayscale::createWithSpriteFrameName("RL_featuredCoin.png"_spr)
-                       : CCSprite::createWithSpriteFrameName("RL_featuredCoin.png"_spr);
+              grayRing ? CCSpriteGrayscale::createWithSpriteFrameName(
+                             "RL_featuredCoin.png"_spr)
+                       : CCSprite::createWithSpriteFrameName(
+                             "RL_featuredCoin.png"_spr);
           newFeaturedCoin->setPosition(
               {difficultySprite2->getContentSize().width / 2,
                difficultySprite2->getContentSize().height / 2});
@@ -1040,9 +1043,11 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
         if (legendaryFeaturedCoin)
           legendaryFeaturedCoin->removeFromParent();
         if (!epicFeaturedCoin) {
-          auto newEpicCoin =
-              grayRing ? CCSpriteGrayscale::createWithSpriteFrameName("RL_epicFeaturedCoin.png"_spr)
-                       : CCSprite::createWithSpriteFrameName("RL_epicFeaturedCoin.png"_spr);
+          auto newEpicCoin = grayRing
+                                 ? CCSpriteGrayscale::createWithSpriteFrameName(
+                                       "RL_epicFeaturedCoin.png"_spr)
+                                 : CCSprite::createWithSpriteFrameName(
+                                       "RL_epicFeaturedCoin.png"_spr);
           newEpicCoin->setPosition(
               {difficultySprite2->getContentSize().width / 2,
                difficultySprite2->getContentSize().height / 2});
@@ -1565,11 +1570,10 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
       CCSprite *starIcon = nullptr;
       if (layerRef && layerRef->m_level && layerRef->m_level->isPlatformer()) {
         if (grayRing) {
-          starIcon =
-              CCSpriteGrayscale::createWithSpriteFrameName("RL_planetSmall.png"_spr);
+          starIcon = CCSpriteGrayscale::createWithSpriteFrameName(
+              "RL_planetSmall.png"_spr);
           if (!starIcon)
-            starIcon =
-                CCSpriteGrayscale::create("RL_planetMed.png"_spr);
+            starIcon = CCSpriteGrayscale::create("RL_planetMed.png"_spr);
         } else {
           starIcon =
               CCSprite::createWithSpriteFrameName("RL_planetSmall.png"_spr);
@@ -1580,9 +1584,11 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
       }
       if (!starIcon) {
         if (grayRing) {
-          starIcon = CCSpriteGrayscale::createWithSpriteFrameName("RL_starSmall.png"_spr);
+          starIcon = CCSpriteGrayscale::createWithSpriteFrameName(
+              "RL_starSmall.png"_spr);
         } else {
-          starIcon = CCSprite::createWithSpriteFrameName("RL_starSmall.png"_spr);
+          starIcon =
+              CCSprite::createWithSpriteFrameName("RL_starSmall.png"_spr);
         }
       }
       if (starIcon) {
@@ -2147,7 +2153,6 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
     this->repositionRLStars();
     this->repositionRubyUI();
     this->fetchRLLevelInfo();
-    
   }
 
   void checkRated(int levelId) {

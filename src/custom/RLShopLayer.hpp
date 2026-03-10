@@ -25,6 +25,7 @@ private:
     int price;
     int creatorId;
     std::string creatorUsername;
+    std::string iconUrl;
   };
 
   void onLayoutCreator(CCObject *sender);
@@ -48,4 +49,8 @@ private:
   // data
   std::vector<ShopItem> m_shopItems;
   int m_shopPage = 0; // zero-based
+  int m_totalPages = 1;
+
+  // banner from server now
+  void loadShopPage(int page);
 };

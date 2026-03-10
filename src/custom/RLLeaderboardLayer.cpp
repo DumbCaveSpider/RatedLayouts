@@ -357,16 +357,19 @@ void RLLeaderboardLayer::populateLeaderboard(
       cell->addChild(bgSprite, 0);
     }
 
-    CCSprite *nameplate = nullptr;
+    CCNode *nameplateNode = nullptr;
     if (nameplateId != 0 &&
         !Mod::get()->getSettingValue<bool>("disableNameplate")) {
-      nameplate = CCSprite::createWithSpriteFrameName(
-          fmt::format("nameplate_{}.png"_spr, nameplateId).c_str());
-      if (nameplate) {
-        nameplate->setPosition(
-            {bgSprite->getPositionX() - 10, bgSprite->getPositionY()});
-        cell->addChild(nameplate, -1);
-      }
+      std::string url = fmt::format(
+          "https://gdrate.arcticwoof.xyz/nameplates/banner/nameplate_{}.png",
+          nameplateId);
+      auto lazy = LazySprite::create({bgSprite->getScaledContentSize() + CCSize(25, 25)}, false);
+      lazy->loadFromUrl(url, CCImage::kFmtPng, true);
+      lazy->setAutoResize(true);
+      lazy->setPosition(
+          {bgSprite->getPositionX(), bgSprite->getPositionY()});
+      cell->addChild(lazy, -1);
+      nameplateNode = lazy;
     }
 
     // glow for top 3

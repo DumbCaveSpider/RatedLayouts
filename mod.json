@@ -22,9 +22,6 @@
 			"RLSheet": [
 				"resources/RL_Sheet/*.png"
 			],
-			"RLNameplates": [
-				"resources/RL_Nameplates/*.png"
-			],
 			"RLShop": [
 				"resources/RL_Shop/*.png"
 			],

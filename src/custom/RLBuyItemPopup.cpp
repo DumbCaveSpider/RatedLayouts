@@ -14,13 +14,15 @@ using namespace ratedlayouts;
 
 RLBuyItemPopup *RLBuyItemPopup::create(int itemId, int creatorId,
                                        const std::string &creatorUsername,
-                                       int value, RLShopLayer *owner) {
+                                       const std::string &iconUrl, int value,
+                                       RLShopLayer *owner) {
   auto ret = new RLBuyItemPopup();
   if (!ret)
     return nullptr;
   ret->m_itemId = itemId;
   ret->m_creatorId = creatorId;
   ret->m_creatorUsername = creatorUsername;
+  ret->m_iconUrl = iconUrl;
   ret->m_value = value;
   ret->m_owner = owner;
   if (ret->init()) {
@@ -55,16 +57,17 @@ bool RLBuyItemPopup::init() {
   m_statusLabel->setColor(owned ? ccGREEN : ccRED);
   m_mainLayer->addChild(m_statusLabel);
 
-  // preview icon
-  auto plateName = fmt::format("nameplate_{}.png"_spr, m_itemId);
-  auto plateSpr = CCSprite::createWithSpriteFrameName(plateName.c_str());
-  if (plateSpr) {
-    plateSpr->setScale(0.65f);
-    plateSpr->setPosition(
-        {m_mainLayer->getScaledContentSize().width / 2.f,
-         m_mainLayer->getScaledContentSize().height / 2.f + 6.f});
-    m_mainLayer->addChild(plateSpr);
-  }
+  // preview icon (banner from server)
+  auto plateName = fmt::format("nameplate_{}.png", m_itemId);
+  std::string url =
+      "https://gdrate.arcticwoof.xyz/nameplates/banner/" + plateName;
+  auto lazy = LazySprite::create(
+      {m_mainLayer->getScaledContentSize() - CCSize{10, 10}}, true);
+  lazy->loadFromUrl(url, CCImage::kFmtPng, true);
+  lazy->setAutoResize(true);
+  lazy->setPosition({m_mainLayer->getScaledContentSize().width / 2.f,
+                     m_mainLayer->getScaledContentSize().height / 2.f + 6.f});
+  m_mainLayer->addChild(lazy);
 
   // creator username (clickable if creatorId > 0)
   auto creatorLabel = CCLabelBMFont::create(
