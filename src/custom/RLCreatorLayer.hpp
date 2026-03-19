@@ -20,6 +20,7 @@ class RLCreatorLayer : public CCLayer {
       void onMonthlyLayouts(CCObject* sender);
       void onUnknownButton(CCObject* sender);
       void onLayoutGauntlets(CCObject* sender);
+      void onLayoutSpire(CCObject* sender);
       void onAnnoucementButton(CCObject* sender);
       void onSearchLayouts(CCObject* sender);
       void onAchievementsButton(CCObject* sender);
@@ -39,6 +40,8 @@ class RLCreatorLayer : public CCLayer {
       // labels for mod info
       CCLabelBMFont* m_modStatusLabel = nullptr;
       CCLabelBMFont* m_modVersionLabel = nullptr;
+
+      int m_indexDia = 0;
 
       geode::async::TaskHolder<geode::utils::web::WebResponse> m_announcementTask;
       geode::async::TaskHolder<geode::utils::web::WebResponse> m_dialogueTask;

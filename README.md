@@ -12,7 +12,7 @@ This gives the <cy>Layout/Gameplay creators</c> a platform to get their levels r
 
 <cr>**This won't replace/conflict with existing rating systems nor officially rated levels will be included in this mod!**</c>
 
-<co>**You can find the Rated Layouts by clicking the Blue star button at the bottom left of the Creator Layer or Level Search Layer!**</c>
+<co>**You can find the Rated Layouts by clicking the Blue Spark button at the bottom left of the Creator Layer or Level Search Layer!**</c>
 
 ---
 

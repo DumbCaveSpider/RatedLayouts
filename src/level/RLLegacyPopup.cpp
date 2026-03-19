@@ -252,7 +252,7 @@ void RLLegacyPopup::onInfoButton(CCObject *sender) {
       "This <cg>special rating tier</c> cannot be <co>awarded to layouts "
       "rated</c> after the change of <cc>standards and criterias</c>.\n\n"
       "Creator with a <cc>Legacy Rate</c> will only receive <cl>1 Blueprint "
-      "Points only</c> regardless it's <cy>featured value</c>, and any layouts that "
+      "Point</c> regardless it's <cy>featured value</c>, and any layouts that "
       "is <cl>Layout Rated</c> with <cc>Legacy Rate</c> will only count the "
       "<cl>Blueprint Points</c> based of the <cg>normal Layout Rated</c>.\n\n"
       "<co>Sparks/Planets</c> that are <cc>grayscaled</c> are layouts that is "

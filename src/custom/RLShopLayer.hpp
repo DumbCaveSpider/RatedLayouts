@@ -33,6 +33,7 @@ private:
   void onUnequipNameplate(CCObject *sender);
   void onBuyItem(CCObject *sender);
   void onForm(CCObject *sender);
+  void onRedeemLayer(CCObject *sender);
 
   // pagination
   void onPrevPage(CCObject *sender);
