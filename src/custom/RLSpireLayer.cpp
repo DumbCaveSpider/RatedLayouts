@@ -1,6 +1,8 @@
 #include <Geode/Geode.hpp>
 #include "RLSpireLayer.hpp"
+#include "RLSpireSelectLevelLayer.hpp"
 #include <Geode/binding/CCMenuItemSpriteExtra.hpp>
+#include <Geode/binding/DialogLayer.hpp>
 #include <cue/RepeatingBackground.hpp>
 #include "Geode/cocos/cocoa/CCObject.h"
 
@@ -51,9 +53,10 @@ bool RLSpireLayer::init() {
     auto whiteSquareSpr = CCSprite::create("geode.loader/white-square.png");
     whiteSquareSpr->setOpacity(0);
     whiteSquareSpr->setScale(2.f);
-    auto whiteSquareBtn = CCMenuItemSpriteExtra::create(whiteSquareSpr, this, menu_selector(RLSpireLayer::onEnterSpire));
-    whiteSquareBtn->setPosition({50, 100});
-    entryMenu->addChild(whiteSquareBtn);
+    m_enterBtn = CCMenuItemSpriteExtra::create(whiteSquareSpr, this, menu_selector(RLSpireLayer::onSpireClick));
+    m_enterBtn->setPosition({50, 100});
+    entryMenu->addChild(m_enterBtn);
+
 
     this->setKeypadEnabled(true);
 
@@ -65,7 +68,28 @@ void RLSpireLayer::keyBackClicked() {
         0.5f, PopTransition::kPopTransitionFade);
 }
 
-void RLSpireLayer::onEnterSpire(CCObject* sender) {
+void RLSpireLayer::onSpireEnterComplete() {
+    auto nextScene = CCScene::create();
+    auto selectLayer = RLSpireSelectLevelLayer::create();
+    nextScene->addChild(selectLayer);
+    CCDirector::sharedDirector()->pushScene(CCTransitionFade::create(0.5f, nextScene));
+    m_readyReset = true;
+}
+
+void RLSpireLayer::onEnter() {
+    CCLayer::onEnter();
+
+    // reset spire state for when return
+    if (m_spireSpr && m_readyReset) {
+        m_spireSpr->setScale(m_spireOriginalScale);
+        m_spireSpr->setPosition(m_spireOriginalPos);
+        m_enterBtn->setEnabled(true);
+        m_blackout->removeFromParent();
+        m_readyReset = false;
+    }
+}
+
+void RLSpireLayer::onSpireClick(CCObject* sender) {
     if (!Mod::get()->getSavedValue<bool>("hasCode")) {
         FMODAudioEngine::sharedEngine()->playEffect("chestClick.ogg");
         DialogObject* dialogObj = nullptr;
@@ -103,5 +127,24 @@ void RLSpireLayer::onEnterSpire(CCObject* sender) {
         dialog->m_characterSprite->removeFromParent();
         return;
     }
-    log::debug("Entering the spire");
+
+    // entering the spire
+    if (m_spireSpr) {
+        m_spireOriginalPos = m_spireSpr->getPosition();
+        m_spireOriginalScale = m_spireSpr->getScale();
+        m_enterBtn->setEnabled(false);
+
+        auto scaleAction = CCScaleTo::create(1, 6.0f);
+        auto moveAction = CCMoveBy::create(1, {0, 300.0f});
+        auto spawnAction = CCSpawn::create(scaleAction, moveAction, nullptr);
+        auto easeAction = CCEaseSineInOut::create(spawnAction);
+        auto completeAction = CCCallFunc::create(this, callfunc_selector(RLSpireLayer::onSpireEnterComplete));
+        m_spireSpr->runAction(CCSequence::create(easeAction, completeAction, nullptr));
+
+        auto winSize = CCDirector::sharedDirector()->getWinSize();
+        m_blackout = CCLayerColor::create({0, 0, 0, 0}, winSize.width, winSize.height);
+        m_blackout->setOpacity(0);
+        this->addChild(m_blackout, 1000);
+        m_blackout->runAction(CCFadeTo::create(.85, 255));
+    }
 }

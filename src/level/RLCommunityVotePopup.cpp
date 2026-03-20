@@ -63,7 +63,7 @@ void RLCommunityVotePopup::onSubmit(CCObject *) {
             auto s = m_gameplayInput->getString();
             if (!s.empty()) {
               gameplayVote = numFromString<int>(s).unwrapOr(0);
-              gameplayVote = std::clamp(gameplayVote, 1, 30);
+              gameplayVote = std::clamp(gameplayVote, 1, 10);
               includeGameplay = true;
             }
           }
@@ -79,7 +79,7 @@ void RLCommunityVotePopup::onSubmit(CCObject *) {
             auto string = m_difficultyInput->getString();
             if (!string.empty()) {
               difficultyVote = numFromString<int>(string).unwrapOr(0);
-              difficultyVote = std::clamp(difficultyVote, 1, 10);
+              difficultyVote = std::clamp(difficultyVote, 1, 30);
               includeDifficulty = true;
             }
           }

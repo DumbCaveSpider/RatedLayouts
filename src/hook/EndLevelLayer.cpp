@@ -3,6 +3,7 @@
 #include "Geode/cocos/textures/CCTexture2D.h"
 #include <Geode/Geode.hpp>
 #include <Geode/modify/EndLevelLayer.hpp>
+#include "../custom/RLSpireSelectLevelLayer.hpp"
 
 using namespace geode::prelude;
 using namespace ratedlayouts;
@@ -64,6 +65,7 @@ class $modify(EndLevelLayer) {
     // to do crap lmaoooo
     if (level->m_normalPercent >= 100) {
       log::info("Level ID: {} completed for the first time!", level->m_levelID);
+      RLSpireSelectLevelLayer::setSpireLevelCompleted(level->m_levelID);
     } else {
       log::info("Level ID: {} not completed, skipping reward",
                 level->m_levelID);

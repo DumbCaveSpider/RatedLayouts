@@ -1,6 +1,7 @@
 #include <Geode/Geode.hpp>
 #include <Geode/binding/GJAccountManager.hpp>
 #include "RLSecretLayer1.hpp"
+#include "RLAchievements.hpp"
 
 using namespace geode::prelude;
 
@@ -65,7 +66,6 @@ bool RLSecretLayer1::init() {
         m_oracleParticle->setID("floating-particles"_spr);
         m_oracleParticle->update(0.15f);
 
-        this->setKeypadEnabled(true);
     }
 
     // crystal ball particle
@@ -82,9 +82,9 @@ bool RLSecretLayer1::init() {
         m_crystalParticle->setID("floating-particles"_spr);
         m_crystalParticle->update(0.15f);
         m_crystalParticle->setVisible(false);
-
-        this->setKeypadEnabled(true);
     }
+    
+    this->setKeypadEnabled(true);
     return true;
 }
 
@@ -276,6 +276,7 @@ void RLSecretLayer1::startRedeemRequest() {
         dialog->m_mainLayer->addChild(orSprite, 1);
         dialog->m_characterSprite->setVisible(false);
         self->finishRedeem();
+        RLAchievements::onReward("misc_spire");
         return;
     }
 
@@ -376,6 +377,7 @@ void RLSecretLayer1::startRedeemRequest() {
             if (self->m_textLabel) {
                 self->m_textLabel->setString("The Cosmos approves of your wisdom");
                 self->m_textLabel->setColor({0, 150, 0});
+                RLAchievements::onReward("misc_code");
             }
 
             // Reward the player with rubies and show currency animation

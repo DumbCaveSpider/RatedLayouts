@@ -281,7 +281,7 @@ void RLShopLayer::onLayoutCreator(CCObject* sender) {
         return g;
     }();
 
-    int v = gen.generate<int>(0, 15);
+    int v = gen.generate<int>(0, 16);
     uint64_t raw = gen.next();
     DialogObject* dialogObj = nullptr;
     std::string response = "Can I help you?";

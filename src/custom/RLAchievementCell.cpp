@@ -28,7 +28,7 @@ TableViewCell* RLAchievementCell(RLAchievements::Achievement const& ach, bool un
       // title
       auto title = CCLabelBMFont::create(ach.name.c_str(), "goldFont.fnt");
       title->setScale(0.7f);
-      title->limitLabelWidth(380.f, 0.6f, 0.45f);
+      title->limitLabelWidth(200.f, 0.6f, 0.45f);
       title->setAnchorPoint({0.f, 1.f});
       title->setPosition({60.f, 50.f});
       cell->addChild(title);
@@ -38,6 +38,7 @@ TableViewCell* RLAchievementCell(RLAchievements::Achievement const& ach, bool un
       desc->setScale(0.7f);
       desc->setAnchorPoint({0.f, 1.f});
       desc->setPosition({60.f, 25.f});
+      desc->limitLabelWidth(200.f, 0.7f, 0.45f);
       cell->addChild(desc);
 
       // status icon (check or lock)

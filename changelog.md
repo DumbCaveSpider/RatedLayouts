@@ -1,3 +1,10 @@
+# v0.5.0-beta.1
+### The Spire Update!
+
+- Added **The Spire**. Platformer-focus user created Rated Layouts levels. Explore the Spire and find forsaken lore beyond the <cp>Cosmos</c>
+- Added New Secret Character. *Discover this character and your access to the Spire will be granted.*
+- Fixed the issue where Difficulty Score voted 10 or higher doesn't apply correctly when voted.
+
 # v0.4.3-beta.1
 
 - Added **Community Vote Leaderboard** to show the top voters in the community vote. (Found in the Community Vote popup)

@@ -33,6 +33,7 @@ This gives the <cy>Layout/Gameplay creators</c> a platform to get their levels r
 - **<co>Custom Search Filters</c>**: Easily search for rated layout levels using various filters such as difficulty, level type, and more!
 - **<cc>Community Voting System</c>**: Players can vote on suggested/rated layouts based on originality, difficulty, and gameplay.
 - **<cj>Layout Gauntlets</c>**: Special gauntlets featuring themed classic rated layout levels created by Layout/Gameplay creators through Creator Contest.
+- **<cf>The Spire</c>**: Platformer-focus user created Rated Layouts levels. Explore the Spire and find forsaken lore beyond the <cp>Cosmos</c>.
 - **<cr>Report System</c>**: Report rated layouts that violates the Rated Layouts guidelines. Help us maintain the quality of rated layouts!
 - **<cg>Custom Achievements</c>**: Custom Achievements for completing rated layout levels and achieving milestones and other special interactions.
 - **<cs>QOL Features!</c>**: Various quality of life improvements for both players and creators.
@@ -59,9 +60,10 @@ This gives the <cy>Layout/Gameplay creators</c> a platform to get their levels r
 
 ### Credits
 
-- <cg>**Developers**:</c> [ArcticWoof](user:7689052) & [delivel](user:13678537)
-- <cg>**Texture Designs**:</c> [Dasshu](user:1975253) & [Darkore](user:3595559)
+- <cg>**Developer**:</c> [ArcticWoof](user:7689052)
+- <cg>**Texture Designs**:</c> [Darkore](user:3595559) & [Dasshu](user:1975253)
+- <cg>**Audio/Music**:</c> [Darkore](user:3595559)
 - <cg>**Discord Bot/Server**:</c> [delivel](user:13678537)
-- <cg>**Special Thanks**:</c> [hiimjasmine00](https://github.com/hiimjasmine00) & [iAndyHD3](https://github.com/iAndyHD3)
+- <cg>**Special Thanks**:</c> [hiimjasmine00](https://github.com/hiimjasmine00), [iAndyHD3](https://github.com/iAndyHD3), [delivel](https://github.com/delivel-tech) & [Erymanthus](https://github.com/RayDeeUx)
 
 ![King Clawthorne](arcticwoof.rated_layouts/king.png)
