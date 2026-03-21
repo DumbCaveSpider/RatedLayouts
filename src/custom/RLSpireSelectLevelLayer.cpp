@@ -228,7 +228,7 @@ void RLSpireSelectLevelLayer::rewardRoomTransition() {
 
     Mod::get()->setSavedValue("highestSpireRoomExplored", m_spireRoomIndex);
 
-    const int reward = 5000;
+    const int reward = 1000;
     int oldRubies = Mod::get()->getSavedValue<int>("rubies", 0);
     Mod::get()->setSavedValue<int>("rubies", oldRubies + reward);
 
@@ -419,7 +419,7 @@ void RLSpireSelectLevelLayer::onInfoClick(CCObject*) {
     MDPopup::create("The Spire",
         "<cf>The Spire</c> is tower-themed <co>Platformer-focus</c> user created <cl>Rated Layouts</c> levels.\n\n"
         "Explore the Spire and find forsaken lore beyond the <cp>Cosmos</c>.\n\n"
-        "Each <co>room</c> contains <cl>5 platformer layouts</c>. Complete them to unlock the next room, when you completed a room, you are rewarded <cr>5000 rubies</c>.\n\n"
+        "Each <co>room</c> contains <cl>5 platformer layouts</c>. Complete them to unlock the next room, when you completed a room, you are rewarded <cr>1000 rubies</c>.\n\n"
         "These levels are hand-picked by <cf>ArcticWoof</c> and usually relates to <cf>The Spire</c> and it's <cr>lore</c>. <cg>Check out the Spire regularly for new rooms!</c>",
         "OK")
         ->show();
