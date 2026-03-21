@@ -1,6 +1,7 @@
 #include <Geode/Geode.hpp>
 #include <cue/RepeatingBackground.hpp>
 #include "Geode/cocos/script_support/CCScriptSupport.h"
+#include "Geode/ui/MDPopup.hpp"
 #include "Geode/utils/general.hpp"
 #include "RLSpireSelectLevelLayer.hpp"
 #include <unordered_set>
@@ -168,7 +169,7 @@ void RLSpireSelectLevelLayer::showRoomTransition() {
         auto winSize = CCDirector::sharedDirector()->getWinSize();
         m_transitionLayer = CCLayerColor::create({0, 0, 0, 0}, winSize.width, winSize.height);
         m_transitionLayer->setPosition({0, 0});
-        this->addChild(m_transitionLayer, 300);
+        this->addChild(m_transitionLayer, 5);
     }
 
     m_transitionLayer->setOpacity(0);
@@ -180,7 +181,7 @@ void RLSpireSelectLevelLayer::showRoomTransition() {
         m_loadingSpinner = LoadingSpinner::create(60.f);
         if (m_loadingSpinner) {
             m_loadingSpinner->setPosition({winSize.width / 2.0f, winSize.height / 2.0f});
-            this->addChild(m_loadingSpinner, 310);
+            this->addChild(m_loadingSpinner, 6);
         }
     }
 
@@ -215,6 +216,104 @@ void RLSpireSelectLevelLayer::completeRoomTransition() {
     }
 }
 
+void RLSpireSelectLevelLayer::rewardRoomTransition() {
+    if (m_spireRoomIndex < 2) {
+        return;
+    }
+
+    int highestExplored = Mod::get()->getSavedValue<int>("highestSpireRoomExplored", 0);
+    if (m_spireRoomIndex <= highestExplored) {
+        return;
+    }
+
+    Mod::get()->setSavedValue("highestSpireRoomExplored", m_spireRoomIndex);
+
+    const int reward = 5000;
+    int oldRubies = Mod::get()->getSavedValue<int>("rubies", 0);
+    Mod::get()->setSavedValue<int>("rubies", oldRubies + reward);
+
+    auto winSize = CCDirector::sharedDirector()->getWinSize();
+    auto rewardPos = ccp(winSize.width / 2.0f, winSize.height / 2.0f);
+
+    if (auto rewardLayer = CurrencyRewardLayer::create(
+            0,
+            0,
+            0,
+            reward,
+            CurrencySpriteType::Star,
+            0,
+            CurrencySpriteType::Star,
+            0,
+            rewardPos,
+            CurrencyRewardType::Default,
+            0.0,
+            1.0)) {
+        if (rewardLayer->m_diamondsLabel) {
+            rewardLayer->m_diamonds = 0;
+            rewardLayer->incrementDiamondsCount(oldRubies);
+        }
+
+        std::string rubyFrameName = "RL_bigRuby.png"_spr;
+        std::string rubyCurrency = "RL_currencyRuby.png"_spr;
+        auto rubyDisplayFrame =
+            CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(rubyFrameName.c_str());
+        auto rubyCurrencyFrame =
+            CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(rubyCurrency.c_str());
+
+        CCTexture2D* rubyTexture = nullptr;
+        CCTexture2D* rubyCurrencyTexture = nullptr;
+        if (!rubyDisplayFrame) {
+            rubyTexture =
+                CCTextureCache::sharedTextureCache()->addImage((rubyFrameName).c_str(), false);
+            if (rubyTexture) {
+                rubyDisplayFrame = CCSpriteFrame::createWithTexture(
+                    rubyTexture, {{0, 0}, rubyTexture->getContentSize()});
+            }
+        } else {
+            rubyTexture = rubyDisplayFrame->getTexture();
+        }
+
+        if (!rubyCurrencyFrame) {
+            rubyCurrencyTexture =
+                CCTextureCache::sharedTextureCache()->addImage((rubyCurrency).c_str(), false);
+            if (rubyCurrencyTexture) {
+                rubyCurrencyFrame = CCSpriteFrame::createWithTexture(
+                    rubyCurrencyTexture,
+                    {{0, 0}, rubyCurrencyTexture->getContentSize()});
+            }
+        } else {
+            rubyCurrencyTexture = rubyCurrencyFrame->getTexture();
+        }
+
+        if (rewardLayer->m_diamondsSprite && rubyDisplayFrame) {
+            rewardLayer->m_diamondsSprite->setDisplayFrame(rubyDisplayFrame);
+        }
+        if (rewardLayer->m_currencyBatchNode && rubyCurrencyTexture) {
+            rewardLayer->m_currencyBatchNode->setTexture(rubyCurrencyTexture);
+        }
+
+        for (auto sprite : CCArrayExt<CurrencySprite>(rewardLayer->m_objects)) {
+            if (!sprite) continue;
+            if (sprite->m_burstSprite) sprite->m_burstSprite->setVisible(false);
+            if (auto child = sprite->getChildByIndex(0)) child->setVisible(false);
+            if (sprite->m_spriteType == CurrencySpriteType::Diamond) {
+                if (rubyCurrencyFrame) sprite->setDisplayFrame(rubyCurrencyFrame);
+                if (rubyCurrencyTexture && rewardLayer->m_currencyBatchNode) {
+                    rewardLayer->m_currencyBatchNode->setTexture(rubyCurrencyTexture);
+                }
+            }
+        }
+
+        this->addChild(rewardLayer, 100);
+        FMODAudioEngine::sharedEngine()->playEffect("gold02.ogg");
+    }
+
+    Notification::create(
+        std::string("Received ") + numToString(reward) + " rubies!",
+        CCSprite::createWithSpriteFrameName("RL_bigRuby.png"_spr))
+        ->show();
+}
+
 void RLSpireSelectLevelLayer::onRoomTransitionComplete() {
     if (m_transitionLayer) {
         m_transitionLayer->removeFromParent();
@@ -223,6 +322,11 @@ void RLSpireSelectLevelLayer::onRoomTransitionComplete() {
     if (m_loadingSpinner) {
         m_loadingSpinner->removeFromParent();
         m_loadingSpinner = nullptr;
+    }
+
+    if (m_didAdvanceRoom) {
+        rewardRoomTransition();
+        m_didAdvanceRoom = false;
     }
 
     if (!Mod::get()->getSavedValue<bool>("hasEnteredSpire")) {
@@ -257,7 +361,11 @@ bool RLSpireSelectLevelLayer::init() {
 
     m_levelsMenu = CCMenu::create();
     m_levelsMenu->setPosition({0, 0});
-    this->addChild(m_levelsMenu, 1);
+    this->addChild(m_levelsMenu, -1);
+
+    m_infoMenu = CCMenu::create();
+    m_infoMenu->setPosition({0, 0});
+    this->addChild(m_infoMenu, 5);
 
     m_roomLabel = CCLabelBMFont::create(fmt::format("Room {}", m_spireRoomIndex).c_str(), "goldFont.fnt");
     if (m_roomLabel) {
@@ -265,7 +373,7 @@ bool RLSpireSelectLevelLayer::init() {
         m_roomLabel->setAnchorPoint({0.f, .5f});
         m_roomLabel->setPosition({50.f, winSize.height - 25.f});
         m_roomLabel->setColor({255, 255, 255});
-        this->addChild(m_roomLabel, 200);
+        this->addChild(m_roomLabel, 1);
     }
 
     // back border on the left side
@@ -292,12 +400,29 @@ bool RLSpireSelectLevelLayer::init() {
     rightGlow->setColor({0, 0, 0});
     rightBorder->addChild(rightGlow, 1);
 
+    // info thingy yappa
+    auto infoSpr = CCSprite::createWithSpriteFrameName("RL_info01.png"_spr);
+    infoSpr->setScale(0.75f);
+    auto infoBtn = CCMenuItemSpriteExtra::create(infoSpr, this, menu_selector(RLSpireSelectLevelLayer::onInfoClick));
+    infoBtn->setPosition({winSize.width - 25, winSize.height - 25});
+    m_infoMenu->addChild(infoBtn);
+
     this->setKeypadEnabled(true);
     this->scheduleUpdate();
 
     showRoomTransition();
 
     return true;
+}
+
+void RLSpireSelectLevelLayer::onInfoClick(CCObject*) {
+    MDPopup::create("The Spire",
+        "<cf>The Spire</c> is tower-themed <co>Platformer-focus</c> user created <cl>Rated Layouts</c> levels.\n\n"
+        "Explore the Spire and find forsaken lore beyond the <cp>Cosmos</c>.\n\n"
+        "Each <co>room</c> contains <cl>5 platformer layouts</c>. Complete them to unlock the next room, when you completed a room, you are rewarded <cr>5000 rubies</c>.\n\n"
+        "These levels are hand-picked by <cf>ArcticWoof</c> and usually relates to <cf>The Spire</c> and it's <cr>lore</c>. <cg>Check out the Spire regularly for new rooms!</c>",
+        "OK")
+        ->show();
 }
 
 void RLSpireSelectLevelLayer::fetchSpireLevels() {
@@ -310,12 +435,14 @@ void RLSpireSelectLevelLayer::fetchSpireLevels() {
 
             if (!res.ok()) {
                 Notification::create("Failed to load spire levels", NotificationIcon::Warning)->show();
+                self->keyBackClicked();
                 return;
             }
 
             auto jsonRes = res.json();
             if (!jsonRes) {
                 Notification::create("Bad spire level data", NotificationIcon::Warning)->show();
+                self->keyBackClicked();
                 return;
             }
 
@@ -620,6 +747,7 @@ void RLSpireSelectLevelLayer::onNavArrowUpClick(CCObject* sender) {
     }
 
     // when all levels in current room are completed, go to next room
+    m_didAdvanceRoom = true;
     m_spireRoomIndex++;
     showRoomTransition();
 }

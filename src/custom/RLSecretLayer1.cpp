@@ -99,7 +99,7 @@ void RLSecretLayer1::onEnterTransitionDidFinish() {
     if (!Mod::get()->getSavedValue<bool>("oracleFirstTime")) {
         Mod::get()->setSavedValue("oracleFirstTime", true);
         DialogObject* dialog1 = DialogObject::create("The Oracle", "As it was <cp>foretold.</c>", 1, 1.f, false, ccWHITE);
-        DialogObject* dialog2 = DialogObject::create("The Oracle", "<cg>Child</c>, your arrival has been <cp>lingering</c> on the <co>firmament</c> above for ages!", 0, 1.f, false, ccWHITE);
+        DialogObject* dialog2 = DialogObject::create("The Oracle", fmt::format("<cg>{}</c>, your arrival has been <cp>lingering</c> on the <co>firmament</c> above for ages!", GJAccountManager::get()->m_username).c_str(), 0, 1.f, false, ccWHITE);
         DialogObject* dialog3 = DialogObject::create("The Oracle", "I inquire that you learn to read the <cp>Cosmos</c>, that you may find <cg>riches unbound</c>!", 0, 1.f, false, ccWHITE);
         DialogObject* dialog4 = DialogObject::create("The Oracle", "Now then.", 0, 1.f, false, ccWHITE);
         DialogObject* dialog5 = DialogObject::create("The Oracle", "I shall watch your <cy>exploits</c> most <cg>attentively</c>.<d100> <cl>Enjoy</c>.", 0, 1.f, false, ccWHITE);
@@ -170,6 +170,8 @@ void RLSecretLayer1::onRedeem(CCObject* sender) {
     m_oracleBtn->setEnabled(false);
     m_crystalParticle->setVisible(true);
 
+    FMODAudioEngine::sharedEngine()->playEffect("unlockGauntlet.ogg");
+
     // fade in the text label while redeeming
     if (m_textLabel) {
         m_textLabel->removeFromParent();
@@ -214,7 +216,7 @@ void RLSecretLayer1::onRedeem(CCObject* sender) {
         CCFadeIn::create(1.0f),
         nullptr));
 
-    auto delay = CCDelayTime::create(5.0f);
+    auto delay = CCDelayTime::create(1.5f);
     auto call = CCCallFunc::create(this, callfunc_selector(RLSecretLayer1::startRedeemRequest));
     this->runAction(CCSequence::create(delay, call, nullptr));
 }

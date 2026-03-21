@@ -141,14 +141,13 @@ bool RLShopLayer::init() {
     menu->addChild(submitBtn);
 
     // bottom left redeem button
-    auto redeemSpr = CCSprite::createWithSpriteFrameName("RL_oracle.png"_spr);
-    redeemSpr->setColor({50, 50, 50});
-    redeemSpr->setOpacity(150);
-    redeemSpr->setRotation(30);
-    redeemSpr->setScale(0.5f);
+    auto orcaleSpr = CCSprite::createWithSpriteFrameName("RL_oracle.png"_spr);
+    orcaleSpr->setColor({50, 50, 50});
+    orcaleSpr->setOpacity(150);
+    orcaleSpr->setScale(0.4f);
     auto redeemBtn = CCMenuItemSpriteExtra::create(
-        redeemSpr, this, menu_selector(RLShopLayer::onRedeemLayer));
-        redeemBtn->setPosition({5, 5});
+        orcaleSpr, this, menu_selector(RLShopLayer::onRedeemLayer));
+        redeemBtn->setPosition({20, 25});
     menu->addChild(redeemBtn);
 
     // shop item menu

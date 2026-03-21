@@ -1,5 +1,6 @@
 #include <Geode/Geode.hpp>
 #include <cue/RepeatingBackground.hpp>
+#include "Geode/cocos/menu_nodes/CCMenu.h"
 
 using namespace geode::prelude;
 
@@ -13,14 +14,17 @@ private:
     void createSpireDoors();
     void refreshDoorStates();
     void updateNavArrowState();
+    void onInfoClick(CCObject* sender);
     void onSpireDoorClick(CCObject* sender);
     void onNavArrowUpClick(CCObject* sender);
     void onNavArrowDownClick(CCObject* sender);
     bool isLevelCompleted(int levelId);
+    void rewardRoomTransition();
     void update(float dt) override;
 
     cue::RepeatingBackground* m_bg = nullptr;
     CCMenu* m_levelsMenu = nullptr;
+    CCMenu* m_infoMenu = nullptr;
     CCMenuItemSpriteExtra* m_navArrowUp = nullptr;
     CCMenuItemSpriteExtra* m_navArrowDown = nullptr;
     CCLabelBMFont* m_roomLabel = nullptr;
@@ -38,6 +42,7 @@ private:
     async::TaskHolder<web::WebResponse> m_fetchTask;
     CCLayerColor* m_transitionLayer = nullptr;
     bool m_isRoomTransitionActive = false;
+    bool m_didAdvanceRoom = false;
 
 public:
     static RLSpireSelectLevelLayer* create();

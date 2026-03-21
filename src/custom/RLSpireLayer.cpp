@@ -57,7 +57,6 @@ bool RLSpireLayer::init() {
     m_enterBtn->setPosition({50, 100});
     entryMenu->addChild(m_enterBtn);
 
-
     this->setKeypadEnabled(true);
 
     return true;
@@ -91,7 +90,6 @@ void RLSpireLayer::onEnter() {
 
 void RLSpireLayer::onSpireClick(CCObject* sender) {
     if (!Mod::get()->getSavedValue<bool>("hasCode")) {
-        FMODAudioEngine::sharedEngine()->playEffect("chestClick.ogg");
         DialogObject* dialogObj = nullptr;
         std::string response = "";
         switch (m_indexDia) {
@@ -127,6 +125,8 @@ void RLSpireLayer::onSpireClick(CCObject* sender) {
         dialog->m_characterSprite->removeFromParent();
         return;
     }
+
+    FMODAudioEngine::sharedEngine()->playEffect("door01.ogg");
 
     // entering the spire
     if (m_spireSpr) {
