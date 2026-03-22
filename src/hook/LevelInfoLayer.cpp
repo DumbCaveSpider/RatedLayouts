@@ -209,378 +209,11 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             }
         });
     }
-
-    void removeCommunityVoteButton(Ref<RLLevelInfoLayer> layerRef) {
-        if (!layerRef)
-            return;
-        auto rightMenuNode = layerRef->getChildByID("right-side-menu");
-        if (!rightMenuNode || !typeinfo_cast<CCMenu*>(rightMenuNode))
-            return;
-
-        auto menu = static_cast<CCMenu*>(rightMenuNode);
-        if (auto existing = menu->getChildByID("rl-community-vote")) {
-            existing->removeFromParent();
-            menu->updateLayout();
-        }
-    }
-
-    void updateCommunityVoteButtonState(Ref<RLLevelInfoLayer> layerRef) {
-        if (!layerRef)
-            return;
-        auto rightMenuNode = layerRef->getChildByID("right-side-menu");
-        if (!rightMenuNode || !typeinfo_cast<CCMenu*>(rightMenuNode)) {
-            removeCommunityVoteButton(layerRef);
-            return;
-        }
-
-        auto menu = static_cast<CCMenu*>(rightMenuNode);
-        bool exists = menu->getChildByID("rl-community-vote") != nullptr;
-
-        int normalPct = -1;
-        int practicePct = -1;
-        bool hasPctFields = false;
-        if (layerRef->m_level) {
-            hasPctFields = true;
-            normalPct = layerRef->m_level->m_normalPercent;
-            practicePct = layerRef->m_level->m_practicePercent;
-        }
-        bool shouldDisable = shouldDisableCommunityVote(layerRef, hasPctFields, normalPct, practicePct);
-
-        if (!exists) {
-            createCommunityVoteButton(layerRef, shouldDisable);
-        } else {
-            updateCommunityVoteButton(layerRef, shouldDisable);
-        }
-    }
-
-    void ensureLegacyInfoButton(Ref<RLLevelInfoLayer> layerRef, CCNode* difficultySprite, bool isLegacy) {
-        if (!layerRef || !difficultySprite || !isLegacy)
-            return;
-        if (difficultySprite->getChildByID("rl-legacy-info-menu"))
-            return;
-
-        auto infoSpr = CCSprite::createWithSpriteFrameName("RL_info01.png"_spr);
-        if (!infoSpr)
-            return;
-        infoSpr->setScale(0.3f);
-
-        auto infoBtn = CCMenuItemSpriteExtra::create(
-            infoSpr, layerRef, menu_selector(RLLevelInfoLayer::onLegacyInfo));
-        infoBtn->setID("rl-legacy-info-btn");
-        float yPos = difficultySprite->getContentSize().height - 20;
-        infoBtn->setPosition({difficultySprite->getContentSize().width - 20, yPos});
-
-        auto infoMenu = CCMenu::createWithItem(infoBtn);
-        infoMenu->setID("rl-legacy-info-menu");
-        infoMenu->setPosition({0, 0});
-        infoMenu->setContentSize({difficultySprite->getContentSize().width,
-            difficultySprite->getContentSize().height});
-        difficultySprite->addChild(infoMenu, 100);
-    }
-
-    void processCompletionReward(Ref<RLLevelInfoLayer> layerRef, int difficulty) {
-        if (!layerRef || !layerRef->m_level)
-            return;
-
-        if (!GameStatsManager::sharedState()->hasCompletedOnlineLevel(layerRef->m_level->m_levelID))
-            return;
-
-        log::info("Level is completed, submitting completion reward");
-
-        int levelId = layerRef->m_level->m_levelID;
-        int accountId = GJAccountManager::get()->m_accountID;
-        std::string argonToken = Mod::get()->getSavedValue<std::string>("argon_token");
-
-        int attempts = layerRef->m_level->m_attempts;
-        bool isPlat = layerRef->m_level->isPlatformer();
-        int attemptTime = isPlat ? (layerRef->m_level->m_bestTime / 1000)
-                                 : layerRef->m_level->m_attemptTime;
-        int jumps = layerRef->m_level->m_jumps;
-        int clicks = layerRef->m_level->m_clicks;
-
-        log::debug(
-            "Submitting completion with attempts: {} time: {} jumps: {} clicks: {}",
-            attempts,
-            attemptTime,
-            jumps,
-            clicks);
-
-        std::string coinsStr;
-        std::vector<int> coins;
-        for (int i = 1; i <= 3; ++i) {
-            auto coinKey = layerRef->m_level->getCoinKey(i);
-            if (GameStatsManager::sharedState()->hasPendingUserCoin(coinKey)) {
-                coins.push_back(i);
-            }
-        }
-        for (size_t idx = 0; idx < coins.size(); ++idx) {
-            if (idx)
-                coinsStr += ",";
-            coinsStr += std::to_string(coins[idx]);
-        }
-
-        log::debug("Collected pending coins for level {}: {}", levelId, coinsStr);
-
-        matjson::Value jsonBody;
-        jsonBody["accountId"] = accountId;
-        jsonBody["argonToken"] = argonToken;
-        jsonBody["levelId"] = levelId;
-        jsonBody["attempts"] = attempts;
-        jsonBody["attemptTime"] = attemptTime;
-        jsonBody["jumps"] = jumps;
-        jsonBody["clicks"] = clicks;
-        jsonBody["isPlat"] = isPlat;
-        if (!coinsStr.empty()) {
-            jsonBody["coins"] = coinsStr;
-        }
-
-        auto submitReq = web::WebRequest();
-        submitReq.bodyJSON(jsonBody);
-
-        m_fields->m_submitTask.spawn(
-            submitReq.post("https://gdrate.arcticwoof.xyz/submitComplete"),
-            [layerRef, difficulty, levelId](web::WebResponse submitResponse) {
-                // Re-use existing callback logic from original block unchanged.
-                // This block is intentionally kept in place to preserve behavior exactly.
-                // (It includes reward mapping, animation, and ruby persistence.)
-                if (!layerRef) {
-                    log::warn("LevelInfoLayer has been destroyed");
-                    return;
-                }
-
-                CCNode* difficultySprite = nullptr;
-                if (layerRef) {
-                    difficultySprite = layerRef->getChildByID("difficulty-sprite");
-                }
-
-                if (!submitResponse.ok()) {
-                    log::warn("submitComplete returned non-ok status: {}",
-                        submitResponse.code());
-                    return;
-                }
-
-                auto submitJsonRes = submitResponse.json();
-                if (!submitJsonRes) {
-                    log::warn("Failed to parse submitComplete JSON response");
-                    return;
-                }
-
-                auto submitJson = submitJsonRes.unwrap();
-                bool success = submitJson["success"].asBool().unwrapOrDefault();
-                int responseStars = submitJson["stars"].asInt().unwrapOrDefault();
-                int responsePlanets =
-                    submitJson["planets"].asInt().unwrapOrDefault();
-                log::info("submitComplete success: {}, response stars: {}", success, responseStars);
-
-                if (responseStars == 30 || responsePlanets == 30) {
-                    RLAchievements::onReward("misc_extreme");
-                }
-
-                bool isPlat = false;
-                if (layerRef && layerRef->m_level)
-                    isPlat = layerRef->m_level->isPlatformer();
-                log::info("submitComplete values - stars: {}, planets: {}",
-                    responseStars,
-                    responsePlanets);
-                int displayReward = (isPlat ? (responsePlanets - difficulty)
-                                            : (responseStars - difficulty));
-
-                int sparks = Mod::get()->getSavedValue<int>("stars", 0);
-                int planets = Mod::get()->getSavedValue<int>("planets", 0);
-
-                if (isPlat) {
-                    RLAchievements::onUpdated(RLAchievements::Collectable::Planets,
-                        planets,
-                        responsePlanets);
-                } else {
-                    RLAchievements::onUpdated(RLAchievements::Collectable::Sparks,
-                        sparks,
-                        responseStars);
-                }
-
-                RLAchievements::checkAll(RLAchievements::Collectable::Sparks,
-                    responseStars);
-                RLAchievements::checkAll(RLAchievements::Collectable::Planets,
-                    responsePlanets);
-
-                int rewardValue = 0;
-                if (success) {
-                    rewardValue = difficulty;
-                    if (isPlat) {
-                        Mod::get()->setSavedValue<int>("planets", responsePlanets);
-                    } else {
-                        Mod::get()->setSavedValue<int>("stars", responseStars);
-                    }
-                } else {
-                    log::warn("level already completed and rewarded beforehand");
-                }
-
-                int rubies = Mod::get()->getSavedValue<int>("rubies");
-                std::string medSprite = isPlat ? "RL_planetMed.png"_spr : "RL_starMed.png"_spr;
-                std::string reward = isPlat ? "planets" : "sparks";
-
-                auto rubyInfo = computeRubyInfo(layerRef->m_level, difficulty);
-                int remainingRubies = rubyInfo.remaining;
-                int calcAtPercent = rubyInfo.calcAtPercent;
-
-                bool animationEnabled = !Mod::get()->getSettingValue<bool>("disableRewardAnimation");
-                bool hasAnyReward = (rewardValue > 0 || remainingRubies > 0);
-
-                if (animationEnabled && hasAnyReward) {
-                    log::debug(
-                        "Ruby info - remaining: {}, calcAtPercent: {} for "
-                        "difficulty {}",
-                        remainingRubies,
-                        calcAtPercent,
-                        difficulty);
-                    if (auto rewardLayer = CurrencyRewardLayer::create(
-                            0, isPlat ? rewardValue : 0, isPlat ? 0 : rewardValue, remainingRubies, CurrencySpriteType::Star, 0, CurrencySpriteType::Star, 0, difficultySprite->getPosition(), CurrencyRewardType::Default, 0.0, 1.0)) {
-                        bool playSound = false;
-                        if (rewardValue > 0) {
-                            if (isPlat) {
-                                rewardLayer->m_stars = 0;
-                                rewardLayer->incrementStarsCount(displayReward);
-                                playSound = true;
-                            } else {
-                                rewardLayer->m_moons = 0;
-                                rewardLayer->incrementMoonsCount(displayReward);
-                                playSound = true;
-                            }
-                        }
-
-                        if (remainingRubies > 0) {
-                            if (rewardLayer->m_diamondsLabel) {
-                                rewardLayer->m_diamonds = 0;
-                                rewardLayer->incrementDiamondsCount(rubies);
-                                playSound = true;
-                                int newTotal = rubies + remainingRubies;
-                                log::info("Adding {} rubies to {}", remainingRubies, rubies);
-                                Mod::get()->setSavedValue<int>("rubies", newTotal);
-
-                                int oldCollected = rubyInfo.collected;
-                                int newCollected = oldCollected + remainingRubies;
-                                if (newCollected > rubyInfo.total)
-                                    newCollected = rubyInfo.total;
-                                bool wrote = persistCollectedRubies(levelId, rubyInfo.total, newCollected);
-                                if (!wrote) {
-                                    log::warn("Failed to write rubies_collected.json: level {}", levelId);
-                                } else {
-                                    log::debug("Updated Rubies Collection: {} collected: {}", levelId, newCollected);
-                                }
-                            }
-                        }
-
-                        std::string frameName =
-                            isPlat ? "RL_planetBig.png"_spr : "RL_starBig.png"_spr;
-                        auto displayFrame =
-                            CCSpriteFrameCache::sharedSpriteFrameCache()
-                                ->spriteFrameByName((frameName).c_str());
-                        CCTexture2D* texture = nullptr;
-                        if (!displayFrame) {
-                            texture = CCTextureCache::sharedTextureCache()->addImage(
-                                (frameName).c_str(), false);
-                            if (texture) {
-                                displayFrame = CCSpriteFrame::createWithTexture(
-                                    texture, {{0, 0}, texture->getContentSize()});
-                            }
-                        } else {
-                            texture = displayFrame->getTexture();
-                        }
-
-                        std::string rubyFrameName = "RL_bigRuby.png"_spr;
-                        std::string rubyCurrenyName = "RL_currencyRuby.png"_spr;
-                        auto rubyDisplayFrame =
-                            CCSpriteFrameCache::sharedSpriteFrameCache()
-                                ->spriteFrameByName((rubyFrameName).c_str());
-                        auto rubyCurrencyFrame =
-                            CCSpriteFrameCache::sharedSpriteFrameCache()
-                                ->spriteFrameByName((rubyCurrenyName).c_str());
-                        CCTexture2D* rubyTexture = nullptr;
-                        CCTexture2D* rubyCurrencyTexture = nullptr;
-                        if (!rubyDisplayFrame) {
-                            rubyTexture = CCTextureCache::sharedTextureCache()->addImage(
-                                (rubyFrameName).c_str(), false);
-                            if (rubyTexture) {
-                                rubyDisplayFrame = CCSpriteFrame::createWithTexture(
-                                    rubyTexture, {{0, 0}, rubyTexture->getContentSize()});
-                            }
-                            if (!rubyCurrencyFrame) {
-                                rubyCurrencyTexture =
-                                    CCTextureCache::sharedTextureCache()->addImage(
-                                        (rubyCurrenyName).c_str(), false);
-                                if (rubyCurrencyTexture) {
-                                    rubyCurrencyFrame = CCSpriteFrame::createWithTexture(
-                                        rubyCurrencyTexture,
-                                        {{0, 0}, rubyCurrencyTexture->getContentSize()});
-                                }
-                            } else {
-                                log::warn("Failed to load ruby texture");
-                            }
-                        } else {
-                            rubyTexture = rubyDisplayFrame->getTexture();
-                        }
-                        if (displayReward > 0) {
-                            if (isPlat) {
-                                if (rewardLayer->m_starsSprite)
-                                    rewardLayer->m_starsSprite->setDisplayFrame(displayFrame);
-                            } else {
-                                if (rewardLayer->m_moonsSprite)
-                                    rewardLayer->m_moonsSprite->setDisplayFrame(displayFrame);
-                            }
-                            if (rewardLayer->m_currencyBatchNode && texture) {
-                                rewardLayer->m_currencyBatchNode->setTexture(texture);
-                            }
-                        }
-
-                        if (rubyDisplayFrame && rubyTexture &&
-                            rewardLayer->m_currencyBatchNode) {
-                            rewardLayer->m_currencyBatchNode->setTexture(rubyTexture);
-                        }
-
-                        for (auto sprite :
-                            CCArrayExt<CurrencySprite>(rewardLayer->m_objects)) {
-                            if (!sprite)
-                                continue;
-                            if (sprite->m_burstSprite)
-                                sprite->m_burstSprite->setVisible(false);
-                            if (auto child = sprite->getChildByIndex(0)) {
-                                child->setVisible(false);
-                            }
-
-                            if (sprite->m_spriteType ==
-                                (isPlat ? CurrencySpriteType::Star
-                                        : CurrencySpriteType::Moon)) {
-                                if (displayFrame) {
-                                    sprite->setDisplayFrame(displayFrame);
-                                }
-                            }
-
-                            if (sprite->m_spriteType == CurrencySpriteType::Diamond) {
-                                if (rubyCurrencyFrame) {
-                                    if (rubyCurrencyTexture &&
-                                        rewardLayer->m_currencyBatchNode) {
-                                        rewardLayer->m_currencyBatchNode->setTexture(
-                                            rubyCurrencyTexture);
-                                    }
-                                }
-                            }
-                        }
-
-                        if (playSound) {
-                            FMODAudioEngine::sharedEngine()->playEffect("gold02.ogg");
-                        }
-                        layerRef->addChild(rewardLayer, 100);
-                    }
-                }
-            });
-    }
-
     void processLevelRating(const matjson::Value& json,
         Ref<RLLevelInfoLayer> layerRef,
         bool grayRing = false) {
         if (!layerRef)
             return;
-
         int difficulty = json["difficulty"].asInt().unwrapOrDefault();
         int featured = json["featured"].asInt().unwrapOrDefault();
         bool isLegacy = json["legacy"].asBool().unwrapOrDefault();
@@ -588,24 +221,489 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
 
         if (!grayRing)  // this is just a fallback lol
             grayRing = (isLegacy && !isRated);
-
-        CCNode* difficultySprite = layerRef->getChildByID("difficulty-sprite");
-        if (difficultySprite) {
-            if (auto existingLegacy = difficultySprite->getChildByID("rl-legacy-info-menu")) {
-                existingLegacy->setPosition({0, 0});
+        CCNode* difficultySprite = nullptr;
+        if (layerRef) {
+            difficultySprite = layerRef->getChildByID("difficulty-sprite");
+            if (difficultySprite) {
+                auto existingLegacy =
+                    difficultySprite->getChildByID("rl-legacy-info-menu");
+                if (existingLegacy) {
+                    existingLegacy->setPosition({0, 0});
+                }
             }
         }
 
-        updateCommunityVoteButtonState(layerRef);
-        ensureLegacyInfoButton(layerRef, difficultySprite, isLegacy);
+        // helper to remove existing button
+        auto removeExistingCommunityBtn = [layerRef]() {
+            auto rightMenuNode = layerRef->getChildByID("right-side-menu");
+            if (rightMenuNode && typeinfo_cast<CCMenu*>(rightMenuNode)) {
+                auto existing = static_cast<CCMenu*>(rightMenuNode)
+                                    ->getChildByID("rl-community-vote");
+                if (existing) {
+                    existing->removeFromParent();
+                    static_cast<CCMenu*>(rightMenuNode)->updateLayout();
+                }
+            }
+        };
 
+        // create button if not already present
+        bool exists = false;
+        auto rightMenuNode = layerRef->getChildByID("right-side-menu");
+        if (rightMenuNode && typeinfo_cast<CCMenu*>(rightMenuNode)) {
+            if (static_cast<CCMenu*>(rightMenuNode)
+                    ->getChildByID("rl-community-vote"))
+                exists = true;
+
+            int normalPct = -1;
+            int practicePct = -1;
+            bool hasPctFields = false;
+            if (layerRef && layerRef->m_level) {
+                hasPctFields = true;
+                normalPct = layerRef->m_level->m_normalPercent;
+                practicePct = layerRef->m_level->m_practicePercent;
+            }
+
+            bool shouldDisable = shouldDisableCommunityVote(layerRef, hasPctFields, normalPct, practicePct);
+
+            if (!exists) {
+                createCommunityVoteButton(layerRef, shouldDisable);
+            } else {
+                updateCommunityVoteButton(layerRef, shouldDisable);
+            }
+        } else {
+            removeExistingCommunityBtn();
+        }
+
+        // if this rating came from the legacy system, add a small info button
+        if (isLegacy && !Mod::get()->getSettingValue<bool>("disableLegacyInfo")) {
+            // don't recreate if already present
+            if (difficultySprite &&
+                !difficultySprite->getChildByID("rl-legacy-info-menu")) {
+                auto infoSpr = CCSprite::createWithSpriteFrameName("RL_info01.png"_spr);
+                infoSpr->setScale(0.3f);
+
+                auto infoBtn = CCMenuItemSpriteExtra::create(
+                    infoSpr, layerRef, menu_selector(RLLevelInfoLayer::onLegacyInfo));
+                infoBtn->setID("rl-legacy-info-btn");
+                // shift button further down for non-demon difficulties (1–9)
+                float yPos = difficultySprite->getContentSize().height - 20;
+                infoBtn->setPosition(
+                    {difficultySprite->getContentSize().width - 20, yPos});
+
+                auto infoMenu = CCMenu::createWithItem(infoBtn);
+                infoMenu->setID("rl-legacy-info-menu");
+                infoMenu->setPosition({0, 0});
+                infoMenu->setContentSize({difficultySprite->getContentSize().width,
+                    difficultySprite->getContentSize().height});
+                difficultySprite->addChild(infoMenu, 100);
+            }
+        }
+
+        // If no difficulty rating, nothing to apply
         if (difficulty == 0) {
             return;
         }
 
         log::info("difficulty: {}, featured: {}", difficulty, featured);
 
-        processCompletionReward(layerRef, difficulty);
+        // check if the level needs to submit completion reward if completed
+        if (layerRef->m_level &&
+            GameStatsManager::sharedState()->hasCompletedOnlineLevel(
+                layerRef->m_level->m_levelID)) {
+            log::info("Level is completed, submitting completion reward");
+
+            int levelId = layerRef->m_level->m_levelID;
+            int accountId = GJAccountManager::get()->m_accountID;
+            std::string argonToken =
+                Mod::get()->getSavedValue<std::string>("argon_token");
+
+            // include attempt data for analytics / verification
+            int attempts = 0;
+            int attemptTime = 0;
+            int jumps = 0;
+            int clicks = 0;
+            bool isPlat = false;
+            if (layerRef && layerRef->m_level) {
+                attempts = layerRef->m_level->m_attempts;
+                isPlat = layerRef->m_level->isPlatformer();
+                attemptTime = isPlat ? (layerRef->m_level->m_bestTime / 1000)
+                                     : layerRef->m_level->m_attemptTime;
+                jumps = layerRef->m_level->m_jumps;
+                clicks = layerRef->m_level->m_clicks;
+            }
+
+            log::debug(
+                "Submitting completion with attempts: {} time: {} jumps: {} "
+                "clicks: {}",
+                attempts,
+                attemptTime,
+                jumps,
+                clicks);
+
+            // Build comma-separated coins list based on pending user coins
+            std::string coinsStr;
+            if (layerRef && layerRef->m_level) {
+                std::vector<int> coins;
+                for (int i = 1; i <= 3; ++i) {
+                    auto coinKey = layerRef->m_level->getCoinKey(i);
+                    if (GameStatsManager::sharedState()->hasPendingUserCoin(coinKey)) {
+                        coins.push_back(i);
+                    }
+                }
+                for (size_t idx = 0; idx < coins.size(); ++idx) {
+                    if (idx)
+                        coinsStr += ",";
+                    coinsStr += std::to_string(coins[idx]);
+                }
+            } else {
+                log::warn(
+                    "Unable to build coins list: level pointer is null for levelId {}",
+                    levelId);
+            }
+            log::debug("Collected pending coins for level {}: {}", levelId, coinsStr);
+
+            matjson::Value jsonBody;
+            jsonBody["accountId"] = accountId;
+            jsonBody["argonToken"] = argonToken;
+            jsonBody["levelId"] = levelId;
+            jsonBody["attempts"] = attempts;
+            jsonBody["attemptTime"] = attemptTime;
+            jsonBody["jumps"] = jumps;
+            jsonBody["clicks"] = clicks;
+            jsonBody["isPlat"] = isPlat;
+            if (!coinsStr.empty()) {
+                jsonBody["coins"] = coinsStr;
+            }
+
+            auto submitReq = web::WebRequest();
+            submitReq.bodyJSON(jsonBody);
+
+            m_fields->m_submitTask.spawn(
+                submitReq.post("https://gdrate.arcticwoof.xyz/submitComplete"),
+                [layerRef, difficulty, levelId](web::WebResponse submitResponse) {
+                    // re-fetch sprite here in case the layer changed/destroyed
+                    CCNode* difficultySprite = nullptr;
+                    if (layerRef) {
+                        difficultySprite = layerRef->getChildByID("difficulty-sprite");
+                    }
+                    log::info("Received submitComplete response for level ID: {}",
+                        levelId);
+
+                    if (!layerRef) {
+                        log::warn("LevelInfoLayer has been destroyed");
+                        return;
+                    }
+
+                    if (!submitResponse.ok()) {
+                        log::warn("submitComplete returned non-ok status: {}",
+                            submitResponse.code());
+                        return;
+                    }
+
+                    auto submitJsonRes = submitResponse.json();
+                    if (!submitJsonRes) {
+                        log::warn("Failed to parse submitComplete JSON response");
+                        return;
+                    }
+
+                    auto submitJson = submitJsonRes.unwrap();
+                    bool success = submitJson["success"].asBool().unwrapOrDefault();
+                    int responseStars = submitJson["stars"].asInt().unwrapOrDefault();
+                    int responsePlanets =
+                        submitJson["planets"].asInt().unwrapOrDefault();
+                    log::info("submitComplete success: {}, response stars: {}", success, responseStars);
+
+                    if (responseStars == 30 || responsePlanets == 30) {
+                        RLAchievements::onReward("misc_extreme");
+                    }
+
+                    bool isPlat = false;
+                    if (layerRef && layerRef->m_level)
+                        isPlat = layerRef->m_level->isPlatformer();
+                    log::info("submitComplete values - stars: {}, planets: {}",
+                        responseStars,
+                        responsePlanets);
+                    int displayReward = (isPlat ? (responsePlanets - difficulty)
+                                                : (responseStars - difficulty));
+
+                    // Check previous totals and trigger achievements if increased
+                    int sparks = Mod::get()->getSavedValue<int>("stars", 0);
+                    int planets = Mod::get()->getSavedValue<int>("planets", 0);
+
+                    if (isPlat) {
+                        RLAchievements::onUpdated(RLAchievements::Collectable::Planets,
+                            planets,
+                            responsePlanets);
+                    } else {
+                        RLAchievements::onUpdated(RLAchievements::Collectable::Sparks,
+                            sparks,
+                            responseStars);
+                    }
+
+                    // Also check current totals for retroactive awards
+                    RLAchievements::checkAll(RLAchievements::Collectable::Sparks,
+                        responseStars);
+                    RLAchievements::checkAll(RLAchievements::Collectable::Planets,
+                        responsePlanets);
+                    int rewardValue = 0;
+                    if (success) {
+                        rewardValue = difficulty;
+                        if (isPlat) {
+                            log::info("Display planets: {} - {} = {}", responsePlanets, difficulty, displayReward);
+                            Mod::get()->setSavedValue<int>("planets", responsePlanets);
+                        } else {
+                            log::info("Display stars: {} - {} = {}", responseStars, difficulty, displayReward);
+                            Mod::get()->setSavedValue<int>("stars", responseStars);
+                        }
+                    } else {
+                        rewardValue = 0;
+                        log::warn("level already completed and rewarded beforehand");
+                    }
+
+                    int rubies = Mod::get()->getSavedValue<int>("rubies");
+
+                    std::string medSprite =
+                        isPlat ? "RL_planetMed.png"_spr : "RL_starMed.png"_spr;
+                    std::string reward = isPlat ? "planets" : "sparks";
+
+                    auto rubyInfo = computeRubyInfo(layerRef->m_level, difficulty);
+                    int remainingRubies = rubyInfo.remaining;
+                    int calcAtPercent = rubyInfo.calcAtPercent;
+
+                    bool animationEnabled =
+                        !Mod::get()->getSettingValue<bool>("disableRewardAnimation");
+                    bool hasAnyReward = (rewardValue > 0 || remainingRubies > 0);
+
+                    if (animationEnabled && hasAnyReward) {
+                        log::debug(
+                            "Ruby info - remaining: {}, calcAtPercent: {} for "
+                            "difficulty {}",
+                            remainingRubies,
+                            calcAtPercent,
+                            difficulty);
+                        if (auto rewardLayer = CurrencyRewardLayer::create(
+                                0, isPlat ? rewardValue : 0, isPlat ? 0 : rewardValue, remainingRubies, CurrencySpriteType::Star, 0, CurrencySpriteType::Star, 0, difficultySprite->getPosition(), CurrencyRewardType::Default, 0.0, 1.0)) {
+                            bool playSound = false;
+                            if (rewardValue > 0) {
+                                if (isPlat) {
+                                    rewardLayer->m_stars = 0;
+                                    rewardLayer->incrementStarsCount(displayReward);
+                                    playSound = true;
+                                } else {
+                                    rewardLayer->m_moons = 0;
+                                    rewardLayer->incrementMoonsCount(displayReward);
+                                    playSound = true;
+                                }
+                            }
+
+                            if (remainingRubies > 0) {
+                                if (rewardLayer->m_diamondsLabel) {
+                                    rewardLayer->m_diamonds = 0;
+                                    rewardLayer->incrementDiamondsCount(rubies);
+                                    playSound = true;
+                                    int newTotal = rubies + remainingRubies;
+                                    log::info("Adding {} rubies to {}", remainingRubies, rubies);
+                                    Mod::get()->setSavedValue<int>("rubies", newTotal);
+
+                                    // persist collected amount locally
+                                    int oldCollected = rubyInfo.collected;
+                                    int newCollected = oldCollected + remainingRubies;
+                                    if (newCollected > rubyInfo.total)
+                                        newCollected = rubyInfo.total;
+                                    bool wrote = persistCollectedRubies(levelId, rubyInfo.total, newCollected);
+                                    if (!wrote) {
+                                        log::warn(
+                                            "Failed to write rubies_collected.json: level {}",
+                                            levelId);
+                                    } else {
+                                        log::debug("Updated Rubies Collection: {} collected: {}",
+                                            levelId,
+                                            newCollected);
+                                    }
+                                }
+                            }
+
+                            std::string frameName =
+                                isPlat ? "RL_planetBig.png"_spr : "RL_starBig.png"_spr;
+                            auto displayFrame =
+                                CCSpriteFrameCache::sharedSpriteFrameCache()
+                                    ->spriteFrameByName((frameName).c_str());
+                            CCTexture2D* texture = nullptr;
+                            if (!displayFrame) {
+                                texture = CCTextureCache::sharedTextureCache()->addImage(
+                                    (frameName).c_str(), false);
+                                if (texture) {
+                                    displayFrame = CCSpriteFrame::createWithTexture(
+                                        texture, {{0, 0}, texture->getContentSize()});
+                                }
+                            } else {
+                                texture = displayFrame->getTexture();
+                            }
+
+                            std::string rubyFrameName = "RL_bigRuby.png"_spr;
+                            std::string rubyCurrenyName = "RL_currencyRuby.png"_spr;
+                            auto rubyDisplayFrame =
+                                CCSpriteFrameCache::sharedSpriteFrameCache()
+                                    ->spriteFrameByName((rubyFrameName).c_str());
+                            auto rubyCurrencyFrame =
+                                CCSpriteFrameCache::sharedSpriteFrameCache()
+                                    ->spriteFrameByName((rubyCurrenyName).c_str());
+                            CCTexture2D* rubyTexture = nullptr;
+                            CCTexture2D* rubyCurrencyTexture = nullptr;
+                            if (!rubyDisplayFrame) {
+                                rubyTexture = CCTextureCache::sharedTextureCache()->addImage(
+                                    (rubyFrameName).c_str(), false);
+                                if (rubyTexture) {
+                                    rubyDisplayFrame = CCSpriteFrame::createWithTexture(
+                                        rubyTexture, {{0, 0}, rubyTexture->getContentSize()});
+                                }
+                                if (!rubyCurrencyFrame) {
+                                    rubyCurrencyTexture =
+                                        CCTextureCache::sharedTextureCache()->addImage(
+                                            (rubyCurrenyName).c_str(), false);
+                                    if (rubyCurrencyTexture) {
+                                        rubyCurrencyFrame = CCSpriteFrame::createWithTexture(
+                                            rubyCurrencyTexture,
+                                            {{0, 0}, rubyCurrencyTexture->getContentSize()});
+                                    }
+                                } else {
+                                    log::warn("Failed to load ruby texture");
+                                }
+                            } else {
+                                rubyTexture = rubyDisplayFrame->getTexture();
+                            }
+                            if (displayReward > 0) {
+                                if (isPlat) {
+                                    if (rewardLayer->m_starsSprite)
+                                        rewardLayer->m_starsSprite->setDisplayFrame(displayFrame);
+                                } else {
+                                    if (rewardLayer->m_moonsSprite)
+                                        rewardLayer->m_moonsSprite->setDisplayFrame(displayFrame);
+                                }
+                                // set batch-node texture for primary reward (star/planet)
+                                if (rewardLayer->m_currencyBatchNode && texture) {
+                                    rewardLayer->m_currencyBatchNode->setTexture(texture);
+                                    // if (auto blend = typeinfo_cast<CCBlendProtocol*>(
+                                    //         rewardLayer->m_currencyBatchNode)) {
+                                    //   blend->setBlendFunc({GL_SRC_ALPHA, GL_ONE});
+                                    // }
+                                }
+                            }
+
+                            if (rubyDisplayFrame && rubyTexture &&
+                                rewardLayer->m_currencyBatchNode) {
+                                rewardLayer->m_currencyBatchNode->setTexture(rubyTexture);
+                            }
+
+                            for (auto sprite :
+                                CCArrayExt<CurrencySprite>(rewardLayer->m_objects)) {
+                                if (!sprite)
+                                    continue;
+                                if (sprite->m_burstSprite)
+                                    sprite->m_burstSprite->setVisible(false);
+                                if (auto child = sprite->getChildByIndex(0)) {
+                                    child->setVisible(false);
+                                }
+
+                                // default star/moon frames
+                                if (sprite->m_spriteType ==
+                                    (isPlat ? CurrencySpriteType::Star
+                                            : CurrencySpriteType::Moon)) {
+                                    if (displayFrame) {
+                                        sprite->setDisplayFrame(displayFrame);
+                                    }
+                                }
+
+                                // diamond slot: show ruby frame when available
+                                if (sprite->m_spriteType == CurrencySpriteType::Diamond) {
+                                    if (rubyCurrencyFrame) {
+                                        if (rubyCurrencyTexture &&
+                                            rewardLayer->m_currencyBatchNode) {
+                                            rewardLayer->m_currencyBatchNode->setTexture(
+                                                rubyCurrencyTexture);
+                                            // blend for ruby currency
+                                            // if (auto blend = typeinfo_cast<CCBlendProtocol*>(
+                                            //         rewardLayer->m_currencyBatchNode)) {
+                                            //   blend->setBlendFunc({GL_SRC_ALPHA, GL_ONE});
+                                            // }
+                                        }
+                                        sprite->setDisplayFrame(rubyCurrencyFrame);
+                                    }
+                                }
+                            }
+
+                            // also update diamonds sprite/frame if applicable
+                            if (rewardLayer->m_diamondsSprite && rubyDisplayFrame) {
+                                if (rubyTexture && rewardLayer->m_currencyBatchNode) {
+                                    rewardLayer->m_currencyBatchNode->setTexture(rubyTexture);
+                                    // if (auto blend = typeinfo_cast<CCBlendProtocol*>(
+                                    //         rewardLayer->m_currencyBatchNode)) {
+                                    //   blend->setBlendFunc({GL_SRC_ALPHA, GL_ONE});
+                                    // }
+                                }
+                                rewardLayer->m_diamondsSprite->setDisplayFrame(
+                                    rubyDisplayFrame);
+                            }
+                            if (playSound) {
+                                // @geode-ignore(unknown-resource)
+                                FMODAudioEngine::sharedEngine()->playEffect("gold02.ogg");
+                            }
+                            layerRef->addChild(rewardLayer, 100);
+                        }
+                    }
+
+                    if (!animationEnabled) {
+                        log::info("Reward animation disabled");
+                        Notification::create(
+                            "Received " + numToString(difficulty) + " " + reward + "!",
+                            CCSprite::createWithSpriteFrameName(medSprite.c_str()),
+                            2.f)
+                            ->show();
+                        FMODAudioEngine::sharedEngine()->playEffect(
+                            // @geode-ignore(unknown-resource)
+                            "gold02.ogg");
+                    }
+
+                    if (remainingRubies > 0) {
+                        int newTotal = rubies + remainingRubies;
+                        Mod::get()->setSavedValue<int>("rubies", newTotal);
+
+                        if (!animationEnabled) {
+                            Notification::create(
+                                std::string("Received ") + numToString(remainingRubies) +
+                                    " rubies!",
+                                CCSprite::createWithSpriteFrameName("RL_bigRuby.png"_spr))
+                                ->show();
+                        }
+
+                        int oldCollected = rubyInfo.collected;
+                        int newCollected = oldCollected + remainingRubies;
+                        if (newCollected > rubyInfo.total)
+                            newCollected = rubyInfo.total;
+                        bool wrote =
+                            persistCollectedRubies(levelId, rubyInfo.total, newCollected);
+                        if (!wrote) {
+                            log::warn("Failed to write rubies_collected.json: level {}",
+                                levelId);
+                        } else {
+                            log::debug("Updated Rubies Collection: {} collected: {}",
+                                levelId,
+                                newCollected);
+                        }
+                    }
+
+                    if (animationEnabled && hasAnyReward) {
+                        if (difficultySprite) {
+                            auto fakeCircleWave =
+                                CCCircleWave::create(10.f, 110.f, 0.5f, false);
+                            fakeCircleWave->m_color = ccWHITE;
+                            fakeCircleWave->setPosition(difficultySprite->getPosition());
+                            if (layerRef)
+                                layerRef->addChild(fakeCircleWave, 1);
+                        }
+                    }
+                });
+        }
 
         // Map difficulty to difficultyLevel
         int difficultyLevel = 0;

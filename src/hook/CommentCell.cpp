@@ -1,4 +1,7 @@
+#include "Geode/cocos/label_nodes/CCLabelBMFont.h"
+#include "Geode/loader/Loader.hpp"
 #include "Geode/loader/Mod.hpp"
+#include "Geode/ui/NineSlice.hpp"
 #include "ccTypes.h"
 #include <Geode/Geode.hpp>
 #include <Geode/modify/CommentCell.hpp>
@@ -23,6 +26,12 @@ class $modify(RLCommentCell, CommentCell) {
         ~Fields() { m_fetchTask.cancel(); }
     };
 
+    static void onModify(auto& self) {
+        if (!self.setHookPriorityAfterPost("CommentCell::fetchUserRole", "prevter.comment_emojis")) {
+            log::warn("Failed to set hook priority from prevter.comment_emojis.");
+        }
+    }
+
     void loadFromComment(GJComment* comment) {
         CommentCell::loadFromComment(comment);
 
@@ -31,6 +40,11 @@ class $modify(RLCommentCell, CommentCell) {
         }
 
         if (m_accountComment) {
+            // im cheeky and apply the color if is arcticwoof
+            if (comment->m_accountID == 7689052) {
+                applyCommentTextColor(comment->m_accountID);
+                return;
+            }
             return;
         }
 
@@ -78,46 +92,29 @@ class $modify(RLCommentCell, CommentCell) {
                                      : "normal",
             m_compactMode ? "compact" : "non-compact");
 
-        // check for prevter.comment_emojis custom text area first (comment reloaded
-        // mod)
-        if (auto emojiTextArea = m_mainLayer->getChildByIDRecursive(
-                "prevter.comment_emojis/comment-text-area")) {
-            log::debug("using comment emoji text area, applying color");
-            if (auto label = typeinfo_cast<CCLabelBMFont*>(emojiTextArea)) {
-                label->setColor(color);
-            }  // cant bothered adding colors support for non-compact mode for the
-            // emojis mod thingy
-        }
-        // apply the color to the comment text label
-        else if (auto commentTextLabel = typeinfo_cast<CCLabelBMFont*>(
-                     m_mainLayer->getChildByIDRecursive(
-                         "comment-text-label"))) {  // compact mode (easy face mode)
-            log::debug("Found comment-text-label, applying color");
-            commentTextLabel->setColor(color);
-        } else if (auto textArea = m_mainLayer->getChildByIDRecursive(
-                       "comment-text-area")) {  // non-compact mode is ass (extreme
-                                                // demon face)
-            log::debug("TextArea found, searching for MultilineBitmapFont child");
-            auto children = textArea->getChildren();
-            if (children && children->count() > 0) {
-                auto child = static_cast<CCNode*>(children->objectAtIndex(0));
-                if (auto multilineFont = typeinfo_cast<MultilineBitmapFont*>(child)) {
-                    log::debug("Found MultilineBitmapFont, applying color");
-                    auto multilineChildren = multilineFont->getChildren();
-                    if (multilineChildren) {
-                        for (std::size_t i = 0; i < multilineChildren->count(); ++i) {
-                            auto labelChild =
-                                static_cast<CCNode*>(multilineChildren->objectAtIndex(i));
-                            if (auto label = typeinfo_cast<CCLabelBMFont*>(labelChild)) {
-                                label->setColor(color);
-                            }
-                        }
-                    }
-                } else if (auto label = typeinfo_cast<CCLabelBMFont*>(child)) {
-                    log::debug("Found CCLabelBMFont child, applying color");
-                    label->setColor(color);
-                }
+        // check for prevter.comment_emojis
+        if (Loader::get()->isModLoaded("prevter.comment_emojis")) {
+            log::debug("prevter.comment_emojis mod detected, looking for custom text area");
+
+            if (auto emojiTextArea = m_mainLayer->getChildByIDRecursive(
+                    "prevter.comment_emojis/comment-text-area")) {
+                typeinfo_cast<CCRGBAProtocol*>(emojiTextArea)->setColor(color);
+            } else if (auto emojiLabel = m_mainLayer->getChildByIDRecursive(
+                           "prevter.comment_emojis/comment-text-label")) {
+                typeinfo_cast<CCRGBAProtocol*>(emojiLabel)->setColor(color);
             }
+            return;
+        }
+
+        // vanilla text area/label
+        if (auto commentTextLabel = typeinfo_cast<CCLabelBMFont*>(
+                m_mainLayer->getChildByIDRecursive(
+                    "comment-text-label"))) {  // compact mode (easy face mode)
+            log::debug("Found comment-text-label, applying color");
+            typeinfo_cast<CCLabelBMFont*>(commentTextLabel)->setColor(color);
+        } else if (auto textArea = m_mainLayer->getChildByIDRecursive(
+                       "comment-text-area")) {
+            typeinfo_cast<TextArea*>(textArea)->colorAllLabels(color);
         }
     };
 
@@ -278,8 +275,18 @@ class $modify(RLCommentCell, CommentCell) {
                     lazy->setPosition(
                         {cellRef->m_backgroundLayer->getScaledContentSize().width / 2,
                             cellRef->m_backgroundLayer->getScaledContentSize().height / 2});
-                    cellRef->m_backgroundLayer->setOpacity(150);
+                    cellRef->m_backgroundLayer->setOpacity(100);
                     cellRef->m_backgroundLayer->addChild(lazy, -1);
+
+                    // add a background behind the comment text for better contrast with bright nameplates in compact mode
+                    auto commentBg = NineSlice::create("square02_small.png");
+                    auto commentText = cellRef->m_mainLayer->getChildByIDRecursive("comment-text-label");
+                    commentBg->setInsets({5, 5, 5, 5});
+                    commentBg->setContentSize(commentText->getScaledContentSize() + CCSize(5, 0));
+                    commentBg->setPosition({commentText->getPosition().x - 2, commentText->getPosition().y});
+                    commentBg->setOpacity(150);
+                    commentBg->setAnchorPoint(commentText->getAnchorPoint());
+                    cellRef->m_mainLayer->addChild(commentBg, -1);
                 } else {
                     auto lazy = LazySprite::create(
                         {cellRef->m_backgroundLayer->getScaledContentSize() +

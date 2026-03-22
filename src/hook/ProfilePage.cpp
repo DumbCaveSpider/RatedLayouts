@@ -215,7 +215,7 @@ class $modify(RLProfilePage, ProfilePage) {
                     ->setAxisAlignment(AxisAlignment::Center)
                     ->setGrowCrossAxis(false));
 
-            m_mainLayer->addChild(m_fields->m_rlButtonBg, 9);
+            m_mainLayer->addChild(m_fields->m_rlButtonBg, 20);
             m_fields->m_rlButtonBg->addChild(m_fields->m_rlButtonsMenu, 1);
 
             // create toggle arrow button
@@ -228,7 +228,7 @@ class $modify(RLProfilePage, ProfilePage) {
             m_fields->m_arrowMenu = CCMenu::create(arrowBtn, nullptr);
             m_fields->m_arrowMenu->setPosition({0, 0});
             m_fields->m_arrowMenu->setID("rl-toggle-menu");
-            m_mainLayer->addChild(m_fields->m_arrowMenu, 10);
+            m_mainLayer->addChild(m_fields->m_arrowMenu, 20);
             // position at right edge
             float arrowW = arrowSpr->getContentSize().width;
             arrowBtn->setPosition(
@@ -284,17 +284,12 @@ class $modify(RLProfilePage, ProfilePage) {
 
         m_fields->m_rlStatsMenu = CCMenu::create();
         m_fields->m_rlStatsMenu->setID("rl-stats-menu");
-        m_fields->m_rlStatsMenu->setContentSize(statsMenu->getContentSize());
 
         auto row = RowLayout::create();
         row->setAxisAlignment(AxisAlignment::Center);
         row->setCrossAxisAlignment(AxisAlignment::Center);
         row->setGap(4.f);
         m_fields->m_rlStatsMenu->setLayout(row);
-
-        m_fields->m_rlStatsMenu->setAnchorPoint({0.5f, 0.5f});
-
-        m_fields->m_rlStatsMenu->setPositionY(245.f);
 
         auto starsText = GameToolbox::pointsToString(m_fields->m_stars);
         auto planetsText = GameToolbox::pointsToString(m_fields->m_planets);
@@ -321,6 +316,16 @@ class $modify(RLProfilePage, ProfilePage) {
             m_fields->m_rlStatsMenu->addChild(pointsEntry);
         }
 
+        m_fields->m_rlStatsMenu->setAnchorPoint(statsMenu->getAnchorPoint());
+        m_fields->m_rlStatsMenu->setPosition(statsMenu->getPosition());
+        m_fields->m_rlStatsMenu->setContentSize(statsMenu->getContentSize());
+        m_fields->m_rlStatsMenu->setScale(statsMenu->getScale());
+
+        if (Loader::get()->isModLoaded("itzkiba.better_progression")) {  // me when hardcoding position because of this stupid mod be like:
+            m_fields->m_rlStatsMenu->setPositionY(248.f);
+            m_fields->m_rlStatsMenu->setPositionX(309.5f);
+            m_fields->m_rlStatsMenu->setScale(0.845f);
+        }
         m_fields->m_rlStatsMenu->setVisible(false);
         statsMenu->setVisible(true);
 
@@ -862,5 +867,3 @@ class $modify(RLProfilePage, ProfilePage) {
             popup->show();
     }
 };
-
-

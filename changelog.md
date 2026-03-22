@@ -1,14 +1,21 @@
 # v0.5.0-beta.1
+
 ### The Spire Update!
 
 - Added **The Spire**. Platformer-focus user created Rated Layouts levels. Explore the Spire and find forsaken lore beyond the <cp>Cosmos</c>
-- Added New Secret Character. *Discover this character and your access to the Spire will be granted*
-- Fixed the issue where Difficulty Score voted 10 or higher doesn't apply correctly when voted
+- Added New Secret Character. _Discover this character and your access to the Spire will be granted_
+- Fixed issue where Difficulty Score voted 10 or higher doesn't apply correctly when voted
 - Added **Disable Notification in Level** in the mod settings
 - Tweaked the Comment Cell Colors for users with a bright nameplate
 - Fixed issue where the text label in the Achievements overflows
 - Replace the use of the old scrolling system to use Cue's list node.
 - Tweaked the Rubies Labels on the Level Info Layer and the End Level Layer.
+- Fixed issue where the Shopkeeper and the Plushie sprite are floating on screens with different aspect ratios.
+- Fixed issue where the RL Stats Menu is overlapping with the [Better Progression](mod:itzkiba.better_progression).
+- Fixed issue where on smaller screens, the Button Menu is overlapping with the socials menu.
+- Fixed issue where the comment text color isn't applied for users with [Comment Emojis Reloaded](mod:prevter.comment_emojis) mod enabled.
+- Adjusted the comment colors to be more visible on bright nameplates.
+- Added Comment Text Background for better visibility of comments on bright nameplates.
 - Internal Code Refactor and optimizations
 
 # v0.4.3-beta.1

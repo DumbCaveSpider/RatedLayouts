@@ -69,7 +69,8 @@ bool RLShopLayer::init() {
     auto shopkeeperItem = CCMenuItemSpriteExtra::create(
         shopkeeperIcon, this, menu_selector(RLShopLayer::onLayoutCreator));
     shopkeeperItem->setPosition(
-        {winSize.width / 2 - 120, winSize.height / 2 + 65});
+        {winSize.width / 2 - 120, deckSpr->getContentHeight()});
+    shopkeeperItem->setAnchorPoint({0.5f, .1f});
     shopkeeperItem->m_scaleMultiplier = 1.02;
     menu->addChild(shopkeeperItem);
 
@@ -95,13 +96,13 @@ bool RLShopLayer::init() {
     // PLUSHIESS
     auto plushiesSpr =
         CCSprite::createWithSpriteFrameName("RL_plushpile.png"_spr);
-    plushiesSpr->setPosition({winSize.width / 2 - 10, winSize.height / 2 + 28});
-    plushiesSpr->setAnchorPoint({0.5f, 0.f});
+    plushiesSpr->setPosition({winSize.width / 2 - 10, deckSpr->getContentHeight()});
+    plushiesSpr->setAnchorPoint({0.5f, 0.1f});
     this->addChild(plushiesSpr, -2);
 
     // random sign image
     std::vector<std::string> signFrames = {
-        "signImage_00.png"_spr, "signImage_01.png"_spr, "signImage_02.png"_spr, "signImage_03.png"_spr, "signImage_04.png"_spr, "signImage_05.png"_spr, "signImage_06.png"_spr, "signImage_07.png"_spr, "signImage_08.png"_spr};
+        "signImage_00.png"_spr, "signImage_01.png"_spr, "signImage_02.png"_spr, "signImage_03.png"_spr, "signImage_04.png"_spr, "signImage_05.png"_spr, "signImage_06.png"_spr, "signImage_07.png"_spr, "signImage_08.png"_spr, "signImage_09.png"_spr, "signImage_10.png"_spr};
     static geode::utils::random::Generator signGen = [] {
         geode::utils::random::Generator g;
         g.seed(geode::utils::random::secureU64());
@@ -281,7 +282,7 @@ void RLShopLayer::onLayoutCreator(CCObject* sender) {
         return g;
     }();
 
-    int v = gen.generate<int>(0, 16);
+    int v = gen.generate<int>(0, 18);
     uint64_t raw = gen.next();
     DialogObject* dialogObj = nullptr;
     std::string response = "Can I help you?";
@@ -319,7 +320,7 @@ void RLShopLayer::onLayoutCreator(CCObject* sender) {
             break;
         case 8:
             response =
-                "<co><d030>s<d030>i<d030>g<d030>h<d030>.<d030>.<d030>.<d030></c> Is my own decision <cr>bad</c>...";
+                "<co><d030>s<d030>i<d030>g<d030>h<d030>.<d030>.<d030>.<d030></c> did I make the <cr>wrong</c> decision...";
             break;
         case 9:
             response =
@@ -352,6 +353,15 @@ void RLShopLayer::onLayoutCreator(CCObject* sender) {
             break;
         case 16:
             response = "I heard there's <cf>The Spire</c> nearby, but I don't know how to get in there...";
+            break;
+        case 17:
+            response = "I am <cr>much worst</c> than <cg>RubRub</c>... is that right? I don't deserve this...";
+            break;
+        case 18:
+            response = "I'm thinking of <cr><s100>burning</s></c> down this shop... <d100> <cy>just kidding!</c> <d100> <co>maybe...</c>";
+            break;
+        case 19:
+            response = "Come back later... <co>please...</c>";
             break;
         default:
             response = "Weh!";

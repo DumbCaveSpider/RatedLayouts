@@ -1,6 +1,7 @@
 #include <Geode/Geode.hpp>
 #include "../include/RLDialogIcons.hpp"
 #include <cue/RepeatingBackground.hpp>
+#include "Geode/cocos/cocoa/CCArray.h"
 #include "Geode/cocos/script_support/CCScriptSupport.h"
 #include "Geode/ui/MDPopup.hpp"
 #include "Geode/utils/general.hpp"
@@ -400,7 +401,7 @@ bool RLSpireSelectLevelLayer::init() {
 
     // info thingy yappa
     auto infoSpr = CCSprite::createWithSpriteFrameName("RL_info01.png"_spr);
-    infoSpr->setScale(0.75f);
+    infoSpr->setScale(0.7f);
     auto infoBtn = CCMenuItemSpriteExtra::create(infoSpr, this, menu_selector(RLSpireSelectLevelLayer::onInfoClick));
     infoBtn->setPosition({winSize.width - 25, winSize.height - 25});
     m_infoMenu->addChild(infoBtn);
@@ -418,7 +419,8 @@ void RLSpireSelectLevelLayer::onInfoClick(CCObject*) {
         "<cf>The Spire</c> is tower-themed <co>Platformer-focus</c> user created <cl>Rated Layouts</c> levels.\n\n"
         "Explore the Spire and find forsaken lore beyond the <cp>Cosmos</c>.\n\n"
         "Each <co>room</c> contains <cl>5 platformer layouts</c>. Complete them to unlock the next room, when you completed a room, you are rewarded <cr>1000 rubies</c>.\n\n"
-        "These levels are hand-picked by <cf>ArcticWoof</c> and usually relates to <cf>The Spire</c> and it's <cr>lore</c>. <cg>Check out the Spire regularly for new rooms!</c>",
+        "These levels are hand-picked by <cf>ArcticWoof</c> and usually relates to <cf>The Spire</c> and it's <cr>lore</c>.\n\n"
+        "### <cg>Check out the Spire regularly for new rooms and levels!</c>",
         "OK")
         ->show();
 }
@@ -563,8 +565,8 @@ void RLSpireSelectLevelLayer::createSpireDoors() {
     for (int i = 0; i < 5; ++i) {
         int levelId = m_levelIds[i];
         bool previouslyCompleted = (i == 0) || (i > 0 && m_levelCompleted[i - 1]);
-        bool thisCompleted = (levelId > 0) && m_levelCompleted[i];
-        bool unlocked = levelId > 0 && (previouslyCompleted || thisCompleted);
+        bool thisCompleted = (levelId >= 0) && m_levelCompleted[i];
+        bool unlocked = levelId >= 0 && (previouslyCompleted || thisCompleted);
 
         const char* spriteFrame = unlocked ? "RL_spireDoor_unlocked.png"_spr : "RL_spireDoor_locked.png"_spr;
         auto doorSprite = CCSprite::createWithSpriteFrameName(spriteFrame);
@@ -604,23 +606,26 @@ void RLSpireSelectLevelLayer::createSpireDoors() {
             doorItem->addChild(numberLabel, 2);
 
             int theMagicNumberThatNoOneAsked = 1;
-            // difficulty label
-            int levelDiff = (i < m_levelDifficulty.size()) ? m_levelDifficulty[i] : 0;
-            auto diffLabel = CCLabelBMFont::create(fmt::format("{}", levelDiff).c_str(), "bigFont.fnt");
-            diffLabel->setScale(0.35f);
-            diffLabel->setPosition({doorSprite->getContentSize().width / 2 + theMagicNumberThatNoOneAsked, doorSprite->getContentSize().height / 2 + 9});
-            diffLabel->setAnchorPoint({0.f, 0.5f});
-            diffLabel->setBlendFunc({GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA});
-            diffLabel->setOpacity(230);
-            diffLabel->limitLabelWidth(10, .35f, .1f);
-            doorItem->addChild(diffLabel, 2);
 
-            // planet sprite
-            auto planetSpr = CCSprite::createWithSpriteFrameName("RL_planetSmall.png"_spr);
-            planetSpr->setPosition({diffLabel->getPositionX() - theMagicNumberThatNoOneAsked, diffLabel->getPositionY()});
-            planetSpr->setAnchorPoint({1.f, 0.5f});
-            planetSpr->setScale(.8f);
-            doorItem->addChild(planetSpr);
+            if (levelId > 0) {
+                // difficulty label
+                int levelDiff = (i < m_levelDifficulty.size()) ? m_levelDifficulty[i] : 0;
+                auto diffLabel = CCLabelBMFont::create(fmt::format("{}", levelDiff).c_str(), "bigFont.fnt");
+                diffLabel->setScale(0.35f);
+                diffLabel->setPosition({doorSprite->getContentSize().width / 2 + theMagicNumberThatNoOneAsked, doorSprite->getContentSize().height / 2 + 9});
+                diffLabel->setAnchorPoint({0.f, 0.5f});
+                diffLabel->setBlendFunc({GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA});
+                diffLabel->setOpacity(230);
+                diffLabel->limitLabelWidth(10, .35f, .1f);
+                doorItem->addChild(diffLabel, 2);
+
+                // planet sprite
+                auto planetSpr = CCSprite::createWithSpriteFrameName("RL_planetSmall.png"_spr);
+                planetSpr->setPosition({diffLabel->getPositionX() - theMagicNumberThatNoOneAsked, diffLabel->getPositionY()});
+                planetSpr->setAnchorPoint({1.f, 0.5f});
+                planetSpr->setScale(.8f);
+                doorItem->addChild(planetSpr);
+            }
         }
     }
 }
@@ -675,8 +680,20 @@ void RLSpireSelectLevelLayer::onSpireDoorClick(CCObject* sender) {
         return;
 
     int levelId = menuItem->getTag();
+
     if (levelId <= 0) {
-        Notification::create("No level data", NotificationIcon::Warning)->show();
+        DialogObject* dialogObj1 = DialogObject::create("The Oracle", "It seems <cl>this door</c> leads to <co>an endless void</c>...<d100> <cy>for now</c>.", 1, 1.f, false, ccWHITE);
+        DialogObject* dialogObj2 = DialogObject::create("The Oracle", "<cg>Come back later</c> when <cr>it</c> is ready.", 1, 1.f, false, ccWHITE);
+
+        CCArray* dialogArray = CCArray::create();
+        dialogArray->addObject(dialogObj1);
+        dialogArray->addObject(dialogObj2);
+
+        auto dialog = DialogLayer::createWithObjects(dialogArray, 4);
+        dialog->addToMainScene();
+        dialog->animateInRandomSide();
+
+        rl::setDialogObjectIcon(dialog, dialogObj1->m_characterFrame);
         return;
     }
 
