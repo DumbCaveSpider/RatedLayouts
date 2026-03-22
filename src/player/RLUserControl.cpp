@@ -245,7 +245,7 @@ bool RLUserControl::init() {
                             json["isClassicAdmin"].asBool().unwrapOrDefault();
                         isPlatMod = json["isPlatMod"].asBool().unwrapOrDefault();
                         isPlatAdmin = json["isPlatAdmin"].asBool().unwrapOrDefault();
-                        isWhitelisted = json["whitelist"].asBool().unwrapOrDefault();
+                        isWhitelisted = json["whitelisted"].asBool().unwrapOrDefault();
                     }
                 }
 
@@ -290,7 +290,12 @@ bool RLUserControl::init() {
                         }
 
                         opt.actionButton->setVisible(showAction);
-                        opt.actionButton->setEnabled(showAction);
+
+                        if (key == "exclude" && isWhitelisted) {
+                            opt.actionButton->setEnabled(false);
+                        } else {
+                            opt.actionButton->setEnabled(showAction);
+                        }
                     }
                 }
 
@@ -843,12 +848,27 @@ void RLUserControl::setOptionState(const std::string& key, bool desired, bool up
         m_optionsMenu->updateLayout();
     }
 
-    // whenever whitelist is updated, exclude is locked
+    // whenever whitelist is updated, exclude is locked and styled as disabled
     auto whitelistOpt = getOptionByKey("whitelist");
+    auto excludeOpt = getOptionByKey("exclude");
     if (whitelistOpt && whitelistOpt->desired) {
-        setOptionEnabled("exclude", false);
+        if (excludeOpt && excludeOpt->actionButton) {
+            excludeOpt->actionButton->setEnabled(false);
+            std::string excludeText = excludeOpt->desired ? "Remove Leaderboard Exclude" : "Set Leaderboard Exclude";
+            excludeOpt->actionSprite = ButtonSprite::create(
+                excludeText.c_str(), 200, true, "goldFont.fnt", "GJ_button_04.png", 30.f, 1.f);
+            excludeOpt->actionButton->setNormalImage(excludeOpt->actionSprite);
+        }
     } else {
         setOptionEnabled("exclude", true);
+        if (excludeOpt && excludeOpt->actionButton) {
+            std::string excludeText = excludeOpt->desired ? "Remove Leaderboard Exclude" : "Set Leaderboard Exclude";
+            std::string excludeBg = excludeOpt->desired ? "GJ_button_02.png" : "GJ_button_01.png";
+            excludeOpt->actionSprite = ButtonSprite::create(
+                excludeText.c_str(), 200, true, "goldFont.fnt", excludeBg.c_str(), 30.f, 1.f);
+            excludeOpt->actionButton->setNormalImage(excludeOpt->actionSprite);
+            excludeOpt->actionButton->setEnabled(true);
+        }
     }
 
     if (GJAccountManager::get()->m_accountID == DEV_ACCOUNT_ID) {

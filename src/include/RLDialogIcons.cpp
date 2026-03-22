@@ -9,8 +9,13 @@ namespace rl {
 
         dialog->m_characterSprite->setVisible(false);
 
-        if (characterFrame < 0 || characterFrame >= DialogIconCount) {
-            characterFrame = 0;
+        // when characterFrame = 0 LITERALLY REMOVES THE SPRITE lol
+        int iconFrame = characterFrame - 1;
+        if (characterFrame <= 0) {
+            iconFrame = 0;
+        }
+        if (iconFrame < 0 || iconFrame >= DialogIconCount) {
+            iconFrame = 0;
         }
 
         for (int frame = 0; frame < DialogIconCount; frame++) {
@@ -29,7 +34,7 @@ namespace rl {
                 icon->setPosition(dialog->m_characterSprite->getPosition());
             }
 
-            icon->setVisible(frame == characterFrame);
+            icon->setVisible(frame == iconFrame);
         }
     }
 

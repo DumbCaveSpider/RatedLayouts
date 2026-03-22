@@ -99,14 +99,14 @@ void RLSecretLayer1::onEnterTransitionDidFinish() {
     // first time?
     if (!Mod::get()->getSavedValue<bool>("oracleFirstTime")) {
         Mod::get()->setSavedValue("oracleFirstTime", true);
-        DialogObject* dialog1 = DialogObject::create("The Oracle", "A <cg>visitor</c>?<d100> <cy>Surely not</c>?", 1, 1.f, false, ccWHITE);
-        DialogObject* dialog2 = DialogObject::create("The Oracle", "...!", 0, 1.f, false, ccWHITE);
-        DialogObject* dialog3 = DialogObject::create("The Oracle", "By the <s100><cr>Red Comet</c></s>! Your <cg>arrival</c> has been <co>lingering</c> on the <cy>firmament above for ages</c>!", 2, 1.f, false, ccWHITE);
-        DialogObject* dialog4 = DialogObject::create("The Oracle", "...", 3, 1.f, false, ccWHITE);
-        DialogObject* dialog5 = DialogObject::create("The Oracle", "Do excuse me.", 4, 1.f, false, ccWHITE);
-        DialogObject* dialog6 = DialogObject::create("The Oracle", "I inquire that you <cg>learn to read</c> the <cp>Cosmos</c>, that you may find <cy>riches unbound</c>!", 0, 1.f, false, ccWHITE);
-        DialogObject* dialog7 = DialogObject::create("The Oracle", "Now then.", 1, 1.f, false, ccWHITE);
-        DialogObject* dialog8 = DialogObject::create("The Oracle", "I shall watch your <co>exploits</c> most <cg>attentively</c>. <cl>Enjoy</c>.", 0, 1.f, false, ccWHITE);
+        DialogObject* dialog1 = DialogObject::create("The Oracle", "A <cg>visitor</c>?<d100> <cy>Surely not</c>?", 2, 1.f, false, ccWHITE);
+        DialogObject* dialog2 = DialogObject::create("The Oracle", "...!", 1, 1.f, false, ccWHITE);
+        DialogObject* dialog3 = DialogObject::create("The Oracle", "By the <s100><cr>Red Comet</c></s>! Your <cg>arrival</c> has been <co>lingering</c> on the <cy>firmament above for ages</c>!", 3, 1.f, false, ccWHITE);
+        DialogObject* dialog4 = DialogObject::create("The Oracle", "...", 4, 1.f, false, ccWHITE);
+        DialogObject* dialog5 = DialogObject::create("The Oracle", "Do excuse me.", 5, 1.f, false, ccWHITE);
+        DialogObject* dialog6 = DialogObject::create("The Oracle", "I inquire that you <cg>learn to read</c> the <cp>Cosmos</c>, that you may find <cy>riches unbound</c>!", 1, 1.f, false, ccWHITE);
+        DialogObject* dialog7 = DialogObject::create("The Oracle", "Now then.", 2, 1.f, false, ccWHITE);
+        DialogObject* dialog8 = DialogObject::create("The Oracle", "I shall watch your <co>exploits</c> most <cg>attentively</c>. <cl>Enjoy</c>.", 1, 1.f, false, ccWHITE);
 
         auto dialogArray = CCArray::create();
         dialogArray->addObject(dialog1);
@@ -136,7 +136,7 @@ void RLSecretLayer1::onRedeem(CCObject* sender) {
 
     if (code.empty()) {
         DialogObject* dialogObj = nullptr;
-        dialogObj = DialogObject::create("The Oracle", "<cr>Mimicking</c> the void of the <cp>Cosmos</c>, <cg>are we</c>?", 1, 1.f, false, ccWHITE);
+        dialogObj = DialogObject::create("The Oracle", "<cr>Mimicking</c> the void of the <cp>Cosmos</c>, <cg>are we</c>?", 2, 1.f, false, ccWHITE);
 
         auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 4);
         dialog->addToMainScene();
@@ -149,7 +149,7 @@ void RLSecretLayer1::onRedeem(CCObject* sender) {
     std::string argonToken = Mod::get()->getSavedValue<std::string>("argon_token");
     if (argonToken.empty()) {
         DialogObject* dialogObj = nullptr;
-        dialogObj = DialogObject::create("The Oracle", "Something went wrong...", 1, 1.f, false, ccWHITE);
+        dialogObj = DialogObject::create("The Oracle", "Something went wrong...", 3, 1.f, false, ccWHITE);
 
         auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 4);
         dialog->addToMainScene();
@@ -232,17 +232,13 @@ void RLSecretLayer1::startRedeemRequest() {
     std::string argonToken = Mod::get()->getSavedValue<std::string>("argon_token");
     if (argonToken.empty()) {
         DialogObject* dialogObj = nullptr;
-        dialogObj = DialogObject::create("The Oracle", "Something went wrong...", 1, 1.f, false, ccWHITE);
+        dialogObj = DialogObject::create("The Oracle", "Something went wrong...", 3, 1.f, false, ccWHITE);
 
         auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 4);
         dialog->addToMainScene();
         dialog->animateInRandomSide();
 
-        auto orSprite =
-            CCSprite::createWithSpriteFrameName("RL_dialogIconOracle.png"_spr);
-        orSprite->setPosition(dialog->m_characterSprite->getPosition());
-        dialog->m_characterSprite->setVisible(false);
-        dialog->m_mainLayer->addChild(orSprite, 1);
+        rl::setDialogObjectIcon(dialog, dialogObj->m_characterFrame);
         Notification::create("Argon authentication missing")->show();
         finishRedeem();
         return;
@@ -262,8 +258,8 @@ void RLSecretLayer1::startRedeemRequest() {
             self->m_textLabel->setString("Something has aligned...");
             self->m_textLabel->setColor({150, 100, 0});
         }
-        DialogObject* dialog1 = DialogObject::create("The Oracle", "The <co>Planets align</c>. You read the <cp>Cosmos</c> and <cg>found the way to what you spoke.</c>", 1, 1.f, false, ccWHITE);
-        DialogObject* dialog2 = DialogObject::create("The Oracle", "Now seek your <cg>words</c> outside of this place, <s100><cr>it</c></s> is <cy>waiting.</c>", 0, 1.f, false, ccWHITE);
+        DialogObject* dialog1 = DialogObject::create("The Oracle", "The <co>Planets align</c>. You read the <cp>Cosmos</c> and <cg>found the way to what you spoke.</c>", 2, 1.f, false, ccWHITE);
+        DialogObject* dialog2 = DialogObject::create("The Oracle", "Now seek your <cg>words</c> outside of this place, <s100><cr>it</c></s> is <cy>waiting.</c>", 1, 1.f, false, ccWHITE);
 
         auto dialogArray = CCArray::create();
         dialogArray->addObject(dialog1);
@@ -297,13 +293,13 @@ void RLSecretLayer1::startRedeemRequest() {
             auto jsonRes = res.json();
             if (!jsonRes) {
                 DialogObject* dialogObj = nullptr;
-                dialogObj = DialogObject::create("The Oracle", "Something went wrong...", 1, 1.f, false, ccWHITE);
+                dialogObj = DialogObject::create("The Oracle", "Something went wrong...", 0, 1.f, false, ccWHITE);
 
                 auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 4);
                 dialog->addToMainScene();
                 dialog->animateInRandomSide();
 
-                rl::setDialogObjectCustomIcon(dialog, "RL_dialogIcon_00.png"_spr);
+                rl::setDialogObjectIcon(dialog, dialogObj->m_characterFrame);
                 Notification::create("Redeem request failed with invalid response.")->show();
                 log::warn("Redeem request failed with invalid JSON response.");
                 self->finishRedeem();

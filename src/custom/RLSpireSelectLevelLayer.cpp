@@ -332,8 +332,8 @@ void RLSpireSelectLevelLayer::onRoomTransitionComplete() {
 
     if (!Mod::get()->getSavedValue<bool>("hasEnteredSpire")) {
         Mod::get()->setSavedValue("hasEnteredSpire", true);
-        DialogObject* dialog1 = DialogObject::create("The Oracle", "This <cl>place</c>... I believe <cr><s100>it</s></c> is <cy>waiting for you here</c>.", 1, 1.f, false, ccWHITE);
-        DialogObject* dialog2 = DialogObject::create("The Oracle", "<cg>Good luck</c>.", 0, 1.f, false, ccWHITE);
+        DialogObject* dialog1 = DialogObject::create("The Oracle", "This <cl>place</c>... I believe <cr><s100>it</s></c> is <cy>waiting for you here</c>.", 2, 1.f, false, ccWHITE);
+        DialogObject* dialog2 = DialogObject::create("The Oracle", "<cg>Good luck</c>.", 1, 1.f, false, ccWHITE);
 
         auto dialogArray = CCArray::create();
         dialogArray->addObject(dialog1);
@@ -343,7 +343,7 @@ void RLSpireSelectLevelLayer::onRoomTransitionComplete() {
         dialog->addToMainScene();
         dialog->animateInRandomSide();
 
-        rl::setDialogObjectIcon(dialog, 0);
+        rl::setDialogObjectIcon(dialog, dialog1->m_characterFrame);
     }
 
     m_isRoomTransitionActive = false;
@@ -736,11 +736,7 @@ void RLSpireSelectLevelLayer::onNavArrowUpClick(CCObject* sender) {
         dialog->addToMainScene();
         dialog->animateInRandomSide();
 
-        auto orSprite =
-            CCSprite::createWithSpriteFrameName("RL_dialogIconOracle.png"_spr);
-        orSprite->setPosition(dialog->m_characterSprite->getPosition());
-        dialog->m_mainLayer->addChild(orSprite, 1);
-        dialog->m_characterSprite->setVisible(false);
+        rl::setDialogObjectIcon(dialog, dialogObj->m_characterFrame);
         return;
     }
 

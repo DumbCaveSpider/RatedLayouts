@@ -315,18 +315,15 @@ void RLShopLayer::onLayoutCreator(CCObject* sender) {
             break;
         case 7:
             response =
-                "Stop spread rumors about <cg>buying every nameplate</c>, "
-                "there's legit <cr>nothing happen when you do >:(</c>";
+                "Everyone <cr>hates me</c>,<d100> but I'm their <cf>God</c>...<d050> I mean...<d100> just a <cg>normal shopkeeper</c>.";
             break;
         case 8:
             response =
-                "Still making more <cg>nameplates</c> coming. My <cl>delivery "
-                "got delayed</c>...";
+                "<co><d030>s<d030>i<d030>g<d030>h<d030>.<d030>.<d030>.<d030></c> Is my own decision <cr>bad</c>...";
             break;
         case 9:
             response =
-                "Sorry <cy>I can't talk right now</c>, I'm busy counting my "
-                "<cr>rubies</c> :3";
+                "Cooking some <cg>new nameplates</c> for you all! <cl>Can't wait for you to see them</c>!";
             break;
         case 10:
             response = "I'm <cr>lurking</c> on <cl>every move</c> you do...";
@@ -343,16 +340,18 @@ void RLShopLayer::onLayoutCreator(CCObject* sender) {
             break;
         case 13:
             response =
-                "Did you know that you can get <cr>free rubies!</c> Tell me and "
-                "I'll <cg>give you a hint</c> on how to get them :P";
+                "Ask <cp>The Oracle</c> about <cf>me</c>! That would be funny.";
             break;
         case 14:
             response =
-                "Would you want to buy my entire shop for <cg>$100k?</c> I know "
+                "Would you want to buy my entire shop for <cr>100k Rubies?</c> I know "
                 "someone is <cy>interested</c> :P";
             break;
         case 15:
-            response = "Give me <cr>10k rubies</c> and a <cl>high-end car</c>!";
+            response = "Give me <cr>10k Rubies</c> and a <cl>high-end car</c>!";
+            break;
+        case 16:
+            response = "I heard there's <cf>The Spire</c> nearby, but I don't know how to get in there...";
             break;
         default:
             response = "Weh!";
