@@ -3,7 +3,7 @@
 #include <Geode/ui/NineSlice.hpp>
 
 #include "../include/RLAchievements.hpp"
-#include "../custom/RLLevelBrowserLayer.hpp"
+#include "../layer/RLLevelBrowserLayer.hpp"
 #include <Geode/modify/GameLevelManager.hpp>
 #include <Geode/modify/LevelBrowserLayer.hpp>
 #include <Geode/modify/LevelInfoLayer.hpp>
@@ -648,3 +648,5 @@ void RLEventLayouts::onSafeButton(CCObject* sender) {
     auto transitionFade = CCTransitionFade::create(0.5f, scene);
     CCDirector::sharedDirector()->pushScene(transitionFade);
 }
+
+

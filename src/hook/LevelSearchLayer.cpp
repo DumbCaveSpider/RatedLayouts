@@ -1,7 +1,7 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/LevelSearchLayer.hpp>
 
-#include "../custom/RLCreatorLayer.hpp"
+#include "../layer/RLCreatorLayer.hpp"
 
 using namespace geode::prelude;
 
@@ -38,3 +38,5 @@ class $modify(RLLevelSearchLayer, LevelSearchLayer) {
         CCDirector::sharedDirector()->pushScene(transitionFade);
     }
 };
+
+

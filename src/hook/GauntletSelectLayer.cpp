@@ -1,7 +1,7 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/GauntletSelectLayer.hpp>
 
-#include "../custom/RLGauntletSelectLayer.hpp"
+#include "../layer/RLGauntletSelectLayer.hpp"
 
 using namespace geode::prelude;
 
@@ -38,3 +38,5 @@ class $modify(RLHookGauntletSelectLayer, GauntletSelectLayer) {
         CCDirector::sharedDirector()->pushScene(transitionFade);
     }
 };
+
+

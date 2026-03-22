@@ -1,6 +1,6 @@
 #include "RLCommunityVotePopup.hpp"
 #include "../include/RLAchievements.hpp"
-#include "../custom/RLVotesLeaderboardLayer.hpp"
+#include "../layer/RLVotesLeaderboardLayer.hpp"
 #include <Geode/binding/GJAccountManager.hpp>
 #include <Geode/binding/UploadActionPopup.hpp>
 #include <algorithm>
@@ -611,3 +611,5 @@ void RLCommunityVotePopup::onToggleAll(CCObject* sender) {
         refreshFromServer();
     }
 }
+
+

@@ -3,7 +3,7 @@
 #include "Geode/cocos/textures/CCTexture2D.h"
 #include <Geode/Geode.hpp>
 #include <Geode/modify/EndLevelLayer.hpp>
-#include "../custom/RLSpireSelectLevelLayer.hpp"
+#include "../layer/RLSpireSelectLevelLayer.hpp"
 
 using namespace geode::prelude;
 using namespace rl;
@@ -677,3 +677,5 @@ class $modify(EndLevelLayer) {
             });
     }
 };
+
+

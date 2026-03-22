@@ -1,7 +1,7 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/CreatorLayer.hpp>
 
-#include "../custom/RLCreatorLayer.hpp"
+#include "../layer/RLCreatorLayer.hpp"
 
 using namespace geode::prelude;
 
@@ -38,3 +38,5 @@ class $modify(RLHCreatorLayer, CreatorLayer) {
         CCDirector::sharedDirector()->pushScene(transitionFade);
     }
 };
+
+
