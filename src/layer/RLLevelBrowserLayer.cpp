@@ -27,6 +27,147 @@ RLLevelBrowserLayer* RLLevelBrowserLayer::create(Mode mode,
     return nullptr;
 }
 
+void RLLevelBrowserLayer::setupBackground() {
+    if (Mod::get()->getSettingValue<bool>("disableBackground") == true) {
+        auto bg = createLayerBG();
+        bg->setColor(
+            Mod::get()->getSettingValue<cocos2d::ccColor3B>("rgbBackground"));
+        addChild(bg, -1);
+        return;
+    }
+
+    auto value = Mod::get()->getSettingValue<int>("backgroundType");
+    std::string bgIndex = (value >= 1 && value <= 9)
+                              ? ("0" + numToString(value))
+                              : numToString(value);
+    std::string bgName = "game_bg_" + bgIndex + "_001.png";
+    auto bg = cue::RepeatingBackground::create(bgName.c_str(), 1.f, cue::RepeatMode::X);
+    bg->setColor(
+        Mod::get()->getSettingValue<cocos2d::ccColor3B>("rgbBackground"));
+    addChild(bg, -1);
+}
+
+int RLLevelBrowserLayer::computeModeType() const {
+    if (m_mode == Mode::Featured)
+        return 2;
+    if (m_mode == Mode::AdminSent)
+        return 4;
+    if (m_mode == Mode::LegendarySends)
+        return 5;
+    if (m_mode == Mode::Sent)
+        return 1;
+    return 0;
+}
+
+void RLLevelBrowserLayer::applyModeFetch(bool force) {
+    if (m_mode == Mode::Featured || m_mode == Mode::Sent ||
+        m_mode == Mode::AdminSent || m_mode == Mode::LegendarySends) {
+        if (force)
+            m_page = 0;
+        int type = computeModeType();
+        if (!m_modeParams.empty()) {
+            auto& val = m_modeParams.front().second;
+            int parsed = 0;
+            auto res = std::from_chars(val.data(), val.data() + val.size(), parsed);
+            if (res.ec == std::errc())
+                type = parsed;
+        }
+        this->fetchLevelsForType(type);
+    } else if (m_mode == Mode::Account) {
+        if (force)
+            m_page = 0;
+        int accountId = GJAccountManager::get()->m_accountID;
+        if (!m_modeParams.empty()) {
+            auto& val = m_modeParams.front().second;
+            int parsed = 0;
+            auto res = std::from_chars(val.data(), val.data() + val.size(), parsed);
+            if (res.ec == std::errc())
+                accountId = parsed;
+        }
+        this->fetchAccountLevels(accountId);
+    } else if (m_mode == Mode::Search || m_mode == Mode::EventSafe) {
+        if (!m_modeParams.empty())
+            this->performSearchQuery(m_modeParams);
+    }
+}
+
+void RLLevelBrowserLayer::setupControls() {
+    auto winSize = CCDirector::sharedDirector()->getWinSize();
+    const char* title = m_title.empty() ? "Rated Layouts" : m_title.c_str();
+
+    auto uiMenu = CCMenu::create();
+    uiMenu->setPosition({0, 0});
+
+    addBackButton(this, BackButtonStyle::Pink);
+
+    auto infoSpr = CCSprite::createWithSpriteFrameName("RL_info01.png"_spr);
+    infoSpr->setScale(0.7f);
+    auto infoButton = CCMenuItemSpriteExtra::create(
+        infoSpr, this, menu_selector(RLLevelBrowserLayer::onInfoButton));
+    infoButton->setPosition({25, 25});
+    uiMenu->addChild(infoButton);
+
+    // compact mode toggle button (bottom-left)
+    auto compactSpr =
+        CCSprite::createWithSpriteFrameName("GJ_smallModeIcon_001.png");
+    if (compactSpr) {
+        m_compactToggleBtn = CCMenuItemSpriteExtra::create(
+            compactSpr, this, menu_selector(RLLevelBrowserLayer::onCompactToggle));
+        if (m_compactToggleBtn) {
+            m_compactToggleBtn->setPosition(
+                {infoButton->getPositionX(), infoButton->getPositionY() + 40});
+            uiMenu->addChild(m_compactToggleBtn);
+
+            m_compactMode = Mod::get()->getSavedValue<bool>("compact_mode", false);
+            m_compactToggleBtn->setOpacity(m_compactMode ? 255 : 180);
+        }
+    }
+
+    this->addChild(uiMenu, 10);
+
+    m_listLayer = GJListLayer::create(nullptr, title, {191, 114, 62, 255}, LIST_SIZE.width, LIST_SIZE.height, 0);
+    m_listLayer->setPosition(
+        {winSize / 2 - m_listLayer->getScaledContentSize() / 2 - 5});
+
+    auto scrollLayer =
+        ScrollLayer::create({m_listLayer->getContentSize().width,
+            m_listLayer->getContentSize().height});
+    scrollLayer->setPosition({0, 0});
+    m_listLayer->addChild(scrollLayer);
+    m_scrollLayer = scrollLayer;
+
+    if (!Mod::get()->getSettingValue<bool>("disableScrollbar")) {
+        auto scrollBar = Scrollbar::create(scrollLayer);
+        scrollBar->setPosition({LIST_SIZE.width + 24.f, LIST_SIZE.height / 2});
+        scrollBar->setContentHeight(LIST_SIZE.height - 20);
+        m_listLayer->addChild(scrollBar, 10);
+    }
+
+    auto contentLayer = scrollLayer->m_contentLayer;
+    if (contentLayer) {
+        auto layout = ColumnLayout::create();
+        contentLayer->setLayout(layout);
+        layout->setGap(0.f);
+        layout->setAutoGrowAxis(220.f);
+        layout->setAxisReverse(true);
+        layout->setAxisAlignment(AxisAlignment::End);
+        auto spinner = LoadingSpinner::create(64.f);
+        if (spinner) {
+            spinner->setID("rl-spinner");
+            auto win = CCDirector::sharedDirector()->getWinSize();
+            spinner->setPosition(win / 2);
+            this->addChild(spinner, 1000);
+            m_circle = spinner;
+        }
+    }
+
+    this->addChild(m_listLayer);
+}
+
+void RLLevelBrowserLayer::setupPageControls() {
+    // Keep this method available for future use; current initialization is handled in init.
+}
+
 bool RLLevelBrowserLayer::init(GJSearchObject* object) {
     if (!CCLayer::init())
         return false;
@@ -52,7 +193,6 @@ bool RLLevelBrowserLayer::init(GJSearchObject* object) {
     }
 
     auto winSize = CCDirector::sharedDirector()->getWinSize();
-
     const char* title = m_title.empty() ? "Rated Layouts" : m_title.c_str();
 
     auto uiMenu = CCMenu::create();
@@ -236,47 +376,7 @@ bool RLLevelBrowserLayer::init(GJSearchObject* object) {
     this->scheduleUpdate();
     this->setKeypadEnabled(true);
 
-    // perform auto-fetch depending on mode
-    if (m_mode == Mode::Featured) {
-        int type = 2;
-        if (!m_modeParams.empty()) {
-            auto& val = m_modeParams.front().second;
-            int parsed = 0;
-            auto res = std::from_chars(val.data(), val.data() + val.size(), parsed);
-            if (res.ec == std::errc()) {
-                type = parsed;
-            } else {
-                type = 2;
-            }
-        }
-        this->fetchLevelsForType(type);
-    } else if (m_mode == Mode::Sent || m_mode == Mode::AdminSent ||
-               m_mode == Mode::LegendarySends) {
-        int type = (m_mode == Mode::AdminSent)
-                       ? 4
-                       : (m_mode == Mode::LegendarySends ? 5 : 1);
-        if (!m_modeParams.empty()) {
-            auto& val = m_modeParams.front().second;
-            int parsed = 0;
-            auto res = std::from_chars(val.data(), val.data() + val.size(), parsed);
-            if (res.ec == std::errc())
-                type = parsed;
-        }
-        this->fetchLevelsForType(type);
-    } else if (m_mode == Mode::Search || m_mode == Mode::EventSafe) {
-        if (!m_modeParams.empty())
-            this->performSearchQuery(m_modeParams);
-    } else if (m_mode == Mode::Account) {
-        int accountId = GJAccountManager::get()->m_accountID;
-        if (!m_modeParams.empty()) {
-            auto& val = m_modeParams.front().second;
-            int parsed = 0;
-            auto res = std::from_chars(val.data(), val.data() + val.size(), parsed);
-            if (res.ec == std::errc())
-                accountId = parsed;
-        }
-        this->fetchAccountLevels(accountId);
-    }
+    applyModeFetch(false);
 
     return true;
 }

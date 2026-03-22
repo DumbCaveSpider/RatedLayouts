@@ -109,6 +109,16 @@ protected:
     void fetchAccountLevels(int accountId);
     void updatePageButton();
 
+    void setupBackground();
+    void setupControls();
+    void setupPageControls();
+    void applyModeFetch(bool force);
+    int computeModeType() const;
+    void presentSearchResults(web::WebResponse const& res);
+    void presentEventSafeResults(web::WebResponse const& res);
+    LevelCell* createLevelCell(GJGameLevel* level, int index, float cellH);
+    void updateLevelsLabel(int returned);
+
     // UI handlers
     void onPrevPage(CCObject* sender);
     void onNextPage(CCObject* sender);
