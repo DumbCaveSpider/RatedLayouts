@@ -260,116 +260,21 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                     ->getChildByID("rl-community-vote"))
                 exists = true;
 
+            int normalPct = -1;
+            int practicePct = -1;
+            bool hasPctFields = false;
+            if (layerRef && layerRef->m_level) {
+                hasPctFields = true;
+                normalPct = layerRef->m_level->m_normalPercent;
+                practicePct = layerRef->m_level->m_practicePercent;
+            }
+
+            bool shouldDisable = shouldDisableCommunityVote(layerRef, hasPctFields, normalPct, practicePct);
+
             if (!exists) {
-                // determine whether we can use the level's percentage fields
-                int normalPct = -1;
-                int practicePct = -1;
-                bool hasPctFields = false;
-
-                if (layerRef && layerRef->m_level) {
-                    hasPctFields = true;
-                    normalPct = layerRef->m_level->m_normalPercent;
-                    practicePct = layerRef->m_level->m_practicePercent;
-                }
-
-                bool shouldDisable = true;
-                if (hasPctFields) {
-                    shouldDisable = !(normalPct >= 20 || practicePct >= 80);
-                }
-                // Mods/Admins can always vote regardless of percentages
-                bool isClassicMod = Mod::get()->getSavedValue<bool>("isClassicMod");
-                bool isClassicAdmin = Mod::get()->getSavedValue<bool>("isClassicAdmin");
-                bool isPlatMod = Mod::get()->getSavedValue<bool>("isPlatMod");
-                bool isPlatAdmin = Mod::get()->getSavedValue<bool>("isPlatAdmin");
-                bool isDev = (GJAccountManager::get()->m_accountID == DEV_ACCOUNTID);
-                if (isClassicMod || isClassicAdmin || isPlatMod || isPlatAdmin ||
-                    isDev) {
-                    shouldDisable = false;
-                    log::debug(
-                        "Community vote enabled due to role override (classic/plat)");
-                }
-
-                // if the level is platformer
-                if (layerRef && layerRef->m_level &&
-                    layerRef->m_level->isPlatformer()) {
-                    shouldDisable = false;
-                    log::debug("Community vote enabled due to platformer level");
-                }
-
-                auto commSpriteGray = CCSpriteGrayscale::createWithSpriteFrameName(
-                    "RL_commVote01.png"_spr);
-                if (commSpriteGray) {
-                    auto commBtnSpr = CircleButtonSprite::create(
-                        commSpriteGray, CircleBaseColor::Gray, CircleBaseSize::Medium);
-                    auto commBtnItem = CCMenuItemSpriteExtra::create(
-                        commBtnSpr, layerRef, menu_selector(RLLevelInfoLayer::onCommunityVote));
-                    commBtnItem->setID("rl-community-vote");
-
-                    auto rightMenuNode = layerRef->getChildByID("right-side-menu");
-                    if (rightMenuNode && typeinfo_cast<CCMenu*>(rightMenuNode)) {
-                        static_cast<CCMenu*>(rightMenuNode)->addChild(commBtnItem);
-                        // ensure layout updates so the button is placed correctly
-                        static_cast<CCMenu*>(rightMenuNode)->updateLayout();
-
-                        // Reactivate immediately if it should be enabled according to data
-                        if (!shouldDisable) {
-                            // swap to colored sprite
-                            auto commSpriteColor =
-                                CCSprite::createWithSpriteFrameName("RL_commVote01.png"_spr);
-                            if (commSpriteColor) {
-                                auto coloredBtnSpr = CircleButtonSprite::create(
-                                    commSpriteColor, CircleBaseColor::Green, CircleBaseSize::Medium);
-                                commBtnItem->setNormalImage(coloredBtnSpr);
-                            }
-                            commBtnItem->setEnabled(true);
-                            commBtnItem->setOpacity(255);
-                        }
-                    } else {
-                        log::warn(
-                            "Right-side-menu not found; community vote button not added");
-                    }
-                }
+                createCommunityVoteButton(layerRef, shouldDisable);
             } else {
-                // update existing button state based on current data
-                int normalPct = -1;
-                int practicePct = -1;
-                bool hasPctFields = false;
-
-                if (layerRef && layerRef->m_level) {
-                    hasPctFields = true;
-                    normalPct = layerRef->m_level->m_normalPercent;
-                    practicePct = layerRef->m_level->m_practicePercent;
-                }
-
-                bool shouldDisable = true;
-                if (hasPctFields) {
-                    shouldDisable = !(normalPct >= 20 || practicePct >= 80);
-                }
-
-                bool isClassicMod = Mod::get()->getSavedValue<bool>("isClassicMod");
-                bool isClassicAdmin = Mod::get()->getSavedValue<bool>("isClassicAdmin");
-                bool isPlatMod = Mod::get()->getSavedValue<bool>("isPlatMod");
-                bool isPlatAdmin = Mod::get()->getSavedValue<bool>("isPlatAdmin");
-                bool isDev = (GJAccountManager::get()->m_accountID == DEV_ACCOUNTID);
-                if (isClassicMod || isClassicAdmin || isPlatMod || isPlatAdmin ||
-                    isDev) {
-                    shouldDisable = false;
-                    log::debug(
-                        "Community vote enabled due to role override (classic/plat)");
-                }
-
-                auto rightMenuNode2 = layerRef->getChildByID("right-side-menu");
-                if (rightMenuNode2 && typeinfo_cast<CCMenu*>(rightMenuNode2)) {
-                    auto existing = static_cast<CCMenu*>(rightMenuNode2)
-                                        ->getChildByID("rl-community-vote");
-                    if (existing) {
-                        auto menuItem = static_cast<CCMenuItemSpriteExtra*>(existing);
-                        if (menuItem) {
-                            menuItem->setEnabled(!shouldDisable);
-                            menuItem->setOpacity(shouldDisable ? 100 : 255);
-                        }
-                    }
-                }
+                updateCommunityVoteButton(layerRef, shouldDisable);
             }
         } else {
             removeExistingCommunityBtn();
@@ -1306,6 +1211,137 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
         log::debug("repositionRLStars callback scheduled");
     }
 
+    bool shouldDisableCommunityVote(Ref<RLLevelInfoLayer> layerRef,
+        bool hasPctFields,
+        int normalPct,
+        int practicePct) {
+        bool shouldDisable = true;
+        if (hasPctFields) {
+            shouldDisable = !(normalPct >= 20 || practicePct >= 80);
+        }
+
+        bool isClassicMod = Mod::get()->getSavedValue<bool>("isClassicMod");
+        bool isClassicAdmin = Mod::get()->getSavedValue<bool>("isClassicAdmin");
+        bool isPlatMod = Mod::get()->getSavedValue<bool>("isPlatMod");
+        bool isPlatAdmin = Mod::get()->getSavedValue<bool>("isPlatAdmin");
+        bool isDev = (GJAccountManager::get()->m_accountID == DEV_ACCOUNTID);
+
+        if (isClassicMod || isClassicAdmin || isPlatMod || isPlatAdmin || isDev) {
+            shouldDisable = false;
+            log::debug("Community vote enabled due to role override");
+        }
+
+        if (layerRef && layerRef->m_level && layerRef->m_level->isPlatformer()) {
+            shouldDisable = false;
+            log::debug("Community vote enabled due to platformer level");
+        }
+
+        return shouldDisable;
+    }
+
+    void createCommunityVoteButton(Ref<RLLevelInfoLayer> layerRef, bool shouldDisable) {
+        if (!layerRef)
+            return;
+        auto commSpriteGray = CCSpriteGrayscale::createWithSpriteFrameName(
+            "RL_commVote01.png"_spr);
+        if (!commSpriteGray)
+            return;
+
+        auto commBtnSpr = CircleButtonSprite::create(
+            commSpriteGray, CircleBaseColor::Gray, CircleBaseSize::Medium);
+        auto commBtnItem = CCMenuItemSpriteExtra::create(
+            commBtnSpr, layerRef, menu_selector(RLLevelInfoLayer::onCommunityVote));
+        commBtnItem->setID("rl-community-vote");
+
+        auto rightMenuNode = layerRef->getChildByID("right-side-menu");
+        if (!rightMenuNode || !typeinfo_cast<CCMenu*>(rightMenuNode)) {
+            log::warn("Right-side-menu not found; community vote button not added");
+            return;
+        }
+
+        static_cast<CCMenu*>(rightMenuNode)->addChild(commBtnItem);
+        static_cast<CCMenu*>(rightMenuNode)->updateLayout();
+
+        if (!shouldDisable) {
+            auto commSpriteColor =
+                CCSprite::createWithSpriteFrameName("RL_commVote01.png"_spr);
+            if (commSpriteColor) {
+                auto coloredBtnSpr = CircleButtonSprite::create(
+                    commSpriteColor, CircleBaseColor::Green, CircleBaseSize::Medium);
+                commBtnItem->setNormalImage(coloredBtnSpr);
+            }
+            commBtnItem->setEnabled(true);
+            commBtnItem->setOpacity(255);
+        } else {
+            commBtnItem->setEnabled(false);
+            commBtnItem->setOpacity(100);
+        }
+    }
+
+    void updateCommunityVoteButton(Ref<RLLevelInfoLayer> layerRef, bool shouldDisable) {
+        if (!layerRef)
+            return;
+        auto rightMenuNode = layerRef->getChildByID("right-side-menu");
+        if (!rightMenuNode || !typeinfo_cast<CCMenu*>(rightMenuNode))
+            return;
+
+        auto existing = static_cast<CCMenu*>(rightMenuNode)
+                            ->getChildByID("rl-community-vote");
+        if (!existing)
+            return;
+
+        auto menuItem = static_cast<CCMenuItemSpriteExtra*>(existing);
+        if (menuItem) {
+            menuItem->setEnabled(!shouldDisable);
+            menuItem->setOpacity(shouldDisable ? 100 : 255);
+        }
+    }
+
+    bool isDemonDifficulty(int difficulty) {
+        switch (difficulty) {
+            case 10:
+            case 15:
+            case 20:
+            case 25:
+            case 30:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    int mapDifficultyToLevel(int difficulty) {
+        switch (difficulty) {
+            case 1:
+                return -1;
+            case 2:
+                return 1;
+            case 3:
+                return 2;
+            case 4:
+            case 5:
+                return 3;
+            case 6:
+            case 7:
+                return 4;
+            case 8:
+            case 9:
+                return 5;
+            case 10:
+                return 7;
+            case 15:
+                return 8;
+            case 20:
+                return 6;
+            case 25:
+                return 9;
+            case 30:
+                return 10;
+            default:
+                return 0;
+        }
+    }
+
     void processLevelUpdateWithDifficulty(const matjson::Value& json,
         Ref<RLLevelInfoLayer> layerRef,
         bool forceShow = false) {
@@ -1457,59 +1493,8 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
         if (difficultySprite) {
             auto sprite = static_cast<GJDifficultySprite*>(difficultySprite);
 
-            bool isDemon = false;
-            switch (difficulty) {
-                case 10:
-                case 15:
-                case 20:
-                case 25:
-                case 30:
-                    isDemon = true;
-                    break;
-            }
-
-            int difficultyLevel = 0;
-            switch (difficulty) {
-                case 1:
-                    difficultyLevel = -1;
-                    break;
-                case 2:
-                    difficultyLevel = 1;
-                    break;
-                case 3:
-                    difficultyLevel = 2;
-                    break;
-                case 4:
-                case 5:
-                    difficultyLevel = 3;
-                    break;
-                case 6:
-                case 7:
-                    difficultyLevel = 4;
-                    break;
-                case 8:
-                case 9:
-                    difficultyLevel = 5;
-                    break;
-                case 10:
-                    difficultyLevel = 7;
-                    break;
-                case 15:
-                    difficultyLevel = 8;
-                    break;
-                case 20:
-                    difficultyLevel = 6;
-                    break;
-                case 25:
-                    difficultyLevel = 9;
-                    break;
-                case 30:
-                    difficultyLevel = 10;
-                    break;
-                default:
-                    difficultyLevel = 0;
-                    break;
-            }
+            bool isDemon = this->isDemonDifficulty(difficulty);
+            int difficultyLevel = this->mapDifficultyToLevel(difficulty);
 
             // RESET: Remove all star icons and labels FIRST
             auto existingStarIcon = sprite->getChildByID("rl-star-icon");
