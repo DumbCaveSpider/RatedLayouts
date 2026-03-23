@@ -1,4 +1,3 @@
-#include <vcruntime_typeinfo.h>
 #include <Geode/Geode.hpp>
 #include <Geode/binding/FLAlertLayer.hpp>
 #include <Geode/binding/GameToolbox.hpp>
