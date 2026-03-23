@@ -26,7 +26,7 @@ bool RLRubiesCodePopup::init() {
     addSideArt(m_mainLayer, SideArt::All, SideArtStyle::PopupGold, false);
 
     CCSize listSize = {
-        m_mainLayer->getScaledContentSize().width - 40.f,
+        m_mainLayer->getScaledContentSize().width - 50.f,
         m_mainLayer->getScaledContentSize().height - 80.f,
     };
 
@@ -135,6 +135,7 @@ void RLRubiesCodePopup::fetchCodes() {
                     continue;
                 std::string code = item["code"].asString().unwrapOrDefault();
                 int reward = item["reward"].asInt().unwrapOrDefault();
+                int totalRedeemed = item["redeems"].asInt().unwrapOrDefault();
                 if (code.empty())
                     continue;
 
@@ -171,12 +172,17 @@ void RLRubiesCodePopup::fetchCodes() {
                 }
 
                 auto rewardLabel = CCLabelBMFont::create(fmt::format("{}", reward).c_str(), "bigFont.fnt");
-                rewardLabel->setScale(0.65f);
-                rewardLabel->limitLabelWidth(100.f, 0.65f, 0.5f);
+                rewardLabel->limitLabelWidth(50.f, 0.5f, 0.4f);
                 rewardLabel->setAnchorPoint({0.f, 0.5f});
                 rewardLabel->setPosition({iconX, 25.f});
                 row->addChild(rewardLabel);
                 self->m_codeItems.push_back({static_cast<int>(item["id"].asInt().unwrapOrDefault()), code, fmt::format("{}", reward)});
+
+                auto redeemedLabel = CCLabelBMFont::create(fmt::format("Redeemed: {}", totalRedeemed).c_str(), "chatFont.fnt");
+                redeemedLabel->setScale(0.5f);
+                redeemedLabel->setAnchorPoint({0.5f, 0.f});
+                redeemedLabel->setPosition({row->getContentWidth() / 2, 1.f});
+                row->addChild(redeemedLabel);
 
                 auto checkSpr = CCSprite::createWithSpriteFrameName("RL_check.png"_spr);
                 auto crossSpr = CCSprite::createWithSpriteFrameName("RL_cross.png"_spr);
@@ -220,6 +226,7 @@ void RLRubiesCodePopup::fetchCodes() {
             }
             self->m_listNode->getScrollLayer()->m_contentLayer->updateLayout();
             self->m_listNode->scrollToTop();
+            self->m_title->setString(fmt::format("Oracle Rubies Codes ({} codes)", idx).c_str());
         });
 }
 
