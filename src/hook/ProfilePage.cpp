@@ -349,10 +349,18 @@ class $modify(RLProfilePage, ProfilePage) {
 
     void onInfo(CCObject* sender) {
         if (m_fields->m_rlStatsMenu->isVisible()) {
-            FLAlertLayer::create(this->m_score->m_userName.c_str(),
-                "<cl>Sparks: </c>" + GameToolbox::pointsToString(m_fields->m_stars) + "\n" + "<co>Planets:</c> " + GameToolbox::pointsToString(m_fields->m_planets) + "\n" + "<cb>Blue Coins:</c> " + GameToolbox::pointsToString(m_fields->m_coins) + "\n" + "<cg>Votes:</c> " + GameToolbox::pointsToString(m_fields->m_votes) + (m_fields->m_points > 0 ? ("\n<cf>Blueprint Points:</c> " + GameToolbox::pointsToString(m_fields->m_points)) : ""),
-                "OK")
-                ->show();
+            auto morePoints = m_fields->m_points > 0
+                ? fmt::format("\n<cf>Blueprint Points:</c> {}", GameToolbox::pointsToString(m_fields->m_points))
+                : "";
+            auto statsInfo = fmt::format(
+                "<cl>Sparks: </c>{}\n<co>Planets:</c> {}\n<cb>Blue Coins:</c> {}\n<cg>Votes:</c> {}{}",
+                GameToolbox::pointsToString(m_fields->m_stars),
+                GameToolbox::pointsToString(m_fields->m_planets),
+                GameToolbox::pointsToString(m_fields->m_coins),
+                GameToolbox::pointsToString(m_fields->m_votes),
+                morePoints);
+
+            FLAlertLayer::create(this->m_score->m_userName.c_str(), statsInfo, "OK")->show();
             return;
         }
         ProfilePage::onInfo(sender);

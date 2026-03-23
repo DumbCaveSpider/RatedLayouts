@@ -8,17 +8,17 @@
 - Added **Disable Notification in Level** in the mod settings
 - Tweaked the Comment Cell Colors for users with a bright nameplate
 - Fixed issue where the text label in the Achievements overflows
-- Replace the use of the old scrolling system to use Cue's list node.
-- Tweaked the Rubies Labels on the Level Info Layer and the End Level Layer.
-- Fixed issue where the Shopkeeper and the Plushie sprite are floating on screens with different aspect ratios.
-- Fixed issue where the RL Stats Menu is overlapping with the [Better Progression](mod:itzkiba.better_progression).
-- Fixed issue where on smaller screens, the Button Menu is overlapping with the socials menu.
-- Fixed issue where the comment text color isn't applied for users with [Comment Emojis Reloaded](mod:prevter.comment_emojis) mod enabled.
-- Adjusted the comment colors to be more visible on bright nameplates.
-- Added Comment Text Background for better visibility of comments on bright nameplates.
+- Replace the use of the old scrolling system to use Cue's list node
+- Tweaked the Rubies Labels on the Level Info Layer and the End Level Layer
+- Fixed issue where the Shopkeeper and the Plushie sprite are floating on screens with different aspect ratios
+- Fixed issue where the RL Stats Menu is overlapping with the [Better Progression](mod:itzkiba.better_progression)
+- Fixed issue where on smaller screens, the Button Menu is overlapping with the socials menu
+- Fixed issue where the comment text color isn't applied for users with [Comment Emojis Reloaded](mod:prevter.comment_emojis) mod enabled
+- Adjusted the comment colors to be more visible on bright nameplates
+- Added Comment Text Background for better visibility of comments on bright nameplates
 - Added Leaderboard Whitelist for Leaderboard Moderators
-- Stats Info Button at the Profile Page will now show their Rated Layouts stats when the stats menu is toggled to Rated Layouts stats.
-- Updated the **Community Votes** information.
+- Stats Info Button at the Profile Page will now show their Rated Layouts stats when the stats menu is toggled to Rated Layouts stats
+- Updated the **Community Votes** information
 - Internal Code Refactor and optimizations
 
 # v0.4.3-beta.1
