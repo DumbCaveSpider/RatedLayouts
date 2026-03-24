@@ -6,10 +6,6 @@
 using namespace geode::prelude;
 
 namespace rl {
-    // Adds the user-configured background to a layer. When the
-    // "disableBackground" setting is on a plain solid-colour background is
-    // used; otherwise a scrolling tiled game background is applied.
-    // The node is added at z-order -1 so it sits behind all other content.
     inline void addLayerBackground(cocos2d::CCNode* parent) {
         auto color = Mod::get()->getSettingValue<cocos2d::ccColor3B>("rgbBackground");
 
