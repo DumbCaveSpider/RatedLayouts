@@ -1,4 +1,4 @@
-#include "RLCreatorLayer.hpp"
+#include "RLMenuLayer.hpp"
 #include <Geode/Geode.hpp>
 #include <Geode/binding/FLAlertLayer.hpp>
 #include <Geode/binding/GJAccountManager.hpp>
@@ -86,7 +86,7 @@ static arc::Future<std::optional<ModInfo>> fetchModInfoAsync() {
 
 using namespace geode::prelude;
 
-bool RLCreatorLayer::init() {
+bool RLMenuLayer::init() {
     if (!CCLayer::init())
         return false;
 
@@ -125,7 +125,7 @@ bool RLCreatorLayer::init() {
         CircleBaseSize::Medium);
     modSettingsBtnSprite->setScale(0.75f);
     auto settingsButton = CCMenuItemSpriteExtra::create(
-        modSettingsBtnSprite, this, menu_selector(RLCreatorLayer::onSettingsButton));
+        modSettingsBtnSprite, this, menu_selector(RLMenuLayer::onSettingsButton));
     settingsButton->setPosition({winSize.width - 25, winSize.height - 25});
     backMenu->addChild(settingsButton);
     this->addChild(backMenu);
@@ -147,14 +147,14 @@ bool RLCreatorLayer::init() {
     auto featuredSpr =
         CCSprite::createWithSpriteFrameName("RL_featured01.png"_spr);
     auto featuredItem = CCMenuItemSpriteExtra::create(
-        featuredSpr, this, menu_selector(RLCreatorLayer::onFeaturedLayouts));
+        featuredSpr, this, menu_selector(RLMenuLayer::onFeaturedLayouts));
     featuredItem->setID("featured-button");
     mainMenu->addChild(featuredItem);
 
     auto leaderboardSpr =
         CCSprite::createWithSpriteFrameName("RL_leaderboard01.png"_spr);
     auto leaderboardItem = CCMenuItemSpriteExtra::create(
-        leaderboardSpr, this, menu_selector(RLCreatorLayer::onLeaderboard));
+        leaderboardSpr, this, menu_selector(RLMenuLayer::onLeaderboard));
     leaderboardItem->setID("leaderboard-button");
     mainMenu->addChild(leaderboardItem);
 
@@ -162,7 +162,7 @@ bool RLCreatorLayer::init() {
     auto gauntletSpr =
         CCSprite::createWithSpriteFrameName("RL_gauntlets01.png"_spr);
     auto gauntletItem = CCMenuItemSpriteExtra::create(
-        gauntletSpr, this, menu_selector(RLCreatorLayer::onLayoutGauntlets));
+        gauntletSpr, this, menu_selector(RLMenuLayer::onLayoutGauntlets));
     gauntletItem->setID("gauntlet-button");
     mainMenu->addChild(gauntletItem);
 
@@ -170,44 +170,44 @@ bool RLCreatorLayer::init() {
     auto spireSpr =
         CCSprite::createWithSpriteFrameName("RL_spire01.png"_spr);
     auto spireItem = CCMenuItemSpriteExtra::create(
-        spireSpr, this, menu_selector(RLCreatorLayer::onLayoutSpire));
+        spireSpr, this, menu_selector(RLMenuLayer::onLayoutSpire));
     spireItem->setID("spire-button");
     mainMenu->addChild(spireItem);
 
     auto sentSpr = CCSprite::createWithSpriteFrameName("RL_sent01.png"_spr);
     auto sentItem = CCMenuItemSpriteExtra::create(
-        sentSpr, this, menu_selector(RLCreatorLayer::onSentLayouts));
+        sentSpr, this, menu_selector(RLMenuLayer::onSentLayouts));
     sentItem->setID("sent-layouts-button");
     mainMenu->addChild(sentItem);
 
     auto searchSpr = CCSprite::createWithSpriteFrameName("RL_search01.png"_spr);
     auto searchItem = CCMenuItemSpriteExtra::create(
-        searchSpr, this, menu_selector(RLCreatorLayer::onSearchLayouts));
+        searchSpr, this, menu_selector(RLMenuLayer::onSearchLayouts));
     searchItem->setID("search-layouts-button");
     mainMenu->addChild(searchItem);
 
     auto dailySpr = CCSprite::createWithSpriteFrameName("RL_daily01.png"_spr);
     auto dailyItem = CCMenuItemSpriteExtra::create(
-        dailySpr, this, menu_selector(RLCreatorLayer::onDailyLayouts));
+        dailySpr, this, menu_selector(RLMenuLayer::onDailyLayouts));
     dailyItem->setID("daily-layouts-button");
     mainMenu->addChild(dailyItem);
 
     auto weeklySpr = CCSprite::createWithSpriteFrameName("RL_weekly01.png"_spr);
     auto weeklyItem = CCMenuItemSpriteExtra::create(
-        weeklySpr, this, menu_selector(RLCreatorLayer::onWeeklyLayouts));
+        weeklySpr, this, menu_selector(RLMenuLayer::onWeeklyLayouts));
     weeklyItem->setID("weekly-layouts-button");
     mainMenu->addChild(weeklyItem);
 
     auto monthlySpr = CCSprite::createWithSpriteFrameName("RL_monthly01.png"_spr);
     auto monthlyItem = CCMenuItemSpriteExtra::create(
-        monthlySpr, this, menu_selector(RLCreatorLayer::onMonthlyLayouts));
+        monthlySpr, this, menu_selector(RLMenuLayer::onMonthlyLayouts));
     monthlyItem->setID("monthly-layouts-button");
     mainMenu->addChild(monthlyItem);
 
     CCSprite* unknownSpr =
         CCSpriteGrayscale::createWithSpriteFrameName("RL_unknownBtn.png"_spr);
     auto unknownItem = CCMenuItemSpriteExtra::create(
-        unknownSpr, this, menu_selector(RLCreatorLayer::onUnknownButton));
+        unknownSpr, this, menu_selector(RLMenuLayer::onUnknownButton));
     unknownItem->setID("unknown-button");
     mainMenu->addChild(unknownItem);
 
@@ -221,7 +221,7 @@ bool RLCreatorLayer::init() {
     auto infoButtonSpr = CCSprite::createWithSpriteFrameName("RL_info01.png"_spr);
     infoButtonSpr->setScale(0.7f);
     auto infoButton = CCMenuItemSpriteExtra::create(
-        infoButtonSpr, this, menu_selector(RLCreatorLayer::onInfoButton));
+        infoButtonSpr, this, menu_selector(RLMenuLayer::onInfoButton));
     infoButton->setPosition({25, 25});
     infoMenu->addChild(infoButton);
 
@@ -230,7 +230,7 @@ bool RLCreatorLayer::init() {
         CCSprite::createWithSpriteFrameName("RL_discord01.png"_spr);
     discordIconSpr->setScale(0.7f);
     auto discordIconBtn = CCMenuItemSpriteExtra::create(
-        discordIconSpr, this, menu_selector(RLCreatorLayer::onDiscordButton));
+        discordIconSpr, this, menu_selector(RLMenuLayer::onDiscordButton));
     discordIconBtn->setPosition(
         {infoButton->getPositionX(), infoButton->getPositionY() + 40});
     infoMenu->addChild(discordIconBtn);
@@ -240,7 +240,7 @@ bool RLCreatorLayer::init() {
     auto annouceSpr = CCSprite::createWithSpriteFrameName("RL_news01.png"_spr);
     annouceSpr->setScale(0.7f);
     auto annouceBtn = CCMenuItemSpriteExtra::create(
-        annouceSpr, this, menu_selector(RLCreatorLayer::onAnnoucementButton));
+        annouceSpr, this, menu_selector(RLMenuLayer::onAnnoucementButton));
     annouceBtn->setPosition(
         {infoButton->getPositionX(), infoButton->getPositionY() + 80});
     infoMenu->addChild(annouceBtn);
@@ -250,7 +250,7 @@ bool RLCreatorLayer::init() {
         CCSprite::createWithSpriteFrameName("RL_achievements01.png"_spr);
     achievementSpr->setScale(0.7f);
     auto achievementItem = CCMenuItemSpriteExtra::create(
-        achievementSpr, this, menu_selector(RLCreatorLayer::onAchievementsButton));
+        achievementSpr, this, menu_selector(RLMenuLayer::onAchievementsButton));
     achievementItem->setID("achievements-button");
     achievementItem->setPosition(
         {infoButton->getPositionX(), infoButton->getPositionY() + 120});
@@ -261,7 +261,7 @@ bool RLCreatorLayer::init() {
     auto browserSpr = CCSprite::createWithSpriteFrameName("RL_browser01.png"_spr);
     browserSpr->setScale(0.7f);
     auto browserBtn = CCMenuItemSpriteExtra::create(
-        browserSpr, this, menu_selector(RLCreatorLayer::onBrowserButton));
+        browserSpr, this, menu_selector(RLMenuLayer::onBrowserButton));
     browserBtn->setPosition(
         {infoButton->getPositionX(), infoButton->getPositionY() + 160});
     infoMenu->addChild(browserBtn);
@@ -281,7 +281,7 @@ bool RLCreatorLayer::init() {
     }
 
     // check server announcement id and set badge visibility
-    Ref<RLCreatorLayer> self = this;
+    Ref<RLMenuLayer> self = this;
     m_announcementTask.spawn(
         web::WebRequest().get("https://gdrate.arcticwoof.xyz/getAnnoucement"),
         [self](web::WebResponse const& res) {
@@ -315,7 +315,7 @@ bool RLCreatorLayer::init() {
         CCSprite::createWithSpriteFrameName("RL_credits01.png"_spr);
     creditButtonSpr->setScale(0.7f);
     auto creditButton = CCMenuItemSpriteExtra::create(
-        creditButtonSpr, this, menu_selector(RLCreatorLayer::onCreditsButton));
+        creditButtonSpr, this, menu_selector(RLMenuLayer::onCreditsButton));
     creditButton->setPosition({winSize.width - 25, 25});
     infoMenu->addChild(creditButton);
 
@@ -324,7 +324,7 @@ bool RLCreatorLayer::init() {
         CCSprite::createWithSpriteFrameName("RL_support01.png"_spr);
     supportButtonSpr->setScale(0.7f);
     auto supportButton = CCMenuItemSpriteExtra::create(
-        supportButtonSpr, this, menu_selector(RLCreatorLayer::onSupporterButton));
+        supportButtonSpr, this, menu_selector(RLMenuLayer::onSupporterButton));
     supportButton->setPosition(
         {creditButton->getPositionX(), creditButton->getPositionY() + 40});
     infoMenu->addChild(supportButton);
@@ -334,7 +334,7 @@ bool RLCreatorLayer::init() {
         CCSpriteGrayscale::createWithSpriteFrameName("RL_demonList01.png"_spr);
     demonListSpr->setScale(0.7f);
     auto demonListBtn = CCMenuItemSpriteExtra::create(
-        demonListSpr, this, menu_selector(RLCreatorLayer::onDemonListButton));
+        demonListSpr, this, menu_selector(RLMenuLayer::onDemonListButton));
     demonListBtn->setPosition(
         {creditButton->getPositionX(), creditButton->getPositionY() + 80});
     infoMenu->addChild(demonListBtn);
@@ -343,7 +343,7 @@ bool RLCreatorLayer::init() {
     auto shopSpr = CCSprite::createWithSpriteFrameName("RL_shop01.png"_spr);
     shopSpr->setScale(0.7f);
     auto shopBtn = CCMenuItemSpriteExtra::create(
-        shopSpr, this, menu_selector(RLCreatorLayer::onShopButton));
+        shopSpr, this, menu_selector(RLMenuLayer::onShopButton));
     shopBtn->setPosition(
         {creditButton->getPositionX(), creditButton->getPositionY() + 120});
     infoMenu->addChild(shopBtn);
@@ -360,7 +360,7 @@ bool RLCreatorLayer::init() {
             CCSprite::createWithSpriteFrameName("RL_bobBtn01.png"_spr);
         addDiagloueBtnSpr->setScale(0.7f);
         auto addDialogueBtn = CCMenuItemSpriteExtra::create(
-            addDiagloueBtnSpr, this, menu_selector(RLCreatorLayer::onSecretDialogueButton));
+            addDiagloueBtnSpr, this, menu_selector(RLMenuLayer::onSecretDialogueButton));
         addDialogueBtn->setPosition(
             {creditButton->getPositionX(), creditButton->getPositionY() + 160});
         infoMenu->addChild(addDialogueBtn);
@@ -400,16 +400,16 @@ bool RLCreatorLayer::init() {
     return true;
 }
 
-void RLCreatorLayer::onSettingsButton(CCObject* sender) {
+void RLMenuLayer::onSettingsButton(CCObject* sender) {
     openSettingsPopup(getMod());
 }
 
-void RLCreatorLayer::onDiscordButton(CCObject* sender) {
+void RLMenuLayer::onDiscordButton(CCObject* sender) {
     utils::web::openLinkInBrowser("https://discord.gg/jBf2wfBgVT");
     RLAchievements::onReward("misc_discord");
 }
 
-void RLCreatorLayer::onBrowserButton(CCObject* sender) {
+void RLMenuLayer::onBrowserButton(CCObject* sender) {
     createQuickPopup("Rated Layouts Browser",
         "You will be redirected to the <cl>Rated Layouts Browser "
         "website</c> in your web browser.\n<cy>Continue?</c>",
@@ -428,7 +428,7 @@ void RLCreatorLayer::onBrowserButton(CCObject* sender) {
         });
 }
 
-void RLCreatorLayer::onDemonListButton(CCObject* sender) {
+void RLMenuLayer::onDemonListButton(CCObject* sender) {
     DialogObject* dialogObj = DialogObject::create(
         "Layout Creator", "The <co>Rated Layouts Demonlist</c> isn't done yet...", 28, 1.f, false, ccWHITE);
     if (dialogObj) {
@@ -438,7 +438,7 @@ void RLCreatorLayer::onDemonListButton(CCObject* sender) {
     }
 }
 
-void RLCreatorLayer::onLayoutGauntlets(CCObject* sender) {
+void RLMenuLayer::onLayoutGauntlets(CCObject* sender) {
     auto gauntletSelect = RLGauntletSelectLayer::create();
     auto scene = CCScene::create();
     scene->addChild(gauntletSelect);
@@ -446,17 +446,17 @@ void RLCreatorLayer::onLayoutGauntlets(CCObject* sender) {
     CCDirector::sharedDirector()->pushScene(transitionFade);
 }
 
-void RLCreatorLayer::onSupporterButton(CCObject* sender) {
+void RLMenuLayer::onSupporterButton(CCObject* sender) {
     auto donationPopup = RLDonationPopup::create();
     donationPopup->show();
 }
 
-void RLCreatorLayer::onSecretDialogueButton(CCObject* sender) {
+void RLMenuLayer::onSecretDialogueButton(CCObject* sender) {
     auto dialogue = RLAddDialogue::create();
     dialogue->show();
 }
 
-void RLCreatorLayer::onShopButton(CCObject* sender) {
+void RLMenuLayer::onShopButton(CCObject* sender) {
     auto shopLayer = RLShopLayer::create();
     auto scene = CCScene::create();
     scene->addChild(shopLayer);
@@ -464,13 +464,13 @@ void RLCreatorLayer::onShopButton(CCObject* sender) {
     CCDirector::sharedDirector()->pushScene(transitionFade);
 }
 
-void RLCreatorLayer::onAnnoucementButton(CCObject* sender) {
+void RLMenuLayer::onAnnoucementButton(CCObject* sender) {
     // disable the button if provided to avoid spamming
     auto menuItem = static_cast<CCMenuItemSpriteExtra*>(sender);
     if (menuItem)
         menuItem->setEnabled(false);
 
-    Ref<RLCreatorLayer> self = this;
+    Ref<RLMenuLayer> self = this;
     m_announcementTask.spawn(
         web::WebRequest().get("https://gdrate.arcticwoof.xyz/getAnnoucement"),
         [self, menuItem](web::WebResponse const& res) {
@@ -532,12 +532,12 @@ void RLCreatorLayer::onAnnoucementButton(CCObject* sender) {
         });
 }
 
-void RLCreatorLayer::onUnknownButton(CCObject* sender) {
+void RLMenuLayer::onUnknownButton(CCObject* sender) {
     // disable the button first to prevent spamming
     auto menuItem = static_cast<CCMenuItemSpriteExtra*>(sender);
     menuItem->setEnabled(false);
     // fetch dialogue from server and show it in a dialog
-    Ref<RLCreatorLayer> self = this;
+    Ref<RLMenuLayer> self = this;
     m_dialogueTask.spawn(
         web::WebRequest().get("https://gdrate.arcticwoof.xyz/getDialogue"),
         [self, menuItem](web::WebResponse const& res) {
@@ -598,7 +598,7 @@ void RLCreatorLayer::onUnknownButton(CCObject* sender) {
         });
 }
 
-void RLCreatorLayer::onInfoButton(CCObject* sender) {
+void RLMenuLayer::onInfoButton(CCObject* sender) {
     MDPopup::create(
         "About Rated Layouts",
         "## <cl>Rated Layouts</cl> is a community-run rating system focusing "
@@ -631,7 +631,7 @@ void RLCreatorLayer::onInfoButton(CCObject* sender) {
         ->show();
 }
 
-void RLCreatorLayer::onLayoutSpire(CCObject* sender) {
+void RLMenuLayer::onLayoutSpire(CCObject* sender) {
     auto spireLayer = RLSpireLayer::create();
     auto scene = CCScene::create();
     scene->addChild(spireLayer);
@@ -639,33 +639,33 @@ void RLCreatorLayer::onLayoutSpire(CCObject* sender) {
     CCDirector::sharedDirector()->pushScene(transitionFade);
 }
 
-void RLCreatorLayer::onAchievementsButton(CCObject* sender) {
+void RLMenuLayer::onAchievementsButton(CCObject* sender) {
     auto achievementLayer = RLAchievementsPopup::create();
     achievementLayer->show();
 }
 
-void RLCreatorLayer::onCreditsButton(CCObject* sender) {
+void RLMenuLayer::onCreditsButton(CCObject* sender) {
     auto creditsPopup = RLCreditsPopup::create();
     creditsPopup->show();
 }
 
-void RLCreatorLayer::onDailyLayouts(CCObject* sender) {
+void RLMenuLayer::onDailyLayouts(CCObject* sender) {
     auto dailyPopup = RLEventLayouts::create(RLEventLayouts::EventType::Daily);
     dailyPopup->show();
 }
 
-void RLCreatorLayer::onWeeklyLayouts(CCObject* sender) {
+void RLMenuLayer::onWeeklyLayouts(CCObject* sender) {
     auto weeklyPopup = RLEventLayouts::create(RLEventLayouts::EventType::Weekly);
     weeklyPopup->show();
 }
 
-void RLCreatorLayer::onMonthlyLayouts(CCObject* sender) {
+void RLMenuLayer::onMonthlyLayouts(CCObject* sender) {
     auto monthlyPopup =
         RLEventLayouts::create(RLEventLayouts::EventType::Monthly);
     monthlyPopup->show();
 }
 
-void RLCreatorLayer::onFeaturedLayouts(CCObject* sender) {
+void RLMenuLayer::onFeaturedLayouts(CCObject* sender) {
     auto browserLayer = RLLevelBrowserLayer::create(
         RLLevelBrowserLayer::Mode::Featured, RLLevelBrowserLayer::ParamList(), "Featured Layouts");
     auto scene = CCScene::create();
@@ -674,7 +674,7 @@ void RLCreatorLayer::onFeaturedLayouts(CCObject* sender) {
     CCDirector::sharedDirector()->pushScene(transitionFade);
 }
 
-void RLCreatorLayer::onSentLayouts(CCObject* sender) {
+void RLMenuLayer::onSentLayouts(CCObject* sender) {
     if (Mod::get()->getSavedValue<bool>("isClassicAdmin") ||
         Mod::get()->getSavedValue<bool>("isPlatAdmin") ||
         Mod::get()->getSavedValue<bool>("isClassicMod") ||
@@ -695,7 +695,7 @@ void RLCreatorLayer::onSentLayouts(CCObject* sender) {
     CCDirector::sharedDirector()->pushScene(transitionFade);
 }
 
-void RLCreatorLayer::onLeaderboard(CCObject* sender) {
+void RLMenuLayer::onLeaderboard(CCObject* sender) {
     auto leaderboardLayer = RLLeaderboardLayer::create();
     auto scene = CCScene::create();
     scene->addChild(leaderboardLayer);
@@ -703,7 +703,7 @@ void RLCreatorLayer::onLeaderboard(CCObject* sender) {
     CCDirector::sharedDirector()->pushScene(transitionFade);
 }
 
-void RLCreatorLayer::onSearchLayouts(CCObject* sender) {
+void RLMenuLayer::onSearchLayouts(CCObject* sender) {
     auto searchLayer = RLSearchLayer::create();
     auto scene = CCScene::create();
     scene->addChild(searchLayer);
@@ -711,7 +711,7 @@ void RLCreatorLayer::onSearchLayouts(CCObject* sender) {
     CCDirector::sharedDirector()->pushScene(transitionFade);
 }
 
-void RLCreatorLayer::onEnter() {
+void RLMenuLayer::onEnter() {
     CCLayer::onEnter();
 
     if (!Mod::get()->getSettingValue<bool>("disableModInfo")) {
@@ -726,7 +726,7 @@ void RLCreatorLayer::onEnter() {
             m_modVersionLabel->setColor({255, 150, 0});
         }
 
-        Ref<RLCreatorLayer> selfRef = this;
+        Ref<RLMenuLayer> selfRef = this;
         async::spawn(fetchModInfoAsync(), [selfRef](std::optional<ModInfo> infoOpt) {
             if (!selfRef)
                 return;
@@ -766,8 +766,8 @@ void RLCreatorLayer::onEnter() {
     }
 }
 
-RLCreatorLayer* RLCreatorLayer::create() {
-    auto ret = new RLCreatorLayer();
+RLMenuLayer* RLMenuLayer::create() {
+    auto ret = new RLMenuLayer();
     if (ret && ret->init()) {
         ret->autorelease();
         return ret;
@@ -776,7 +776,7 @@ RLCreatorLayer* RLCreatorLayer::create() {
     return nullptr;
 }
 
-void RLCreatorLayer::keyBackClicked() {
+void RLMenuLayer::keyBackClicked() {
     CCDirector::sharedDirector()->popSceneWithTransition(
         0.5f, PopTransition::kPopTransitionFade);
 }

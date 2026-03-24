@@ -5,7 +5,7 @@
 
 using namespace geode::prelude;
 
-class RLCreatorLayer : public CCLayer {
+class RLMenuLayer : public CCLayer {
 protected:
     bool init() override;
     void keyBackClicked() override;
@@ -48,5 +48,5 @@ protected:
 
 public:
     void onEnter() override;
-    static RLCreatorLayer* create();
+    static RLMenuLayer* create();
 };
