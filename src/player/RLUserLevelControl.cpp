@@ -20,7 +20,7 @@ RLUserLevelControl* RLUserLevelControl::create(int accountId) {
 };
 
 bool RLUserLevelControl::init() {
-    if (!Popup::init(380.f, 240.f, "GJ_square04.png"))
+    if (!Popup::init(440.f, 280.f, "GJ_square04.png"))
         return false;
     setTitle("Rated Layouts User Level Mod Panel");
     addSideArt(m_mainLayer, SideArt::All, SideArtStyle::PopupGold, false);
@@ -34,7 +34,7 @@ bool RLUserLevelControl::init() {
         m_usernameLabel = CCLabelBMFont::create(username.c_str(), "bigFont.fnt");
         m_usernameLabel->setPosition(m_title->getPositionX(),
             m_title->getPositionY() - 20);
-        m_usernameLabel->setScale(m_title->getScale());
+        m_usernameLabel->limitLabelWidth(m_mainLayer->getContentWidth(), .5f, 0.3f);
         m_usernameLabel->setString(username.c_str());
         m_mainLayer->addChild(m_usernameLabel);
     }

@@ -197,7 +197,7 @@ void RLLevelBrowserLayer::setupControls() {
 
     m_listNode = cue::ListNode::create({m_listLayer->getContentSize().width,
                                            m_listLayer->getContentSize().height},
-        {191, 114, 62, 255},
+        {191, 114, 62, 0},
         cue::ListBorderStyle::None);
     m_listNode->setPosition({m_listLayer->getContentSize().width / 2,
         m_listLayer->getContentSize().height / 2});
@@ -276,7 +276,9 @@ bool RLLevelBrowserLayer::init(GJSearchObject* object) {
         {winSize / 2 - m_listLayer->getScaledContentSize() / 2 - 5});
 
     m_listNode = cue::ListNode::create({m_listLayer->getContentSize().width,
-        m_listLayer->getContentSize().height});
+                                           m_listLayer->getContentSize().height},
+        {191, 114, 62, 0},
+        cue::ListBorderStyle::None);
     m_listNode->setPosition({m_listLayer->getContentSize().width / 2,
         m_listLayer->getContentSize().height / 2});
     m_listLayer->addChild(m_listNode, 5);

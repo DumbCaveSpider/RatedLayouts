@@ -144,6 +144,11 @@ void RLUserControl::rebuildUserOptions() {
 }
 
 void RLUserControl::updateOptionVisibility() {
+    auto whitelistOpt = getOptionByKey("whitelist");
+    auto excludeOpt = getOptionByKey("exclude");
+    bool isWhitelistActive = whitelistOpt && whitelistOpt->desired;
+    bool isExcludeActive = excludeOpt && excludeOpt->desired;
+
     for (auto& kv : m_userOptions) {
         auto key = kv.first;
         auto& opt = kv.second;
@@ -166,14 +171,39 @@ void RLUserControl::updateOptionVisibility() {
         }
 
         opt.actionButton->setVisible(show);
-        opt.actionButton->setEnabled(show && (!opt.desired || opt.desired));
+
+        bool enabled = show;
+        if ((key == "exclude" && isWhitelistActive) || (key == "whitelist" && isExcludeActive)) {
+            enabled = false;
+        }
+
+        opt.actionButton->setEnabled(enabled);
 
         setOptionState(key, opt.desired, true);
+
+        if (key == "exclude" && isWhitelistActive) {
+            setOptionEnabled("exclude", false);
+        }
+        if (key == "whitelist" && isExcludeActive) {
+            setOptionEnabled("whitelist", false);
+        }
     }
 
     if (m_wipeButton) {
         m_wipeButton->setVisible(rl::isUserOwner());
         m_wipeButton->setEnabled(rl::isUserOwner());
+    }
+
+    // Final exclusive lock enforcement: if one option is active, the other is disabled.
+    if (whitelistOpt && whitelistOpt->desired) {
+        setOptionEnabled("exclude", false);
+        if (excludeOpt && excludeOpt->actionButton)
+            excludeOpt->actionButton->setEnabled(false);
+    }
+    if (excludeOpt && excludeOpt->desired) {
+        setOptionEnabled("whitelist", false);
+        if (whitelistOpt && whitelistOpt->actionButton)
+            whitelistOpt->actionButton->setEnabled(false);
     }
 }
 
@@ -191,7 +221,7 @@ RLUserControl* RLUserControl::create(int accountId) {
 };
 
 bool RLUserControl::init() {
-    if (!Popup::init(380.f, 240.f, "GJ_square04.png"))
+    if (!Popup::init(440.f, 280.f, "GJ_square04.png"))
         return false;
     setTitle("Rated Layouts User Mod Panel");
     addSideArt(m_mainLayer, SideArt::All, SideArtStyle::PopupGold, false);
@@ -207,13 +237,13 @@ bool RLUserControl::init() {
         ("Target: " + username).c_str(), "bigFont.fnt", m_mainLayer->getContentSize().width - 40, kCCTextAlignmentCenter);
     usernameLabel->setPosition(
         {m_title->getPositionX(), m_title->getPositionY() - 20});
-    usernameLabel->setScale(m_title->getScale());
+    usernameLabel->limitLabelWidth(m_mainLayer->getContentWidth(), .5f, 0.3f);
     m_mainLayer->addChild(usernameLabel);
 
     auto optionsMenu = CCMenu::create();
     optionsMenu->setPosition({m_mainLayer->getContentSize().width / 2,
         m_mainLayer->getContentSize().height / 2 - 15});
-    optionsMenu->setContentSize({m_mainLayer->getContentSize().width - 60, 150});
+    optionsMenu->setContentSize({m_mainLayer->getContentSize().width - 60, 190});
     optionsMenu->setLayout(RowLayout::create()
             ->setGap(6.f)
             ->setGrowCrossAxis(true)
@@ -222,11 +252,12 @@ bool RLUserControl::init() {
     m_optionsLayout = static_cast<RowLayout*>(optionsMenu->getLayout());
     m_optionsMenu = optionsMenu;
 
-    auto menuBg = NineSlice::create("square02_small.png");
+    auto menuBg = NineSlice::create("geode.loader/white-square.png");
     menuBg->setContentSize({optionsMenu->getContentSize().width + 5,
         optionsMenu->getContentSize().height + 10});
     menuBg->setPosition(optionsMenu->getPosition());
-    menuBg->setOpacity(90);
+    menuBg->setOpacity(200);
+    menuBg->setColor({0, 0, 0});
     m_mainLayer->addChild(menuBg, 1);
 
     auto spinner = LoadingSpinner::create(60.f);
@@ -300,7 +331,7 @@ bool RLUserControl::init() {
                     log::warn("Failed to parse JSON response for profile");
                     return;
                 }
-                
+
                 auto json = jsonRes.unwrap();
 
                 isExcluded = json["excluded"].asBool().unwrapOrDefault();
@@ -816,6 +847,8 @@ void RLUserControl::onOptionAction(CCObject* sender) {
     auto item = static_cast<CCMenuItemSpriteExtra*>(sender);
     if (!item)
         return;
+    if (!item->isEnabled())
+        return;
 
     for (auto& kv : m_userOptions) {
         auto& key = kv.first;
@@ -934,6 +967,7 @@ void RLUserControl::setOptionState(const std::string& key, bool desired, bool up
     auto whitelistOpt = getOptionByKey("whitelist");
     auto excludeOpt = getOptionByKey("exclude");
     if (whitelistOpt && whitelistOpt->desired) {
+        setOptionEnabled("exclude", false);
         if (excludeOpt && excludeOpt->actionButton) {
             excludeOpt->actionButton->setEnabled(false);
             std::string excludeText = excludeOpt->desired ? "Remove Leaderboard Exclude" : "Set Leaderboard Exclude";
@@ -955,6 +989,7 @@ void RLUserControl::setOptionState(const std::string& key, bool desired, bool up
 
     // whenever exclude is updated, whitelist is locked and styled as disabled
     if (excludeOpt && excludeOpt->desired) {
+        setOptionEnabled("whitelist", false);
         if (whitelistOpt && whitelistOpt->actionButton) {
             whitelistOpt->actionButton->setEnabled(false);
             std::string whitelistText = whitelistOpt->desired ? "Remove Leaderboard Whitelist" : "Set Leaderboard Whitelist";
@@ -974,6 +1009,14 @@ void RLUserControl::setOptionState(const std::string& key, bool desired, bool up
                 whitelistOpt->actionButton->setEnabled(true);
             }
         }
+    }
+
+    // enforce lock state for gray-out behavior explicitly
+    if (whitelistOpt && whitelistOpt->desired && excludeOpt && excludeOpt->actionButton) {
+        excludeOpt->actionButton->setEnabled(false);
+    }
+    if (excludeOpt && excludeOpt->desired && whitelistOpt && whitelistOpt->actionButton) {
+        whitelistOpt->actionButton->setEnabled(false);
     }
 
     if (rl::isUserOwner()) {

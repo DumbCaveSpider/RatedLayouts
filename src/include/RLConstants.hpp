@@ -79,7 +79,7 @@ namespace rl {
     inline void showClassicAdminInfo() {
         FLAlertLayer::create(
             "Classic Layout Admin",
-            "<cr>Classic Layout Admin</c> has the ability to <cy>rate classic levels</c>, <cb>suggest classic levels</c>, <cc>manage Featured Layouts</c> and <cg>promote users into Classic Layout Mods</c> for <cl>Rated Layouts</c>.",
+            "<cr>Classic Layout Admin</c> has the ability to <cy>rate classic levels</c>, <cb>suggest classic levels</c>, <cc>manage Featured Layouts</c> and <cg>promote users into Classic Layout Mod</c> for <cl>Rated Layouts</c>.",
             "OK")
             ->show();
     }
@@ -111,7 +111,7 @@ namespace rl {
     inline void showPlatAdminInfo() {
         FLAlertLayer::create(
             "Platformer Layout Admin",
-            "<cr>Platformer Layout Admin</c> has the ability to <cy>rate platformer levels</c>, <cb>suggest platformer levels</c>, <cc>manage Featured Layouts</c> and <cg>promote users into Platformer Layout Mods</c> for <cl>Rated Layouts</c>.",
+            "<cr>Platformer Layout Admin</c> has the ability to <cy>rate platformer levels</c>, <cb>suggest platformer levels</c>, <cc>manage Featured Layouts</c> and <cg>promote users into Platformer Layout Mod</c> for <cl>Rated Layouts</c>.",
             "OK")
             ->show();
     }

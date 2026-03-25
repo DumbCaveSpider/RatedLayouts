@@ -3,6 +3,7 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/GameLevelManager.hpp>
 #include <cue/ListNode.hpp>
+#include "Geode/cocos/label_nodes/CCLabelBMFont.h"
 
 using namespace geode::prelude;
 
@@ -52,6 +53,7 @@ protected:
     bool m_needsLayout = false;
 
     CCLabelBMFont* m_levelsLabel;
+    CCLabelBMFont* m_titleLabel;
     LoadingSpinner* m_circle;
     CCMenuItemSpriteExtra* m_prevButton;
     CCMenuItemSpriteExtra* m_nextButton;
