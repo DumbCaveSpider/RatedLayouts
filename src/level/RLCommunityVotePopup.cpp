@@ -8,15 +8,6 @@
 
 using namespace geode::prelude;
 
-// helper to determine whether the current account has moderator permissions
-static bool checkPerms() {
-    return (Mod::get()->getSavedValue<bool>("isClassicMod") ||
-            Mod::get()->getSavedValue<bool>("isClassicAdmin") ||
-            Mod::get()->getSavedValue<bool>("isPlatMod") ||
-            Mod::get()->getSavedValue<bool>("isPlatAdmin") ||
-            GJAccountManager::get()->m_accountID == rl::DEV_ACCOUNT_ID);
-}
-
 RLCommunityVotePopup* RLCommunityVotePopup::create() {
     return RLCommunityVotePopup::create(0);
 }
@@ -318,8 +309,7 @@ bool RLCommunityVotePopup::init() {
     m_buttonMenu->addChild(leaderboardBtn, 3);
 
     // single toggle for moderators to show/hide all scores at once
-    bool hasPerms = checkPerms();
-    if (hasPerms) {
+    if (rl::isUserClassicAdmin() || rl::isUserPlatformerAdmin() || rl::isUserClassicMod() || rl::isUserPlatformerMod() || rl::isUserOwner()) {
         auto allSpr = CCSprite::createWithSpriteFrameName("hideBtn_001.png");
         allSpr->setOpacity(120);
         m_toggleAllBtn = CCMenuItemSpriteExtra::create(

@@ -42,26 +42,26 @@ bool RLSelectSends::init() {
     showAllBtn->m_scaleMultiplier = 1.05f;
     m_buttonMenu->addChild(showAllBtn);
 
-    auto mostBtn = CCMenuItemSpriteExtra::create(
-        ButtonSprite::create("Most Sents", 180, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f),
-        this,
-        menu_selector(RLSelectSends::onMostSents));
-    mostBtn->setPosition({160.f, 80.f});
-    mostBtn->m_scaleMultiplier = 1.05f;
-    m_buttonMenu->addChild(mostBtn);
+    if (rl::isUserClassicAdmin() || rl::isUserPlatformerAdmin() || rl::isUserClassicMod() || rl::isUserPlatformerMod() || rl::isUserOwner()) {
+        auto mostBtn = CCMenuItemSpriteExtra::create(
+            ButtonSprite::create("Most Sents", 180, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f),
+            this,
+            menu_selector(RLSelectSends::onMostSents));
+        mostBtn->setPosition({160.f, 80.f});
+        mostBtn->m_scaleMultiplier = 1.05f;
+        m_buttonMenu->addChild(mostBtn);
 
-    // least sents button
-    auto leastBtn = CCMenuItemSpriteExtra::create(
-        ButtonSprite::create("Least Sents", 180, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f),
-        this,
-        menu_selector(RLSelectSends::onLeastSents));
-    leastBtn->setPosition({270.f, 20.f});
-    leastBtn->m_scaleMultiplier = 1.05f;
-    m_buttonMenu->addChild(leastBtn);
+        // least sents button
+        auto leastBtn = CCMenuItemSpriteExtra::create(
+            ButtonSprite::create("Least Sents", 180, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f),
+            this,
+            menu_selector(RLSelectSends::onLeastSents));
+        leastBtn->setPosition({270.f, 20.f});
+        leastBtn->m_scaleMultiplier = 1.05f;
+        m_buttonMenu->addChild(leastBtn);
+    }
 
-    if (Mod::get()->getSavedValue<bool>("isClassicAdmin") ||
-        Mod::get()->getSavedValue<bool>("isPlatAdmin") ||
-        GJAccountManager::sharedState()->m_accountID == rl::DEV_ACCOUNT_ID) {
+    if (rl::isUserClassicAdmin() || rl::isUserPlatformerAdmin() || rl::isUserOwner()) {
         auto threePlusBtn = CCMenuItemSpriteExtra::create(
             ButtonSprite::create("3+ Sents", 180, true, "goldFont.fnt", "geode.loader/GE_button_01.png", 30.f, 1.f),
             this,
@@ -145,5 +145,3 @@ void RLSelectSends::onLeastSents(CCObject* sender) {
     CCDirector::sharedDirector()->pushScene(transitionFade);
     this->onClose(sender);
 }
-
-

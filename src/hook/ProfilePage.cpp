@@ -256,9 +256,9 @@ class $modify(RLProfilePage, ProfilePage) {
             // if u are leaderboard mod show the manage button to manage your
             // leaderboard entries
             if (!m_fields->m_rlButtonsMenu->getChildByID("rl-manage-btn")) {
-                if (rl::isUserHasPerms() || rl::isUserOwner()) {
+                if (rl::isUserAdmin() || rl::isUserLeaderboardMod() || rl::isUserOwner()) {
                     auto modUserSpr =
-                        CCSprite::createWithSpriteFrameName("RL_badgelbMod01.png"_spr);
+                        CCSprite::createWithSpriteFrameName("RL_userPanel.png"_spr);
                     auto modUserButton = EditorButtonSprite::create(
                         modUserSpr, EditorBaseColor::LightBlue, EditorBaseSize::Normal);
                     auto modUserBtnItem = CCMenuItemSpriteExtra::create(
@@ -268,7 +268,7 @@ class $modify(RLProfilePage, ProfilePage) {
                 }
                 if (rl::isUserLeaderboardMod() || rl::isUserLeaderboardAdmin() || rl::isUserOwner()) {
                     auto manageLevelSpr =
-                        CCSprite::createWithSpriteFrameName("RL_badgeMod01.png"_spr);
+                        CCSprite::createWithSpriteFrameName("RL_userHammer.png"_spr);
                     auto manageLevelButton = EditorButtonSprite::create(
                         manageLevelSpr, EditorBaseColor::LightBlue, EditorBaseSize::Normal);
                     auto manageLevelBtnItem = CCMenuItemSpriteExtra::create(
@@ -594,10 +594,10 @@ class $modify(RLProfilePage, ProfilePage) {
                 // create the user buttons manage
                 if (!Mod::get()->getSettingValue<bool>("disableRLMenu")) {
                     auto rlButtonsMenu = pageRef->getChildByIDRecursive("rl-buttons-menu");
-                    if (rlButtonsMenu && (rl::isUserHasPerms() || rl::isUserOwner())) {
+                    if (rlButtonsMenu && (rl::isUserAdmin() || rl::isUserLeaderboardMod() || rl::isUserOwner())) {
                         if (!rlButtonsMenu->getChildByID("rl-manage-btn")) {
                             auto modUserSpr = CCSprite::createWithSpriteFrameName(
-                                "RL_badgelbMod01.png"_spr);
+                                "RL_userPanel.png"_spr);
                             auto modUserButton = EditorButtonSprite::create(
                                 modUserSpr, EditorBaseColor::LightBlue, EditorBaseSize::Normal);
                             auto modUserBtnItem = CCMenuItemSpriteExtra::create(
@@ -610,7 +610,7 @@ class $modify(RLProfilePage, ProfilePage) {
                         if (rlButtonsMenu && (rl::isUserLeaderboardAdmin() || rl::isUserLeaderboardMod() || rl::isUserOwner())) {
                             if (!rlButtonsMenu->getChildByID("rl-manage-level-btn")) {
                                 auto manageLevelSpr = CCSprite::createWithSpriteFrameName(
-                                    "RL_badgeMod01.png"_spr);
+                                    "RL_userHammer.png"_spr);
                                 auto manageLevelButton = EditorButtonSprite::create(
                                     manageLevelSpr, EditorBaseColor::LightBlue, EditorBaseSize::Normal);
                                 auto manageLevelBtnItem = CCMenuItemSpriteExtra::create(

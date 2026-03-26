@@ -45,9 +45,12 @@ private:
     CCMenuItemSpriteExtra* m_promoteClassicAdminButton = nullptr;
     CCMenuItemSpriteExtra* m_promotePlatModButton = nullptr;
     CCMenuItemSpriteExtra* m_promotePlatAdminButton = nullptr;
-    CCMenuItemSpriteExtra* m_demoteClassicButton = nullptr;
-    CCMenuItemSpriteExtra* m_demotePlatButton = nullptr;
-    CCMenuItemSpriteExtra* m_demoteLBButton = nullptr;
+    CCMenuItemSpriteExtra* m_demoteClassicModButton = nullptr;
+    CCMenuItemSpriteExtra* m_demoteClassicAdminButton = nullptr;
+    CCMenuItemSpriteExtra* m_demotePlatModButton = nullptr;
+    CCMenuItemSpriteExtra* m_demotePlatAdminButton = nullptr;
+    CCMenuItemSpriteExtra* m_demoteLBModButton = nullptr;
+    CCMenuItemSpriteExtra* m_demoteLBAdminButton = nullptr;
     // tracked state of the target account's roles (for UI updates)
     bool m_targetIsLeaderboardMod = false;
     bool m_targetIsLeaderboardAdmin = false;

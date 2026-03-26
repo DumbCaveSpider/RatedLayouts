@@ -1207,13 +1207,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             shouldDisable = !(normalPct >= 20 || practicePct >= 80);
         }
 
-        bool isClassicMod = Mod::get()->getSavedValue<bool>("isClassicMod");
-        bool isClassicAdmin = Mod::get()->getSavedValue<bool>("isClassicAdmin");
-        bool isPlatMod = Mod::get()->getSavedValue<bool>("isPlatMod");
-        bool isPlatAdmin = Mod::get()->getSavedValue<bool>("isPlatAdmin");
-        bool isDev = (GJAccountManager::get()->m_accountID == DEV_ACCOUNT_ID);
-
-        if (isClassicMod || isClassicAdmin || isPlatMod || isPlatAdmin || isDev) {
+        if (rl::isUserHasPerms() || rl::isUserOwner()) {
             shouldDisable = false;
             log::debug("Community vote enabled due to role override");
         }
@@ -1379,20 +1373,11 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                 }
 
                 // Mods/Admins can always vote regardless of percentages
-                int isClassicMod = Mod::get()->getSavedValue<int>("isClassicMod");
-                int isClassicAdmin = Mod::get()->getSavedValue<int>("isClassicAdmin");
-                int isPlatMod = Mod::get()->getSavedValue<int>("isPlatMod");
-                int isPlatAdmin = Mod::get()->getSavedValue<int>("isPlatAdmin");
-                bool isDev = (GJAccountManager::get()->m_accountID == DEV_ACCOUNT_ID);
-                if (isClassicMod == 1 || isClassicAdmin == 1 || isDev) {
+                if ((rl::isUserClassicMod() || rl::isUserClassicAdmin() || rl::isUserOwner()) && !this->m_level->isPlatformer()) {
                     shouldDisable = false;
-                    log::debug("Community vote enabled due to role override (role={})",
-                        isClassicMod == 1 ? "isClassicMod" : "isClassicAdmin");
                 }
-                if (isPlatMod == 1 || isPlatAdmin == 1 || isDev) {
+                if (rl::isUserPlatformerMod() || rl::isUserPlatformerAdmin() || rl::isUserOwner() && this->m_level->isPlatformer()) {
                     shouldDisable = false;
-                    log::debug("Community vote enabled due to role override (role={})",
-                        isPlatMod == 1 ? "isPlatMod" : "isPlatAdmin");
                 }
 
                 auto commSpriteGray = CCSpriteGrayscale::createWithSpriteFrameName(
@@ -1441,17 +1426,8 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                     shouldDisable = !(normalPct >= 20 || practicePct >= 80);
                 }
 
-                bool isClassicMod = Mod::get()->getSavedValue<bool>("isClassicMod");
-                bool isClassicAdmin = Mod::get()->getSavedValue<bool>("isClassicAdmin");
-                bool isPlatMod = Mod::get()->getSavedValue<bool>("isPlatMod");
-                bool isPlatAdmin = Mod::get()->getSavedValue<bool>("isPlatAdmin");
-                if (isClassicMod || isClassicAdmin || isPlatMod || isPlatAdmin) {
+                if (rl::isUserClassicMod() || rl::isUserClassicAdmin() || rl::isUserPlatformerMod() || rl::isUserPlatformerAdmin()) {
                     shouldDisable = false;
-                    log::debug("Community vote enabled due to role override (role={})",
-                        isClassicMod     ? "isClassicMod"
-                        : isClassicAdmin ? "isClassicAdmin"
-                        : isPlatMod      ? "isPlatMod"
-                                         : "isPlatAdmin");
                 }
 
                 auto rightMenuNode2 = layerRef->getChildByID("right-side-menu");
@@ -1724,12 +1700,8 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             return;
         }
 
-        bool isClassicMod = Mod::get()->getSavedValue<bool>("isClassicMod");
-        bool isClassicAdmin = Mod::get()->getSavedValue<bool>("isClassicAdmin");
-        bool isPlatMod = Mod::get()->getSavedValue<bool>("isPlatMod");
-        bool isPlatAdmin = Mod::get()->getSavedValue<bool>("isPlatAdmin");
 
-        if (isClassicMod && !isPlatformer) {
+        if (rl::isUserClassicMod() && !isPlatformer) {
             log::info("Role button clicked as Classic Mod");
             auto popup =
                 RLModRatePopup::create(RLModRatePopup::PopupRole::Mod,
@@ -1737,7 +1709,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                     this->m_level);
             if (popup)
                 popup->show();
-        } else if (isClassicAdmin && !isPlatformer) {
+        } else if (rl::isUserClassicAdmin() && !isPlatformer) {
             log::info("Role button clicked as Classic Admin");
             auto popup =
                 RLModRatePopup::create(RLModRatePopup::PopupRole::Admin,
@@ -1745,14 +1717,14 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                     this->m_level);
             if (popup)
                 popup->show();
-        } else if (isPlatMod && isPlatformer) {
+        } else if (rl::isUserPlatformerMod() && isPlatformer) {
             log::info("Role button clicked as Plat Mod");
             auto popup = RLModRatePopup::create(RLModRatePopup::PopupRole::Mod,
                 "Mod: Suggest Platformer Layout",
                 this->m_level);
             if (popup)
                 popup->show();
-        } else if (isPlatAdmin && isPlatformer) {
+        } else if (rl::isUserPlatformerAdmin() && isPlatformer) {
             log::info("Role button clicked as Plat Admin");
             auto popup = RLModRatePopup::create(RLModRatePopup::PopupRole::Admin,
                 "Admin: Rate Platformer Layout",
@@ -1789,12 +1761,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
         bool shouldDisable = true;
         shouldDisable = !(normalPct >= 20 || practicePct >= 80);
 
-        bool isClassicMod = Mod::get()->getSavedValue<bool>("isClassicMod");
-        bool isClassicAdmin = Mod::get()->getSavedValue<bool>("isClassicAdmin");
-        bool isPlatMod = Mod::get()->getSavedValue<bool>("isPlatMod");
-        bool isPlatAdmin = Mod::get()->getSavedValue<bool>("isPlatAdmin");
-        bool isDev = (GJAccountManager::get()->m_accountID == DEV_ACCOUNT_ID);
-        if (isClassicMod || isClassicAdmin || isPlatMod || isPlatAdmin || isDev) {
+        if (rl::isUserClassicMod() || rl::isUserClassicAdmin() || rl::isUserPlatformerMod() || rl::isUserPlatformerAdmin() || rl::isUserOwner()) {
             shouldDisable = false;
             log::debug("Community vote enabled due to role override (classic/plat)");
         }

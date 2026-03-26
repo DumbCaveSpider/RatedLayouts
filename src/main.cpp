@@ -4,6 +4,7 @@
 #include "Geode/ui/Popup.hpp"
 #include "Geode/utils/general.hpp"
 #include "include/RLAchievements.hpp"
+#include "include/RLConstants.hpp"
 #include "include/RLNetworkUtils.hpp"
 #include <Geode/DefaultInclude.hpp>
 #include <Geode/Geode.hpp>
@@ -27,11 +28,8 @@ class $modify(RLSupportLayer, SupportLayer) {
     };
 
     void customSetup() {
-        if (Mod::get()->getSavedValue<bool>("isClassicMod") ||
-            Mod::get()->getSavedValue<bool>("isClassicAdmin") ||
-            Mod::get()->getSavedValue<bool>("isPlatMod") ||
-            Mod::get()->getSavedValue<bool>("isPlatAdmin") ||
-            Mod::get()->getSavedValue<bool>("isLeaderboardMod")) {
+        // show the argon button for user with a role
+        if (rl::isUserHasPerms()) {
             m_fields->m_argonMenu = CCMenu::create();
             m_fields->m_argonMenu->setPosition({0, 0});
             m_listLayer->addChild(m_fields->m_argonMenu, 10);

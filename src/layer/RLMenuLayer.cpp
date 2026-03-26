@@ -349,13 +349,7 @@ bool RLMenuLayer::init() {
     infoMenu->addChild(shopBtn);
 
     // button bob
-    bool isClassicMod = Mod::get()->getSavedValue<bool>("isClassicMod");
-    bool isClassicAdmin = Mod::get()->getSavedValue<bool>("isClassicAdmin");
-    bool isPlatMod = Mod::get()->getSavedValue<bool>("isPlatMod");
-    bool isPlatAdmin = Mod::get()->getSavedValue<bool>("isPlatAdmin");
-    bool isLeaderboardMod = Mod::get()->getSavedValue<bool>("isLeaderboardMod");
-    if (isClassicMod || isClassicAdmin || isPlatMod || isPlatAdmin ||
-        isLeaderboardMod) {
+    if (rl::isUserHasPerms() || rl::isUserSupporter()) {
         auto addDiagloueBtnSpr =
             CCSprite::createWithSpriteFrameName("RL_bobBtn01.png"_spr);
         addDiagloueBtnSpr->setScale(0.7f);
@@ -675,11 +669,7 @@ void RLMenuLayer::onFeaturedLayouts(CCObject* sender) {
 }
 
 void RLMenuLayer::onSentLayouts(CCObject* sender) {
-    if (Mod::get()->getSavedValue<bool>("isClassicAdmin") ||
-        Mod::get()->getSavedValue<bool>("isPlatAdmin") ||
-        Mod::get()->getSavedValue<bool>("isClassicMod") ||
-        Mod::get()->getSavedValue<bool>("isPlatMod") ||
-        GJAccountManager::sharedState()->m_accountID == rl::DEV_ACCOUNT_ID) {
+    if (rl::isUserClassicAdmin() || rl::isUserPlatformerAdmin() || rl::isUserClassicMod() || rl::isUserPlatformerMod()) {
         auto selectPopup = RLSelectSends::create();
         selectPopup->show();
         return;

@@ -1,6 +1,7 @@
 #include "RLLegacyPopup.hpp"
 #include "../include/RLNetworkUtils.hpp"
-#include "Geode/cocos/cocoa/CCObject.h"
+#include <Geode/Geode.hpp>
+#include "../include/RLConstants.hpp"
 #include "Geode/ui/MDPopup.hpp"
 
 using namespace geode::prelude;
@@ -150,10 +151,8 @@ bool RLLegacyPopup::init() {
     }
 
     // delete button only visible by admins
-    bool isClassicAdmin = Mod::get()->getSavedValue<bool>("isClassicAdmin");
-    bool isPlatAdmin = Mod::get()->getSavedValue<bool>("isPlatAdmin");
     bool isPlat = m_level ? m_level->isPlatformer() : false;
-    if ((isClassicAdmin && !isPlat) || (isPlatAdmin && isPlat)) {
+    if ((rl::isUserClassicAdmin() && !isPlat) || (rl::isUserPlatformerAdmin() && isPlat)) {
         auto deleteSpr = ButtonSprite::create("Delete", 50, true, "goldFont.fnt", "GJ_button_06.png", 20.f, 1.f);
         auto deleteBtn = CCMenuItemSpriteExtra::create(
             deleteSpr, this, menu_selector(RLLegacyPopup::onDeleteLegacy));
@@ -254,10 +253,8 @@ void RLLegacyPopup::onInfoButton(CCObject* sender) {
 }
 
 void RLLegacyPopup::onDeleteLegacy(CCObject* sender) {
-    // check if user has admin privileges
-    bool isClassicAdmin = Mod::get()->getSavedValue<bool>("isClassicAdmin");
-    bool isPlatAdmin = Mod::get()->getSavedValue<bool>("isPlatAdmin");
-    if (!isClassicAdmin && !isPlatAdmin) {
+
+    if (!rl::isUserClassicAdmin() && !rl::isUserPlatformerAdmin()) {
         Notification::create(
             "You don't have permission to delete this legacy layout",
             NotificationIcon::Error)
