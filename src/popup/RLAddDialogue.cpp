@@ -116,5 +116,6 @@ void RLAddDialogue::onSubmit(CCObject* sender) {
                 return;
             }
             upopup->showSuccessMessage("Dialogue submitted successfully!");
+            self->m_dialogueInput->setString("");
         });
 }
