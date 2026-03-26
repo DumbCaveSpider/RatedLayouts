@@ -8,7 +8,6 @@ using namespace geode::prelude;
 
 class RLVotesLeaderboardLayer : public CCLayer {
 protected:
-    GJListLayer* m_listLayer;
     cue::ListNode* m_userListNode;
     ScrollLayer* m_scrollLayer;
     LoadingSpinner* m_spinner;

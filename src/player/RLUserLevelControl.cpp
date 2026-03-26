@@ -2,6 +2,7 @@
 #include "../include/RLNetworkUtils.hpp"
 #include "../include/RLConstants.hpp"
 #include "Geode/cocos/label_nodes/CCLabelBMFont.h"
+#include "Geode/ui/BasedButtonSprite.hpp"
 #include "Geode/ui/Popup.hpp"
 #include <cue/ListNode.hpp>
 #include <Geode/modify/GameLevelManager.hpp>
@@ -50,7 +51,7 @@ bool RLUserLevelControl::init() {
 
     m_listNode = cue::ListNode::create({listWidth, listHeight}, {191, 114, 62, 255}, cue::ListBorderStyle::CommentsBlue);
     m_listNode->setAnchorPoint({0.5f, 0.5f});
-    m_listNode->setPosition({m_mainLayer->getContentSize().width / 2.f, m_mainLayer->getContentSize().height / 2.f - 10.f});
+    m_listNode->setPosition({m_mainLayer->getContentSize().width / 2.f, m_mainLayer->getContentSize().height / 2.f - 15.f});
     m_listNode->getScrollLayer()->m_contentLayer->setLayout(ColumnLayout::create()
             ->setGap(0.f)
             ->setAutoGrowAxis(0.f)
@@ -70,18 +71,34 @@ bool RLUserLevelControl::init() {
     auto prevSprite = CCSprite::createWithSpriteFrameName("GJ_arrow_03_001.png");
     m_prevPageButton = CCMenuItemSpriteExtra::create(
         prevSprite, this, menu_selector(RLUserLevelControl::onPrevPage));
-    m_prevPageButton->setPosition({20, m_mainLayer->getContentHeight() / 2.f});
+    m_prevPageButton->setPosition({20, m_mainLayer->getContentHeight() / 2.f - 5.f});
     m_buttonMenu->addChild(m_prevPageButton);
 
     auto nextSprite = CCSprite::createWithSpriteFrameName("GJ_arrow_03_001.png");
     nextSprite->setFlipX(true);
     m_nextPageButton = CCMenuItemSpriteExtra::create(
         nextSprite, this, menu_selector(RLUserLevelControl::onNextPage));
-    m_nextPageButton->setPosition({cs.width - 20, m_mainLayer->getContentHeight() / 2.f});
+    m_nextPageButton->setPosition({cs.width - 20, m_mainLayer->getContentHeight() / 2.f - 5.f});
     m_buttonMenu->addChild(m_nextPageButton);
 
     m_prevPageButton->setVisible(false);
     m_nextPageButton->setVisible(false);
+
+    // toggle button to show platformer completions
+    auto platIcon =
+        CCSprite::createWithSpriteFrameName("RL_planetBig.png"_spr);
+    auto platOffSpr = EditorButtonSprite::create(
+        platIcon, EditorBaseColor::Gray, EditorBaseSize::Normal);
+    auto platOnSpr = EditorButtonSprite::create(
+        platIcon, EditorBaseColor::Cyan, EditorBaseSize::Normal);
+    m_togglePlatButton = CCMenuItemSpriteExtra::create(
+        platOffSpr, this, menu_selector(RLUserLevelControl::onPlanetFilter));
+    if (m_togglePlatButton) {
+        m_togglePlatButton->setPosition({cs.width - 22, m_mainLayer->getContentHeight() - 80});
+        m_buttonMenu->addChild(m_togglePlatButton);
+    }
+
+    m_filterPlat = false;
 
     fetchCompletionList(0);
 
@@ -177,7 +194,7 @@ void RLUserLevelControl::fetchCompletionList(int page) {
     body["argonToken"] = token;
     body["targetAccountId"] = m_targetId;
     body["page"] = page;
-    body["isPlat"] = false;
+    body["isPlat"] = m_filterPlat;
 
     auto req = web::WebRequest();
     req.bodyJSON(body);
@@ -233,9 +250,9 @@ void RLUserLevelControl::fetchCompletionList(int page) {
                     glm->getOnlineLevels(searchObj);
                 }
             } else {
-                if (self->m_listNode)
-                    self->m_listNode->clear();
-                self->updateCompletionPaging(0);
+                if (self) {
+                    self->populateCompletionLevels(nullptr);
+                }
             }
         });
 }
@@ -243,9 +260,26 @@ void RLUserLevelControl::fetchCompletionList(int page) {
 void RLUserLevelControl::populateCompletionLevels(cocos2d::CCArray* levels) {
     if (!m_listNode)
         return;
+
     m_listNode->clear();
+    if (m_emptyLabel) {
+        m_emptyLabel->removeFromParent();
+        m_emptyLabel = nullptr;
+    }
 
     if (!levels || levels->count() == 0) {
+        m_emptyLabel = CCLabelBMFont::create("No completion levels returned", "goldFont.fnt");
+        if (m_emptyLabel) {
+            m_emptyLabel->setAnchorPoint({0.5f, 0.5f});
+            m_emptyLabel->setPosition({m_listNode->getContentSize().width / 2.f,
+                m_listNode->getContentSize().height / 2.f});
+                m_emptyLabel->limitLabelWidth(m_listNode->getContentSize().width - 20, .7f, .5f);
+            m_listNode->addChild(m_emptyLabel, 3);
+        }
+        if (m_listSpinner) {
+            m_listSpinner->setVisible(false);
+        }
+
         updateCompletionPaging(0);
         return;
     }
@@ -322,6 +356,21 @@ void RLUserLevelControl::loadLevelsFinished(cocos2d::CCArray* levels, char const
 void RLUserLevelControl::loadLevelsFailed(char const* key, int type) {
     (void)type;
     loadLevelsFailed(key);
+}
+
+void RLUserLevelControl::onPlanetFilter(CCObject* sender) {
+    (void)sender;
+
+    m_filterPlat = !m_filterPlat;
+
+    if (m_togglePlatButton) {
+        auto icon = CCSprite::createWithSpriteFrameName("RL_planetBig.png"_spr);
+        auto sprite = EditorButtonSprite::create(
+            icon, m_filterPlat ? EditorBaseColor::Cyan : EditorBaseColor::Gray, EditorBaseSize::Normal);
+        m_togglePlatButton->setNormalImage(sprite);
+    }
+
+    fetchCompletionList(0);
 }
 
 void RLUserLevelControl::onPrevPage(CCObject* sender) {

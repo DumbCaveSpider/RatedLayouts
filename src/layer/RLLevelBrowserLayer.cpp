@@ -192,24 +192,25 @@ void RLLevelBrowserLayer::setupControls() {
 
     this->addChild(uiMenu, 10);
 
-    m_listLayer = GJListLayer::create(nullptr, title, {191, 114, 62, 255}, LIST_SIZE.width, LIST_SIZE.height, 0);
-    m_listLayer->setPosition(
-        {winSize / 2 - m_listLayer->getScaledContentSize() / 2 - 5});
-
-    m_listNode = cue::ListNode::create({m_listLayer->getContentSize().width,
-                                           m_listLayer->getContentSize().height},
-        {191, 114, 62, 0},
-        cue::ListBorderStyle::None);
-    m_listNode->setPosition({m_listLayer->getContentSize().width / 2,
-        m_listLayer->getContentSize().height / 2});
-    m_listLayer->addChild(m_listNode, 5);
+    m_listNode = cue::ListNode::create({LIST_SIZE.width, LIST_SIZE.height}, {191, 114, 62, 255}, cue::ListBorderStyle::Levels);
+    m_listNode->setAnchorPoint({0.5f, 0.5f});
+    m_listNode->setPosition(winSize.width / 2 - 5.f, winSize.height / 2 - 5.f);
+    this->addChild(m_listNode, 5);
     m_scrollLayer = m_listNode->getScrollLayer();
+
+    m_titleLabel = CCLabelBMFont::create(m_title.c_str(), "bigFont.fnt");
+    if (m_titleLabel) {
+        m_titleLabel->setAnchorPoint({0.5f, 0.5f});
+        m_titleLabel->setPosition({LIST_SIZE.width / 2.f, LIST_SIZE.height + 18.f});
+        m_titleLabel->limitLabelWidth(LIST_SIZE.width - 30.f, .8f, 0.5f);
+        m_listNode->addChild(m_titleLabel, 1);
+    }
 
     if (!Mod::get()->getSettingValue<bool>("disableScrollbar")) {
         auto scrollBar = Scrollbar::create(m_scrollLayer);
         scrollBar->setPosition({LIST_SIZE.width + 24.f, LIST_SIZE.height / 2});
         scrollBar->setContentHeight(LIST_SIZE.height - 20);
-        m_listLayer->addChild(scrollBar, 10);
+        m_listNode->addChild(scrollBar, 10);
     }
 
     auto contentLayer = m_scrollLayer->m_contentLayer;
@@ -229,8 +230,6 @@ void RLLevelBrowserLayer::setupControls() {
             m_circle = spinner;
         }
     }
-
-    this->addChild(m_listLayer);
 }
 
 bool RLLevelBrowserLayer::init(GJSearchObject* object) {
@@ -272,24 +271,25 @@ bool RLLevelBrowserLayer::init(GJSearchObject* object) {
         }
     }
 
-    m_listLayer = GJListLayer::create(nullptr, title, {191, 114, 62, 255}, LIST_SIZE.width, LIST_SIZE.height, 0);
-    m_listLayer->setPosition(
-        {winSize / 2 - m_listLayer->getScaledContentSize() / 2 - 5});
-
-    m_listNode = cue::ListNode::create({m_listLayer->getContentSize().width,
-                                           m_listLayer->getContentSize().height},
-        {191, 114, 62, 0},
-        cue::ListBorderStyle::None);
-    m_listNode->setPosition({m_listLayer->getContentSize().width / 2,
-        m_listLayer->getContentSize().height / 2});
-    m_listLayer->addChild(m_listNode, 5);
+    m_listNode = cue::ListNode::create({LIST_SIZE.width, LIST_SIZE.height}, {191, 114, 62, 255}, cue::ListBorderStyle::Levels);
+    m_listNode->setAnchorPoint({0.5f, 0.5f});
+    m_listNode->setPosition(winSize.width / 2 - 5.f, winSize.height / 2 - 5.f);
+    this->addChild(m_listNode, 5);
     m_scrollLayer = m_listNode->getScrollLayer();
+
+    m_titleLabel = CCLabelBMFont::create(m_title.c_str(), "bigFont.fnt");
+    if (m_titleLabel) {
+        m_titleLabel->setAnchorPoint({0.5f, 0.5f});
+        m_titleLabel->setPosition({LIST_SIZE.width / 2.f, LIST_SIZE.height + 18.f});
+        m_titleLabel->limitLabelWidth(LIST_SIZE.width - 30.f, .8f, 0.5f);
+        m_listNode->addChild(m_titleLabel, 1);
+    }
 
     if (!Mod::get()->getSettingValue<bool>("disableScrollbar")) {
         auto scrollBar = Scrollbar::create(m_scrollLayer);
         scrollBar->setPosition({LIST_SIZE.width + 24.f, LIST_SIZE.height / 2});
         scrollBar->setContentHeight(LIST_SIZE.height - 20);
-        m_listLayer->addChild(scrollBar, 10);
+        m_listNode->addChild(scrollBar, 10);
     }
 
     auto contentLayer = m_scrollLayer ? m_scrollLayer->m_contentLayer : nullptr;
@@ -310,7 +310,6 @@ bool RLLevelBrowserLayer::init(GJSearchObject* object) {
         }
     }
 
-    this->addChild(m_listLayer);
     this->addChild(uiMenu, 10);
 
     auto pageBtnSpr = CCSprite::createWithSpriteFrameName(

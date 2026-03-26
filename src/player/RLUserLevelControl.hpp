@@ -23,6 +23,9 @@ private:
     LoadingSpinner* m_listSpinner = nullptr;
     CCMenuItemSpriteExtra* m_prevPageButton = nullptr;
     CCMenuItemSpriteExtra* m_nextPageButton = nullptr;
+    CCMenuItemSpriteExtra* m_togglePlatButton = nullptr;
+    CCLabelBMFont* m_emptyLabel = nullptr;
+    bool m_filterPlat = false;
     int m_page = 0;
     int m_perPage = 10;
     async::TaskHolder<web::WebResponse> m_getCompletionTask;
@@ -31,6 +34,7 @@ private:
     void removeLevel(int levelId);
     void onPrevPage(CCObject* sender);
     void onNextPage(CCObject* sender);
+    void onPlanetFilter(CCObject* sender);
 
     void fetchCompletionList(int page);
     void populateCompletionLevels(cocos2d::CCArray* levels);

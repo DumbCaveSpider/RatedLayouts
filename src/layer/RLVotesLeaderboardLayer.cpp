@@ -22,24 +22,29 @@ bool RLVotesLeaderboardLayer::init() {
 
     this->fetchLeaderboard(100);
 
-    auto listLayer = GJListLayer::create(nullptr, "Community Vote Leaderboard", {191, 114, 62, 255}, 356.f, 220.f, 0);
-    listLayer->setPosition(
-        {winSize / 2 - listLayer->getScaledContentSize() / 2 - 5});
+    auto const listWidth = 356.f;
+    auto const listHeight = 220.f;
 
     m_userListNode = cue::ListNode::create(
-        {listLayer->getContentSize().width, listLayer->getContentSize().height},
-        {191, 114, 62, 255}, cue::ListBorderStyle::None);
-    m_userListNode->setPosition({listLayer->getContentSize().width / 2,
-        listLayer->getContentSize().height / 2});
-    listLayer->addChild(m_userListNode, 5);
+        {listWidth, listHeight}, {191, 114, 62, 255}, cue::ListBorderStyle::Levels);
+    m_userListNode->setAnchorPoint({0.5f, 0.5f});
+    m_userListNode->setPosition({winSize.width / 2 - 5, winSize.height / 2 - 5});
+    this->addChild(m_userListNode, 5);
     m_scrollLayer = m_userListNode->getScrollLayer();
+
+    // title label
+    auto titleLabel = CCLabelBMFont::create("Community Votes Leaderboard", "bigFont.fnt");
+    titleLabel->setPosition({listWidth / 2.f, listHeight + 18.f});
+    titleLabel->limitLabelWidth(listWidth - 30.f, .8f, 0.5f);
+    titleLabel->setAnchorPoint({0.5f, 0.5f});
+    m_userListNode->addChild(titleLabel, 1);
 
     if (!Mod::get()->getSettingValue<bool>("disableScrollbar")) {
         auto scrollBar = Scrollbar::create(m_userListNode->getScrollLayer());
-        scrollBar->setPosition({listLayer->getContentSize().width + 24.f,
-            listLayer->getContentSize().height / 2});
-        scrollBar->setContentHeight(listLayer->getContentSize().height - 20);
-        listLayer->addChild(scrollBar, 10);
+        scrollBar->setPosition({m_userListNode->getContentSize().width + 24.f,
+            m_userListNode->getContentSize().height / 2});
+        scrollBar->setContentHeight(m_userListNode->getContentSize().height - 20);
+        m_userListNode->addChild(scrollBar, 10);
     }
 
     auto contentLayer = m_userListNode->getScrollLayer()->m_contentLayer;
@@ -51,13 +56,10 @@ bool RLVotesLeaderboardLayer::init() {
         layout->setAxisReverse(true);
 
         auto spinner = LoadingSpinner::create(100.f);
-        spinner->setPosition(contentLayer->getContentSize() / 2);
-        listLayer->addChild(spinner);
+        spinner->setPosition(m_userListNode->getContentSize() / 2);
+        m_userListNode->addChild(spinner);
         m_spinner = spinner;
     }
-
-    this->addChild(listLayer);
-    m_listLayer = listLayer;
 
     // info button at the bottom left
     auto infoMenu = CCMenu::create();
@@ -115,7 +117,7 @@ void RLVotesLeaderboardLayer::onRefreshButton(CCObject* sender) {
 
     if (m_userListNode) {
         auto spinner = LoadingSpinner::create(100.f);
-        spinner->setPosition(m_listLayer->getContentSize() / 2);
+        spinner->setPosition(m_userListNode->getContentSize() / 2);
         m_userListNode->addChild(spinner);
         m_spinner = spinner;
     }

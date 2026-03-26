@@ -8,6 +8,8 @@
 
 using namespace geode::prelude;
 
+const std::string badgeParticle = "20,2065,2,225,3,165,145,20a-1a2a0.3a8a90a180a15a0a5a5a0a0a0a0a0a0a10a1a0a0a0.768627a0a0.219608a0a0.768627a0a1a0a1a1a0a0a1a0a0.415686a0a0.996078a0a1a0a0.25a0a1a0a0a0a0a0a0a0a0a2a1a0a0a1a21a0a0a0a0a0a0a0a0a0a0a0a0a0a0;";
+
 RLDonationPopup* RLDonationPopup::create() {
     auto ret = new RLDonationPopup();
 
@@ -21,8 +23,11 @@ RLDonationPopup* RLDonationPopup::create() {
 };
 
 bool RLDonationPopup::init() {
-    if (!Popup::init(460.f, 270.f, "GJ_square07.png"))
+    if (!Popup::init(440.f, 280.f, "GJ_square07.png"))
         return false;
+
+    const float mainLayerWidthSpacing = m_mainLayer->getContentSize().width - 25.f;
+
     // clipping node for rounded corners
     auto sStencil = NineSlice::create("GJ_square06.png");
     if (sStencil) {
@@ -35,6 +40,7 @@ bool RLDonationPopup::init() {
     clip->setContentSize({m_mainLayer->getScaledContentSize()});
     clip->setAlphaThreshold(0.01f);
     m_mainLayer->addChild(clip, -1);
+
     // border
     auto borderSprite = NineSlice::create("square02b_001.png");
     borderSprite->setContentSize({m_mainLayer->getScaledContentSize()});
@@ -50,6 +56,7 @@ bool RLDonationPopup::init() {
     glowSprite->setOpacity(120);
     glowSprite->setBlendFunc({GL_SRC_ALPHA, GL_ONE});  // multiply blend
     clip->addChild(glowSprite);
+
     // title
     auto titleLabel = CCLabelBMFont::create("Support Rated Layouts!", "bigFont.fnt");
     titleLabel->setScale(0.75f);
@@ -64,38 +71,61 @@ bool RLDonationPopup::init() {
     badgeSpr->setPosition({titleLabel->getPositionX() - titleLabel->getContentSize().width * 0.75f / 2 - 30.f, titleLabel->getPositionY()});
     m_mainLayer->addChild(badgeSpr);
 
+    // remove any existing particles on this coin to avoid dupes
+    const std::string& pStruct = badgeParticle;
+    if (!pStruct.empty()) {
+        if (auto existingP =
+                badgeSpr->getChildByID("rating-particles")) {
+            existingP->removeFromParent();
+        }
+        ParticleStruct pStruct;
+        GameToolbox::particleStringToStruct(badgeParticle, pStruct);
+        CCParticleSystemQuad* particle =
+            GameToolbox::particleFromStruct(pStruct, nullptr, false);
+        if (particle) {
+            badgeSpr->addChild(particle, -1);
+            particle->resetSystem();
+            particle->setPosition(badgeSpr->getContentSize() /
+                                  2.f);
+            particle->setID("rating-particles"_spr);
+            particle->updateWithNoTime();
+        }
+    }
+
     // title1
     auto heading1 = CCLabelBMFont::create("Get a Supporter Badge!", "goldFont.fnt");
-    heading1->setScale(0.75f);
+    heading1->limitLabelWidth(mainLayerWidthSpacing, 0.75f, 0.7f);
     heading1->setPosition({m_mainLayer->getScaledContentSize().width / 2.f, m_mainLayer->getScaledContentSize().height - 60.f});
     m_mainLayer->addChild(heading1);
+
     // desc1
-    auto desc1 = CCLabelBMFont::create("Get a special badge shown to\nall players and a colored comment!", "bigFont.fnt");
-    desc1->setScale(0.5f);
+    auto desc1 = CCLabelBMFont::create("Get a special badge shown to\nall players and a colored comment within Rated Layouts!", "bigFont.fnt");
+    desc1->limitLabelWidth(mainLayerWidthSpacing, 0.5f, 0.4f);
     desc1->setPosition({m_mainLayer->getScaledContentSize().width / 2.f, m_mainLayer->getScaledContentSize().height - 90.f});
     desc1->setAlignment(kCCTextAlignmentCenter);
     m_mainLayer->addChild(desc1);
 
     // title2
-    auto heading2 = CCLabelBMFont::create("Sneak Peak on future features", "goldFont.fnt");
-    heading2->setScale(0.75f);
+    auto heading2 = CCLabelBMFont::create("Get Exclusive Features", "goldFont.fnt");
+    heading2->limitLabelWidth(mainLayerWidthSpacing, 0.75f, 0.7f);
     heading2->setPosition({m_mainLayer->getScaledContentSize().width / 2.f, m_mainLayer->getScaledContentSize().height - 125.f});
     m_mainLayer->addChild(heading2);
     // desc2
-    auto desc2 = CCLabelBMFont::create("Get exclusive sneak peaks at upcoming features\nboth in-game and on our Discord server!", "bigFont.fnt");
-    desc2->setScale(0.5f);
+    auto desc2 = CCLabelBMFont::create("Access exclusive and up-coming features added in Rated Layouts.\nAnd get early access to these new features!", "bigFont.fnt");
+    desc2->limitLabelWidth(mainLayerWidthSpacing, 0.5f, 0.4f);
     desc2->setPosition({m_mainLayer->getScaledContentSize().width / 2.f, m_mainLayer->getScaledContentSize().height - 155.f});
     desc2->setAlignment(kCCTextAlignmentCenter);
     m_mainLayer->addChild(desc2);
 
     // title3
     auto heading3 = CCLabelBMFont::create("Priority Layout Requests", "goldFont.fnt");
-    heading3->setScale(0.75f);
+    heading3->limitLabelWidth(mainLayerWidthSpacing, 0.75f, 0.7f);
     heading3->setPosition({m_mainLayer->getScaledContentSize().width / 2.f, m_mainLayer->getScaledContentSize().height - 190.f});
     m_mainLayer->addChild(heading3);
+
     // desc3
     auto desc3 = CCLabelBMFont::create("Request priority consideration for your layout\nsubmissions and get faster review from the team.", "bigFont.fnt");
-    desc3->setScale(0.5f);
+    desc3->limitLabelWidth(mainLayerWidthSpacing, 0.5f, 0.4f);
     desc3->setPosition({m_mainLayer->getScaledContentSize().width / 2.f, m_mainLayer->getScaledContentSize().height - 220.f});
     desc3->setAlignment(kCCTextAlignmentCenter);
     m_mainLayer->addChild(desc3);
@@ -103,13 +133,13 @@ bool RLDonationPopup::init() {
     // open kofi link button
     auto kofiSpr = ButtonSprite::create("Donate via Ko-fi", "goldFont.fnt", "GJ_button_03.png");
     auto kofiBtn = CCMenuItemSpriteExtra::create(kofiSpr, this, menu_selector(RLDonationPopup::onClick));
-    kofiBtn->setPosition({m_mainLayer->getContentSize().width / 2.f + 90.f, 0.f});
+    kofiBtn->setPosition({m_mainLayer->getContentSize().width / 2.f + 90.f, 20.f});
     m_buttonMenu->addChild(kofiBtn);
 
     // badge request button
     auto getBadgeSpr = ButtonSprite::create("Get Badge?", "goldFont.fnt", "GJ_button_01.png");
     auto getBadgeBtn = CCMenuItemSpriteExtra::create(getBadgeSpr, this, menu_selector(RLDonationPopup::onGetBadge));
-    getBadgeBtn->setPosition({m_mainLayer->getContentSize().width / 2.f - 120.f, 0.f});
+    getBadgeBtn->setPosition({m_mainLayer->getContentSize().width / 2.f - 120.f, 20.f});
     m_buttonMenu->addChild(getBadgeBtn);
 
     // floating blocks

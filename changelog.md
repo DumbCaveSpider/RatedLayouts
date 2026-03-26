@@ -19,6 +19,10 @@
 - Added Leaderboard Whitelist for Leaderboard Moderators
 - Stats Info Button at the Profile Page will now show their Rated Layouts stats when the stats menu is toggled to Rated Layouts stats
 - Updated the **Community Votes** information
+- Added new **Leaderboard Layout Admin** role. This user can whitelist users and promote/demote leaderboard moderators.
+- Improved the UI especially for the User Level Panel and the Moderator/Admin Panel
+- Replace the use of GJListLayer to use Cue's ListNode
+- Layout Admins can now promote/demote Layout Moderators.
 - Internal Code Refactor and optimizations
 
 # v0.4.3-beta.1

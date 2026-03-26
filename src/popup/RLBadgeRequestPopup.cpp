@@ -15,7 +15,7 @@ RLBadgeRequestPopup* RLBadgeRequestPopup::create() {
 }
 
 bool RLBadgeRequestPopup::init() {
-    if (!Popup::init(420.f, 280.f, "GJ_square02.png"))
+    if (!Popup::init(440.f, 280.f, "GJ_square04.png"))
         return false;
 
     setTitle("Claim Layout Supporter Badge");
@@ -37,8 +37,8 @@ bool RLBadgeRequestPopup::init() {
         "<cp>Ko-fi.</c> beforehand!\n\n"
         "### If you encounter any <cr>issue</c> during this process, please "
         "contact <cf>ArcticWoof</c> on <cb>Discord</c>.",
-        {cs.width - 40.f, 180.f});
-    infoText->setPosition({cs.width / 2.f, cs.height - 170.f});
+        {cs.width - 40.f, 150.f});
+    infoText->setPosition({cs.width / 2.f, cs.height - 150.f});
     infoText->setAnchorPoint({0.5f, 0.5f});
     infoText->setID("rl-badge-request-info");
     m_mainLayer->addChild(infoText);
@@ -48,7 +48,7 @@ bool RLBadgeRequestPopup::init() {
         ButtonSprite::create("Claim", "goldFont.fnt", "GJ_button_01.png");
     auto submitBtn = CCMenuItemSpriteExtra::create(
         submitSpr, this, menu_selector(RLBadgeRequestPopup::onSubmit));
-    submitBtn->setPosition({cs.width / 2.f, 0.f});
+    submitBtn->setPosition({cs.width / 2.f, 25.f});
     m_buttonMenu->addChild(submitBtn);
 
     return true;

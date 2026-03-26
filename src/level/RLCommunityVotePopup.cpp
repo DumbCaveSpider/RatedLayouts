@@ -102,7 +102,7 @@ void RLCommunityVotePopup::onSubmit(CCObject*) {
                             return;
                         if (!res.ok()) {
                             upopup->showFailMessage(
-                                "Failed to submit vote! Try again later.");
+                                "Failed to submit vote!");
                             return;
                         }
                         auto jsonRes = res.json();

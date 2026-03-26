@@ -14,4 +14,5 @@ private:
     ~RLAddDialogue() { m_setDialogueTask.cancel(); }
     void onSubmit(CCObject* sender);
     void onPreview(CCObject* sender);
+    void onInfo(CCObject* sender);
 };

@@ -127,11 +127,11 @@ bool RLCreditsPopup::init() {
                 tableCell->setContentSize({340.f, 30.f});
                 auto label =
                     CCLabelBMFont::create(std::string{text}.c_str(), "bigFont.fnt");
-                label->limitLabelWidth(tableCell->getContentWidth() - 20.f, 0.5f, 0.4f);
                 // center the label in the cell
                 label->setAnchorPoint({0.5f, 0.5f});
                 const float contentW = tableCell->getContentSize().width;
                 const float labelX = contentW / 2.f;
+                label->limitLabelWidth(contentW - 120.f, 0.5f, 0.4f);
                 label->setPosition({labelX, 15.f});
 
                 tableCell->addChild(label);
