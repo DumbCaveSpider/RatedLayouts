@@ -23,6 +23,7 @@
 - Updated the **Community Votes** information
 - Improved the UI especially for the User Level Panel and the Moderator/Admin Panel
 - Replaced the Buttons into a Dropdown Menu in the Shop Layer
+- Moderator Note are now clickable and will show a Popup with the full note text
 - Layout Admins can now promote/demote Layout Moderators
 - Internal Code Refactor and optimizations
 

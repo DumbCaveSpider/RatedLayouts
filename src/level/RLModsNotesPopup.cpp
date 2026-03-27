@@ -1,4 +1,5 @@
 #include "RLModsNotesPopup.hpp"
+#include <Geode/binding/CCSpriteGrayscale.hpp>
 #include "../include/RLConstants.hpp"
 
 static std::string mapRatingToLevel(int rating) {
@@ -188,11 +189,36 @@ bool RLModsNotesPopup::init() {
                 noteBg->setOpacity(75);
                 layer->addChild(noteBg);
                 // note label
-                auto noteLabel = CCLabelBMFont::create(note.c_str(), "chatFont.fnt");
-                noteLabel->setPosition({noteBg->getContentSize().width / 2,
-                    noteBg->getContentSize().height / 2});
+                self->m_notes.push_back(note);
+                auto noteDisplay = note;
+                if (noteDisplay.size() > 80) {
+                    noteDisplay = noteDisplay.substr(0, 80) + "...";
+                }
+
+                auto noteLabel = CCLabelBMFont::create(noteDisplay.c_str(), "chatFont.fnt");
                 noteLabel->limitLabelWidth(noteBg->getContentSize().width - 20.f, 1.f, .1f);
-                noteBg->addChild(noteLabel);
+
+                auto noteButton = CCMenuItemSpriteExtra::create(noteLabel, self, menu_selector(RLModsNotesPopup::onNoteLabelClick));
+                noteButton->setTag(idx);
+                noteButton->setEnabled(false);
+                noteButton->m_scaleMultiplier = 1.05f;
+                noteButton->setPosition({noteBg->getContentSize().width / 2, noteBg->getContentSize().height / 2});
+
+                if (note.size() > 80) {
+                    auto infoSpr = CCSpriteGrayscale::createWithSpriteFrameName("RL_info01.png"_spr);
+                    infoSpr->setScale(0.3f);
+                    infoSpr->setOpacity(150);
+                    infoSpr->setAnchorPoint({1.f, 1.f});
+                    infoSpr->setPosition({noteBg->getContentSize().width - 5.f, noteBg->getContentSize().height - 5.f});
+                    noteButton->setEnabled(true);
+                    noteBg->addChild(infoSpr);
+                }
+
+                auto noteMenu = CCMenu::create(noteButton, nullptr);
+                noteMenu->setPosition({0, 0});
+                noteMenu->setContentSize(noteBg->getContentSize());
+                noteMenu->setAnchorPoint({0, 0});
+                noteBg->addChild(noteMenu);
 
                 auto difficultyLabel = CCLabelBMFont::create(
                     fmt::format("{} ({})", mapRatingToLevel(difficulty), mapFeaturedToName(featured))
@@ -246,4 +272,17 @@ bool RLModsNotesPopup::init() {
         });
 
     return true;
+}
+
+void RLModsNotesPopup::onNoteLabelClick(CCObject* sender) {
+    auto button = static_cast<CCMenuItemLabel*>(sender);
+    if (!button)
+        return;
+
+    int idx = button->getTag();
+    if (idx < 0 || idx >= static_cast<int>(m_notes.size()))
+        return;
+
+    auto note = m_notes[idx];
+    MDPopup::create("Moderator Note", note.c_str(), "OK")->show();
 }
