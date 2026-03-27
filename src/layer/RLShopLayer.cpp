@@ -53,7 +53,7 @@ bool RLShopLayer::init() {
     rubySpr->setScale(0.7f);
     this->addChild(rubySpr);
 
-    // lyout creator menu
+    // layout creator menu
     auto menu = CCMenu::create();
     menu->setPosition({0, 0});
     this->addChild(menu, -1);
@@ -133,10 +133,10 @@ bool RLShopLayer::init() {
     shopMenu->setPosition({deckSpr->getContentSize().width / 2,
         deckSpr->getContentSize().height / 2});
     shopMenu->setContentSize({deckSpr->getContentSize().width - 40,
-        deckSpr->getContentSize().height - 37});
+        deckSpr->getContentSize().height - 30});
     // arrange rows vertically
     shopMenu->setLayout(ColumnLayout::create()
-            ->setGap(-15.f)
+            ->setGap(35.f)
             ->setAxisAlignment(AxisAlignment::Center)
             ->setAxisReverse(true));
 
@@ -148,7 +148,7 @@ bool RLShopLayer::init() {
         menuWithinAMenu->setContentSize({shopMenu->getContentSize().width,
             (shopMenu->getContentSize().height - 8.f) / 2.f});
         menuWithinAMenu->setLayout(RowLayout::create()
-                ->setGap(40.f)
+                ->setGap(50.f)
                 ->setAxisAlignment(AxisAlignment::Center)
                 ->setAxisReverse(false));
         menuWithinAMenu->updateLayout();
@@ -173,8 +173,8 @@ bool RLShopLayer::init() {
         {shopMenu->getPositionX(),
             centerY + offset - 16});  // the magic number is for my ocd
     m_shopRow2->setPosition({shopMenu->getPositionX(), centerY - offset + 3});
-    deckSpr->addChild(m_shopRow1, 1);
-    deckSpr->addChild(m_shopRow2, 1);
+    shopMenu->addChild(m_shopRow1, 1);
+    shopMenu->addChild(m_shopRow2, 1);
 
     // pagination controls
     m_pageLabel = CCLabelBMFont::create("", "goldFont.fnt");

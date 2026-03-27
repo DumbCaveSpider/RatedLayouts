@@ -1,32 +1,32 @@
-# v0.5.0-beta.1
+## v0.5.0-beta.1
 
 ### The Spire Update!
 
 - Added **The Spire**. Platformer-focus user created Rated Layouts levels. Explore the Spire and find forsaken lore beyond the <cp>Cosmos</c>
-- Added New Secret Character. _Discover this character and your access to the Spire will be granted_
-- Fixed issue where Difficulty Score voted 10 or higher doesn't apply correctly when voted
+- Added **New Secret Character**. _Discover this character and your access to the Spire will be granted_
 - Added **Disable Notification in Level** in the mod settings
-- Tweaked the Comment Cell Colors for users with a bright nameplate
+- Added **Comment Text Background** for better visibility of comments on bright nameplates
+- Added **Leaderboard Whitelist** for Leaderboard Moderators
+- Added **Nameplate Test** to test your nameplate images in-game before submitting them.
+- Tweaked the **Comment Cell Colors** for users with a bright nameplate
+- Tweaked the **Leaderboard** to show the nameplate more visible
+- Tweaked the **Rubies Labels** on the Level Info Layer and the End Level Layer
+- Replaced the use of the old scrolling system to use Cue's list node
 - Fixed issue where the text label in the Achievements overflows
-- Replace the use of the old scrolling system to use Cue's list node
-- Tweaked the Rubies Labels on the Level Info Layer and the End Level Layer
 - Fixed issue where the Shopkeeper and the Plushie sprite are floating on screens with different aspect ratios
 - Fixed issue where the RL Stats Menu is overlapping with the [Better Progression](mod:itzkiba.better_progression)
 - Fixed issue where on smaller screens, the Button Menu is overlapping with the socials menu
 - Fixed issue where the comment text color isn't applied for users with [Comment Emojis Reloaded](mod:prevter.comment_emojis) mod enabled
-- Adjusted the comment colors to be more visible on bright nameplates
-- Added Comment Text Background for better visibility of comments on bright nameplates
-- Added Leaderboard Whitelist for Leaderboard Moderators
-- Added Nameplate Test to test your nameplate images in-game
+- Fixed issue where Difficulty Score voted 10 or higher doesn't apply correctly when voted
+- Fixed issue with the nameplate item hitbox area has been set incorrectly
 - Stats Info Button at the Profile Page will now show their Rated Layouts stats when the stats menu is toggled to Rated Layouts stats
 - Updated the **Community Votes** information
 - Improved the UI especially for the User Level Panel and the Moderator/Admin Panel
-- Replace the use of GJListLayer to use Cue's ListNode
 - Replaced the Buttons into a Dropdown Menu in the Shop Layer
 - Layout Admins can now promote/demote Layout Moderators
 - Internal Code Refactor and optimizations
 
-# v0.4.3-beta.1
+## v0.4.3-beta.1
 
 - Added **Community Vote Leaderboard** to show the top voters in the community vote. (Found in the Community Vote popup)
 - Added info button on the difficulty sprite for levels marked as legacy (clickable for more information)
@@ -45,7 +45,7 @@
 - Nameplates are now **Server-sided** to reduce the mod size and allow more nameplates to be added without needing to update the mod.
 - More nameplates!
 
-# v0.4.2-beta.1
+## v0.4.2-beta.1
 
 - Refactored the Moderation system and introducing **Role Specific Badges**! Moderators and Admins will now have different badges to distinguish them in the comments and the leaderboard.
   - **Platformer Layout Moderator** badge for moderators who can suggest platformer rated layouts.
@@ -63,14 +63,14 @@
 - Fixed issue where the **Disable Reward Animation** option isn't applying on rubies collection.
 - Fixed issue with the Menu Buttons in the **Profile Page** got cut off.
 
-# v0.4.1-beta.1
+## v0.4.1-beta.1
 
 - Bump to Geode v5.0.0 stable
 - Added **Community Vote Leaderboard** to show the top voters in the community vote. (Found in the Community Vote popup)
 - Fixed the crash relating to entering the level info screen.
 - Improved the Moderator Popup UI
 
-# v0.4.0-beta.1
+## v0.4.0-beta.1
 
 - Ported to Geode v5.0.0
 - Improved **Level Browser**! Now you can search more than **100 levels**!
@@ -102,7 +102,7 @@
 - Removed Badge API dependency
 - Secret features... shh...
 
-# v0.3.6-beta.1
+## v0.3.6-beta.1
 
 - **Added Blue Coins!** Thanks to [Darkore](user:3595559) for the Blue Coin texture design! You can now collect Blue Coins by collecting them in the Rated Layouts levels.
 - **NEW Featured and Epic Texture** Replaced the old texture to a new and clearer design. _Thanks to myself for the new design!!!!!_
@@ -112,7 +112,7 @@ _(Be sure to re-enter your previously beaten levels to collect Blue Coins if you
 - Fixed issue where liking/refreshing level in level info will set the difficulty sprite incorrectly especially on any levels that isn't rated layouts.
 - Fully patched/fixed the web request crashes.
 
-# v0.3.5-beta.1
+## v0.3.5-beta.1
 
 - **Profile Stats Changed!** The Rated layouts stats are now on a separate section in the profile page. Click the new Planet Button in the profile page to view your Rated Layouts stats!
 - **Added Gauntlet Select Levels!** You can now select and play Layout Gauntlet levels from the Gauntlet Select Layer.
@@ -139,16 +139,16 @@ _(Be sure to re-enter your previously beaten levels to collect Blue Coins if you
 
 _Thanks to [delivel-tech](https://github.com/delivel-tech) & [iAndyHD3](https://github.com/iAndyHD3) for this update and fixes!_
 
-# v0.3.4-beta.2
+## v0.3.4-beta.2
 
 - Very minor fixes relating to ko-fi links being invaild.
 
-# v0.3.4-beta.1
+## v0.3.4-beta.1
 
 - Added Disable Creator Points in mod settings. This is for specific users who see it as a negative aspect of the mod.
 - Minor fixes and improvements.
 
-# v0.3.3-beta.1
+## v0.3.3-beta.1
 
 - **Added Layout Supporter Badge!** Support Rated Layouts development by donating via Ko-fi and get a special badge shown to all players and a colored comment!
 - You can view the total votes count for each suggested levels in the Sent Layouts levels.
@@ -157,7 +157,7 @@ _Thanks to [delivel-tech](https://github.com/delivel-tech) & [iAndyHD3](https://
 - Added **Layout Supporters** users in the credits list.
 - Minor fixes and improvements.
 
-# v0.3.2-beta.1
+## v0.3.2-beta.1
 
 - Removed [More Difficulties](mod:uproxide.more_difficulties) from the incompatible mods, but the more difficulties sprite won't be shown for layouts that is rated.
 - Added "Clear Cached Data" button in the mod settings to clear all cached rating and profile data.
@@ -169,14 +169,14 @@ _Thanks to [delivel-tech](https://github.com/delivel-tech) & [iAndyHD3](https://
 
 _Thanks to [hiimjasmine00](https://github.com/hiimjasmine00) for the fixes!_
 
-# v0.3.1-beta.1
+## v0.3.1-beta.1
 
 - **Added "Classic" Filter** in the Custom Search to filter Classic Rated Layout Levels.
 - **Added Announcement Button** in the Rated Layouts Creator Layer to view the latest news and updates about Rated Layouts.
 - Added Planets Collectable count in the Garage Layer.
 - Epic, Featured and Awarded filters are no longer mutually exclusive, you can now select multiple of them at once.
 
-# v0.3.0-beta.1
+## v0.3.0-beta.1
 
 ### The Planets Platformer Update!
 
@@ -193,7 +193,7 @@ _Thanks to [hiimjasmine00](https://github.com/hiimjasmine00) for the fixes!_
 - Fixed issue with the labels in the Event Layouts layer being misaligned.
 - Fixed issue where spamming the buttons makes the popup appear multiple times.
 
-# v0.2.9-beta.1
+## v0.2.9-beta.1
 
 - Tweaked the **Community Vote** UI. If you are a Layout Moderator or Admin, it's unlocked by default. Others has to meet the percentage requirements to access it.
 - Community vote scores are now hidden until the user has voted, this ensure that users are not biased by the current votes.
@@ -202,7 +202,7 @@ _Thanks to [hiimjasmine00](https://github.com/hiimjasmine00) for the fixes!_
 - **Secret Dialogue messages are now dynamic**. You might get different messages each time you click it!
 - **Layout Moderators and Admins** can now submit custom dialogue messages for users to see when they click the secret dialogue button.
 
-# v0.2.8-beta.1
+## v0.2.8-beta.1
 
 - **Added Layout Gauntlets Annoucement!** Be sure to check out the Layout Gauntlets Creator Contest!!
 - Fixed issue where [Badge API](mod:jouca.badgesapi) was set to the wrong recommended version
@@ -210,7 +210,7 @@ _Thanks to [hiimjasmine00](https://github.com/hiimjasmine00) for the fixes!_
 
 ### _Note: You can still have [More Difficulties](mod:uproxide.more_difficulties) enabled, it just shows a warning that it conflicts but you can still use both mods._
 
-# v0.2.7-beta.1
+## v0.2.7-beta.1
 
 - **New Texture Update!** Huge thanks to [Dasshu](user:1975253) for creating new textures and logo for Rated Layouts mod and [Darkore](user:3595559) for the new stars icon mockup!
 - Removed "Newly Rated" button. _You can still find newly rated layouts in the Custom Search layer by simply clicking the search button without any filters applied._
@@ -227,7 +227,7 @@ _Thanks to [hiimjasmine00](https://github.com/hiimjasmine00) for the fixes!_
 - Fixed issue when liking/unliking levels, the stars count in the level info layer isn't updated correctly.
 - Tweaked the glow effect and the Layout Moderators and Admins' comment colors to be less intense.
 
-# v0.2.6-beta.1
+## v0.2.6-beta.1
 
 - Fixed bug where Layout Admins can't submit featured score for Epic Layouts.
 - Fixed bug where comments text color on non-compact mode was not applied correctly.
@@ -237,16 +237,16 @@ _Thanks to [hiimjasmine00](https://github.com/hiimjasmine00) for the fixes!_
 - Added Stars value formatting. _(Now it shows 1,234 instead of 1234)_
 - Added Rated Layout Button at the Level Search Layer.
 
-# v0.2.5-beta.1
+## v0.2.5-beta.1
 
 - Minor fixes and code cleanup on Event Layouts.
 
-# v0.2.4-beta.1
+## v0.2.4-beta.1
 
 - Fixed issue with the event layouts loading the level incorrectly.
 - Fixed issue with the Search Background Menu not displaying correctly.
 
-# v0.2.3-beta.1
+## v0.2.3-beta.1
 
 - **Added Difficulty Stats!** You can view your difficulty stats in your profile page, including the number of levels you've beaten for each difficulty. (You can view them by clicking the Blueprint Stars icon in the profile page.)
 - **Added User Comment Glow!** You can easily identify comments from users using Rated Layouts mod.
@@ -255,29 +255,29 @@ _Thanks to [hiimjasmine00](https://github.com/hiimjasmine00) for the fixes!_
 - **Added Epic Search Filter!** You can now filter levels by Epic rating in the Custom Search.
 - Tweaks for Search Layer.
 
-# v0.2.2-beta.1
+## v0.2.2-beta.1
 
 - **Added Custom Search!** You can now search for Rated Layout Levels using various filters such as <cr>difficulty</c>, <co>level type</co> and more!
 - Removed the Level Search Quick Menu from the Search Tab in favor of the custom search layer in the Rated Layouts Creator Layer.
 - Fixed the sprite not showing the correct star icon in the end level layer when claiming stars.
 
-# v0.2.1-beta.1
+## v0.2.1-beta.1
 
 - Added fetched comments caching to reduce server requests and included in the disabled fetch requests option.
 - Minor fixes.
 
-# v0.2.0-beta.1
+## v0.2.0-beta.1
 
 - Added an option to disable all fetch requests from the server to get the level rating data.
 - Fixed an issue where it can't search for levels that has more than 100 level IDs.
 
-# v0.1.9-beta.1
+## v0.1.9-beta.1
 
 - Fixed the Star Reward animation on the end level layer.
 - Added Notification and sound effect when claiming stars from the level info layer if the reward animation is disabled.
 - Minor fixes.
 
-# v0.1.8-beta.1
+## v0.1.8-beta.1
 
 - Added User logs and control panel (for moderators and admins)
 - Added credits or layout moderators and admins list
@@ -286,44 +286,44 @@ _Thanks to [hiimjasmine00](https://github.com/hiimjasmine00) for the fixes!_
 - Removed the background decoration because it kept lagging the game
 - Minor fixes
 
-# v0.1.7-beta.1
+## v0.1.7-beta.1
 
 - Added Info Button at the Rated Layouts Creator Layer that explains about Rated Layouts and its features.
 - My sanity is in a dialog form now...
 - Minor fixes and improvements.
 
-# v0.1.6-beta.1
+## v0.1.6-beta.1
 
 - Added a custom layer for all Rated Layouts related features. (found at the bottom left of the creator layer)
 - Sprite changes to make sure its consistent with the theme.
 
-# v0.1.5-beta.1
+## v0.1.5-beta.1
 
 - Added Player's Icons at the leaderboard. Might not update based on your profile but it's usually stored for statistics purposes.
 - Role request is similar process as getting a moderator role in the actual game. Good luck
 
-# v0.1.4-beta.1
+## v0.1.4-beta.1
 
 - Added Leaderboard! You can now view the top players based on the number of stars and creator points they have collected from rated layouts.
 
-# v0.1.3-beta.1
+## v0.1.3-beta.1
 
 - Levels ratings are cached locally to reduce server requests and improve performance. (and removed when deleting the level)
 - Stars are now claimed when you enter the level from the level info layer if already beaten before.
 - Fixed issue where the stars icons in the level info layer are misaligned when refreshing the level.
 - Added Stars reward animation at the end level layer when beaten the level legitimately.
 
-# v0.1.2-beta.1
+## v0.1.2-beta.1
 
 - Fixed a crash that could occur when loading profile pages or comments if the user navigated away before the server responded.
 - Added a notification to inform users if they attempt to claim stars for a level they have already claimed stars for.
 - Blueprint Stars can only be claimed once per level completion to prevent exploitation.
 
-# v0.1.1-beta.1
+## v0.1.1-beta.1
 
 - Minor fixes, mostly just tweaking the position of the star icon on level cells.
 - Fixes some unexpected crashes.
 
-# v0.1.0-beta.1
+## v0.1.0-beta.1
 
 - "i love robtop's rating system, its so fair and totally not rigged, i swear i have 12 sends in adrifto and still not rated. totally fair"

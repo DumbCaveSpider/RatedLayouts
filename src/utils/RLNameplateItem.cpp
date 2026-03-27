@@ -24,22 +24,17 @@ namespace rl {
             lazy->loadFromUrl(iconUrl, CCImage::kFmtPng, true);
             lazy->setAutoResize(true);
             iconSpr = lazy;
-        } else {
-            auto iconName = fmt::format("icon_{}.png"_spr, index);
-            iconSpr = CCSprite::createWithSpriteFrameName(iconName.c_str());
-            if (!iconSpr)
-                iconSpr = CCSprite::createWithSpriteFrameName("RL_bob.png"_spr);
         }
 
         auto texSize = iconSpr->getTextureRect().size;
-        float width = std::max(texSize.width, 56.f);
-        float height = texSize.height + 26.f;  // room for price label
+        float width = std::max(texSize.width, 40.f);
+        float height = std::max(texSize.height, 40.f);  // room for price label
 
         // container node used as the menu item's normal image
         auto container = CCSprite::create();
         container->setContentSize({width, height});
 
-        iconSpr->setPosition({width / 2.f, height - texSize.height / 2.f - 5.f});
+        iconSpr->setPosition({width / 2.f, height / 2.f});
         container->addChild(iconSpr);
 
         // price label underneath (show "Owned" when purchased)
@@ -47,7 +42,7 @@ namespace rl {
         auto priceLabel = CCLabelBMFont::create(
             owned ? "Owned" : fmt::format("{}", value).c_str(), "bigFont.fnt");
         priceLabel->setScale(0.4f);
-        priceLabel->setPosition({width / 2.f - 6.f, -5.f});
+        priceLabel->setPosition({width / 2.f - 6.f, -6.f});
         if (owned) {
             priceLabel->setColor({120, 255, 140});
             priceLabel->setPosition({width / 2.f, -5.f});

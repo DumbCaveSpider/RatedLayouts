@@ -319,7 +319,7 @@ void RLLeaderboardLayer::populateLeaderboard(
 
         CCSprite* bgSprite = CCSprite::create();
         bgSprite->setTextureRect(CCRectMake(0, 0, 356.f, 40.f));
-        if (accountId == GJAccountManager::sharedState()->m_accountID) {
+        if (accountId == currentAccountID) {
             bgSprite->setColor({230, 150, 10});
         } else if (rank % 2 == 1) {
             bgSprite->setColor({161, 88, 44});
@@ -327,10 +327,8 @@ void RLLeaderboardLayer::populateLeaderboard(
             bgSprite->setColor({194, 114, 62});
         }
         bgSprite->setPosition({178.f, 20.f});
-        bgSprite->setOpacity(150);
         rowContainer->addChild(bgSprite, 0);
 
-        CCNode* nameplateNode = nullptr;
         if (nameplateId != 0 &&
             !Mod::get()->getSettingValue<bool>("disableNameplate")) {
             std::string url = fmt::format(
@@ -342,8 +340,8 @@ void RLLeaderboardLayer::populateLeaderboard(
             lazy->setAutoResize(true);
             lazy->setPosition(
                 {bgSprite->getPositionX(), bgSprite->getPositionY()});
+            bgSprite->setOpacity(50);
             rowContainer->addChild(lazy, -1);
-            nameplateNode = lazy;
         }
 
         // glow for top 3
@@ -371,11 +369,6 @@ void RLLeaderboardLayer::populateLeaderboard(
             glow->setScale(5.f);
             glow->setColor({205, 127, 50});
             rowContainer->addChild(glow, 1);
-        }
-
-        // award achievement for getting on the leaderboard for the first time :)
-        if (accountId == currentAccountID) {
-            RLAchievements::onReward("misc_leaderboard");  // gg
         }
 
         // Rank label
@@ -445,6 +438,13 @@ void RLLeaderboardLayer::populateLeaderboard(
             m_userListNode->addCell(rowContainer);
             m_userListNode->getScrollLayer()->m_contentLayer->updateLayout();
         }
+
+        if (accountId == currentAccountID) {
+            accountLabel->setColor({0, 255, 255});
+            rankLabel->setColor({0, 255, 255});
+            RLAchievements::onReward("misc_leaderboard");  // gg
+        }
+
         rank++;
     }
 }

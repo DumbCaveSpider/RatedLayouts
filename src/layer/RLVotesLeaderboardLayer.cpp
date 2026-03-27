@@ -196,47 +196,36 @@ void RLVotesLeaderboardLayer::populateLeaderboard(
         int score = userValue["votes"].asInt().unwrapOrDefault();
         int nameplateId = userValue["nameplate"].asInt().unwrapOr(0);
 
-        auto cell = TableViewCell::create();
-        cell->setContentSize({356.f, 40.f});
+        auto rowContainer = CCLayer::create();
+        rowContainer->setContentSize({356.f, 40.f});
 
-        CCSprite* bgSprite = nullptr;
-        CCSprite* namePlate = nullptr;
         int currentAccountID = GJAccountManager::sharedState()->m_accountID;
 
+        CCSprite* bgSprite = CCSprite::create();
+        bgSprite->setTextureRect(CCRectMake(0, 0, 356.f, 40.f));
         if (accountId == currentAccountID) {
-            bgSprite = CCSprite::create();
-            bgSprite->setTextureRect(CCRectMake(0, 0, 356.f, 40.f));
             bgSprite->setColor({230, 150, 10});
         } else if (rank % 2 == 1) {
-            bgSprite = CCSprite::create();
-            bgSprite->setTextureRect(CCRectMake(0, 0, 356.f, 40.f));
             bgSprite->setColor({161, 88, 44});
         } else {
-            bgSprite = CCSprite::create();
-            bgSprite->setTextureRect(CCRectMake(0, 0, 356.f, 40.f));
             bgSprite->setColor({194, 114, 62});
         }
+        bgSprite->setPosition({178.f, 20.f});
+        rowContainer->addChild(bgSprite, 0);
 
-        if (bgSprite) {
-            bgSprite->setPosition({178.f, 20.f});
-            bgSprite->setOpacity(150);
-            cell->addChild(bgSprite, 0);
-        }
-
-        CCNode* nameplateNode = nullptr;
         if (nameplateId != 0 &&
             !Mod::get()->getSettingValue<bool>("disableNameplate")) {
             std::string url = fmt::format(
                 "{}/nameplates/banner/nameplate_{}.png",
                 std::string(rl::BASE_API_URL),
                 nameplateId);
-            auto lazy = LazySprite::create(
-                {bgSprite->getScaledContentSize() + CCSize(25, 25)}, false);
+            auto lazy = LazySprite::create({bgSprite->getScaledContentSize() + CCSize(25, 25)}, false);
             lazy->loadFromUrl(url, CCImage::kFmtPng, true);
             lazy->setAutoResize(true);
-            lazy->setPosition({bgSprite->getPositionX(), bgSprite->getPositionY()});
-            cell->addChild(lazy, -1);
-            nameplateNode = lazy;
+            lazy->setPosition(
+                {bgSprite->getPositionX(), bgSprite->getPositionY()});
+            bgSprite->setOpacity(50);
+            rowContainer->addChild(lazy, -1);
         }
 
         // glow for top 3
@@ -247,7 +236,7 @@ void RLVotesLeaderboardLayer::populateLeaderboard(
             glow->setAnchorPoint({0.f, 0.5f});
             glow->setScale(5.f);
             glow->setColor({255, 215, 0});
-            cell->addChild(glow, 1);
+            rowContainer->addChild(glow, 1);
         } else if (rank == 2) {
             auto glow = CCSprite::createWithSpriteFrameName("chest_glow_bg_001.png");
             glow->setPosition({100.f, 40.5f});
@@ -255,7 +244,7 @@ void RLVotesLeaderboardLayer::populateLeaderboard(
             glow->setAnchorPoint({0.f, 0.5f});
             glow->setScale(5.f);
             glow->setColor({192, 192, 192});
-            cell->addChild(glow, 1);
+            rowContainer->addChild(glow, 1);
         } else if (rank == 3) {
             auto glow = CCSprite::createWithSpriteFrameName("chest_glow_bg_001.png");
             glow->setPosition({100.f, 40.5f});
@@ -263,7 +252,7 @@ void RLVotesLeaderboardLayer::populateLeaderboard(
             glow->setAnchorPoint({0.f, 0.5f});
             glow->setScale(5.f);
             glow->setColor({205, 127, 50});
-            cell->addChild(glow, 1);
+            rowContainer->addChild(glow, 1);
         }
 
         // Rank label
@@ -272,7 +261,7 @@ void RLVotesLeaderboardLayer::populateLeaderboard(
         rankLabel->setScale(0.5f);
         rankLabel->setPosition({15.f, 20.f});
         rankLabel->setAnchorPoint({0.f, 0.5f});
-        cell->addChild(rankLabel, 2);
+        rowContainer->addChild(rankLabel, 2);
 
         auto username = userValue["username"].asString().unwrapOrDefault();
         auto accountLabel = CCLabelBMFont::create(username.c_str(), "goldFont.fnt");
@@ -293,7 +282,7 @@ void RLVotesLeaderboardLayer::populateLeaderboard(
         }
         player->setPosition({55.f, 20.f});
         player->setScale(0.75f);
-        cell->addChild(player, 2);
+        rowContainer->addChild(player, 2);
 
         auto buttonMenu = CCMenu::create();
         buttonMenu->setPosition({0, 0});
@@ -305,7 +294,7 @@ void RLVotesLeaderboardLayer::populateLeaderboard(
         accountButton->setAnchorPoint({0.f, 0.5f});
 
         buttonMenu->addChild(accountButton);
-        cell->addChild(buttonMenu, 2);
+        rowContainer->addChild(buttonMenu, 2);
 
         auto scoreLabelText = CCLabelBMFont::create(
             fmt::format("{}", GameToolbox::pointsToString(score)).c_str(),
@@ -313,20 +302,24 @@ void RLVotesLeaderboardLayer::populateLeaderboard(
         scoreLabelText->setScale(0.5f);
         scoreLabelText->setPosition({320.f, 20.f});
         scoreLabelText->setAnchorPoint({1.f, 0.5f});
-        cell->addChild(scoreLabelText, 2);
+        rowContainer->addChild(scoreLabelText, 2);
 
-        const char* iconName = "RL_commVote01.png"_spr;
-        auto iconSprite = CCSprite::createWithSpriteFrameName(iconName);
+        auto iconSprite = CCSprite::createWithSpriteFrameName("RL_commVote01.png"_spr);
         iconSprite->setScale(0.65f);
         iconSprite->setPosition({325.f, 20.f});
         iconSprite->setAnchorPoint({0.f, 0.5f});
-        cell->addChild(iconSprite, 2);
+        rowContainer->addChild(iconSprite, 2);
 
         if (m_userListNode) {
-            m_userListNode->addCell(cell);
+            m_userListNode->addCell(rowContainer);
             if (m_userListNode->getScrollLayer() && m_userListNode->getScrollLayer()->m_contentLayer) {
                 m_userListNode->getScrollLayer()->m_contentLayer->updateLayout();
             }
+        }
+
+        if (accountId == currentAccountID) {
+            accountLabel->setColor({0, 255, 255});
+            rankLabel->setColor({0, 255, 255});
         }
         rank++;
     }

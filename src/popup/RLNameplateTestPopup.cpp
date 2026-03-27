@@ -3,6 +3,7 @@
 #include <Geode/modify/CommentCell.hpp>
 #include <Geode/utils/file.hpp>
 #include <algorithm>
+#include "Geode/utils/general.hpp"
 
 using namespace geode::prelude;
 
@@ -53,10 +54,11 @@ arc::Future<void> RLNameplateTestPopup::pickAndLoadPng() {
     }
 
     if (image.getWidth() != 1500 || image.getHeight() != 150) {
-        notify("Image must be 1500x150");
+        notify("Image must be 1500x150, got " + numToString(image.getWidth()) + "x" + numToString(image.getHeight()));
         co_return;
     }
 
+    // imma goog this an create a new lazysprite with this one :speak:
     Loader::get()->queueInMainThread([popup, path = std::move(path)]() {
         if (auto self = popup.lock()) {
             if (auto existing = self->m_nameplateLazy) {
@@ -102,7 +104,7 @@ bool RLNameplateTestPopup::init() {
 
     this->setTitle("Nameplate Test");
 
-    m_leaderboardListNode = cue::ListNode::create({350.f, 40.f});
+    m_leaderboardListNode = cue::ListNode::create({355.f, 40.f});
     m_leaderboardListNode->setPosition({m_mainLayer->getContentSize().width / 2.f, m_mainLayer->getContentSize().height / 2.f});
     m_mainLayer->addChild(m_leaderboardListNode);
 
@@ -110,17 +112,9 @@ bool RLNameplateTestPopup::init() {
     auto rowContainer = CCLayer::create();
     rowContainer->setContentSize({356.f, 40.f});
 
-    CCSprite* bgSprite = CCSprite::create();
-    bgSprite->setTextureRect(CCRectMake(0, 0, 356.f, 40.f));
-    bgSprite->setColor({230, 150, 10});
-
-    bgSprite->setPosition({178.f, 20.f});
-    bgSprite->setOpacity(150);
-    rowContainer->addChild(bgSprite, 0);
-
-    m_nameplateLazy = LazySprite::create({bgSprite->getScaledContentSize() + CCSize(25, 25)}, false);
+    m_nameplateLazy = LazySprite::create({356.f, 40.f}, false);
     m_nameplateLazy->setAutoResize(true);
-    m_nameplateLazy->setPosition({bgSprite->getPositionX(), bgSprite->getPositionY()});
+    m_nameplateLazy->setPosition({rowContainer->getContentWidth() / 2.f, 20.f});
     rowContainer->addChild(m_nameplateLazy, -1);
 
     // Rank label
@@ -134,6 +128,9 @@ bool RLNameplateTestPopup::init() {
     auto accountLabel = CCLabelBMFont::create("Player", "goldFont.fnt");
     accountLabel->setAnchorPoint({0.f, 0.5f});
     accountLabel->setScale(0.7f);
+    accountLabel->setPosition({80.f, 20.f});
+    accountLabel->setAnchorPoint({0.f, 0.5f});
+    rowContainer->addChild(accountLabel, 2);
 
     auto gm = GameManager::sharedState();
     auto player = SimplePlayer::create(1);
@@ -142,24 +139,6 @@ bool RLNameplateTestPopup::init() {
     player->setPosition({55.f, 20.f});
     player->setScale(0.75f);
     rowContainer->addChild(player, 2);
-
-    auto buttonMenu = CCMenu::create();
-    buttonMenu->setPosition({0, 0});
-
-    auto accountButton = CCMenuItemSpriteExtra::create(
-        accountLabel, this, nullptr);
-    accountButton->setEnabled(false);
-    accountButton->setPosition({80.f, 20.f});
-    accountButton->setAnchorPoint({0.f, 0.5f});
-
-    buttonMenu->addChild(accountButton);
-    rowContainer->addChild(buttonMenu, 2);
-
-    auto pickSprite = ButtonSprite::create("Pick Nameplate", 120, true, "goldFont.fnt", "GJ_button_01.png", 25.f, .7f);
-    auto pickMenuItem = CCMenuItemSpriteExtra::create(
-        pickSprite, this, menu_selector(RLNameplateTestPopup::onPickImage));
-    pickMenuItem->setPosition({m_mainLayer->getContentSize().width / 2, 25.f});
-    m_buttonMenu->addChild(pickMenuItem);
 
     auto scoreLabelText = CCLabelBMFont::create(
         fmt::format("{}", GameToolbox::pointsToString(69420)).c_str(),
@@ -177,6 +156,12 @@ bool RLNameplateTestPopup::init() {
 
     m_leaderboardListNode->addCell(rowContainer);
     m_leaderboardListNode->getScrollLayer()->m_disableMovement = true;
+
+    auto pickSprite = ButtonSprite::create("Pick Nameplate", 120, true, "goldFont.fnt", "GJ_button_01.png", 25.f, .7f);
+    auto pickMenuItem = CCMenuItemSpriteExtra::create(
+        pickSprite, this, menu_selector(RLNameplateTestPopup::onPickImage));
+    pickMenuItem->setPosition({m_mainLayer->getContentSize().width / 2, 25.f});
+    m_buttonMenu->addChild(pickMenuItem);
 
     return true;
 }
