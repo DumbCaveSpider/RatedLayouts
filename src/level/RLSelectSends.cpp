@@ -30,7 +30,7 @@ bool RLSelectSends::init() {
         closeBtn->removeFromParent();
     }
 
-    geode::addBackButton(this, [this](CCObject* sender) { this->onClose(sender); }, BackButtonStyle::Blue);
+    addBackButton(this, [this](CCObject* sender) { this->onClose(sender); }, BackButtonStyle::Blue);
 
     m_buttonMenu->setLayout(ColumnLayout::create()
             ->setGap(10.f)

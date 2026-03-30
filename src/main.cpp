@@ -29,7 +29,7 @@ class $modify(RLSupportLayer, SupportLayer) {
 
     void customSetup() {
         // show the argon button for user with a role
-        if (rl::isUserHasPerms()) {
+        if (rl::isUserHasPerms() || rl::isUserOwner()) {
             m_fields->m_argonMenu = CCMenu::create();
             m_fields->m_argonMenu->setPosition({0, 0});
             m_listLayer->addChild(m_fields->m_argonMenu, 10);
