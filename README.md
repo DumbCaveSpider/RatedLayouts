@@ -40,14 +40,6 @@ This gives the <cy>Layout/Gameplay creators</c> a platform to get their levels r
 
 ---
 
-### Up-coming Features
-
-- **<cr>Rated Layouts Demonlist</c>**: A dedicated demonlist for rated layout demons. Grind hardest rated layout demons curated by the Rated Layouts Mod Team!
-
----
-
-<co>**Note:** This is currently in beta and expected to have some bugs and unfinished features. Please report any issues you encounter!</c>
-
 <cc>![🛠️](frame:GJ_hammerIcon_001.png?scale=0.45) We are actively improving the Layouts Rating System and want to be transparent about it. If you want to learn more, considered joining our [**Discord Server**](https://discord.gg/jBf2wfBgVT)!</c>
 
 ---
@@ -60,10 +52,11 @@ This gives the <cy>Layout/Gameplay creators</c> a platform to get their levels r
 
 ### Credits
 
-- <cg>**Developer**:</c> [ArcticWoof](user:7689052)
+- <cg>**Geode Mod Developer**:</c> [ArcticWoof](user:7689052)
 - <cg>**Texture Designs**:</c> [Darkore](user:3595559) & [Dasshu](user:1975253)
 - <cg>**Audio/Music**:</c> [Darkore](user:3595559)
-- <cg>**Discord Bot/Server**:</c> [delivel](user:13678537) & [Supernova3339](user:4882817)
+- <cg>**Backend/Bot Developer**:</c> [Supernova3339](user:4882817)
+- <cg>**Discord Server Management**:</c> [Silence](user:29642529) & [ATXM](user:10092120)
 - <cg>**Special Thanks**:</c> [hiimjasmine00](https://github.com/hiimjasmine00), [iAndyHD3](https://github.com/iAndyHD3), [delivel](https://github.com/delivel-tech), [Supernova3339](https://github.com/Supernova3339) & [Erymanthus](https://github.com/RayDeeUx)
 
 ![King Clawthorne](arcticwoof.rated_layouts/king.png)

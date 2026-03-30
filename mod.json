@@ -1,5 +1,5 @@
 {
-	"geode": "5.4.1",
+	"geode": "5.0.0",
 	"gd": {
 		"win": "2.2081",
 		"android": "2.2081",
@@ -8,7 +8,7 @@
 	},
 	"id": "arcticwoof.rated_layouts",
 	"name": "Rated Layouts",
-	"version": "v1.0.0",
+	"version": "v1.1.0",
 	"developer": "ArcticWoof",
 	"description": "Play layout rated levels",
 	"resources": {

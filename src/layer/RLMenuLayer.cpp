@@ -349,7 +349,7 @@ bool RLMenuLayer::init() {
     infoMenu->addChild(shopBtn);
 
     // button bob
-    if (rl::isUserHasPerms() || rl::isUserSupporter()) {
+    if (rl::isUserHasPerms() || rl::isUserSupporter() || rl::isUserOwner()) {
         auto addDiagloueBtnSpr =
             CCSprite::createWithSpriteFrameName("RL_bobBtn01.png"_spr);
         addDiagloueBtnSpr->setScale(0.7f);

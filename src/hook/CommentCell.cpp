@@ -261,7 +261,8 @@ class $modify(RLCommentCell, CommentCell) {
             }
 
             // nameplate thing
-            if (cellRef->m_backgroundLayer && nameplate != 0 &&
+            bool validCell = cellRef && cellRef->m_mainLayer && cellRef->m_backgroundLayer && cellRef->getParent();
+            if (validCell && nameplate != 0 &&
                 !Mod::get()->getSettingValue<bool>("disableNameplateInComment")) {
                 std::string url = fmt::format(
                     "{}/nameplates/banner/nameplate_{}.png",
@@ -282,12 +283,16 @@ class $modify(RLCommentCell, CommentCell) {
                     // add a background behind the comment text for better contrast with bright nameplates in compact mode
                     auto commentBg = NineSlice::create("square02_small.png");
                     auto commentText = cellRef->m_mainLayer->getChildByIDRecursive("comment-text-label");
-                    commentBg->setInsets({5, 5, 5, 5});
-                    commentBg->setContentSize(commentText->getScaledContentSize() + CCSize(5, 0));
-                    commentBg->setPosition({commentText->getPosition().x - 2, commentText->getPosition().y});
-                    commentBg->setOpacity(150);
-                    commentBg->setAnchorPoint(commentText->getAnchorPoint());
-                    cellRef->m_mainLayer->addChild(commentBg, -1);
+                    if (commentText) {
+                        commentBg->setInsets({5, 5, 5, 5});
+                        commentBg->setContentSize(commentText->getScaledContentSize() + CCSize(5, 0));
+                        commentBg->setPosition({commentText->getPosition().x - 2, commentText->getPosition().y});
+                        commentBg->setOpacity(150);
+                        commentBg->setAnchorPoint(commentText->getAnchorPoint());
+                        cellRef->m_mainLayer->addChild(commentBg, -1);
+                    } else {
+                        log::warn("CommentCell compress mode: comment-text-label not found, skipping text background for nameplate");
+                    }
                 } else {
                     auto lazy = LazySprite::create(
                         {cellRef->m_backgroundLayer->getScaledContentSize() +
@@ -301,6 +306,8 @@ class $modify(RLCommentCell, CommentCell) {
                     cellRef->m_backgroundLayer->setOpacity(150);
                     cellRef->m_backgroundLayer->addChild(lazy, -1);
                 }
+            } else if (!validCell && nameplate != 0) {
+                log::debug("Skipping nameplate for account {} because CommentCell was removed or invalid", accountId);
             }
 
             cellRef->m_fields->stars = stars;
@@ -332,7 +339,7 @@ class $modify(RLCommentCell, CommentCell) {
             cellRef->applyStarGlow(accountId, stars, planets);
         });
         // Only update UI if it still exists
-        if (cellRef->m_mainLayer) {
+        if (cellRef && cellRef->m_mainLayer) {
             cellRef->loadBadgeForComment(accountId);
             cellRef->applyCommentTextColor(accountId);
             cellRef->applyStarGlow(accountId, cellRef->m_fields->stars, cellRef->m_fields->planets);

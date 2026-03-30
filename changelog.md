@@ -1,3 +1,9 @@
+
+## v1.1.0
+
+- Fixed a crash when deleting a comment with a nameplate crashes your game.
+- Added Back button for mods/admins when clicking the Sent Tab
+
 ## v1.0.0
 
 ### The Spire Update!

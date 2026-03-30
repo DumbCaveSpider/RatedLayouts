@@ -152,7 +152,7 @@ bool RLLegacyPopup::init() {
 
     // delete button only visible by admins
     bool isPlat = m_level ? m_level->isPlatformer() : false;
-    if ((rl::isUserClassicAdmin() && !isPlat) || (rl::isUserPlatformerAdmin() && isPlat)) {
+    if ((rl::isUserClassicAdmin() && !isPlat) || (rl::isUserPlatformerAdmin() && isPlat) || rl::isUserOwner()) {
         auto deleteSpr = ButtonSprite::create("Delete", 50, true, "goldFont.fnt", "GJ_button_06.png", 20.f, 1.f);
         auto deleteBtn = CCMenuItemSpriteExtra::create(
             deleteSpr, this, menu_selector(RLLegacyPopup::onDeleteLegacy));
@@ -254,7 +254,7 @@ void RLLegacyPopup::onInfoButton(CCObject* sender) {
 
 void RLLegacyPopup::onDeleteLegacy(CCObject* sender) {
 
-    if (!rl::isUserClassicAdmin() && !rl::isUserPlatformerAdmin()) {
+    if ((!rl::isUserClassicAdmin() && !rl::isUserPlatformerAdmin()) || !rl::isUserOwner()) {
         Notification::create(
             "You don't have permission to delete this legacy layout",
             NotificationIcon::Error)

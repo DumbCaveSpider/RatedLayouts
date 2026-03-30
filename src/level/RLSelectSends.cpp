@@ -3,6 +3,7 @@
 #include "../layer/RLLevelBrowserLayer.hpp"
 #include "Geode/ui/Layout.hpp"
 #include "Geode/ui/MDTextArea.hpp"
+#include "Geode/utils/function.hpp"
 #include <Geode/Geode.hpp>
 #include <Geode/binding/ButtonSprite.hpp>
 
@@ -28,6 +29,8 @@ bool RLSelectSends::init() {
     if (auto closeBtn = this->m_closeBtn) {
         closeBtn->removeFromParent();
     }
+
+    geode::addBackButton(this, [this](CCObject* sender) { this->onClose(sender); }, BackButtonStyle::Blue);
 
     m_buttonMenu->setLayout(ColumnLayout::create()
             ->setGap(10.f)
