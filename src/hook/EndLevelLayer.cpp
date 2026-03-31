@@ -301,6 +301,10 @@ class $modify(EndLevelLayer) {
                             success,
                             responseStars);
 
+                        if (levelId == 103853867) {
+                            RLAchievements::onReward("misc_gem");
+                        }
+
                         if (success) {
                             // check for coins increases
                             int oldCoins = Mod::get()->getSavedValue<int>("coins", 0);
@@ -308,6 +312,7 @@ class $modify(EndLevelLayer) {
                                 RLAchievements::onUpdated(
                                     RLAchievements::Collectable::Coins, oldCoins, responseCoins);
                             }
+
                             Mod::get()->setSavedValue<int>("coins", responseCoins);
                             std::string rewards = isPlat ? "Planets" : "Sparks";
                             std::string medSprite =

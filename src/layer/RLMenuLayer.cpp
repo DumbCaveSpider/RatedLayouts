@@ -577,6 +577,7 @@ void RLMenuLayer::onDemonListButton(CCObject* sender) {
                 dialog->animateInRandomSide();
 
                 rl::setDialogObjectCustomIcon(dialog, "RL_goog.png"_spr);
+                RLAchievements::onReward("misc_goog");
             }
             m_indexDia++;
             break;
