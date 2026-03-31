@@ -557,7 +557,7 @@ void RLMenuLayer::onDemonListButton(CCObject* sender) {
         }
         case 10: {
             DialogObject* dialogObj = DialogObject::create(
-                "ArcticWoof", "... I seriously stop making <cl>Rated Layouts</c> into <cg>Geometry Dash Dos</c>.", 28, 1.f, false, ccWHITE);
+                "ArcticWoof", "... I should seriously stop turning <cl>Rated Layouts</c> into <cg>Geometry Dash Dos</c>.", 28, 1.f, false, ccWHITE);
             if (dialogObj) {
                 auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 2);
                 dialog->addToMainScene();
@@ -596,7 +596,7 @@ void RLMenuLayer::onDemonListButton(CCObject* sender) {
         }
         case 13: {
             DialogObject* dialogObj = DialogObject::create(
-                "ArcticWoof", "okay I seriously need to <cr>stop</c> making these...", 28, 1.f, false, ccWHITE);
+                "ArcticWoof", "okay I seriously need to <cr>stop</c> making these random stuff... <d500><cy>jk NOT!</c>", 28, 1.f, false, ccWHITE);
             if (dialogObj) {
                 auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 2);
                 dialog->addToMainScene();

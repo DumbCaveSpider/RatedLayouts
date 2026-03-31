@@ -353,7 +353,7 @@ void RLShopLayer::onLayoutCreator(CCObject* sender) {
         case 3:
             response =
                 "The plushies are <cr>NOT FOR SALE</c>. I just keep them here "
-                "because they are cute.";
+                "because they are <cp>cute.</c>";
             break;
         case 4:
             response =
