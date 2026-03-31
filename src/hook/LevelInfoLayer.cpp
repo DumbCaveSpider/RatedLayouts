@@ -1253,9 +1253,6 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             }
             commBtnItem->setEnabled(true);
             commBtnItem->setOpacity(255);
-        } else {
-            commBtnItem->setEnabled(false);
-            commBtnItem->setOpacity(100);
         }
     }
 

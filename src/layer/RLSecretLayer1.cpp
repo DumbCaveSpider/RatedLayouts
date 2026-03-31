@@ -5,8 +5,82 @@
 #include "RLSecretLayer1.hpp"
 #include "RLRubiesCodePopup.hpp"
 #include "../include/RLAchievements.hpp"
+#include <filesystem>
 
 using namespace geode::prelude;
+
+static std::filesystem::path redeemedCodesPath() {
+    return dirs::getModsSaveDir() / Mod::get()->getID() / "redeemed_codes.json";
+}
+
+static matjson::Value loadRedeemedCodesJson() {
+    auto path = redeemedCodesPath();
+    if (!std::filesystem::exists(path)) {
+        return matjson::Value::array();
+    }
+
+    auto existing = utils::file::readString(utils::string::pathToString(path));
+    if (!existing) {
+        return matjson::Value::array();
+    }
+
+    auto parsed = matjson::parse(existing.unwrap());
+    if (!parsed || !parsed.unwrap().isArray()) {
+        return matjson::Value::array();
+    }
+
+    return parsed.unwrap();
+}
+
+static void saveRedeemedCodesJson(matjson::Value const& entries) {
+    auto path = redeemedCodesPath();
+    std::filesystem::create_directories(path.parent_path());
+    auto jsonString = entries.dump();
+    auto writeRes = utils::file::writeString(utils::string::pathToString(path), jsonString);
+    if (!writeRes) {
+        log::warn("Failed to write redeemed codes data to {}", path.string());
+    }
+}
+
+static bool isCodeRedeemed(std::string const& code) {
+    if (code.empty()) {
+        return false;
+    }
+
+    auto data = loadRedeemedCodesJson();
+    if (!data.isArray()) {
+        return false;
+    }
+
+    auto arr = data.asArray().unwrap();
+    for (auto& entry : arr) {
+        if (entry.isString() && entry.asString().unwrap() == code) {
+            return true;
+        }
+    }
+    return false;
+}
+
+static void addRedeemedCode(std::string const& code) {
+    if (code.empty()) {
+        return;
+    }
+
+    auto data = loadRedeemedCodesJson();
+    if (!data.isArray()) {
+        data = matjson::Value::array();
+    }
+
+    auto& arr = data.asArray().unwrap();
+    for (auto& entry : arr) {
+        if (entry.isString() && entry.asString().unwrap() == code) {
+            return;
+        }
+    }
+
+    arr.push_back(matjson::Value(code));
+    saveRedeemedCodesJson(data);
+}
 
 const std::string oracleFloatingStr = "25,2065,2,2715,3,2265,155,2,156,8,145,25a-1a1a0.3a19a90a0a35a0a30a20a0a0a0a0a0a0a30a1a0a0a0.392157a0a0.0392157a0a0.74902a0a1a0a5a1a0a0a1a0a0.4a0a0.45098a0a1a0a0.11a0a1a0a0a0a0a0a0a0a0a2a1a0a0a1a26a0a0a0a0a0a0a0a0a0a0a0a0a0a0;";
 const std::string crystalBallStr = "25,2065,2,2865,3,2265,155,2,156,8,145,25a-1a1a0.3a-1a90a0a0a0a0a0a0a0a0a0a0a0a100a1a0a0a0.0392157a0a0.564706a0a0.74902a0a1a0a0a1a0a0a0.4a0a0.976471a0a1a0a1a0a1a0a1a0a1a0a0a0a-360a0a1a2a1a0a0a1a185a0a0a0a0a0a0a0a0a0a0a0a0a0a0;";
@@ -273,6 +347,7 @@ void RLSecretLayer1::startRedeemRequest() {
 
     if (code == "spire" && !Mod::get()->getSavedValue<bool>("hasCode")) {  // if u reading this, bruh
         Mod::get()->setSavedValue("hasCode", true);
+        addRedeemedCode(code);
         if (self->m_textLabel) {
             self->m_textLabel->setString("Something has aligned...");
             self->m_textLabel->setColor({150, 100, 0});
@@ -306,12 +381,12 @@ void RLSecretLayer1::startRedeemRequest() {
     }
 
     async::spawn(req.post(std::string(rl::BASE_API_URL) + "/getRubiesReward"),
-        [self](web::WebResponse res) {
+        [self, code](web::WebResponse res) {
             if (!self) {
                 return;
             }
 
-            if (!res.ok()) {
+            if (!res.ok() || isCodeRedeemed(code)) {
                 if (self->m_textLabel) {
                     self->m_textLabel->setString("The Cosmos rejects your request");
                     self->m_textLabel->setColor({150, 0, 0});
@@ -362,6 +437,8 @@ void RLSecretLayer1::startRedeemRequest() {
                 self->m_textLabel->setColor({0, 150, 0});
                 RLAchievements::onReward("misc_code");
             }
+
+            addRedeemedCode(self->m_redeemCode);
 
             // Reward the player with rubies and show currency animation
             int oldRubies = Mod::get()->getSavedValue<int>("rubies", 0);

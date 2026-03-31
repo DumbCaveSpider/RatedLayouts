@@ -228,32 +228,22 @@ void RLLegacyPopup::onInfoButton(CCObject* sender) {
         "dedicated</c> to "
         "layouts that got <co>rated before the standards and rating system "
         "change</c> "
-        "proposed by the <cr>new three classic admins</c> "
-        "([Sokuto](user:9135587), [ATXM](user:10092120) & [qoid](user:13603703)) "
-        "back in <cg>**February "
-        "2026**</c>.\n\n"
-        "This <cg>rating tier</c> is <cl>reserved for layouts</c> that are "
-        "<cc>affected by the "
-        "latest standards and criterias</c> required to get a rate. This feature "
-        "is "
-        "<cg>added in order to prevent confusion</c> or <co>false reports from "
-        "new players</c> "
+        "proposed by the <cr>new three classic admins</c> back in <cg>**February 2026**</c> ([Sokuto](user:9135587), [ATXM](user:10092120) & [qoid](user:13603703)). "
+        "and <cy>three platformer admins</c> back in <cg>**March 2026**</c> ([Silence](user:29642529), [Dragonix](user:21168469) & [Yonabi](user:23635690)).\n\n"
+        "**This <cg>rating tier</c> is <cl>reserved for layouts</c> that are <cc>affected by the "
+        "latest standards and criterias</c>** required to get a rate. This feature is "
+        "<cg>added in order to prevent confusion</c> or <co>false reports from new players</c> "
         "of the mod and serve as a <cf>respect for players who have previously "
         "beaten</c> the <cl>affected layouts</c>.\n\n"
         "This <cg>special rating tier</c> cannot be <co>awarded to layouts "
-        "rated</c> after the change of <cc>standards and criterias</c>.\n\n"
-        "Creator with a <cc>Legacy Rate</c> will only receive <cl>1 Blueprint "
-        "Point</c> regardless it's <cy>featured value</c>, and any layouts that "
-        "is <cl>Layout Rated</c> with <cc>Legacy Rate</c> will only count the "
-        "<cl>Blueprint Points</c> based of the <cg>normal Layout Rated</c>.\n\n"
-        "<co>Sparks/Planets</c> that are <cc>grayscaled</c> are layouts that is "
+        "rated</c> after the change of <cc>standards and criterias</c> and <cr>does not reward creators any Blueprint Points</c>.\n\n"
+        "<cl>Sparks</c>/<co>Planets</c> that are <cc>grayscaled</c> are layouts that is "
         "<cr>not rated</c> but is a <cl>legacy rate</c>.",
         "OK")
         ->show();
 }
 
 void RLLegacyPopup::onDeleteLegacy(CCObject* sender) {
-
     if ((!rl::isUserClassicAdmin() && !rl::isUserPlatformerAdmin()) || !rl::isUserOwner()) {
         Notification::create(
             "You don't have permission to delete this legacy layout",

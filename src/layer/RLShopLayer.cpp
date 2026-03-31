@@ -678,6 +678,16 @@ void RLShopLayer::onResetRubies() {
                     log::warn("Failed to clear owned items file: {}", ownedPath);
                 }
             }
+
+            auto redeemedCodesPath =
+                dirs::getModsSaveDir() / Mod::get()->getID() / "redeemed_codes.json";
+            if (utils::file::readString(redeemedCodesPath)) {
+                auto writeRes3 = utils::file::writeString(redeemedCodesPath, "[]");
+                if (!writeRes3) {
+                    log::warn("Failed to clear redeemed codes file: {}", redeemedCodesPath);
+                }
+            }
+
             Mod::get()->setSavedValue<int>("selected_nameplate", 0);
 
             if (Mod::get()->getSavedValue<int>("rubies") > 0) {

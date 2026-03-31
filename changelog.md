@@ -1,8 +1,11 @@
-
-## v1.1.0
+## v1.0.1-goog
 
 - Fixed a crash when deleting a comment with a nameplate crashes your game.
 - Added Back button for mods/admins when clicking the Sent Tab
+- Tweaked the **Legacy Rated Layouts** text
+- Rubies redeemed from the **Observatory** are now localy stored
+- Reset Rubies will also reset the redeemed codes
+- Added **goog** cat dialogue...
 
 ## v1.0.0
 

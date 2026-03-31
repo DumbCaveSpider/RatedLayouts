@@ -28,7 +28,7 @@
 #include "RLSearchLayer.hpp"
 #include "RLShopLayer.hpp"
 #include "RLSpireLayer.hpp"
-#include "ccTypes.h"
+#include "../include/RLDialogIcons.hpp"
 
 struct ModInfo {
     std::string message;
@@ -85,6 +85,7 @@ static arc::Future<std::optional<ModInfo>> fetchModInfoAsync() {
 }
 
 using namespace geode::prelude;
+using namespace rl;
 
 bool RLMenuLayer::init() {
     if (!CCLayer::init())
@@ -423,12 +424,192 @@ void RLMenuLayer::onBrowserButton(CCObject* sender) {
 }
 
 void RLMenuLayer::onDemonListButton(CCObject* sender) {
-    DialogObject* dialogObj = DialogObject::create(
-        "Layout Creator", "The <co>Rated Layouts Demonlist</c> isn't done yet...", 28, 1.f, false, ccWHITE);
-    if (dialogObj) {
-        auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 2);
-        dialog->addToMainScene();
-        dialog->animateInRandomSide();
+    switch (m_indexDia) {
+        case 0: {
+            DialogObject* dialogObj = DialogObject::create(
+                "ArcticWoof", "The <co>Rated Layouts Demonlist</c> isn't done yet...", 28, 1.f, false, ccWHITE);
+            if (dialogObj) {
+                auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 2);
+                dialog->addToMainScene();
+                dialog->animateInRandomSide();
+
+                rl::setDialogObjectCustomIcon(dialog, "RL_dialogIconAW.png"_spr);
+            }
+            m_indexDia++;
+            break;
+        }
+        case 1: {
+            DialogObject* dialogObj = DialogObject::create(
+                "ArcticWoof", "Yep...<d050> <cl>still not done</c>...", 28, 1.f, false, ccWHITE);
+            if (dialogObj) {
+                auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 2);
+                dialog->addToMainScene();
+                dialog->animateInRandomSide();
+
+                rl::setDialogObjectCustomIcon(dialog, "RL_dialogIconAW.png"_spr);
+            }
+            m_indexDia++;
+            break;
+        }
+        case 2: {
+            DialogObject* dialogObj = DialogObject::create(
+                "ArcticWoof", "Does this even work at all?", 28, 1.f, false, ccWHITE);
+            if (dialogObj) {
+                auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 2);
+                dialog->addToMainScene();
+                dialog->animateInRandomSide();
+
+                rl::setDialogObjectCustomIcon(dialog, "RL_dialogIconAW.png"_spr);
+            }
+            m_indexDia++;
+            break;
+        }
+        case 3: {
+            DialogObject* dialogObj = DialogObject::create(
+                "ArcticWoof", "uhm... hey <cp>Oracle</c>?", 28, 1.f, false, ccWHITE);
+            if (dialogObj) {
+                auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 2);
+                dialog->addToMainScene();
+                dialog->animateInRandomSide();
+
+                rl::setDialogObjectCustomIcon(dialog, "RL_dialogIconAW.png"_spr);
+            }
+            m_indexDia++;
+            break;
+        }
+        case 4: {
+            DialogObject* dialogObj = DialogObject::create(
+                "The Oracle", "...<d050> <cc>what is the reason of my presence?</c>", 28, 1.f, false, ccWHITE);
+            if (dialogObj) {
+                auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 4);
+                dialog->addToMainScene();
+                dialog->animateInRandomSide();
+
+                rl::setDialogObjectCustomIcon(dialog, "RL_dialogIcon_03.png"_spr);
+            }
+            m_indexDia++;
+            break;
+        }
+        case 5: {
+            DialogObject* dialogObj = DialogObject::create(
+                "ArcticWoof", "The <co>Demonlist...?</c>", 28, 1.f, false, ccWHITE);
+            if (dialogObj) {
+                auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 2);
+                dialog->addToMainScene();
+                dialog->animateInRandomSide();
+
+                rl::setDialogObjectCustomIcon(dialog, "RL_dialogIconAW.png"_spr);
+            }
+            m_indexDia++;
+            break;
+        }
+        case 6: {
+            DialogObject* dialogObj = DialogObject::create(
+                "The Oracle", "Ah... <d050> <cc>the Demonlist...</c> <d050> <cr>I do not know what that is...</c>", 28, 1.f, false, ccWHITE);
+            if (dialogObj) {
+                auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 4);
+                dialog->addToMainScene();
+                dialog->animateInRandomSide();
+
+                rl::setDialogObjectCustomIcon(dialog, "RL_dialogIcon_04.png"_spr);
+            }
+            m_indexDia++;
+            break;
+        }
+        case 7: {
+            DialogObject* dialogObj = DialogObject::create(
+                "ArcticWoof", "...<d050> bruh... <d100>", 28, 1.f, false, ccWHITE);
+            if (dialogObj) {
+                auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 2);
+                dialog->addToMainScene();
+                dialog->animateInRandomSide();
+
+                rl::setDialogObjectCustomIcon(dialog, "RL_dialogIconAW.png"_spr);
+            }
+            m_indexDia++;
+            break;
+        }
+        case 8: {
+            DialogObject* dialogObj = DialogObject::create(
+                "The Oracle", "My <cl>knowledge is limited</c> to the <cg>secrets</c> of the <cp>Cosmos</c>... <d050> <cc>perhaps you should ask someone else</c>", 28, 1.f, false, ccWHITE);
+            if (dialogObj) {
+                auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 4);
+                dialog->addToMainScene();
+                dialog->animateInRandomSide();
+
+                rl::setDialogObjectCustomIcon(dialog, "RL_dialogIcon_01.png"_spr);
+            }
+            m_indexDia++;
+            break;
+        }
+        case 9: {
+            DialogObject* dialogObj = DialogObject::create(
+                "ArcticWoof", "Yeah... probably... <d050>You such a <cr>useless vault-looking thing</c>", 28, 1.f, false, ccWHITE);
+            if (dialogObj) {
+                auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 2);
+                dialog->addToMainScene();
+                dialog->animateInRandomSide();
+
+                rl::setDialogObjectCustomIcon(dialog, "RL_dialogIconAW.png"_spr);
+            }
+            m_indexDia++;
+            break;
+        }
+        case 10: {
+            DialogObject* dialogObj = DialogObject::create(
+                "ArcticWoof", "... I seriously stop making <cl>Rated Layouts</c> into <cg>Geometry Dash Dos</c>.", 28, 1.f, false, ccWHITE);
+            if (dialogObj) {
+                auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 2);
+                dialog->addToMainScene();
+                dialog->animateInRandomSide();
+
+                rl::setDialogObjectCustomIcon(dialog, "RL_dialogIconAW.png"_spr);
+            }
+            m_indexDia++;
+            break;
+        }
+        case 11: {
+            DialogObject* dialogObj = DialogObject::create(
+                "Goog Cat", "goog...", 28, 1.f, false, ccWHITE);
+            if (dialogObj) {
+                auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 3);
+                dialog->addToMainScene();
+                dialog->animateInRandomSide();
+
+                rl::setDialogObjectCustomIcon(dialog, "RL_goog.png"_spr);
+            }
+            m_indexDia++;
+            break;
+        }
+        case 12: {
+            DialogObject* dialogObj = DialogObject::create(
+                "ArcticWoof", "<cg><s100>GOOG CAT!!!</s></c> goog...", 28, 1.f, false, ccWHITE);
+            if (dialogObj) {
+                auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 2);
+                dialog->addToMainScene();
+                dialog->animateInRandomSide();
+
+                rl::setDialogObjectCustomIcon(dialog, "RL_dialogIconAW.png"_spr);
+            }
+            m_indexDia++;
+            break;
+        }
+        case 13: {
+            DialogObject* dialogObj = DialogObject::create(
+                "ArcticWoof", "okay I seriously need to <cr>stop</c> making these...", 28, 1.f, false, ccWHITE);
+            if (dialogObj) {
+                auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 2);
+                dialog->addToMainScene();
+                dialog->animateInRandomSide();
+
+                rl::setDialogObjectCustomIcon(dialog, "RL_dialogIconAW.png"_spr);
+            }
+            m_indexDia = 0;
+            break;
+        }
+        default:
+            m_indexDia = 0;
+            break;
     }
 }
 
@@ -608,6 +789,8 @@ void RLMenuLayer::onInfoButton(CCObject* sender) {
         "<cg>**Layout Gauntlets**</c>: Special themed layouts hosted by the "
         "Rated Layouts Team. This holds the <cl>Layout Creator "
         "Contests</c>!\n\n"
+        "<cg>**The Spire**</c>: A tower-themed <co>Platformer-focus</c> user created <cl>Rated Layouts</c> levels. "
+        "Explore the Spire and find forsaken lore beyond the <cp>Cosmos</c>\n\n"
         "<cg>**Sent Layouts**</c>: Suggested or sent layouts by the Layout "
         "Moderators. The community can vote on these layouts based of their "
         "Design, Difficulty and Gameplay. <co>(Only enabled if you have at "
