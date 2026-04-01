@@ -102,7 +102,6 @@ void RLAchievements::init() {
             {"misc_room", "Trespasser", "Completed a Spire Room.", RLAchievements::Collectable::Misc, 1, "RL_rubiesIcon.png"_spr},
             {"misc_extreme", "TOP ONE LAYOUT LIST!", "Complete an Extreme Demon Rated Layout", RLAchievements::Collectable::Misc, 1, "diffIcon_10_btn_001.png"},
             {"misc_goog", "GOOG CAT!!!", "Find the goog cat dialogue...", RLAchievements::Collectable::Misc, 1, "signImage_06.png"_spr},
-            {"misc_gem", "Get Gem To Win", "Beat Get Gem To Win... lol", RLAchievements::Collectable::Misc, 1, "GJ_bigDiamond_001.png"},
 
             // community vote achievements
             {"vote_1", "Civic Layout Duty", "Submit your first vote on a Layout", RLAchievements::Collectable::Votes, 1, "RL_commVote01.png"_spr},

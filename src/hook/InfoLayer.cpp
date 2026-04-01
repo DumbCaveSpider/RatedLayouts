@@ -40,6 +40,7 @@ class $modify(RLLInfoLayer, InfoLayer) {
                     }
 
                     auto json = response.json().unwrap();
+                    bool isRated = json["rated"].asBool().unwrapOrDefault();
 
                     // report button create yes
                     auto reportButtonSpr = CircleButtonSprite::create(
@@ -55,12 +56,8 @@ class $modify(RLLInfoLayer, InfoLayer) {
                     reportButton->setID("rated-layouts-report-button"_spr);
                     auto vanillaReportButton =
                         layerRef->getChildByIDRecursive("report-button");
+                    CCPoint reportPos = vanillaReportButton->getPosition();
                     auto mainMenu = layerRef->getChildByIDRecursive("main-menu");
-                    if (vanillaReportButton) {
-                        mainMenu->addChild(reportButton);
-                        reportButton->setPosition(vanillaReportButton->getPosition());
-                        vanillaReportButton->removeFromParentAndCleanup(true);
-                    }
 
                     // show mod notes on level
                     auto notesButtonSpr = CircleButtonSprite::create(
@@ -74,8 +71,18 @@ class $modify(RLLInfoLayer, InfoLayer) {
 
                     notesButton->setID("rated-layouts-notes-button"_spr);
                     mainMenu->addChild(notesButton);
-                    notesButton->setPosition({reportButton->getPositionX(),
-                        reportButton->getPositionY() + 50});
+                    notesButton->setPosition({reportPos.x,
+                        reportPos.y + 50});
+
+                    if (vanillaReportButton && isRated) {
+                        mainMenu->addChild(reportButton);
+                        reportButton->setPosition(reportPos);
+                        vanillaReportButton->removeFromParentAndCleanup(true);
+                    }
+
+                    if (!isRated) {
+                        reportButton->removeFromParent();
+                    }
 
                 } else {
                     log::warn("failed to fetch level");

@@ -1,4 +1,11 @@
-## v1.0.1 or .2-goog
+## v1.0.3
+
+- Reverted April Fools related changes
+  - Removed **Get Gem to Win** achievement
+- Removed **Layout Report System** button on non-rated layouts.
+- Fixed the Achievement Icons scaled incorrectly in the Achievements Popup.
+
+## v1.0.2-goog
 
 - Fixed a crash when deleting a comment with a nameplate crashes your game.
 - Added Back button for mods/admins when clicking the Sent Tab

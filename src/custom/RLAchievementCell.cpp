@@ -17,11 +17,27 @@ TableViewCell* RLAchievementCell(RLAchievements::Achievement const& ach, bool un
     }
     if (icon) {
         icon->setPosition({30.f, 32.f});
+        float baseScale = 1.f;
         if (ach.type == RLAchievements::Collectable::Sparks || ach.type == RLAchievements::Collectable::Planets || ach.type == RLAchievements::Collectable::Coins) {
-            icon->setScale(.6f);
-        } else {
-            icon->setScale(1.f);
+            baseScale = 0.6f;
         }
+
+        auto iconSize = icon->getContentSize();
+        if (iconSize.width > 0.f && iconSize.height > 0.f) {
+            float maxSize = 30.f;
+            float scaledWidth = iconSize.width * baseScale;
+            float scaledHeight = iconSize.height * baseScale;
+            float fitScale = 1.0f;
+            if (scaledWidth > maxSize || scaledHeight > maxSize) {
+                fitScale = maxSize / std::max(scaledWidth, scaledHeight);
+            } else if (scaledWidth < maxSize && scaledHeight < maxSize) {
+                fitScale = maxSize / std::max(scaledWidth, scaledHeight);
+            }
+            icon->setScale(baseScale * fitScale);
+        } else {
+            icon->setScale(baseScale);
+        }
+
         cell->addChild(icon);
     }
 

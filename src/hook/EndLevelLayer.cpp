@@ -301,9 +301,9 @@ class $modify(EndLevelLayer) {
                             success,
                             responseStars);
 
-                        if (levelId == 103853867) {
-                            RLAchievements::onReward("misc_gem");
-                        }
+                        // if (levelId == 103853867) {
+                        //     RLAchievements::onReward("misc_gem");
+                        // }
 
                         if (success) {
                             // check for coins increases
