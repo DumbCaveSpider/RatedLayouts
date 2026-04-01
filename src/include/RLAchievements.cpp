@@ -79,30 +79,6 @@ void RLAchievements::init() {
             {"points_75", "Revv-olutionary!", "Collected 75 Blueprint Points", RLAchievements::Collectable::Points, 75, "RL_blueprintPoint01.png"_spr},
             {"points_100", "Noob turned Pro", "Collected 100 Blueprint Points", RLAchievements::Collectable::Points, 100, "RL_blueprintPoint01.png"_spr},
 
-            // misc achievements
-            {"misc_begin", "It Rating Out Time", "Play a Rated Layout for the first time", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
-            {"misc_news", "Layouts Out Loud", "Check the Rated Layouts Announcement", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
-            {"misc_credits", "Our Beautiful Team", "View the Rated Layouts Credits", RLAchievements::Collectable::Misc, 1, "RL_creditsIcon.png"_spr},
-            {"misc_ruby", "Cha-ching!", "Purchase your first cosmetic in the Ruby Shop", RLAchievements::Collectable::Misc, 1, "RL_rubiesIcon.png"_spr},
-            {"misc_leaderboard", "Best of the Best", "Be on the Leaderboard", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
-            {"misc_custom_bg", "Personal Stylist", "Set a Custom Background or Ground", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
-            {"misc_creator_1", "A Fellow Creator", "Talk to the Layout Creator for the first time", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
-            {"misc_creator_25", "Layout entrepreneur", "Talk to the Layout Creator 25 times", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
-            {"misc_creator_50", "Nosey Creator", "Talk to the Layout Creator 50 times", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
-            {"misc_creator_100", "Business Layout Creator", "Talk to the Layout Creator 100 times", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
-            {"misc_discord", "Layout-Cord", "Join the Rated Layouts Discord", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
-            {"misc_browser", "www.ratedlayouts.com", "Browse the Rated Layouts Website", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
-            {"misc_salt", "SALT finally rated", "but is it verified?", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
-            {"misc_moderator", "GD Mod Simulator", "Become a Layout Moderator", RLAchievements::Collectable::Misc, 1, "RL_badgeMod01.png"_spr},
-            {"misc_report", "Vigilant Citizen", "Make a valid Report on a Layout", RLAchievements::Collectable::Misc, 10, "RL_bob.png"_spr},
-            {"misc_arcticwoof", "Find the Woof", "Find the Rated Layouts Owner", RLAchievements::Collectable::Misc, 1, "RL_arcticwoof.png"_spr},
-            {"misc_gauntlet", "Gauntlet Conqueror", "Complete a Layout Gauntlet", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
-            {"misc_spire", "Something has aligned...", "You now know about it, be careful about where you go…", RLAchievements::Collectable::Misc, 1, "RL_rubiesIcon.png"_spr},
-            {"misc_code", "Cosmos has accepted you", "Redeem a code to the Cosmos", RLAchievements::Collectable::Misc, 1, "RL_rubiesIcon.png"_spr},
-            {"misc_room", "Trespasser", "Completed a Spire Room.", RLAchievements::Collectable::Misc, 1, "RL_rubiesIcon.png"_spr},
-            {"misc_extreme", "TOP ONE LAYOUT LIST!", "Complete an Extreme Demon Rated Layout", RLAchievements::Collectable::Misc, 1, "diffIcon_10_btn_001.png"},
-            {"misc_goog", "GOOG CAT!!!", "Find the goog cat dialogue...", RLAchievements::Collectable::Misc, 1, "signImage_06.png"_spr},
-
             // community vote achievements
             {"vote_1", "Civic Layout Duty", "Submit your first vote on a Layout", RLAchievements::Collectable::Votes, 1, "RL_commVote01.png"_spr},
             {"vote_10", "Democracy in Layouts", "Submit 10 votes on Layouts", RLAchievements::Collectable::Votes, 10, "RL_commVote01.png"_spr},
@@ -111,6 +87,32 @@ void RLAchievements::init() {
             {"vote_250", "Helping out the Poor", "Submit 250 votes on Layouts", RLAchievements::Collectable::Votes, 250, "RL_commVote01.png"_spr},
             {"vote_500", "You should be a Mod!", "Submit 500 votes on Layouts", RLAchievements::Collectable::Votes, 500, "RL_commVote01.png"_spr},
             {"vote_1000", "Can I NOW rate layouts?", "Submit 1000 votes on Layouts", RLAchievements::Collectable::Votes, 1000, "RL_commVote01.png"_spr},
+
+            // misc achievements
+            {"misc_begin", "It Rating Out Time", "Play a Rated Layout for the first time", RLAchievements::Collectable::Misc, 1, "RL_btn01.png"_spr},
+            {"misc_finish", "Laying Out!", "Complete a Rated Layout for the first time", RLAchievements::Collectable::Misc, 1, "RL_btn01.png"_spr},
+            {"misc_news", "Layouts Out Loud", "Check the Rated Layouts Announcement", RLAchievements::Collectable::Misc, 1, "RL_news01.png"_spr},
+            {"misc_credits", "Our Beautiful Team", "View the Rated Layouts Credits", RLAchievements::Collectable::Misc, 1, "RL_creditsIcon.png"_spr},
+            {"misc_ruby", "Cha-ching!", "Purchase your first cosmetic in the Ruby Shop", RLAchievements::Collectable::Misc, 1, "RL_rubiesIcon.png"_spr},
+            {"misc_leaderboard", "Best of the Best", "Be on the Leaderboard", RLAchievements::Collectable::Misc, 1, "rankIcon_top500_001.png"},
+            {"misc_custom_bg", "Personal Stylist", "Set a Custom Background or Ground", RLAchievements::Collectable::Misc, 1, "bgIcon_01_001.png"},
+            {"misc_creator_1", "A Fellow Creator", "Talk to the Layout Creator for the first time", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
+            {"misc_creator_25", "Layout entrepreneur", "Talk to the Layout Creator 25 times", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
+            {"misc_creator_50", "Nosey Creator", "Talk to the Layout Creator 50 times", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
+            {"misc_creator_100", "Business Layout Creator", "Talk to the Layout Creator 100 times", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
+            {"misc_discord", "Layout-Cord", "Join the Rated Layouts Discord", RLAchievements::Collectable::Misc, 1, "RL_discord01.png"_spr},
+            {"misc_browser", "www.ratedlayouts.com", "Browse the Rated Layouts Website", RLAchievements::Collectable::Misc, 1, "RL_browser01.png"_spr},
+            {"misc_salt", "SALT finally rated", "but is it verified?", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
+            {"misc_moderator", "GD Mod Simulator", "Become a Layout Moderator", RLAchievements::Collectable::Misc, 1, "RL_badgeMod01.png"_spr},
+            {"misc_report", "Vigilant Citizen", "Make a valid Report on a Layout", RLAchievements::Collectable::Misc, 10, "exMark_001.png"},
+            {"misc_arcticwoof", "Find the Woof", "Find the Rated Layouts Owner", RLAchievements::Collectable::Misc, 1, "RL_arcticwoof.png"_spr},
+            {"misc_gauntlet", "Gauntlet Conqueror", "Complete a Layout Gauntlet", RLAchievements::Collectable::Misc, 1, "RL_gauntlet-2.png"_spr},
+            {"misc_spire", "Something has aligned...", "You now know about it, be careful about where you go…", RLAchievements::Collectable::Misc, 1, "RL_planetBig.png"_spr},
+            {"misc_code", "Cosmos has accepted you", "Redeem a code to the Cosmos", RLAchievements::Collectable::Misc, 1, "RL_oracle.png"_spr},
+            {"misc_room", "Trespasser", "Complete a Spire Room.", RLAchievements::Collectable::Misc, 1, "RL_spireDoor_unlocked.png"_spr},
+            {"misc_extreme", "TOP ONE LAYOUT LIST!", "Complete an Extreme Demon Rated Layout", RLAchievements::Collectable::Misc, 1, "diffIcon_10_btn_001.png"},
+            {"misc_goog", "GOOG CAT!!!", "Find the goog cat dialogue...", RLAchievements::Collectable::Misc, 1, "RL_goog.png"_spr},
+
         };
         s_achievementsDict = CCDictionary::create();
         s_achievementsDict->retain();

@@ -3,7 +3,8 @@
 - Reverted April Fools related changes
   - Removed **Get Gem to Win** achievement
 - Removed **Layout Report System** button on non-rated layouts.
-- Fixed the Achievement Icons scaled incorrectly in the Achievements Popup.
+- Fixed and Tweaked the Achievement Icons scaled incorrectly in the Achievements Popup.
+- Fixed issue where Layout Gauntlets levels showing as incompleted even when its been completed already.
 
 ## v1.0.2-goog
 

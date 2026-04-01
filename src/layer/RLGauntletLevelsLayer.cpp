@@ -243,6 +243,64 @@ void RLGauntletLevelsLayer::createLevelButtons(matjson::Value const& levelsData,
 
     float totalWidth = validCount * buttonWidth + (validCount - 1) * spacingX;
 
+    // prepare gauntlet completion override set to show completed state immediately
+    auto gauntletData = loadGauntletCompletedJson();
+    std::unordered_set<int> gauntletCompletedLevelSet;
+    if (gauntletData.isObject()) {
+        auto gauntletLevels = gauntletData["gauntlet_levels"];
+        if (gauntletLevels.isObject()) {
+            auto levelArr = gauntletLevels[std::to_string(m_gauntletId)];
+            if (levelArr.isArray()) {
+                for (auto& v : levelArr.asArray().unwrap()) {
+                    int lid = v.asInt().unwrapOr(-1);
+                    if (lid > 0) {
+                        gauntletCompletedLevelSet.insert(lid);
+                    }
+                }
+            }
+        }
+    }
+
+    auto isLevelCompleted = [&](int groupLevelId) {
+        if (groupLevelId <= 0) {
+            return false;
+        }
+        if (gauntletCompletedLevelSet.count(groupLevelId) > 0) {
+            return true;
+        }
+        auto glm = GameLevelManager::sharedState();
+        auto gsm = GameStatsManager::sharedState();
+        if (!glm || !gsm) {
+            return false;
+        }
+
+        // try exact level key first
+        auto searchObj = GJSearchObject::create(SearchType::Search, numToString(groupLevelId));
+        auto stored = glm->getStoredOnlineLevels(searchObj->getKey());
+        if (!stored || stored->count() == 0) {
+            // fallback to cached gauntlet list
+            if (!m_levelsSearchKey.empty()) {
+                stored = glm->getStoredOnlineLevels(m_levelsSearchKey.c_str());
+            }
+        }
+
+        if (!stored) {
+            return false;
+        }
+
+        for (unsigned int si = 0; si < stored->count(); ++si) {
+            auto g = static_cast<GJGameLevel*>(stored->objectAtIndex(si));
+            if (!g || static_cast<int>(g->m_levelID) != groupLevelId) {
+                continue;
+            }
+            if (gsm->hasCompletedLevel(g)) {
+                return true;
+            }
+        }
+
+        return false;
+    };
+
     for (size_t i = 0; i < levelsArray.size(); i++) {
         auto level = levelsArray[i];
 
@@ -303,23 +361,7 @@ void RLGauntletLevelsLayer::createLevelButtons(matjson::Value const& levelsData,
         starSpr->setPosition({difficultyLabel->getPositionX(), -10});
         gauntletSprite->addChild(starSpr);
 
-        bool isCompleted = false;
-        if (levelId > 0 && GameStatsManager::sharedState()) {
-            auto glm = GameLevelManager::sharedState();
-            if (glm && !m_levelsSearchKey.empty()) {
-                auto storedAll = glm->getStoredOnlineLevels(m_levelsSearchKey.c_str());
-                if (storedAll && storedAll->count() > 0) {
-                    for (unsigned int si = 0; si < storedAll->count(); ++si) {
-                        auto g = static_cast<GJGameLevel*>(storedAll->objectAtIndex(si));  // press "g"
-                        if (g && static_cast<int>(g->m_levelID) == levelId) {
-                            isCompleted =
-                                GameStatsManager::sharedState()->hasCompletedLevel(g);
-                            break;
-                        }
-                    }
-                }
-            }
-        }
+        bool isCompleted = isLevelCompleted(levelId);
 
         if (isCompleted) {
             // avoid duplicate icon
