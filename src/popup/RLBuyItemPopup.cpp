@@ -193,7 +193,7 @@ void RLBuyItemPopup::onBuy(CCObject* sender) {
                 break;
             case 5:
                 response = fmt::format(
-                    "Yikes! You just <cr>{} rubies short</c>, can't let you have this.",
+                    "Yikes! Your just <cr>{} rubies short</c>, can't let you have this.",
                     m_value - current);
                 break;
             case 6:
@@ -201,7 +201,7 @@ void RLBuyItemPopup::onBuy(CCObject* sender) {
                 break;
             case 7:
                 response =
-                    "Oh you short on <cr>rubies</c>? That's unfortunate. womp womp";
+                    "Oh, you short on <cr>rubies</c>? That's unfortunate. womp womp";
                 break;
             case 8:
                 response =

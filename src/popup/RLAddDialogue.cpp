@@ -53,7 +53,7 @@ void RLAddDialogue::onInfo(CCObject* sender) {
         "1. Dialogue <cr>cannot</c> be empty and must not exceed 500 characters.\n"
         "2. Dialogue must be <cg>appropriate</c>. Submitting an <cr>inappropriate dialogue</c> may result in a <cr>ban</c> from using this feature.\n"
         "3. Do <cr>not</c> bypass any of these rules.\n"
-        "### <cy>By submitting a custom dialogue, you agree to follow these rules.\n"
+        "### <cy>By submitting custom dialogue, you agree to follow these rules.\n"
         "### <cl>ArcticWoof has the rights to remove any dialogue that is inappropriate without any notice.</c>\n"
         "### <cc>All dialogues submitted are logged and visible by Layout Admins/Mods for reviewing purposes.</c>";
     MDPopup::create(
