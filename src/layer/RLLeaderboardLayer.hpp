@@ -15,6 +15,7 @@ protected:
     TabButton* m_planetsTab;
     TabButton* m_creatorTab;
     TabButton* m_coinsTab;
+    TabButton* m_votesTab;
     CCMenuItemSpriteExtra* m_refreshBtn;
 
     bool init() override;

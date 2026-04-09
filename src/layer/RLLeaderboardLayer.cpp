@@ -54,18 +54,19 @@ bool RLLeaderboardLayer::init() {
     }
 
     auto typeMenu = CCMenu::create();
-    typeMenu->setPosition({0, 0});
+    typeMenu->setPosition({0, -2});
     typeMenu->setContentSize(m_userListNode->getContentSize());
 
     auto starsTab = TabButton::create(
         TabBaseColor::Unselected, TabBaseColor::UnselectedDark, "Top Sparks", this, menu_selector(RLLeaderboardLayer::onLeaderboardTypeButton));
     float centerX = m_userListNode->getContentSize().width / 2.f;
     const float tabY = 247.f;
-    const float spacing = 100.f;
+    const float spacing = 80.f;
 
     starsTab->setTag(1);
     starsTab->toggle(true);
-    starsTab->setPosition({centerX - 1.5f * spacing, tabY});
+    starsTab->setScale(0.8f);
+    starsTab->setPosition({centerX - 2.f * spacing, tabY});
     typeMenu->addChild(starsTab);
     m_starsTab = starsTab;
 
@@ -73,7 +74,8 @@ bool RLLeaderboardLayer::init() {
         TabBaseColor::Unselected, TabBaseColor::UnselectedDark, "Top Planets", this, menu_selector(RLLeaderboardLayer::onLeaderboardTypeButton));
     planetsTab->setTag(3);
     planetsTab->toggle(false);
-    planetsTab->setPosition({centerX - 0.5f * spacing, tabY});
+    planetsTab->setScale(0.8f);
+    planetsTab->setPosition({centerX - 1.f * spacing, tabY});
     typeMenu->addChild(planetsTab);
     m_planetsTab = planetsTab;
 
@@ -81,7 +83,8 @@ bool RLLeaderboardLayer::init() {
         TabBaseColor::Unselected, TabBaseColor::UnselectedDark, "Top Creator", this, menu_selector(RLLeaderboardLayer::onLeaderboardTypeButton));
     creatorTab->setTag(2);
     creatorTab->toggle(false);
-    creatorTab->setPosition({centerX + 0.5f * spacing, tabY});
+    creatorTab->setScale(0.8f);
+    creatorTab->setPosition({centerX, tabY});
     typeMenu->addChild(creatorTab);
     m_creatorTab = creatorTab;
 
@@ -90,9 +93,19 @@ bool RLLeaderboardLayer::init() {
         TabBaseColor::Unselected, TabBaseColor::UnselectedDark, "Top Coins", this, menu_selector(RLLeaderboardLayer::onLeaderboardTypeButton));
     coinsTab->setTag(4);
     coinsTab->toggle(false);
-    coinsTab->setPosition({centerX + 1.5f * spacing, tabY});
+    coinsTab->setScale(0.8f);
+    coinsTab->setPosition({centerX + 1.f * spacing, tabY});
     typeMenu->addChild(coinsTab);
     m_coinsTab = coinsTab;
+
+    auto votesTab = TabButton::create(
+        TabBaseColor::Unselected, TabBaseColor::UnselectedDark, "Top Votes", this, menu_selector(RLLeaderboardLayer::onLeaderboardTypeButton));
+    votesTab->setTag(5);
+    votesTab->toggle(false);
+    votesTab->setScale(0.8f);
+    votesTab->setPosition({centerX + 2.f * spacing, tabY});
+    typeMenu->addChild(votesTab);
+    m_votesTab = votesTab;
 
     if (Mod::get()->getSettingValue<bool>("disableCreatorPoints") == true) {
         if (m_creatorTab) {
@@ -131,8 +144,8 @@ void RLLeaderboardLayer::onInfoButton(CCObject* sender) {
     MDPopup::create(
         "Rated Layouts Leaderboard",
         "The leaderboard shows the top players in <cb>Rated Layouts</c> based "
-        "on <cl>Sparks</c>, <co>Planets</c>, <cb>Blue Coins</c> or <cf>Blueprint "
-        "Points</c>. You can view each category by selecting the tabs.\n\n"
+        "on <cl>Sparks</c>, <co>Planets</c>, <cb>Blue Coins</c>, <cf>Blueprint "
+        "Points</c> and <cg>Votes</c>. You can view each category by selecting the tabs.\n\n"
         "- <cl>Sparks</c> are earned by completing a <cb>Classic Rated "
         "Layouts</c> level and are only counted when beaten legitimately.\n"
         "- <co>Planets</c> are earned by completing a <cb>Platformer Rated "
@@ -146,8 +159,7 @@ void RLLeaderboardLayer::onInfoButton(CCObject* sender) {
         "Rated Layouts</c> level earns you 2 points, <cp>Epic Rated Layout</c> "
         "levels earn you 3 points and <cd>Legendary Rated Layout</c> levels earn "
         "you 4 points\n\n"
-        "<cd>Legendary</c> layouts are only awarded by <cf>**ArcticWoof**</c> "
-        "himself, <cr>Layout Admins can not set new Legendary Layouts</c>.\n\n"
+        "- <cg>Votes</c> are earned by voting in the <cb>Community Votes</c>. Each vote is earned per-level.\n\n"
         "### Any <cr>unfair</c> means of obtaining these stats <cy>(eg. instant "
         "complete, noclipping, secret way)</c> will result in an <cr>exclusion "
         "from the leaderboard and there will be NO APPEALS!</c> Each completion "
@@ -173,6 +185,8 @@ void RLLeaderboardLayer::onRefreshButton(CCObject* sender) {
         type = 2;
     } else if (m_coinsTab && m_coinsTab->isToggled()) {
         type = 4;
+    } else if (m_votesTab && m_votesTab->isToggled()) {
+        type = 5;
     }
 
     auto contentLayer = m_scrollLayer ? m_scrollLayer->m_contentLayer : nullptr;
@@ -217,11 +231,22 @@ void RLLeaderboardLayer::onLeaderboardTypeButton(CCObject* sender) {
         m_creatorTab->toggle(true);
         if (m_coinsTab)
             m_coinsTab->toggle(false);
+        if (m_votesTab)
+            m_votesTab->toggle(false);
     } else if (type == 4 && m_coinsTab && !m_coinsTab->isToggled()) {
         m_starsTab->toggle(false);
         m_planetsTab->toggle(false);
         m_creatorTab->toggle(false);
         m_coinsTab->toggle(true);
+        if (m_votesTab)
+            m_votesTab->toggle(false);
+    } else if (type == 5 && m_votesTab && !m_votesTab->isToggled()) {
+        m_starsTab->toggle(false);
+        m_planetsTab->toggle(false);
+        m_creatorTab->toggle(false);
+        if (m_coinsTab)
+            m_coinsTab->toggle(false);
+        m_votesTab->toggle(true);
     }
 
     auto contentLayer = m_scrollLayer->m_contentLayer;
@@ -423,11 +448,13 @@ void RLLeaderboardLayer::populateLeaderboard(
         const bool isStar = m_starsTab->isToggled();
         const bool isPlanets = m_planetsTab && m_planetsTab->isToggled();
         const bool isCoins = m_coinsTab && m_coinsTab->isToggled();
+        const bool isVotes = m_votesTab && m_votesTab->isToggled();
         const char* iconName =
             isStar ? "RL_starMed.png"_spr
                    : (isPlanets ? "RL_planetMed.png"_spr
                                 : (isCoins ? "RL_BlueCoinSmall.png"_spr
-                                           : "RL_blueprintPoint01.png"_spr));
+                                           : (isVotes ? "RL_commVote01.png"_spr
+                                                      : "RL_blueprintPoint01.png"_spr)));
         auto iconSprite = CCSprite::createWithSpriteFrameName(iconName);
         iconSprite->setScale(0.65f);
         iconSprite->setPosition({325.f, 20.f});

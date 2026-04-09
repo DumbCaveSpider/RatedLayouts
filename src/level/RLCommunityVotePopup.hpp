@@ -13,7 +13,6 @@ private:
     // handlers
     void onSubmit(CCObject*);
     void onInfo(CCObject*);
-    void onLeaderboard(CCObject*);
 
     int m_levelId = 0;
     int m_originalityVote = 0;

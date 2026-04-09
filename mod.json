@@ -8,7 +8,7 @@
 	},
 	"id": "arcticwoof.rated_layouts",
 	"name": "Rated Layouts",
-	"version": "v1.0.3",
+	"version": "v1.0.4",
 	"developer": "ArcticWoof",
 	"description": "Play layout rated levels",
 	"resources": {
@@ -230,6 +230,12 @@
 		"titleMisc": {
 			"type": "title",
 			"name": "Miscellaneous Settings"
+		},
+		"disableMenuButton": {
+			"name": "Disable Rated Layouts Menu Button",
+			"type": "bool",
+			"default": true,
+			"description": "Disable the Rated Layouts Menu Button in the Main Menu. <cy>Enable this if you don't use the Rated Layouts Menu and want a cleaner Main Menu.</cy>"
 		},
 		"disableLegacyInfo":{
 			"name": "Disable Legacy Rate Info",

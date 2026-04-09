@@ -5,6 +5,8 @@
 - Fixed issue where user with **Disabled Reward Animation** enabled still getting the reward notification even when it's already completed.
 - Fixed the Author's name in the Shop Item list not showing. _(Due to the backend changes)_
 - Notification are off on levels by default. _(You can enable it in the mod settings)_
+- Added **Rated Layouts Menu Button** in the Main Menu. _(Can be disabled in the mod settings)_
+- Moved the **Votes Leaderboard** to the main Leaderboard Tabs.
 
 ## v1.0.3
 
