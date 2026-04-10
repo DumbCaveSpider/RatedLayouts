@@ -8,7 +8,8 @@
 - Fixed typos in the information texts
 - Notification are off on levels by default. _(You can enable it in the mod settings)_
 - Added **Rated Layouts Menu Button** in the Main Menu. _(Can be disabled in the mod settings)_
-- Added **Gudebook** as a replacement to the info button in the main menu. _(It will ask you when opening the layer first)_
+- Added **Guidebook** as a replacement to the info button in the main menu. _(It will ask you when opening the layer first)_
+- Added **Key** button, mainly used for internal uses.
 - Moved the **Votes Leaderboard** to the main Leaderboard Tabs.
 - Nav buttons on the Ruby Shop now wraps around when reaching the end of the list.
 
