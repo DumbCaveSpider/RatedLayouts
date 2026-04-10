@@ -1,12 +1,16 @@
 #include "RLDonationPopup.hpp"
+#include <argon/Argon.hpp>
 #include <Geode/Geode.hpp>
 #include <Geode/ui/NineSlice.hpp>
 #include "RLBadgeRequestPopup.hpp"
+#include "../include/RLConstants.hpp"
+#include "../include/RLNetworkUtils.hpp"
 
 #include <cstdlib>
 #include <ctime>
 
 using namespace geode::prelude;
+using namespace rl;
 
 const std::string badgeParticle = "20,2065,2,225,3,165,145,20a-1a2a0.3a8a90a180a15a0a5a5a0a0a0a0a0a0a10a1a0a0a0.768627a0a0.219608a0a0.768627a0a1a0a1a1a0a0a1a0a0.415686a0a0.996078a0a1a0a0.25a0a1a0a0a0a0a0a0a0a0a2a1a0a0a1a21a0a0a0a0a0a0a0a0a0a0a0a0a0a0;";
 
@@ -130,17 +134,29 @@ bool RLDonationPopup::init() {
     desc3->setAlignment(kCCTextAlignmentCenter);
     m_mainLayer->addChild(desc3);
 
-    // open kofi link button
-    auto kofiSpr = ButtonSprite::create("Donate via Ko-fi", "goldFont.fnt", "GJ_button_03.png");
-    auto kofiBtn = CCMenuItemSpriteExtra::create(kofiSpr, this, menu_selector(RLDonationPopup::onClick));
-    kofiBtn->setPosition({m_mainLayer->getContentSize().width / 2.f + 90.f, 20.f});
-    m_buttonMenu->addChild(kofiBtn);
+    // menu for da buttons yes
+    auto donoMenu = CCMenu::create();
+    donoMenu->setPosition({m_mainLayer->getContentWidth() / 2.f, 20});
+    donoMenu->setContentSize({m_mainLayer->getContentWidth(), 40.f});
+    donoMenu->setLayout(RowLayout::create()->setGap(5.f)->setAxisAlignment(AxisAlignment::Center)->setAxisReverse(false));
+    m_mainLayer->addChild(donoMenu);
 
     // badge request button
     auto getBadgeSpr = ButtonSprite::create("Get Badge?", "goldFont.fnt", "GJ_button_01.png");
     auto getBadgeBtn = CCMenuItemSpriteExtra::create(getBadgeSpr, this, menu_selector(RLDonationPopup::onGetBadge));
-    getBadgeBtn->setPosition({m_mainLayer->getContentSize().width / 2.f - 120.f, 20.f});
-    m_buttonMenu->addChild(getBadgeBtn);
+    donoMenu->addChild(getBadgeBtn);
+
+    // open kofi link button
+    auto kofiSpr = ButtonSprite::create("Donate via Ko-fi", "goldFont.fnt", "GJ_button_03.png");
+    auto kofiBtn = CCMenuItemSpriteExtra::create(kofiSpr, this, menu_selector(RLDonationPopup::onClick));
+    donoMenu->addChild(kofiBtn);
+
+    // request supporter features
+    auto requestSpr = ButtonSprite::create("Request Features", "goldFont.fnt", "GJ_button_05.png");
+    auto requestBtn = CCMenuItemSpriteExtra::create(requestSpr, this, menu_selector(RLDonationPopup::onAccessBadge));  // same popup for now since we don't have a separate feature request system
+    donoMenu->addChild(requestBtn);
+
+    donoMenu->updateLayout();
 
     // floating blocks
     static bool _rl_rain_seeded = false;
@@ -214,3 +230,72 @@ void RLDonationPopup::onGetBadge(CCObject* sender) {
     auto popup = RLBadgeRequestPopup::create();
     if (popup) popup->show();
 }
+
+void RLDonationPopup::onAccessBadge(CCObject* sender) {
+    m_uploadPopup = UploadActionPopup::create(nullptr, "Requesting Access...");
+    m_uploadPopup->show();
+    // argon my beloved <3
+    auto accountData = argon::getGameAccountData();
+
+    m_authTask.spawn(
+        argon::startAuth(std::move(accountData)),
+        [this](Result<std::string> res) {
+            if (res.isOk()) {
+                auto token = std::move(res).unwrap();
+                log::info("token obtained: {}", token);
+                Mod::get()->setSavedValue("argon_token", token);
+
+                // json body
+                matjson::Value jsonBody = matjson::Value::object();
+                jsonBody["argonToken"] = token;
+                jsonBody["accountId"] = GJAccountManager::get()->m_accountID;
+
+                // verify the user's role
+                auto postReq = web::WebRequest();
+                postReq.bodyJSON(jsonBody);
+
+                m_getAccessTask.spawn(
+                    postReq.post(std::string(rl::BASE_API_URL) + "/getAccessSupporter"),
+                    [this](web::WebResponse response) {
+                        log::info("Received response from server");
+                        if (!response.ok()) {
+                            log::warn("Server returned non-ok status: {}",
+                                response.code());
+                            m_uploadPopup->showFailMessage(rl::getResponseFailMessage(
+                                response, "Failed! Try again later."));
+                            return;
+                        }
+
+                        auto jsonRes = response.json();
+                        if (!jsonRes) {
+                            log::warn("Failed to parse JSON response");
+                            m_uploadPopup->showFailMessage(
+                                "Failed to parse JSON response");
+                            return;
+                        }
+
+                        auto json = jsonRes.unwrap();
+                        bool isSupporter =
+                            json["isSupporter"].asBool().unwrapOrDefault();
+                        bool isBooster =
+                            json["isBooster"].asBool().unwrapOrDefault();
+
+                        Mod::get()->setSavedValue<bool>("isSupporter", isSupporter);
+                        Mod::get()->setSavedValue<bool>("isBooster", isBooster);
+
+                        if (isSupporter || isBooster) {
+                            log::info("Granted Supporter Features");
+                            m_uploadPopup->showSuccessMessage(
+                                "Granted Supporter Features.");
+                        } else {
+                            m_uploadPopup->showFailMessage("You are not a Supporter or Booster.");
+                        }
+                    });
+            } else {
+                auto err = res.unwrapErr();
+                log::warn("Auth failed: {}", err);
+                Notification::create(err, NotificationIcon::Error)->show();
+                argon::clearToken();
+            }
+        });
+};

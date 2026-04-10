@@ -1,8 +1,3 @@
-#include "Geode/cocos/menu_nodes/CCMenu.h"
-#include "Geode/loader/Log.hpp"
-#include "Geode/loader/Mod.hpp"
-#include "Geode/ui/Popup.hpp"
-#include "Geode/utils/general.hpp"
 #include "include/RLAchievements.hpp"
 #include "include/RLConstants.hpp"
 #include "include/RLNetworkUtils.hpp"
@@ -64,8 +59,7 @@ class $modify(RLSupportLayer, SupportLayer) {
             });
     }
 
-    void onRequestAccess(
-        CCObject* sender) {  // i assume that no one will ever get gd mod xddd
+    void onRequestAccess(CCObject* sender) {  // i assume that no one will ever get gd mod xddd
         m_uploadPopup = UploadActionPopup::create(nullptr, "Requesting Access...");
         m_uploadPopup->show();
         // argon my beloved <3
@@ -176,10 +170,6 @@ class $modify(RLSupportLayer, SupportLayer) {
                                     "Granted Platformer Layout Admin.");
                             } else {
                                 m_uploadPopup->showFailMessage("Nothing Happened.");
-                            }
-
-                            if (isClassicAdmin || isClassicMod || isPlatAdmin || isPlatMod || isLeaderboardAdmin || isLeaderboardMod) {
-                                RLAchievements::onReward("misc_moderator");
                             }
                         });
                 } else {

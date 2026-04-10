@@ -545,12 +545,12 @@ void RLShopLayer::updateShopPage() {
             fmt::format("{}/{}", m_shopPage + 1, m_totalPages).c_str());
     }
     if (m_prevPageBtn) {
-        m_prevPageBtn->setEnabled(m_shopPage > 0);
-        m_prevPageBtn->setOpacity(m_shopPage > 0 ? 255 : 120);
+        m_prevPageBtn->setEnabled(true);
+        m_prevPageBtn->setOpacity(255);
     }
     if (m_nextPageBtn) {
-        m_nextPageBtn->setEnabled(m_shopPage < m_totalPages - 1);
-        m_nextPageBtn->setOpacity(m_shopPage < m_totalPages - 1 ? 255 : 120);
+        m_nextPageBtn->setEnabled(true);
+        m_nextPageBtn->setOpacity(255);
     }
 
     // ensure parent recomputes layout
@@ -570,15 +570,25 @@ void RLShopLayer::refreshRubyLabel() {
 }
 
 void RLShopLayer::onPrevPage(CCObject* sender) {
-    if (m_shopPage > 0) {
-        loadShopPage(m_shopPage - 1);
+    if (m_totalPages <= 0) {
+        return;
     }
+    int prevPage = m_shopPage - 1;
+    if (prevPage < 0) {
+        prevPage = m_totalPages - 1;
+    }
+    loadShopPage(prevPage);
 }
 
 void RLShopLayer::onNextPage(CCObject* sender) {
-    if (m_shopPage < m_totalPages - 1) {
-        loadShopPage(m_shopPage + 1);
+    if (m_totalPages <= 0) {
+        return;
     }
+    int nextPage = m_shopPage + 1;
+    if (nextPage >= m_totalPages) {
+        nextPage = 0;
+    }
+    loadShopPage(nextPage);
 }
 
 void RLShopLayer::keyBackClicked() {

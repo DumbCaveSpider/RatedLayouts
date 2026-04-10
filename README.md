@@ -52,10 +52,10 @@ This gives the <cy>Layout/Gameplay creators</c> a platform to get their levels r
 
 ### Credits
 
-- <cg>**Geode Mod Developer**:</c> [ArcticWoof](user:7689052)
+- <cg>**Main/Geode Mod Developer**:</c> [ArcticWoof](user:7689052)
+- <cg>**Secondary/Mod Backend Developer**:</c> [Supernova3339](user:4882817)
 - <cg>**Texture Designs**:</c> [Darkore](user:3595559) & [Dasshu](user:1975253)
 - <cg>**Audio/Music**:</c> [Darkore](user:3595559)
-- <cg>**Backend/Bot Developer**:</c> [Supernova3339](user:4882817)
 - <cg>**Discord Server Managers**:</c> [Silence](user:29642529) & [ATXM](user:10092120)
 - <cg>**Special Thanks**:</c> [hiimjasmine00](https://github.com/hiimjasmine00), [iAndyHD3](https://github.com/iAndyHD3), [delivel](https://github.com/delivel-tech), [Supernova3339](https://github.com/Supernova3339) & [Erymanthus](https://github.com/RayDeeUx)
 

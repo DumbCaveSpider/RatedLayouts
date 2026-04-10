@@ -103,7 +103,6 @@ void RLAchievements::init() {
             {"misc_discord", "Layout-Cord", "Join the Rated Layouts Discord", RLAchievements::Collectable::Misc, 1, "RL_discord01.png"_spr},
             {"misc_browser", "www.ratedlayouts.com", "Browse the Rated Layouts Website", RLAchievements::Collectable::Misc, 1, "RL_browser01.png"_spr},
             {"misc_salt", "SALT finally rated", "but is it verified?", RLAchievements::Collectable::Misc, 1, "RL_bob.png"_spr},
-            {"misc_moderator", "GD Mod Simulator", "Become a Layout Moderator", RLAchievements::Collectable::Misc, 1, "RL_badgeMod01.png"_spr},
             {"misc_report", "Vigilant Citizen", "Make a valid Report on a Layout", RLAchievements::Collectable::Misc, 10, "exMark_001.png"},
             {"misc_arcticwoof", "Find the Woof", "Find the Rated Layouts Owner", RLAchievements::Collectable::Misc, 1, "RL_arcticwoof.png"_spr},
             {"misc_gauntlet", "Gauntlet Conqueror", "Complete a Layout Gauntlet", RLAchievements::Collectable::Misc, 1, "RL_gauntlet-2.png"_spr},

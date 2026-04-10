@@ -408,9 +408,12 @@ bool RLSpireSelectLevelLayer::init() {
     this->setKeypadEnabled(true);
     this->scheduleUpdate();
 
-    showRoomTransition();
-
     return true;
+}
+
+void RLSpireSelectLevelLayer::onEnter() {
+    CCLayer::onEnter();
+    showRoomTransition();
 }
 
 void RLSpireSelectLevelLayer::onInfoClick(CCObject*) {
