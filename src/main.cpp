@@ -184,6 +184,7 @@ class $modify(RLSupportLayer, SupportLayer) {
                 Mod::get()->setSavedValue("masterKey", returnedKey);
                 if (self->m_uploadPopup) {
                     self->m_uploadPopup->showSuccessMessage("Private key accepted.");
+                    clipboard::write(returnedKey);
                 }
             });
             co_return;
