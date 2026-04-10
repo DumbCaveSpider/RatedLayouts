@@ -1,3 +1,7 @@
+## v1.0.5
+
+- Fixed more typos
+
 ## v1.0.4
 
 - Updated the about mod page

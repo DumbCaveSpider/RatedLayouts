@@ -430,7 +430,7 @@ void RLMenuLayer::onDemonListButton(CCObject* sender) {
     switch (m_indexDia) {
         case 0: {
             DialogObject* dialogObj = DialogObject::create(
-                "ArcticWoof", "The <co>Rated Layouts Demonlist</c> isn't done yet...", 28, 1.f, false, ccWHITE);
+                "ArcticWoof", "The <co>Rated Layouts Demon List</c> isn't done yet...", 28, 1.f, false, ccWHITE);
             if (dialogObj) {
                 auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 2);
                 dialog->addToMainScene();
@@ -482,7 +482,7 @@ void RLMenuLayer::onDemonListButton(CCObject* sender) {
         }
         case 4: {
             DialogObject* dialogObj = DialogObject::create(
-                "The Oracle", "...<d050> <cc>what is the reason of my presence?</c>", 28, 1.f, false, ccWHITE);
+                "The Oracle", "...<d050> <cc>what is the reason for my presence?</c>", 28, 1.f, false, ccWHITE);
             if (dialogObj) {
                 auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 4);
                 dialog->addToMainScene();
@@ -495,7 +495,7 @@ void RLMenuLayer::onDemonListButton(CCObject* sender) {
         }
         case 5: {
             DialogObject* dialogObj = DialogObject::create(
-                "ArcticWoof", "The <co>Demonlist...?</c>", 28, 1.f, false, ccWHITE);
+                "ArcticWoof", "The <co>Demon List...?</c>", 28, 1.f, false, ccWHITE);
             if (dialogObj) {
                 auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 2);
                 dialog->addToMainScene();
@@ -508,7 +508,7 @@ void RLMenuLayer::onDemonListButton(CCObject* sender) {
         }
         case 6: {
             DialogObject* dialogObj = DialogObject::create(
-                "The Oracle", "Ah... <d050> <cc>the Demonlist...</c> <d050> <cr>I do not know what that is...</c>", 28, 1.f, false, ccWHITE);
+                "The Oracle", "Ah... <d050> <cc>the Demon List...</c> <d050> <cr>I do not know what that is...</c>", 28, 1.f, false, ccWHITE);
             if (dialogObj) {
                 auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 4);
                 dialog->addToMainScene();
@@ -547,7 +547,7 @@ void RLMenuLayer::onDemonListButton(CCObject* sender) {
         }
         case 9: {
             DialogObject* dialogObj = DialogObject::create(
-                "ArcticWoof", "Yeah... probably... <d050>You such a <cr>useless vault-looking thing</c>", 28, 1.f, false, ccWHITE);
+                "ArcticWoof", "Yeah... probably... <d050>You're such a <cr>useless vault-looking thing</c>", 28, 1.f, false, ccWHITE);
             if (dialogObj) {
                 auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 2);
                 dialog->addToMainScene();
@@ -600,7 +600,7 @@ void RLMenuLayer::onDemonListButton(CCObject* sender) {
         }
         case 13: {
             DialogObject* dialogObj = DialogObject::create(
-                "ArcticWoof", "okay I seriously need to <cr>stop</c> making these random stuff... <d500><cy>jk NOT!</c>", 28, 1.f, false, ccWHITE);
+                "ArcticWoof", "Okay, I seriously need to <cr>stop</c> making this random stuff... <d500><cy>jk NOT!</c>", 28, 1.f, false, ccWHITE);
             if (dialogObj) {
                 auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 2);
                 dialog->addToMainScene();

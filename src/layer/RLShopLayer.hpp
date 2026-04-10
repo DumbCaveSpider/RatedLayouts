@@ -33,7 +33,7 @@ private:
     void onTestNameplate();
     void onForm();
 
-    void onLayoutCreator(CCObject* sender);
+    void onShopkeeper(CCObject* sender);
     void onBuyItem(CCObject* sender);
     void onRedeemLayer(CCObject* sender);
 

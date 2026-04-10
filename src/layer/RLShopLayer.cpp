@@ -67,7 +67,7 @@ bool RLShopLayer::init() {
     shopkeeperIcon->setScale(2.f);
 
     auto shopkeeperItem = CCMenuItemSpriteExtra::create(
-        shopkeeperIcon, this, menu_selector(RLShopLayer::onLayoutCreator));
+        shopkeeperIcon, this, menu_selector(RLShopLayer::onShopkeeper));
     shopkeeperItem->setPosition(
         {winSize.width / 2 - 120, deckSpr->getContentHeight()});
     shopkeeperItem->setAnchorPoint({0.5f, .1f});
@@ -244,7 +244,7 @@ void RLShopLayer::initDropdownMenu() {
     m_dropdownMenu->addCell(dropdownLabel);
     dropdownLabel->setPositionX(5.f);
 
-    auto resetBtn = CCLabelBMFont::create("Reset Rubies", "bigFont.fnt");
+    auto resetBtn = CCLabelBMFont::create("Clear Rubies", "bigFont.fnt");
     resetBtn->limitLabelWidth(100, .7, .3);
     m_dropdownMenu->addCell(resetBtn);
     resetBtn->setPositionX(15.f);
@@ -328,7 +328,7 @@ void RLShopLayer::onTestNameplate() {
     popup->show();
 }
 
-void RLShopLayer::onLayoutCreator(CCObject* sender) {
+void RLShopLayer::onShopkeeper(CCObject* sender) {
     // gen random
     static geode::utils::random::Generator gen = [] {
         geode::utils::random::Generator g;
@@ -347,7 +347,7 @@ void RLShopLayer::onLayoutCreator(CCObject* sender) {
             break;
         case 2:
             response =
-                "<cg>Layout Creator</c>? <cl>Well he kinda run away when I "
+                "<cg>Layout Creator</c>? <cl>Well, he kind of ran away when I "
                 "arrived</c>, odd fella but oh well...";
             break;
         case 3:
@@ -358,15 +358,15 @@ void RLShopLayer::onLayoutCreator(CCObject* sender) {
         case 4:
             response =
                 "<cl>Darkore</c>, that weird kid that put this <cg>awesome "
-                "music</c> in the shop? Truely peak bud :)";
+                "music</c> in the shop? Truly peak bud :)";
             break;
         case 5:
             response =
-                "Someone must have break into the <cg>front door</c> while "
+                "Someone must have broken into the <cg>front door</c> while "
                 "<cl>I was away...</c>";
             break;
         case 6:
-            response = "Are you gonna buy something? <cy>Or just keep annoying me?</c>";
+            response = "Are you going to buy something? <cy>Or just keep annoying me?</c>";
             break;
         case 7:
             response =
@@ -390,8 +390,8 @@ void RLShopLayer::onLayoutCreator(CCObject* sender) {
             break;
         case 12:
             response =
-                "If you giving me a <cr>nameplate</c>, at least put an "
-                "<cg>effort on it</c>...";
+                "If you're giving me a <cr>nameplate</c>, at least put an "
+                "<cg>effort into it</c>...";
             break;
         case 13:
             response =
@@ -399,7 +399,7 @@ void RLShopLayer::onLayoutCreator(CCObject* sender) {
             break;
         case 14:
             response =
-                "Would you want to buy my entire shop for <cr>100k Rubies?</c> I know "
+                "Would you like to buy my entire shop for <cr>100k Rubies?</c> I know "
                 "someone is <cy>interested</c> :P";
             break;
         case 15:
@@ -409,7 +409,7 @@ void RLShopLayer::onLayoutCreator(CCObject* sender) {
             response = "I heard there's <cf>The Spire</c> nearby, but I don't know how to get in there...";
             break;
         case 17:
-            response = "I am <cr>much worst</c> than <cg>RubRub</c>... is that right? I don't deserve this...";
+            response = "Am I <cr>much worse</c> than <cg>RubRub</c>? Is that right? I don't deserve this...";
             break;
         case 18:
             response = "I'm thinking of <cr><s100>burning</s></c> down this shop... <d100> <cy>just kidding!</c> <d100> <co>maybe...</c>";
@@ -418,7 +418,7 @@ void RLShopLayer::onLayoutCreator(CCObject* sender) {
             response = "Come back later... <co>please...</c>";
             break;
         default:
-            response = "Weh!";
+            response = "<cg>Weh!</c>";
             break;
     }
     dialogObj = DialogObject::create("ArcticWoof", response.c_str(), 1, 1.f, false, ccWHITE);
@@ -660,10 +660,10 @@ void RLShopLayer::onResetRubies() {
         return;
     }
     createQuickPopup(
-        "Reset Rubies",
-        "Are you sure you want to <cr>reset your "
+        "Clear Rubies",
+        "Are you sure you want to <cr>clear your "
         "rubies</c> and <co>all your brought cosmetics</c>?\n"
-        "<cy>This will clear all your rubies but you can reclaim rubies back "
+        "<cy>This will clear all your rubies to zero, reset your redeemed codes and all your collected rubies but you can reclaim rubies back "
         "from any completed rated layouts.</c>",
         "No",
         "Yes",
