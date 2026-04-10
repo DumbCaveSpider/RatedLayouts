@@ -144,26 +144,16 @@ void RLLeaderboardLayer::onInfoButton(CCObject* sender) {
     MDPopup::create(
         "Rated Layouts Leaderboard",
         "The leaderboard shows the top players in <cb>Rated Layouts</c> based "
-        "on <cl>Sparks</c>, <co>Planets</c>, <cb>Blue Coins</c>, <cf>Blueprint "
-        "Points</c> and <cg>Votes</c>. You can view each category by selecting the tabs.\n\n"
-        "- <cl>Sparks</c> are earned by completing a <cb>Classic Rated "
-        "Layouts</c> level and are only counted when beaten legitimately.\n"
-        "- <co>Planets</c> are earned by completing a <cb>Platformer Rated "
-        "Layouts</c> level and are only counted when beaten legitimately.\n"
-        "- <cb>Blue Coins</c> are earned by collecting them while playing in "
-        "Rated Layouts levels.\n"
-        "- <cf>Blueprint Points</c> are earned based on the how many rated "
-        "layouts levels you have in your account and users who are excluded "
-        "won't be affected from this leaderboard.\n\n"
-        "Getting a <cs>Normal Rated Layout</c> earn you 1 point, <cg>Featured "
-        "Rated Layouts</c> level earns you 2 points, <cp>Epic Rated Layout</c> "
-        "levels earn you 3 points and <cd>Legendary Rated Layout</c> levels earn "
-        "you 4 points\n\n"
-        "- <cg>Votes</c> are earned by voting in the <cb>Community Votes</c>. Each vote is earned per-level.\n\n"
-        "### Any <cr>unfair</c> means of obtaining these stats <cy>(eg. instant "
-        "complete, noclipping, secret way)</c> will result in an <cr>exclusion "
-        "from the leaderboard and there will be NO APPEALS!</c> Each completion "
-        "are <co>publicly logged</c> for this purpose.\n\n",
+        "on <cl>Sparks</c>, <co>Planets</c>, <cb>Blue Coins</c>, <cf>Blueprint Points</c> and <cg>Votes</c>. You can view each category by selecting the tabs.\n\n"
+        "- <cl>Sparks</c> are earned by completing a <cb>Classic Rated Layouts</c> level and are only counted when beaten legitimately.\n"
+        "- <co>Planets</c> are earned by completing a <cb>Platformer Rated Layouts</c> level and are only counted when beaten legitimately.\n"
+        "- <cb>Blue Coins</c> are earned by collecting them while playing in Rated Layouts levels.\n"
+        "- <cf>Blueprint Points</c> are earned based on how many rated layout levels you have in your account, and users who are excluded "
+        "won't be affected by this leaderboard.\n\n"
+        "Getting a <cs>Rated</c> layout earns you 1 point, <cg>Featured</c> levels earn you 2 points, <cp>Epic</c> "
+        "levels earn you 3 points, and <cd>Legendary</c> levels earn you 4 points.\n\n"
+        "- <cg>Votes</c> are earned by voting in the <cb>Community Votes</c>. Each vote is earned per level.\n\n"
+        "### Any <cr>unfair</c> means of obtaining these stats <cy>(eg. instant complete, noclipping, secret way)</c> will result in an <cr>exclusion from the leaderboard and there will be NO APPEALS!</c> Each completion is <co>publicly logged</c> for this purpose.\n\n",
         "OK")
         ->show();
 }

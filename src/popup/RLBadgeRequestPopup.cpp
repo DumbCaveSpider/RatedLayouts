@@ -32,6 +32,7 @@ bool RLBadgeRequestPopup::init() {
         "Enter your <co>Discord Username (not display name)</c> that is linked "
         "to your <cp>Ko-fi account</c> to receieve a <cp>Layout Supporter "
         "Badge</c>.\n\n"
+        "After you <cg>successfuly get your badge</c>, you can click the <co>Request</c> button to request access to supporter-only features in Rated Layouts!\n\n"
         "Make sure that you got the <cd>Rated Layouts Supporter Membership</c> "
         "and have already <cg>linked</c> your <cb>Discord Account</c> through "
         "<cp>Ko-fi.</c> beforehand!\n\n"

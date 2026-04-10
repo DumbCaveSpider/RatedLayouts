@@ -17,6 +17,7 @@
 #include "../include/RLAchievements.hpp"
 #include "../include/RLConstants.hpp"
 #include "../include/RLLayerBackground.hpp"
+#include "Geode/ui/Popup.hpp"
 #include "RLAchievementsPopup.hpp"
 #include "RLAddDialogue.hpp"
 #include "RLAnnouncementPopup.hpp"
@@ -28,6 +29,7 @@
 #include "RLSearchLayer.hpp"
 #include "RLShopLayer.hpp"
 #include "RLSpireLayer.hpp"
+#include "RLGuideInfoPopup.hpp"
 #include "../include/RLDialogIcons.hpp"
 
 struct ModInfo {
@@ -392,6 +394,7 @@ bool RLMenuLayer::init() {
 
     this->scheduleUpdate();
     this->setKeypadEnabled(true);
+
     return true;
 }
 
@@ -775,38 +778,8 @@ void RLMenuLayer::onUnknownButton(CCObject* sender) {
 }
 
 void RLMenuLayer::onInfoButton(CCObject* sender) {
-    MDPopup::create(
-        "About Rated Layouts",
-        "## <cl>Rated Layouts</cl> is a community-run rating system focusing "
-        "on "
-        "gameplay in layout levels.\n\n"
-        "### Each of the buttons on this screen lets you browse different "
-        "categories of rated layouts:\n\n"
-        "<cg>**Featured Layouts**</c>: Featured layouts that showcase fun "
-        "gameplay and visuals. Each featured levels are ranked based of their "
-        "featured score.\n\n"
-        "<cg>**Leaderboard**</c>: The top-rated players ranked by blueprint "
-        "stars and creator points.\n\n"
-        "<cg>**Layout Gauntlets**</c>: Special themed layouts hosted by the "
-        "Rated Layouts Team. This holds the <cl>Layout Creator "
-        "Contests</c>!\n\n"
-        "<cg>**The Spire**</c>: A tower-themed <co>Platformer-focus</c> user created <cl>Rated Layouts</c> levels. "
-        "Explore the Spire and find forsaken lore beyond the <cp>Cosmos</c>\n\n"
-        "<cg>**Sent Layouts**</c>: Suggested or sent layouts by the Layout "
-        "Moderators. The community can vote on these layouts based of their "
-        "Design, Difficulty and Gameplay. <co>(Only enabled if you have at "
-        "least "
-        "20% in Normal Mode or 80% in Practice Mode)</c>\n\n"
-        "<cg>**Search Layouts**</c>: Search for rated layouts by their level "
-        "name/ID.\n\n"
-        "<cg>**Event Layouts**</c>: Showcases time-limited Daily, Weekly and "
-        "Monthly layouts picked by the <cr>Layout Admins</c>.\n\n"
-        "### Join the <cb>[Rated Layouts "
-        "Discord](https://discord.gg/jBf2wfBgVT)</c> server for more "
-        "information "
-        "and to submit your layouts for rating.\n\n",
-        "OK")
-        ->show();
+    auto guidePopup = RLGuideInfoPopup::create();
+    guidePopup->show();
 }
 
 void RLMenuLayer::onLayoutSpire(CCObject* sender) {
@@ -887,6 +860,7 @@ void RLMenuLayer::onSearchLayouts(CCObject* sender) {
 
 void RLMenuLayer::onEnter() {
     CCLayer::onEnter();
+
     m_indexDia = 0;
     // refresh mod info every time the layer is entered
     if (m_modStatusLabel) {
@@ -938,6 +912,37 @@ void RLMenuLayer::onEnter() {
     });
 }
 
+void RLMenuLayer::onEnterTransitionDidFinish() {
+    CCLayer::onEnterTransitionDidFinish();
+
+    if (!Mod::get()->getSavedValue<bool>("hasReadGuide")) {
+        this->runAction(CCSequence::create(
+            CCDelayTime::create(0.05f),
+            CCCallFunc::create(this, callfunc_selector(RLMenuLayer::showReadGuidePopup)),
+            nullptr));
+    }
+}
+
+void RLMenuLayer::showReadGuidePopup() {
+    if (Mod::get()->getSavedValue<bool>("hasReadGuide")) {
+        return;
+    }
+
+    Mod::get()->setSavedValue<bool>("hasReadGuide", true);
+    createQuickPopup(
+        "New to Rated Layouts?",
+        "Do you want to read the <cg>guide</c> to learn more about <cl>Rated Layouts</c> and how it works?\n"
+        "<cy>You can read this via the Info Button at the Bottom Left corner later if you want.</c>",
+        "No",
+        "Yes",
+        [](auto, bool yes) {
+            if (!yes)
+                return;
+            auto popup = RLGuideInfoPopup::create();
+            if (popup)
+                popup->show();
+        });
+}
 
 RLMenuLayer* RLMenuLayer::create() {
     auto ret = new RLMenuLayer();

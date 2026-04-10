@@ -5,8 +5,10 @@
 - Fixed issue where user with **Disabled Reward Animation** enabled still getting the reward notification even when it's already completed.
 - Fixed the Author's name in the Shop Item list not showing. _(Due to the backend changes)_
 - Fixed issue where Spire levels not updating after completing a Spire level.
+- Fixed typos in the information texts
 - Notification are off on levels by default. _(You can enable it in the mod settings)_
 - Added **Rated Layouts Menu Button** in the Main Menu. _(Can be disabled in the mod settings)_
+- Added **Gudebook** as a replacement to the info button in the main menu. _(It will ask you when opening the layer first)_
 - Moved the **Votes Leaderboard** to the main Leaderboard Tabs.
 - Nav buttons on the Ruby Shop now wraps around when reaching the end of the list.
 

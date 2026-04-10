@@ -172,9 +172,8 @@ void RLSpireSelectLevelLayer::showRoomTransition() {
         this->addChild(m_transitionLayer, 5);
     }
 
-    m_transitionLayer->setOpacity(0);
+    m_transitionLayer->setOpacity(255);
     m_transitionLayer->setVisible(true);
-    m_transitionLayer->runAction(CCFadeTo::create(0.3f, 255));
 
     if (!m_loadingSpinner) {
         auto winSize = CCDirector::sharedDirector()->getWinSize();

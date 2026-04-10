@@ -1,0 +1,187 @@
+#include <Geode/Geode.hpp>
+#include "Geode/cocos/cocoa/CCObject.h"
+#include "Geode/cocos/label_nodes/CCLabelBMFont.h"
+#include "Geode/ui/General.hpp"
+#include "Geode/ui/Layout.hpp"
+#include "ccTypes.h"
+#include "RLGuideInfoPopup.hpp"
+
+using namespace geode::prelude;
+
+RLGuideInfoPopup* RLGuideInfoPopup::create() {
+    auto ret = new RLGuideInfoPopup();
+    if (ret && ret->init()) {
+        ret->autorelease();
+        return ret;
+    }
+    delete ret;
+    return nullptr;
+}
+
+bool RLGuideInfoPopup::init() {
+    if (!Popup::init(400.f, 280.f, "GJ_square02.png"))
+        return false;
+
+    auto title1 = CCSprite::createWithSpriteFrameName("RL_title.png"_spr);
+    title1->setScale(0.8f);
+    m_mainLayer->addChildAtPosition(title1, Anchor::Top, {0, -30.f});
+
+    auto title2 = CCLabelBMFont::create("FAQ & Guidebook", "bigFont.fnt");
+    title2->setScale(0.6f);
+    m_mainLayer->addChildAtPosition(title2, Anchor::Top, {0, -55.f});
+
+    addSideArt(m_mainLayer, SideArt::All, SideArtStyle::PopupBlue, false);
+
+    // menu yez
+    auto faqMenu = CCMenu::create();
+    faqMenu->setPosition(m_mainLayer->getContentSize() / 2.f - CCPoint(0.f, 10.f));
+    faqMenu->setContentSize(m_mainLayer->getContentSize() - CCSize(20.f, 60.f));
+    faqMenu->setLayout(RowLayout::create()->setGap(10.f)->setCrossAxisOverflow(false)->setGrowCrossAxis(true));
+    m_mainLayer->addChild(faqMenu);
+
+    // list of faq buttons
+    auto aboutBtn = ButtonSprite::create("About", "goldFont.fnt", "GJ_button_01.png");
+    auto aboutItem = CCMenuItemSpriteExtra::create(aboutBtn, this, menu_selector(RLGuideInfoPopup::onAbout));
+    faqMenu->addChild(aboutItem);
+
+    auto layoutsBtn = ButtonSprite::create("Layouts", "goldFont.fnt", "GJ_button_01.png");
+    auto layoutsItem = CCMenuItemSpriteExtra::create(layoutsBtn, this, menu_selector(RLGuideInfoPopup::onLayouts));
+    faqMenu->addChild(layoutsItem);
+
+    auto standardsBtn = ButtonSprite::create("Rating Standards", "goldFont.fnt", "GJ_button_01.png");
+    auto standardsItem = CCMenuItemSpriteExtra::create(standardsBtn, this, menu_selector(RLGuideInfoPopup::onStandards));
+    faqMenu->addChild(standardsItem);
+
+    auto otherBtn = ButtonSprite::create("Other FAQs", "goldFont.fnt", "GJ_button_01.png");
+    auto otherItem = CCMenuItemSpriteExtra::create(otherBtn, this, menu_selector(RLGuideInfoPopup::onOthers));
+    faqMenu->addChild(otherItem);
+
+    // notice
+    auto noticeLabel = CCLabelBMFont::create("Note: This is not a complete guidebook, but it covers the most essential FAQs and information about Rated Layouts.\nFor more detailed info and questions, please refer to our Discord server!", "chatFont.fnt");
+    noticeLabel->limitLabelWidth(m_mainLayer->getScaledContentSize().width - 40.f, 0.7f, 0.3f);
+    noticeLabel->setAlignment(kCCTextAlignmentCenter);
+    m_mainLayer->addChildAtPosition(noticeLabel, Anchor::Bottom, {0, 30.f});
+
+    faqMenu->updateLayout();
+
+    return true;
+};
+
+void RLGuideInfoPopup::onAbout(CCObject* sender) {
+    MDPopup::create(
+        "About Rated Layouts",
+        "## <cl>Rated Layouts</cl> is a community-run rating system focusing on gameplay in layout levels.\n\n"
+        "### Each of the buttons on this screen lets you browse different categories of rated layouts:\n\n"
+        "<cg>**Featured Layouts**</c>: Featured layouts that showcase fun gameplay and visuals. Each featured layout is ranked based on its featured score.\n\n"
+        "<cg>**Leaderboard**</c>: The top-rated players ranked by blueprint stars and creator points.\n\n"
+        "<cg>**Layout Gauntlets**</c>: Special themed layouts hosted by the Rated Layouts Team. This holds the <cl>Layout Creator Contests</c>!\n\n"
+        "<cg>**The Spire**</c>: A tower-themed <co>Platformer-focus</c> user created <cl>Rated Layouts</c> levels. Explore the Spire and find forsaken lore beyond the <cp>Cosmos</c>.\n\n"
+        "<cg>**Sent Layouts**</c>: Suggested or sent layouts by the Layout Moderators. The community can vote on these layouts based on their Design, Difficulty and Gameplay. <co>(Only enabled if you have at least 20% in Normal Mode or 80% in Practice Mode)</c>\n\n"
+        "<cg>**Search Layouts**</c>: Search for rated layouts by their level name/ID.\n\n"
+        "<cg>**Event Layouts**</c>: Showcases time-limited Daily, Weekly and Monthly layouts picked by the <cr>Layout Admins</c>.\n\n"
+        "### Join the <cb>[Rated Layouts Discord](https://discord.gg/jBf2wfBgVT)</c> server for more information and to submit your layouts for rating.\n\n",
+        "OK")
+        ->show();
+}
+
+void RLGuideInfoPopup::onLayouts(CCObject* sender) {
+    MDPopup::create(
+        "Layouts",
+        "## What is a Layout?\n\n"
+        "**Layout** is a level type that puts its main focus on <cg>gameplay</c>. It usually has structuring that goes with the gameplay and strengthens the way it feels, alongside becoming a guidance for the player's path. By default, layouts don't have decoration.\n\n"
+        "Layouts can be considered as levels. While it can be considered as a **'skeleton'** or **'outline'** of a level, they can also be a full and complete experience. Gameplay can be a form of art and layouts are the medium for it.\n\n"
+        "## Can layouts with pure gameplay and without structuring get rated?\n\n"
+        "**Yes**, just make sure that there are no secret ways and a clear pattern for players to follow.\n\n"
+        "## If a layout has bad sync, can it still get rated?"
+        "Player sync and note representation are not completely mandatory or obligatory to obtain a rating.\n\n"
+        "Alternatively, creators can put their focus more on the playability aspect, primarily putting out interesting player movements and engaging gameplay without fully relying on sync and note representation, as long as the **pacing (usage of speed portals) still match perfectly with its used song**.\n\n"
+        "## When does a layout have too much deco/visuals?\n\n"
+        "If the level contains a lot of detailed block design, air decoration, glow and a lot of visuals/effects, it is generally considered as a level and **cannot be rated in <cl>Rated Layouts</c>**, since it is likely to be sent by a GD moderator and is rateable in RobTop's rating system.\n\n"
+        "- Refer to Case 8 of [Non-Rateable Layouts (aka NRL)](https://discord.com/channels/1439944272102162442/1482046209974603877)\n\n"
+        "'Layouts' that contain borderline decoration (block design, background, heavy air deco etc) enough to be called a level.\n\n"
+        "## What is a 'Non-Rateable Layout' (NRL)?\n\n"
+        "**'Non-Rateable Layout' (NRL)** is a rating guideline for Rated Layouts. All layouts should abide by these guidelines to be eligible for a rate. These guidelines are important for quality control in our rates.\n\n"
+        "There are 14 total cases on why a layout should not be rated in Rated Layouts, all available in [Non-Rateable Layouts (aka NRL)](https://discord.com/channels/1439944272102162442/1482046209974603877)\n\n"
+        "## Does a layout rating get affected if it's old/outdated?\n\n"
+        "**No.** We don't have a bias against old layouts and **do not judge based on how old it is/how dated its style is**, but they can be somewhat **likely to be less rated/have a lower rating tier than expected** just because they are **reviewed with the same standards as the newest layouts** which naturally utilize more gameplay mechanics and better.\n\n"
+        "### <co>Important: The ban on 1.0 style is a result of it being easy to replicate and mass produce.</c>\n\n"
+        "## Are layouts with NONG allowed to be rated?\n\n"
+        "**Yes**, if the song itself is available on the [Song File Hub](https://songfilehub.com/home) or [Jukebox Mod](mod:fleym.nongd). Otherwise, no.\n\n",
+        "OK")
+        ->show();
+}
+
+void RLGuideInfoPopup::onStandards(CCObject* sender) {
+    MDPopup::create(
+        "Rating Standards",
+        "## What are the rating standards for Rated Layouts?\n\n"
+        "Rated Layouts has 4 rating tiers, <cs>Rated</c>, <cg>Featured</c>, <cp>Epic</c> and <cd>Legendary</c>. Each tier has its own standards and requirements that a layout should meet to be rated in that tier.\n\n"
+        "- <cs>**Rated**</c>: Layout must synchronize to the music and are required to represent the song in a proper manner. Base gameplay should show a ground level understanding of the fundamentals (Primary rules and/or principles of gameplay). Must be bug-free and skip proof.\n\n"
+        "- <cg>**Featured**</c>: Layout must show good sync, song representation and a decent amount of fundamentals knowledge expressed in the gameplay. Structuring is required to have proper composition, alongside working well with the base gameplay. The pacing (usage of speed portals/changes) should work well with the music. The gameplay should be adequately playtested and be tolerable to the player.\n\n"
+        "- <cp>**Epic**</c>: Layouts are required to showcase detailed note representation in music sync and large moveset variety. Each movement in the layout is required to work well with the respective note in the song, regardless if it is simple or complex. Pacing is also required to be precise with the music. The layout also must maintain consistency and quality from start to finish. The gameplay must be engaging and fun to the player, ensuring the gameplay is satisfying to pull off and deaths are only the fault of the player.\n\n"
+        "- <cd>**Legendary**</c>: This rating tier is awarded for noteworthy layouts that are flawless and revolutionary, showcases full mastery of advanced fundamentals and aspects in base gameplay, alongside being able to bring new ideas to the table. These layouts are able to push the gameplay standards further, simultaneously influencing the community in various ways with its own distinctive and unique gameplay style.\n\n"
+        "## What criteria do our rating standards actually have?\n\n"
+        "### Creativity, Song representation, Fun.\n\n"
+        "Each one is always considered. If a layout excels in all three it will get a higher rate, while excelling in just one aspect will get it a lower rate.\n\n"
+        "However, if the layout is completely lacking in any aspect (e.g. it's unplayable, copies another level too much, doesn't represent the song), it won't be rated at all no matter the quality of other aspects.\n\n"
+        "- **Creativity** is how meaningful and intentional the layout is, how much creative skill it shows. It’s the way all ideas (gp movements, structures) in your level combine together. If they’re original, make sense and connect smoothly, the creator probably put a lot of creativity into it.\n\n"
+        "- **Song representation** is how the layout expresses the song. To do that, you need to represent each note of the song using just player movements. Usually you would start with sync if you’re a beginner, and then try to match how the song feels.\n\n"
+        "- **Fun (playing experience)** is how you make the player feel both the level and the song. Some important things to know about it are sync, control and playability (bugs, consistency, etc.). This also ties into song representation, so don’t neglect that. Good song rep can make a level feel tenfold more fun than bad song rep.\n\n"
+        "## Will the standards ever get decreased?\n\n"
+        "Short Answer: **No.**\n\n"
+        "Long Answer: **Rated Layouts Standards** will not be decreased to ensure quality control in our ratings and encourage creators to be more creative.\n\n"
+        "## Why are the standards so high?\n\n"
+        "Our goal and aim in setting up our standards is to reward creators based on their talent and mastery of layout creation. We don't want to create a system that rewards and provides recognition to simply anyone that just create layouts without putting any effort or thought into their works.\n\n"
+        "We also want to ensure that spark/planet grinders have a much more pleasant experience in playing the levels we rate. This is important for our reputation and image.\n\n"
+        "Besides, your goal in creating shouldn't be about being on par with any standards at all. It is heavily advised and incentivised to enjoy the creative process.\n\n"
+        "## Why are visuals and effects not evaluated in Rated Layouts?\n\n"
+        "Layouts are focused entirely on base gameplay and structuring, and base gameplay is judged in a completely different way in the aspect of idea+execution, song representation and playability.\n\n"
+        "Our rates are meant to explore gameplay in a deeper level. Decoration, visuals and effects have been explored for a very long time, so it's time for us to expand on what we can do with gameplay with the initiative of this mod.\n\n"
+        "While it's cool to wanting to conserve a thing that works, we shouldn't be shy of exploring new possibilities, because we aren't removing what worked at all; we're trying to expand upon it.\n\n"
+        "Our standards and criterias aren't meant to make it 'harder to get a rate,' but rather encourage people to want to be creative.\n\n"
+        "## What are the rating standards for Auto Layouts?\n\n"
+        "Contrast to regular layouts, auto layouts do not require any player input and are built specifically for the viewing experience. Because of this, Auto layouts are evaluated in a slightly different way, only prioritizing sync, pacing and note representation.\n\n"
+        "- The layout must be completely bug free, ensuring no player deaths will ever happen on any attempts.\n\n"
+        "- The player's icon must be visible at all times. Visuals, FX and shaders still do not apply in the judging system.\n\n"
+        "- The entire layout can be beaten without requiring a single player input.\n\n"
+        "Each rating tier still has the same description with the standards of non-auto layouts.\n\n"
+        "What are banned gameplay styles, and why are they banned?\n\n"
+        "The following list provides the gameplay styles that are banned in our rating criterias (will be updated in the future based on trends):\n\n"
+        "- Robtop (1.0-1.7) / Map Packs / 1.0 Style"
+        "- Layouts with gameplay that fully replicate the base gameplay of the following list demon levels, without any expansion/improvement/innovation on the style:\n\n"
+        "**(i.e. Slaughterhouse, Grief, KOCMOC, Silent Clubstep, Superhatemeworld, Every End, Sonic Wave Infinity and Nullscapes)**\n\n"
+        "- Challenge levels\n\n"
+        "- Troll levels\n\n"
+        "- 'Sh**ty levels' that are nerfed versions of existing levels remade with 1.0 blocks"
+        "- Layouts that overdo the concept of rotating default blocks **(i.e. KJackpot/SciPred style)**\n\n"
+        "These specific styles are banned due to how convenient they are to replicate and mass produce into generic levels. We fully discourage this to ensure our rates are valueable and meaningful.\n\n"
+        "The goal is to make sure Rated Layouts are much more tolerable to play for players, alongside rewarding creators for their talent and mastery in gameplay skills.\n\n"
+        "<co>Note that if you can create a fresh, original take on a banned style, it could be rated anyway. We value how creatively you can use a style.</c>",
+        "OK")
+        ->show();
+}
+
+void RLGuideInfoPopup::onOthers(CCObject* sender) {
+    MDPopup::create(
+        "Other FAQs",
+        "##  I believe a certain RL Extreme Demon deserves a higher/lower rating tier. How do I address this?\n\n"
+        "Due to high difficulty that results in it much less accessible to average players, the playability judgement around layouts with said difficulty heavily rely on its victors' opinions. If there are issues regarding the layout with this difficulty deserving a lower/higher rating tier, it's up to the victors to report it and discuss with us. So if you're a victor of any RL extremes and would like to have a word about issues with it, please let us (the mod team) know!\n\n"
+        "The other two aspects are still required to decide its suitable rating tier, but only visually.\n\n"
+        "##  What is a Robtop/mappack/1.0 level? What characteristics define them?\n\n"
+        "A **Robtop-styled** level similar to the old main levels: Stereo madness, Back on track, Polargeist, Dry out, Can't let go, etc. A major indicator is abusing square/rectangle structures that only have default checker-like blocks inside, alongside having alot of basic and ground level fundamentals tied together without any sync (i.e. regular spike jumps and singular orb click)\n\n"
+        "**Mappack-styled** levels are about the same, but they sometimes take ideas from later levels (like xStep or Electroman adventures). They also tend to have weirder or more awkward gameplay. They're similar to 1.0 style.\n\n"
+        "And finally, 1.0-styled levels come from the pre-1.6 era (a bit ironic but yeah). They were usually variations of Robtop style with some more fresh ideas, but same exact look. A good example is [Demon Park](https://youtu.be/n75dhHnrEYs) or [The Nightmare](https://youtu.be/i0dlZgqA8ds)\n\n"
+        "<co>Note that we are NOT banning 1.0 block types.</c>\n\n"
+        "## Does Rated Layouts work the same way as a Geometry Dash Private Server (GDPS)?\n\n"
+        "**No.** Our system does not work the same way as a Geometry Dash Private Server (GDPS).\n\n"
+        "- Since the mod is integrated into RobTop's servers, we need to set a high bar for everyone in our standards and criterias instead of giving out free rates and ignoring quality control, which generally means alot of effort is required to be put in a layout for it to be eligible for a rate here.\n\n"
+        "- Moderator position is also not easily obtainable here, since generally you need to have a good application alongside having a good background (i.e. being an established gameplay creator, players that can reliably beat a lot of extremes with good gameplay analysis skills, etc)\n\n"
+        "- We do not have an exclusive way to 'upload' levels. You upload levels the same way you do in the base game. This mod serves as an integrated separate rating system for levels in RobTop's servers, not host a different server entirely.\n\n"
+        "<cl>**TLDR:** We are not a private server, and we don't do 'free rates' and 'free moderator position' here. You also upload levels the same way you do in the base game.</c>\n\n"
+        "## Where is the layout and its rate stored? Do you need to upload it differently?n\n\n"
+        "No. You can upload your layout normally, and then it's given a separate rate on RL. The rate is stored on RL, the layout itself is stored on Robtop's servers.\n\n"
+        "## Will there be mythic rating tier?\n\n"
+        "᠌**No. Mythic is unnecessary**, since we already have fairly high standards for legendary. If we were to add mythic, only a few levels ever would have it, which is pointless.\n\n",
+        "OK")
+        ->show();
+}

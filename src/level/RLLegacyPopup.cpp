@@ -224,21 +224,12 @@ bool RLLegacyPopup::init() {
 void RLLegacyPopup::onInfoButton(CCObject* sender) {
     MDPopup::create(
         "Legacy Rated Layouts",
-        "<cl>**Legacy Rated Layouts**</c> is a <cg>special rating tier "
-        "dedicated</c> to "
-        "layouts that got <co>rated before the standards and rating system "
-        "change</c> "
-        "proposed by the <cr>new three classic admins</c> back in <cg>**February 2026**</c> ([Sokuto](user:9135587), [ATXM](user:10092120) & [qoid](user:13603703)). "
-        "and <cy>three platformer admins</c> back in <cg>**March 2026**</c> ([Silence](user:29642529), [Dragonix](user:21168469) & [Yonabi](user:23635690)).\n\n"
-        "**This <cg>rating tier</c> is <cl>reserved for layouts</c> that are <cc>affected by the "
-        "latest standards and criterias</c>** required to get a rate. This feature is "
-        "<cg>added in order to prevent confusion</c> or <co>false reports from new players</c> "
-        "of the mod and serve as a <cf>respect for players who have previously "
-        "beaten</c> the <cl>affected layouts</c>.\n\n"
-        "This <cg>special rating tier</c> cannot be <co>awarded to layouts "
-        "rated</c> after the change of <cc>standards and criterias</c> and <cr>does not reward creators any Blueprint Points</c>.\n\n"
-        "<cl>Sparks</c>/<co>Planets</c> that are <cc>grayscaled</c> are layouts that is "
-        "<cr>not rated</c> but is a <cl>legacy rate</c>.",
+        "<cl>**Legacy Rated Layouts**</c> is a <cg>special rating tier dedicated</c> to layouts that got <co>rated before the standards and rating system change</c> proposed by the <cr>new three classic admins</c> back in <cg>**February 2026**</c> ([Sokuto](user:9135587), [ATXM](user:10092120) & [qoid](user:13603703)) "
+        "and the <cy>three platformer admins</c> back in <cg>**March 2026**</c> ([Silence](user:29642529), [Dragonix](user:21168469) & [Yonabi](user:23635690)).\n\n"
+        "**This <cg>rating tier</c> is <cl>reserved for layouts</c> that are <cc>affected by the latest standards and criteria</c>** required to get a rate. This feature was "
+        "<cg>added in order to prevent confusion</c> or <co>false reports from new players</c> of the mod and to serve as a <cf>respect for players who have previously beaten</c> the <cl>affected layouts</c>.\n\n"
+        "This <cg>special rating tier</c> cannot be <co>awarded to layouts rated</c> after the change of <cc>standards and criteria</c> and <cr>does not reward creators any Blueprint Points</c>.\n\n"
+        "<cl>Sparks</c>/<co>Planets</c> that are <cc>grayscaled</c> are layouts that are <cr>not rated</c> but are a <cl>legacy rate</c>.",
         "OK")
         ->show();
 }

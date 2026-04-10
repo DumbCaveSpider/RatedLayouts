@@ -137,12 +137,12 @@ bool RLDonationPopup::init() {
     // menu for da buttons yes
     auto donoMenu = CCMenu::create();
     donoMenu->setPosition({m_mainLayer->getContentWidth() / 2.f, 20});
-    donoMenu->setContentSize({m_mainLayer->getContentWidth(), 40.f});
+    donoMenu->setContentSize({m_mainLayer->getContentWidth() - 20.f, 40.f});
     donoMenu->setLayout(RowLayout::create()->setGap(5.f)->setAxisAlignment(AxisAlignment::Center)->setAxisReverse(false));
     m_mainLayer->addChild(donoMenu);
 
     // badge request button
-    auto getBadgeSpr = ButtonSprite::create("Get Badge?", "goldFont.fnt", "GJ_button_01.png");
+    auto getBadgeSpr = ButtonSprite::create("Claim Badge?", "goldFont.fnt", "GJ_button_01.png");
     auto getBadgeBtn = CCMenuItemSpriteExtra::create(getBadgeSpr, this, menu_selector(RLDonationPopup::onGetBadge));
     donoMenu->addChild(getBadgeBtn);
 
@@ -152,7 +152,7 @@ bool RLDonationPopup::init() {
     donoMenu->addChild(kofiBtn);
 
     // request supporter features
-    auto requestSpr = ButtonSprite::create("Request Features", "goldFont.fnt", "GJ_button_05.png");
+    auto requestSpr = ButtonSprite::create("Request", "goldFont.fnt", "GJ_button_05.png");
     auto requestBtn = CCMenuItemSpriteExtra::create(requestSpr, this, menu_selector(RLDonationPopup::onAccessBadge));  // same popup for now since we don't have a separate feature request system
     donoMenu->addChild(requestBtn);
 
