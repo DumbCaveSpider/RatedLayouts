@@ -76,7 +76,7 @@ void RLGuideInfoPopup::onAbout(CCObject* sender) {
         "<cg>**Leaderboard**</c>: The top-rated players ranked by blueprint stars and creator points.\n\n"
         "<cg>**Layout Gauntlets**</c>: Special themed layouts hosted by the Rated Layouts Team. This holds the <cl>Layout Creator Contests</c>!\n\n"
         "<cg>**The Spire**</c>: A tower-themed, platformer-focused, user-created <cl>Rated Layouts</c> level. Explore the Spire and find forsaken lore beyond the <cp>Cosmos</c>.\n\n"
-        "<cg>**Sent Layouts**</c>: Suggested or sent layouts by the Layout Moderators. The community can vote on these layouts based on their Design, Difficulty and Gameplay.\n\n"
+        "<cg>**Sent Layouts**</c>: Suggested or sent layouts by the Layout Moderators. The community can vote on these layouts based on their <cg>Originality</c>, <cr>Difficulty</c> and <co>Gameplay</c>.\n\n"
         "To access the <co>Community Vote</c>, you need to meet the following requirements:\n\n"
         "- <cr>For Demon Levels:</c> you have at least <cg>20% in Normal Mode</c> or <cf>80% in Practice Mode</c>\n"
         "- <cl>For Non-Demon Levels:</c> you have at least <cg>50% in Normal Mode</c> or <cf>100% in Practice Mode</c>\n"
