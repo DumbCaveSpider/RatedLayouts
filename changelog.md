@@ -32,7 +32,6 @@
 
 - Fixed a crash when deleting a comment with a nameplate crashes your game.
 - Added Back button for mods/admins when clicking the Sent Tab
-- Tweaked the **Legacy Rated Layouts** text
 - Rubies redeemed from the **Observatory** are now localy stored
 - Reset Rubies will also reset the redeemed codes
 - Added **goog** cat dialogue and achievement
@@ -70,8 +69,6 @@
 ## v0.4.3-beta.1
 
 - Added **Community Vote Leaderboard** to show the top voters in the community vote. (Found in the Community Vote popup)
-- Added info button on the difficulty sprite for levels marked as legacy (clickable for more information)
-- Added **Legacy Rated Layout** popup that displays extra details and the difficulty sprite when the info button is clicked
 - Added **Disable Stats Menu Animation** option in the mod settings
 - Added **Moderators Notes** section in the level info layer to show any notes from moderators about the level
 - Added **Vote Count** in the Profile Page.

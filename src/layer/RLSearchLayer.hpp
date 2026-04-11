@@ -41,7 +41,6 @@ public:
     CCMenuItemSpriteExtra* m_uncompletedItem = nullptr;
     CCMenuItemSpriteExtra* m_coinsVerifiedItem = nullptr;
     CCMenuItemSpriteExtra* m_coinsUnverifiedItem = nullptr;
-    CCMenuItemSpriteExtra* m_legacyItem = nullptr;
     bool m_platformerActive = false;
     bool m_classicActive = false;
     bool m_usernameActive = false;
@@ -49,7 +48,6 @@ public:
     bool m_uncompletedActive = false;
     bool m_coinsVerifiedActive = false;
     bool m_coinsUnverifiedActive = false;
-    bool m_legacyActive = false;
 
     // difficulty filter buttons
     CCMenu* m_difficultyFilterMenu = nullptr;
@@ -73,7 +71,6 @@ public:
     void onLegendaryToggle(CCObject* sender);
     void onEpicToggle(CCObject* sender);
     void onClassicToggle(CCObject* sender);
-    void onLegacyToggle(CCObject* sender);
     bool m_oldestActive = false;
     void onInfoButton(CCObject* sender);
     void onOldestToggle(CCObject* sender);

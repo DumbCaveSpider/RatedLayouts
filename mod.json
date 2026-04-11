@@ -237,12 +237,6 @@
 			"default": true,
 			"description": "Disable the Rated Layouts Menu Button in the Main Menu. <cy>Enable this if you don't use the Rated Layouts Menu and want a cleaner Main Menu.</cy>"
 		},
-		"disableLegacyInfo":{
-			"name": "Disable Legacy Rate Info",
-			"type": "bool",
-			"default": false,
-			"description": "Disable the info button for Legacy Rate"
-		},
 		"disableScrollbar": {
 			"name": "Disable Scrollbar",
 			"type": "bool",

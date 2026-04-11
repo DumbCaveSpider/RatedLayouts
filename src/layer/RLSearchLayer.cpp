@@ -398,15 +398,6 @@ bool RLSearchLayer::init() {
     m_coinsUnverifiedItem = coinsUnverifiedItem;
     optionsMenu->addChild(coinsUnverifiedItem);
 
-    // legacy toggle
-    auto legacySpr = ButtonSprite::create("Legacy", 120, true, "goldFont.fnt", "GJ_button_01.png", 30.f, 1.f);
-    auto legacyItem = CCMenuItemSpriteExtra::create(
-        legacySpr, this, menu_selector(RLSearchLayer::onLegacyToggle));
-    legacyItem->setScale(1.0f);
-    legacyItem->setID("legacy-toggle");
-    m_legacyItem = legacyItem;
-    optionsMenu->addChild(legacyItem);
-
     optionsMenu->updateLayout();
 
     // info button yay
@@ -515,8 +506,6 @@ void RLSearchLayer::onRandomButton(CCObject* sender) {
         params.emplace_back("coins", "1");
     if (m_coinsUnverifiedActive)
         params.emplace_back("uncoins", "1");
-    if (m_legacyActive)
-        params.emplace_back("legacy", "1");
     params.emplace_back("accountId",
         numToString(GJAccountManager::get()->m_accountID));
 
@@ -671,8 +660,6 @@ void RLSearchLayer::onSearchButton(CCObject* sender) {
         params.emplace_back("coins", "1");
     if (m_coinsUnverifiedActive)
         params.emplace_back("uncoins", "1");
-    if (m_legacyActive)
-        params.emplace_back("legacy", "1");
     params.emplace_back("accountId",
         numToString(GJAccountManager::get()->m_accountID));
 
@@ -729,18 +716,6 @@ void RLSearchLayer::onCoinsUnverifiedToggle(CCObject* sender) {
     if (btn) {
         btn->updateBGImage(m_coinsUnverifiedActive ? "GJ_button_02.png"
                                                    : "GJ_button_01.png");
-    }
-}
-
-void RLSearchLayer::onLegacyToggle(CCObject* sender) {
-    auto item = static_cast<CCMenuItemSpriteExtra*>(sender);
-    if (!item)
-        return;
-    m_legacyActive = !m_legacyActive;
-    auto normalNode = item->getNormalImage();
-    auto btn = static_cast<ButtonSprite*>(normalNode);
-    if (btn) {
-        btn->updateBGImage(m_legacyActive ? "GJ_button_02.png" : "GJ_button_01.png");
     }
 }
 

@@ -22,7 +22,6 @@ private:
     CCLabelBMFont* m_rankLabel = nullptr;
     CCLabelBMFont* m_coinRankLabel = nullptr;
     CCLabelBMFont* m_voteRankLabel = nullptr;
-    CCLabelBMFont* m_legacyPointsLabel = nullptr;
     LoadingSpinner* m_spinner = nullptr;
     CCMenu* m_facesContainer = nullptr;
     RowLayout* m_facesLayout = nullptr;

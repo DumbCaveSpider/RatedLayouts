@@ -10,7 +10,6 @@
 #include "../include/RLAchievements.hpp"
 #include "../include/RLConstants.hpp"
 #include "../level/RLCommunityVotePopup.hpp"
-#include "../level/RLLegacyPopup.hpp"
 #include "../level/RLModRatePopup.hpp"
 #include "../include/RLRubyUtils.hpp"
 #include "Geode/cocos/textures/CCTexture2D.h"
@@ -177,7 +176,6 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
 
             auto json = jsonRes.unwrap();
             bool isSuggested = json["isSuggested"].asBool().unwrapOrDefault();
-            bool isLegacy = json["legacy"].asBool().unwrapOrDefault();
 
             // Process the response immediately
             if (layerRef) {
@@ -198,27 +196,17 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
         });
     }
     void processLevelRating(const matjson::Value& json,
-        Ref<RLLevelInfoLayer> layerRef,
-        bool grayRing = false) {
+        Ref<RLLevelInfoLayer> layerRef) {
         if (!layerRef)
             return;
         int difficulty = json["difficulty"].asInt().unwrapOrDefault();
         int featured = json["featured"].asInt().unwrapOrDefault();
-        bool isLegacy = json["legacy"].asBool().unwrapOrDefault();
         bool isRated = json["rated"].asBool().unwrapOrDefault();
 
-        if (!grayRing)  // this is just a fallback lol
-            grayRing = (isLegacy && !isRated);
+        (void)isRated;
         CCNode* difficultySprite = nullptr;
         if (layerRef) {
             difficultySprite = layerRef->getChildByID("difficulty-sprite");
-            if (difficultySprite) {
-                auto existingLegacy =
-                    difficultySprite->getChildByID("rl-legacy-info-menu");
-                if (existingLegacy) {
-                    existingLegacy->setPosition({0, 0});
-                }
-            }
         }
 
         // helper to remove existing button
@@ -260,31 +248,6 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             }
         } else {
             removeExistingCommunityBtn();
-        }
-
-        // if this rating came from the legacy system, add a small info button
-        if (isLegacy && !Mod::get()->getSettingValue<bool>("disableLegacyInfo")) {
-            // don't recreate if already present
-            if (difficultySprite &&
-                !difficultySprite->getChildByID("rl-legacy-info-menu")) {
-                auto infoSpr = CCSprite::createWithSpriteFrameName("RL_info01.png"_spr);
-                infoSpr->setScale(0.3f);
-
-                auto infoBtn = CCMenuItemSpriteExtra::create(
-                    infoSpr, layerRef, menu_selector(RLLevelInfoLayer::onLegacyInfo));
-                infoBtn->setID("rl-legacy-info-btn");
-                // shift button further down for non-demon difficulties (1–9)
-                float yPos = difficultySprite->getContentSize().height - 20;
-                infoBtn->setPosition(
-                    {difficultySprite->getContentSize().width - 20, yPos});
-
-                auto infoMenu = CCMenu::createWithItem(infoBtn);
-                infoMenu->setID("rl-legacy-info-menu");
-                infoMenu->setPosition({0, 0});
-                infoMenu->setContentSize({difficultySprite->getContentSize().width,
-                    difficultySprite->getContentSize().height});
-                difficultySprite->addChild(infoMenu, 100);
-            }
         }
 
         // If no difficulty rating, nothing to apply
@@ -763,29 +726,17 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
 
             CCSprite* starIcon = nullptr;
             // Choose icon based on platformer flag: planets for platformer levels;
-            // grayscale if the rating is legacy but unrated (grayRing)
             if (layerRef && layerRef->m_level && layerRef->m_level->isPlatformer()) {
-                if (grayRing) {
-                    starIcon = CCSpriteGrayscale::createWithSpriteFrameName(
-                        "RL_planetSmall.png"_spr);
-                    if (!starIcon)
-                        starIcon = CCSpriteGrayscale::create("RL_planetMed.png"_spr);
-                } else {
+                starIcon =
+                    CCSprite::createWithSpriteFrameName("RL_planetSmall.png"_spr);
+                if (!starIcon)
                     starIcon =
-                        CCSprite::createWithSpriteFrameName("RL_planetSmall.png"_spr);
-                    if (!starIcon)
-                        starIcon =
-                            CCSprite::createWithSpriteFrameName("RL_planetMed.png"_spr);
-                }
+                        CCSprite::createWithSpriteFrameName("RL_planetMed.png"_spr);
             }
+
             if (!starIcon) {
-                if (grayRing) {
-                    starIcon = CCSpriteGrayscale::createWithSpriteFrameName(
-                        "RL_starSmall.png"_spr);
-                } else {
-                    starIcon =
-                        CCSprite::createWithSpriteFrameName("RL_starSmall.png"_spr);
-                }
+                starIcon =
+                    CCSprite::createWithSpriteFrameName("RL_starSmall.png"_spr);
             }
             if (starIcon) {
                 starIcon->setPosition(
@@ -919,11 +870,8 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                 if (legendaryFeaturedCoin)
                     legendaryFeaturedCoin->removeFromParent();
                 if (!featuredCoin) {
-                    auto newFeaturedCoin =
-                        grayRing ? CCSpriteGrayscale::createWithSpriteFrameName(
-                                       "RL_featuredCoin.png"_spr)
-                                 : CCSprite::createWithSpriteFrameName(
-                                       "RL_featuredCoin.png"_spr);
+                    auto newFeaturedCoin = CCSprite::createWithSpriteFrameName(
+                        "RL_featuredCoin.png"_spr);
                     newFeaturedCoin->setPosition(
                         {difficultySprite2->getContentSize().width / 2,
                             difficultySprite2->getContentSize().height / 2});
@@ -937,11 +885,8 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                 if (legendaryFeaturedCoin)
                     legendaryFeaturedCoin->removeFromParent();
                 if (!epicFeaturedCoin) {
-                    auto newEpicCoin = grayRing
-                                           ? CCSpriteGrayscale::createWithSpriteFrameName(
-                                                 "RL_epicFeaturedCoin.png"_spr)
-                                           : CCSprite::createWithSpriteFrameName(
-                                                 "RL_epicFeaturedCoin.png"_spr);
+                    auto newEpicCoin = CCSprite::createWithSpriteFrameName(
+                        "RL_epicFeaturedCoin.png"_spr);
                     newEpicCoin->setPosition(
                         {difficultySprite2->getContentSize().width / 2,
                             difficultySprite2->getContentSize().height / 2});
@@ -976,11 +921,8 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                 if (epicFeaturedCoin)
                     epicFeaturedCoin->removeFromParent();
                 if (!legendaryFeaturedCoin) {
-                    auto newLegendaryCoin =
-                        grayRing ? CCSpriteGrayscale::createWithSpriteFrameName(
-                                       "RL_legendaryFeaturedCoin.png"_spr)
-                                 : CCSprite::createWithSpriteFrameName(
-                                       "RL_legendaryFeaturedCoin.png"_spr);
+                    auto newLegendaryCoin = CCSprite::createWithSpriteFrameName(
+                        "RL_legendaryFeaturedCoin.png"_spr);
                     newLegendaryCoin->setPosition(
                         {difficultySprite2->getContentSize().width / 2,
                             difficultySprite2->getContentSize().height / 2});
@@ -1325,9 +1267,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
         bool forceShow = false) {
         int difficulty = json["difficulty"].asInt().unwrapOrDefault();
         int featured = json["featured"].asInt().unwrapOrDefault();
-        bool isLegacy = json["legacy"].asBool().unwrapOrDefault();
         bool isRated = json["rated"].asBool().unwrapOrDefault();
-        bool grayRing = (isLegacy && !isRated);
 
         // handle community vote button visibility when level updates are fetched
         bool showCommunity = forceShow;
@@ -1523,27 +1463,16 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             // Choose icon based on platformer flag: planets for platformer levels
             CCSprite* starIcon = nullptr;
             if (layerRef && layerRef->m_level && layerRef->m_level->isPlatformer()) {
-                if (grayRing) {
-                    starIcon = CCSpriteGrayscale::createWithSpriteFrameName(
-                        "RL_planetSmall.png"_spr);
-                    if (!starIcon)
-                        starIcon = CCSpriteGrayscale::create("RL_planetMed.png"_spr);
-                } else {
+                starIcon =
+                    CCSprite::createWithSpriteFrameName("RL_planetSmall.png"_spr);
+                if (!starIcon)
                     starIcon =
-                        CCSprite::createWithSpriteFrameName("RL_planetSmall.png"_spr);
-                    if (!starIcon)
-                        starIcon =
-                            CCSprite::createWithSpriteFrameName("RL_planetMed.png"_spr);
-                }
+                        CCSprite::createWithSpriteFrameName("RL_planetMed.png"_spr);
             }
+
             if (!starIcon) {
-                if (grayRing) {
-                    starIcon = CCSpriteGrayscale::createWithSpriteFrameName(
-                        "RL_starSmall.png"_spr);
-                } else {
-                    starIcon =
-                        CCSprite::createWithSpriteFrameName("RL_starSmall.png"_spr);
-                }
+                starIcon =
+                    CCSprite::createWithSpriteFrameName("RL_starSmall.png"_spr);
             }
             if (starIcon) {
                 starIcon->setScale(0.75f);
@@ -1741,13 +1670,6 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                     "level.";
             }
             FLAlertLayer::create("Incorrect Permission", desc.c_str(), "OK")->show();
-        }
-    }
-
-    void onLegacyInfo(CCObject* sender) {
-        auto popup = RLLegacyPopup::create(this->m_level);
-        if (popup) {
-            popup->show();
         }
     }
 
@@ -2022,7 +1944,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                         }
 
                         auto json = jsonRes.unwrap();
-                        // parse server role booleans instead of legacy integer
+                        // parse server role booleans instead of older integer encoding
                         bool isClassicMod =
                             json["isClassicMod"].asBool().unwrapOrDefault();
                         bool isClassicAdmin =
@@ -2189,7 +2111,6 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                     auto json = response.json().unwrap();
 
                     bool isSuggested = json["isSuggested"].asBool().unwrapOrDefault();
-                    bool isLegacy = json["legacy"].asBool().unwrapOrDefault();
                     int difficulty = json["difficulty"].asInt().unwrapOrDefault();
 
                     if (!isSuggested && difficulty > 0) {
@@ -2208,11 +2129,6 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                                 difficultySprite->getChildByID("rl-star-label");
                             if (starLabel)
                                 starLabel->removeFromParent();
-                            // remove legacy info button if it was added
-                            auto legacyMenu =
-                                difficultySprite->getChildByID("rl-legacy-info-menu");
-                            if (legacyMenu)
-                                legacyMenu->removeFromParent();
 
                             // revert any applied difficulty Y offset and coin shifts
                             if (layerRef->m_fields->m_originalYSaved) {
