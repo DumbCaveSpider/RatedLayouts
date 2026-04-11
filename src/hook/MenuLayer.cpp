@@ -1,6 +1,7 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/MenuLayer.hpp>
 #include "../layer/RLMenuLayer.hpp"
+#include "../include/RLNetworkUtils.hpp"
 
 using namespace geode::prelude;
 
@@ -23,6 +24,15 @@ class $modify(RLHookMenuLayer, MenuLayer) {
             mainMenu->updateLayout();
         }
 
+        if (rl::isGDPS()) {
+            FLAlertLayer::create(
+                "Alert from Rated Layouts",
+                "<cl>Rated Layouts</c> does <cr>not work</c> on <co>GDPS.</c>\n"
+                "<cy>Please disable Rated Layouts when playing on a GDPS.</c>",
+                "OK")
+                ->show();
+        }
+
         return true;
     }
 
@@ -35,6 +45,16 @@ class $modify(RLHookMenuLayer, MenuLayer) {
                 ->show();
             return;
         }
+
+        if (rl::isGDPS()) {
+            FLAlertLayer::create(
+                "Rated Layouts",
+                "This feature is not available on <cy>GDPS servers.</c>",
+                "OK")
+                ->show();
+            return;
+        }
+
         auto layer = RLMenuLayer::create();
         auto scene = CCScene::create();
         scene->addChild(layer);

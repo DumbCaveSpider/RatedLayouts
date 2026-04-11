@@ -2,6 +2,7 @@
 #include <Geode/modify/LevelSearchLayer.hpp>
 
 #include "../layer/RLMenuLayer.hpp"
+#include "../include/RLNetworkUtils.hpp"
 
 using namespace geode::prelude;
 
@@ -31,6 +32,15 @@ class $modify(RLLevelSearchLayer, LevelSearchLayer) {
                 ->show();
             return;
         }
+
+        if (rl::isGDPS()) {
+            FLAlertLayer::create(
+                "Rated Layouts",
+                "This feature is not available on <cy>GDPS servers.</c>",
+                "OK")
+                ->show();
+            return;
+        }
         auto layer = RLMenuLayer::create();
         auto scene = CCScene::create();
         scene->addChild(layer);
@@ -38,5 +48,3 @@ class $modify(RLLevelSearchLayer, LevelSearchLayer) {
         CCDirector::sharedDirector()->pushScene(transitionFade);
     }
 };
-
-

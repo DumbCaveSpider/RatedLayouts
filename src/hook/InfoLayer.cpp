@@ -4,6 +4,7 @@
 #include <Geode/utils/async.hpp>
 
 #include "../include/RLConstants.hpp"
+#include "../include/RLNetworkUtils.hpp"
 #include "../level/RLModsNotesPopup.hpp"
 #include "../level/RLReportPopup.hpp"
 
@@ -102,6 +103,16 @@ class $modify(RLLInfoLayer, InfoLayer) {
                 ->show();
             return;
         }
+
+        if (rl::isGDPS()) {
+            FLAlertLayer::create(
+                "Rated Layouts",
+                "This feature is not available on <cy>GDPS servers.</c>",
+                "OK")
+                ->show();
+            return;
+        }
+
         auto reportPopup = RLReportPopup::create(m_level->m_levelID);
         if (reportPopup)
             reportPopup->show();
@@ -112,6 +123,15 @@ class $modify(RLLInfoLayer, InfoLayer) {
             FLAlertLayer::create("Rated Layouts",
                 "You must be <cg>logged in</c> to access this "
                 "feature in <cl>Rated Layouts.</c>",
+                "OK")
+                ->show();
+            return;
+        }
+
+        if (rl::isGDPS()) {
+            FLAlertLayer::create(
+                "Rated Layouts",
+                "This feature is not available on <cy>GDPS servers.</c>",
                 "OK")
                 ->show();
             return;
