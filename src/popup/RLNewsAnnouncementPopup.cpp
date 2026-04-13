@@ -112,7 +112,7 @@ bool RLNewsAnnouncementPopup::init() {
     }
 
     m_bodyText = MDTextArea::create(
-        "Select an announcement from the list to view its content.",
+        "<cy>No Announcements</c>",
         {280.f, cs.height - 60.f});
     if (m_bodyText) {
         m_bodyText->setPosition({listSize.width + (cs.width - listSize.width - 60.f) / 2.f + 40.f,
@@ -130,7 +130,7 @@ bool RLNewsAnnouncementPopup::init() {
 
     Ref<RLNewsAnnouncementPopup> self = this;
     m_fetchTask.spawn(
-        web::WebRequest().get(std::string(rl::BASE_API_URL) + "/getAllAnnoucement"),
+        web::WebRequest().get(std::string(rl::BASE_API_URL) + "/getAllAnnouncement"),
         [self](web::WebResponse const& res) {
             if (!self)
                 return;

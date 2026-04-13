@@ -160,7 +160,6 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             bool isSuggested = json["isSuggested"].asBool().unwrapOrDefault();
             layerRef->processLevelRating(json, layerRef);
             if (!isSuggested) {
-                layerRef->repositionRubyUI();
                 layerRef->addOrUpdateRubyUI(
                     layerRef, json["difficulty"].asInt().unwrapOrDefault());
                 layerRef->m_fields->m_orbsShiftApplied = true;
@@ -178,7 +177,6 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             bool isSuggested = json["isSuggested"].asBool().unwrapOrDefault();
             layerRef->processLevelRating(json, layerRef);
             if (!isSuggested) {
-                layerRef->repositionRubyUI();
                 layerRef->addOrUpdateRubyUI(
                     layerRef, json["difficulty"].asInt().unwrapOrDefault());
                 layerRef->m_fields->m_orbsShiftApplied = true;
@@ -198,7 +196,8 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             }
 
             if (!response.ok()) {
-                log::warn("Server returned non-ok status: {}", response.code());
+                log::debug("Server returned non-ok status: {}", response.code());
+                rl::removeCachedLevelRating(layerRef->m_level ? layerRef->m_level->m_levelID : 0);
                 return;
             }
 
@@ -215,7 +214,9 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             if (layerRef) {
                 layerRef->processLevelRating(json, layerRef);
                 if (!isSuggested) {
-                    layerRef->repositionRubyUI();
+                    if (!layerRef->m_fields->m_hasAppliedRubiesOffset) {
+                        layerRef->repositionRubyUI();
+                    }
                     layerRef->addOrUpdateRubyUI(
                         layerRef, json["difficulty"].asInt().unwrapOrDefault());
                     layerRef->m_fields->m_orbsShiftApplied = true;
@@ -2189,13 +2190,29 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             auto getReq = web::WebRequest();
             Ref<RLLevelInfoLayer> layerRef = this;
 
-            if (auto cachedJson = rl::getCachedLevelRating(levelId)) {
+            auto cachedJson = rl::getCachedLevelRating(levelId);
+            if (cachedJson) {
+                bool isSuggested = (*cachedJson)["isSuggested"].asBool().unwrapOrDefault();
+                int difficulty = (*cachedJson)["difficulty"].asInt().unwrapOrDefault();
+                if (isSuggested || difficulty == 0) {
+                    log::info(
+                        "Level ID {} is not a Rated Layout according to cache (suggested={} difficulty={}); clearing stale cache entry",
+                        levelId,
+                        isSuggested,
+                        difficulty);
+                    rl::removeCachedLevelRating(levelId);
+                    cachedJson = std::nullopt;
+                }
+            }
+
+            if (cachedJson) {
                 log::info("Using cached rating data for level ID: {}", levelId);
                 auto json = *cachedJson;
                 bool isSuggested = json["isSuggested"].asBool().unwrapOrDefault();
                 int difficulty = json["difficulty"].asInt().unwrapOrDefault();
                 if (!isSuggested && difficulty > 0) {
                     layerRef->addOrUpdateRubyUI(layerRef, difficulty);
+                    layerRef->m_fields->m_hasAppliedRubiesOffset = true;
                 }
                 layerRef->processLevelRating(json, layerRef);
             } else if (auto staleJson = rl::getStaleLevelRating(levelId)) {
@@ -2205,6 +2222,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                 int difficulty = json["difficulty"].asInt().unwrapOrDefault();
                 if (!isSuggested && difficulty > 0) {
                     layerRef->addOrUpdateRubyUI(layerRef, difficulty);
+                    layerRef->m_fields->m_hasAppliedRubiesOffset = true;
                 }
                 layerRef->processLevelRating(json, layerRef);
             }
@@ -2222,9 +2240,9 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                         return;
                     }
 
-                    // If server returned non-ok, its okay, just remove existing
-                    // data... sob
+                    // If server returned non-ok, remove stale cached rating and clear UI if needed
                     if (!response.ok()) {
+                        log::debug("Server returned non-ok status for level {}: {}", levelId, response.code());
                         if (response.code() == 404) {
                             auto difficultySprite =
                                 layerRef->getChildByID("difficulty-sprite");
@@ -2239,6 +2257,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                                     starLabel->removeFromParent();
                             }
                         }
+                        rl::removeCachedLevelRating(levelId);
                         return;
                     }
 
@@ -2247,13 +2266,25 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                     }
 
                     auto json = response.json().unwrap();
-                    rl::setCachedLevelRating(levelId, json);
 
                     bool isSuggested = json["isSuggested"].asBool().unwrapOrDefault();
                     int difficulty = json["difficulty"].asInt().unwrapOrDefault();
 
+                    if (isSuggested || difficulty == 0) {
+                        log::info(
+                            "Server reports level {} is no longer rated (suggested={} difficulty={}); clearing cache",
+                            levelId,
+                            isSuggested,
+                            difficulty);
+                        rl::removeCachedLevelRating(levelId);
+                    } else {
+                        rl::setCachedLevelRating(levelId, json);
+                    }
+
                     if (!isSuggested && difficulty > 0) {
                         layerRef->addOrUpdateRubyUI(layerRef, difficulty);
+                        layerRef->m_fields->m_orbsShiftApplied = true;
+                        layerRef->m_fields->m_hasAppliedRubiesOffset = true;
                     }
 
                     if (difficulty == 0) {
@@ -2353,6 +2384,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                 m_orbsIcon->setPositionY(m_orbsIcon->getPositionY() + 10);
                 m_orbsLabel->setPositionY(m_orbsIcon->getPositionY());
             }
+            m_fields->m_orbsShiftApplied = true;
             m_fields->m_hasAppliedRubiesOffset = true;
         }
     }
@@ -2360,7 +2392,8 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
     void onUpdate(CCObject* sender) {
         LevelInfoLayer::onUpdate(sender);
         if (this->m_level && this->m_level->m_levelID != 0) {
-            log::debug("refreshing level info for level ID: {}", this->m_level->m_levelID);
+            int levelId = this->m_level->m_levelID;
+            log::debug("refreshing level info for level ID: {}", levelId);
             this->fetchRLLevelInfo();
         }
     }

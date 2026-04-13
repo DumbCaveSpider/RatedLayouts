@@ -1,6 +1,8 @@
 ## v1.0.7
 
 - Remove Top Creator toggler.
+- Fixed the cache clearing not working correctly when the server returns non-ok status.
+- Fixed the Rubies position offset incorrectly when fetching a level that is cached.
 - Tweaked the **Event Layouts** animation to be similar to Vanilla Daily Level animation.
 - Improved the **News Annoucements** to include past announcements and a better layout.
 

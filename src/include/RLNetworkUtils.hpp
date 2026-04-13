@@ -329,9 +329,9 @@ namespace rl {
 
     inline void removeCachedLevelRating(int levelId) {
         std::lock_guard lock(RequestCacheMutex);
-        if (LevelRatingCache.erase(levelId) > 0) {
-            removeRequestCacheEntry("levelRatingCache", levelId);
-        }
+        LevelRatingCache.erase(levelId);
+        removeRequestCacheEntry("levelRatingCache", levelId);
+        log::debug("Removed cached level rating for level {}", levelId);
     }
 
     inline bool isGDPS() {
