@@ -136,7 +136,7 @@ bool RLLeaderboardLayer::init() {
     infoMenu->addChild(m_refreshBtn);
 
     auto creatorTypeIcon = CCSpriteGrayscale::createWithSpriteFrameName("RL_blueprintPoint01.png"_spr);
-    if (creatorTypeIcon) {
+    if (creatorTypeIcon && !Mod::get()->getSettingValue<bool>("disableCreatorPointsToggle")) {
         auto creatorTypeOff = EditorButtonSprite::create(
             CCSpriteGrayscale::createWithSpriteFrameName("RL_blueprintPoint01.png"_spr),
             EditorBaseColor::Gray,
@@ -264,8 +264,8 @@ void RLLeaderboardLayer::onLeaderboardTypeButton(CCObject* sender) {
         m_creatorTypeToggleBtn->setEnabled(creatorVisible);
         if (creatorVisible) {
             CCSprite* icon = m_creatorType6
-                ? CCSprite::createWithSpriteFrameName("RL_blueprintPoint01.png"_spr)
-                : CCSpriteGrayscale::createWithSpriteFrameName("RL_blueprintPoint01.png"_spr);
+                                 ? CCSprite::createWithSpriteFrameName("RL_blueprintPoint01.png"_spr)
+                                 : CCSpriteGrayscale::createWithSpriteFrameName("RL_blueprintPoint01.png"_spr);
             if (icon) {
                 auto creatorTypeSpr = EditorButtonSprite::create(
                     icon,
@@ -299,8 +299,8 @@ void RLLeaderboardLayer::onLeaderboardTypeButton(CCObject* sender) {
         m_creatorTypeToggleBtn->setEnabled(creatorVisible);
         if (creatorVisible) {
             CCSprite* icon = m_creatorType6
-                ? CCSprite::createWithSpriteFrameName("RL_blueprintPoint01.png"_spr)
-                : CCSpriteGrayscale::createWithSpriteFrameName("RL_blueprintPoint01.png"_spr);
+                                 ? CCSprite::createWithSpriteFrameName("RL_blueprintPoint01.png"_spr)
+                                 : CCSpriteGrayscale::createWithSpriteFrameName("RL_blueprintPoint01.png"_spr);
             if (icon) {
                 auto creatorTypeSpr = EditorButtonSprite::create(
                     icon,
@@ -318,8 +318,8 @@ void RLLeaderboardLayer::onCreatorTypeToggle(CCObject* sender) {
     m_creatorType6 = !m_creatorType6;
     if (m_creatorTypeToggleBtn) {
         CCSprite* icon = m_creatorType6
-            ? CCSprite::createWithSpriteFrameName("RL_blueprintPoint01.png"_spr)
-            : CCSpriteGrayscale::createWithSpriteFrameName("RL_blueprintPoint01.png"_spr);
+                             ? CCSprite::createWithSpriteFrameName("RL_blueprintPoint01.png"_spr)
+                             : CCSpriteGrayscale::createWithSpriteFrameName("RL_blueprintPoint01.png"_spr);
         if (icon) {
             auto creatorTypeSpr = EditorButtonSprite::create(
                 icon,

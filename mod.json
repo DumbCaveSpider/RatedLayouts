@@ -244,10 +244,16 @@
 			"description": "Disable the scrollbar in Rated Layouts leaderboards and level browser."
 		},
 		"disableCreatorPoints": {
-			"name": "Disable Creator Points",
+			"name": "Disable Blueprint Points",
 			"type": "bool",
 			"default": false,
-			"description": "Disable all related to Creator Points. <co>This is those who doesn't want to see creator points entirely as they see it as a competition.</c> <cr>Although this won't entirely remove it, it just gives a sense that it is.</c>"
+			"description": "Disable all related to Blueprint Points. <co>This is those who doesn't want to see blueprint points entirely as they see it as a competition.</c> <cr>Although this won't entirely remove it, it just gives a sense that it is.</c>"
+		},
+		"disableCreatorPointsToggle": {
+			"name": "Disable Blueprint Points Toggle",
+			"type": "bool",
+			"default": true,
+			"description": "Disable the toggler to show/hide blueprint points of creators who has interacted with the mod. <cy>By default it will always show the top creators regardless if that creator has used this mod or not.</c>"
 		},
 		"disableModInfo": {
 			"name": "Disable Mod Info",
