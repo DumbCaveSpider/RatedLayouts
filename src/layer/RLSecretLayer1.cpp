@@ -380,6 +380,17 @@ void RLSecretLayer1::startRedeemRequest() {
         self->finishRedeem();
     }
 
+    if (code == "goog") {
+            DialogObject* dialog1 = DialogObject::create("The Oracle", "goog", 2, 1.f, false, ccWHITE);
+
+            auto dialog = DialogLayer::createDialogLayer(dialog1, nullptr, 4);
+            dialog->addToMainScene();
+            dialog->animateInRandomSide();
+
+            rl::setDialogObjectIcon(dialog, dialog1->m_characterFrame);
+            self->finishRedeem();
+        }
+
     async::spawn(req.post(std::string(rl::BASE_API_URL) + "/getRubiesReward"),
         [self, code](web::WebResponse res) {
             if (!self) {

@@ -8,6 +8,9 @@ namespace rl {
     // Account ID of ArcticWoof.
     constexpr int DEV_ACCOUNT_ID = 7689052;
 
+    // Account ID of the backend developer.
+    constexpr int BACKEND_DEV_ACCOUNT_ID = 4882817;
+
     // Base URL for all Rated Layouts API endpoints.
     constexpr std::string_view BASE_API_URL = "https://gdrate.arcticwoof.xyz";
 
@@ -83,6 +86,14 @@ namespace rl {
     }
 
     // FLAlertLayer of the role information
+    inline void showDevInfo() {
+        FLAlertLayer::create(
+            "Rated Layouts Developer",
+            "<cf>This user</c> is a <cl>developer</c> of <cl>Rated Layouts</c>, responsible for maintaining the <co>backend</c>, <cp>Discord bots</c>, and other infrastructure outside of the mod client.",
+            "OK")
+            ->show();
+    }
+
     inline void showOwnerInfo() {
         FLAlertLayer::create(
             "Rated Layouts Owner",

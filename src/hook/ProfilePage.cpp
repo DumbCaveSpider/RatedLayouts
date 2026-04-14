@@ -698,6 +698,13 @@ class $modify(RLProfilePage, ProfilePage) {
                             addBadgeItem(ownerBadgeSprite, 10, "rl-profile-owner-badge:1");
                         }
                     }
+                    if (pageRef->m_accountID == rl::BACKEND_DEV_ACCOUNT_ID) {
+                        if (!usernameMenu->getChildByID("rl-profile-developer-badge:1")) {
+                            auto devBadgeSprite = CCSprite::createWithSpriteFrameName(
+                                "RL_badgeDeveloper.png"_spr);
+                            addBadgeItem(devBadgeSprite, 12, "rl-profile-developer-badge:1");
+                        }
+                    }
                     usernameMenu->updateLayout();
                 }
 

@@ -153,6 +153,9 @@ bool RLCreditsPopup::init() {
                 else if (text == "Rated Layouts Owner")
                     headerBadge =
                         CCSprite::createWithSpriteFrameName("RL_badgeOwner.png"_spr);
+                else if (text == "Rated Layouts Developer")
+                    headerBadge =
+                        CCSprite::createWithSpriteFrameName("RL_badgeDeveloper.png"_spr);
                 else if (text.find("Admin") != std::string::npos)
                     headerBadge =
                         CCSprite::createWithSpriteFrameName("RL_badgeAdmin01.png"_spr);
@@ -203,6 +206,8 @@ bool RLCreditsPopup::init() {
                     infoTag = 9;
                 else if (text == "Rated Layouts Owner")
                     infoTag = 10;
+                else if (text == "Rated Layouts Developer")
+                    infoTag = 12;
                 infoBtn->setTag(infoTag);
                 // place next to label
                 float infoWidth =
@@ -294,6 +299,13 @@ bool RLCreditsPopup::init() {
                 auto arr = json["owner"].asArray().unwrap();
                 for (auto& val : arr) {
                     addPlayer(val, true, false, false, false, false, false, true);
+                }
+            }
+            if (json.contains("developer") && json["developer"].isArray()) {
+                addHeader("Rated Layouts Developer");
+                auto arr = json["developer"].asArray().unwrap();
+                for (auto& val : arr) {
+                    addPlayer(val, false, false, false, false, false, false, false);
                 }
             }
             if (json.contains("classicAdmins") && json["classicAdmins"].isArray()) {
@@ -433,6 +445,9 @@ void RLCreditsPopup::onHeaderInfo(CCObject* sender) {
             break;
         case 10:  // Owner
             rl::showOwnerInfo();
+            break;
+        case 12:  // Developer
+            rl::showDevInfo();
             break;
         default:
             break;
