@@ -83,6 +83,11 @@ bool RLNotificationOverlay::init() {
         return true;
     }
 
+    if (Mod::get()->getSettingValue<bool>("disableNewRateInLevel")) {
+        log::info("notifications are disabled in level");
+        return true;
+    }
+
     this->schedule(schedule_selector(RLNotificationOverlay::callRateNotification),
         static_cast<float>(pollingInterval));
 
@@ -95,8 +100,8 @@ void RLNotificationOverlay::callRateNotification(float dt) {
         return;
     }
 
-    if (PlayLayer::get() && Mod::get()->getSettingValue<bool>("disableNewRateInLevel")) {
-        log::info("notifications are disabled in level");
+    if ((PlayLayer::get() || LevelEditorLayer::get()) && Mod::get()->getSettingValue<bool>("disableNewRateInLevel")) {
+        log::info("notifications are disabled in level/editor");
         return;
     }
 

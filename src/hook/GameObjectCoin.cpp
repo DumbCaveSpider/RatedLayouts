@@ -3,6 +3,7 @@
 #include <Geode/modify/EffectGameObject.hpp>
 #include <Geode/modify/GameObject.hpp>
 #include "../include/RLConstants.hpp"
+#include "../include/RLNetworkUtils.hpp"
 #include <algorithm>
 #include <vector>
 
@@ -13,13 +14,19 @@ bool g_verifiedCoins = false;
 
 // callback receives `true` only if request succeeded and coinVerified was true
 static void fetchCoinVerified(int levelId, std::function<void(bool)> cb) {
+    if (auto cachedJson = rl::getCachedLevelRating(levelId)) {
+        bool coinVerified = (*cachedJson)["coinVerified"].asBool().unwrapOr(false);
+        cb(coinVerified);
+        return;
+    }
+
     static async::TaskHolder<web::WebResponse> s_task;
     // cancel any previous request for freshness
     g_verifiedCoins = false;
     s_task.cancel();
     auto url =
         fmt::format("{}/fetch?levelId={}", std::string(rl::BASE_API_URL), levelId);
-    s_task.spawn(web::WebRequest().get(url), [cb](web::WebResponse res) {
+    s_task.spawn(web::WebRequest().get(url), [cb, levelId](web::WebResponse res) {
         if (!res.ok()) {
             cb(false);
             return;
@@ -29,8 +36,9 @@ static void fetchCoinVerified(int levelId, std::function<void(bool)> cb) {
             cb(false);
             return;
         }
-        bool coinVerified =
-            jsonRes.unwrap()["coinVerified"].asBool().unwrapOr(false);
+        auto json = jsonRes.unwrap();
+        rl::setCachedLevelRating(levelId, json);
+        bool coinVerified = json["coinVerified"].asBool().unwrapOr(false);
         cb(coinVerified);
     });
 }

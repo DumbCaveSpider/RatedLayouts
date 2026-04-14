@@ -9,6 +9,7 @@ class RLMenuLayer : public CCLayer {
 protected:
     bool init() override;
     void keyBackClicked() override;
+    void onEnterTransitionDidFinish() override;
 
     void onLeaderboard(CCObject* sender);
     void onFeaturedLayouts(CCObject* sender);
@@ -32,6 +33,7 @@ protected:
     void onBrowserButton(CCObject* sender);
     void onSecretDialogueButton(CCObject* sender);
     void onSupporterButton(CCObject* sender);
+    void showReadGuidePopup();
 
     // news / announcement UI
     CCMenuItemSpriteExtra* m_newsIconBtn = nullptr;

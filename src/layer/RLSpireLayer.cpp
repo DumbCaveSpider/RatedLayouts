@@ -103,11 +103,12 @@ void RLSpireLayer::onSpireClick(CCObject* sender) {
                 m_indexDia++;
                 break;
             case 2:
-                response = "Do you think that speaking to me will open it <cg>magically</c>?";
+                response = "Do you think speaking to me will open it <cg>magically</c>?";
                 m_indexDia++;
                 break;
             case 3:
-                response = "I heard <cp>The Oracle</c> is pretty <cl>knowledgeable</c>, maybe you should ask it about this <cf>Spire</c>.";
+                response = "I heard <cp>The Oracle</c> is pretty <cl>knowledgeable</c>. Maybe you should ask it about this <cf>Spire</c>.";
+                break;
             default:
                 m_indexDia = 0;
                 break;

@@ -1,5 +1,5 @@
 {
-	"geode": "5.4.1",
+	"geode": "5.6.1",
 	"gd": {
 		"win": "2.2081",
 		"android": "2.2081",
@@ -8,7 +8,7 @@
 	},
 	"id": "arcticwoof.rated_layouts",
 	"name": "Rated Layouts",
-	"version": "v1.0.3",
+	"version": "v1.0.7",
 	"developer": "ArcticWoof",
 	"description": "Play layout rated levels",
 	"resources": {
@@ -116,14 +116,14 @@
 		"disableNewRateInLevel": {
 			"name": "Disable Notification in Level",
 			"type": "bool",
-			"default": false,
+			"default": true,
 			"description": "Disables the notification that appears when a new rated/event layout occurred while you are in a level. <cy>Enable this if you find the notification distracting while playing.</cy>",
 			"enable-if": "!disableNewRate"
 		},
 		"notiScale": {
 			"type": "float",
 			"name": "Notification Scale",
-			"default": 1.0,
+			"default": 0.5,
 			"description": "Set the scale of the newly rated/event layout notification. <cy>Minimum is 0.1, and Maximum is 1.0.</cy>",
 			"min": 0.1,
 			"max": 1.0,
@@ -231,11 +231,11 @@
 			"type": "title",
 			"name": "Miscellaneous Settings"
 		},
-		"disableLegacyInfo":{
-			"name": "Disable Legacy Rate Info",
+		"disableMenuButton": {
+			"name": "Disable Rated Layouts Menu Button",
 			"type": "bool",
-			"default": false,
-			"description": "Disable the info button for Legacy Rate"
+			"default": true,
+			"description": "Disable the Rated Layouts Menu Button in the Main Menu. <cy>Enable this if you don't use the Rated Layouts Menu and want a cleaner Main Menu.</cy>"
 		},
 		"disableScrollbar": {
 			"name": "Disable Scrollbar",
@@ -244,16 +244,60 @@
 			"description": "Disable the scrollbar in Rated Layouts leaderboards and level browser."
 		},
 		"disableCreatorPoints": {
-			"name": "Disable Creator Points",
+			"name": "Disable Blueprint Points",
 			"type": "bool",
 			"default": false,
-			"description": "Disable all related to Creator Points. <co>This is those who doesn't want to see creator points entirely as they see it as a competition.</c> <cr>Although this won't entirely remove it, it just gives a sense that it is.</c>"
+			"description": "Disable all related to Blueprint Points. <co>This is those who doesn't want to see blueprint points entirely as they see it as a competition.</c> <cr>Although this won't entirely remove it, it just gives a sense that it is.</c>"
+		},
+		"disableCreatorPointsToggle": {
+			"name": "Disable Blueprint Points Toggle",
+			"type": "bool",
+			"default": true,
+			"enable-if": "!disableCreatorPoints",
+			"description": "Disable the toggler to show/hide blueprint points of creators who has interacted with the mod. <cy>By default it will always show the top creators regardless if that creator has used this mod or not.</c>"
 		},
 		"disableModInfo": {
 			"name": "Disable Mod Info",
 			"type": "bool",
 			"default": false,
 			"description": "Disables the mod info shown in the Rated Layouts Creator Layer."
-		}
+        },
+		"titleCache": {
+			"type": "title",
+			"name": "Cache Settings"
+		},
+        "requestCacheLifetime": {
+            "type": "int",
+            "name": "Request Cache Lifetime (Seconds)",
+            "default": 300,
+            "description": "Keep comment role and level rating fetch results cached for this many seconds. <cy>Lower values refresh more often.</c>",
+            "min": 0,
+            "max": 86400,
+            "control": {
+                "arrows": true,
+                "slider": false,
+                "input": true,
+                "arrow-step": 10
+            }
+        },
+        "requestCacheMaxItems": {
+            "type": "int",
+            "name": "Request Cache Max Items",
+            "default": 100,
+            "description": "Limit how many comment role and level rating cache entries are stored in memory. <cy>Set to 0 for unlimited.</c>",
+            "min": 0,
+            "max": 1000,
+            "control": {
+                "arrows": true,
+                "slider": false,
+                "input": true,
+                "arrow-step": 10
+            }
+        },
+        "clearRequestCache": {
+            "type": "custom:rl-clear-cache-button",
+            "name": "Clear Request Cache",
+            "description": "Clears the comment role and level rating cache stored by Rated Layouts."
+        }
 	}
 }

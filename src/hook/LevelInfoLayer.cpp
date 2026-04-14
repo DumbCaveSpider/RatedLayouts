@@ -10,9 +10,9 @@
 #include "../include/RLAchievements.hpp"
 #include "../include/RLConstants.hpp"
 #include "../level/RLCommunityVotePopup.hpp"
-#include "../level/RLLegacyPopup.hpp"
 #include "../level/RLModRatePopup.hpp"
 #include "../include/RLRubyUtils.hpp"
+#include "../include/RLNetworkUtils.hpp"
 #include "Geode/cocos/textures/CCTexture2D.h"
 
 using namespace geode::prelude;
@@ -45,8 +45,10 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
         float m_originalCoin1Y = 0.0f;
         float m_originalCoin2Y = 0.0f;
         float m_originalCoin3Y = 0.0f;
+        int m_difficulty = 0;
         bool m_orbsShiftApplied =
             false;  // true when orbs-icon/label were shifted for ruby UI
+        bool m_isDeletingLevel = false;
         async::TaskHolder<web::WebResponse> m_submitTask;
         async::TaskHolder<web::WebResponse> m_accessTask;
         async::TaskHolder<Result<std::string>> m_authTask;
@@ -147,11 +149,40 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
 
         log::info("Level download finished, fetching rating data...");
 
-        // Fetch rating data from server
         int levelId = this->m_level ? this->m_level->m_levelID : 0;
         log::info("Fetching rating data for level ID: {}", levelId);
 
         Ref<RLLevelInfoLayer> layerRef = this;
+
+        if (auto cachedJson = rl::getCachedLevelRating(levelId)) {
+            log::info("Using cached rating data for level ID: {}", levelId);
+            auto json = *cachedJson;
+            bool isSuggested = json["isSuggested"].asBool().unwrapOrDefault();
+            layerRef->processLevelRating(json, layerRef);
+            if (!isSuggested) {
+                layerRef->addOrUpdateRubyUI(
+                    layerRef, json["difficulty"].asInt().unwrapOrDefault());
+                layerRef->m_fields->m_orbsShiftApplied = true;
+                layerRef->m_fields->m_hasAppliedRubiesOffset = true;
+            }
+            if (layerRef->m_level && layerRef->m_level->m_stars > 0) {
+                layerRef->checkRated(layerRef->m_level->m_levelID);
+            }
+            return;
+        }
+
+        if (auto staleJson = rl::getStaleLevelRating(levelId)) {
+            log::info("Using stale cached rating for level ID: {} while refreshing", levelId);
+            auto json = *staleJson;
+            bool isSuggested = json["isSuggested"].asBool().unwrapOrDefault();
+            layerRef->processLevelRating(json, layerRef);
+            if (!isSuggested) {
+                layerRef->addOrUpdateRubyUI(
+                    layerRef, json["difficulty"].asInt().unwrapOrDefault());
+                layerRef->m_fields->m_orbsShiftApplied = true;
+                layerRef->m_fields->m_hasAppliedRubiesOffset = true;
+            }
+        }
 
         auto url =
             fmt::format("{}/fetch?levelId={}", std::string(rl::BASE_API_URL), levelId);
@@ -165,7 +196,8 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             }
 
             if (!response.ok()) {
-                log::warn("Server returned non-ok status: {}", response.code());
+                log::debug("Server returned non-ok status: {}", response.code());
+                rl::removeCachedLevelRating(layerRef->m_level ? layerRef->m_level->m_levelID : 0);
                 return;
             }
 
@@ -176,14 +208,15 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             }
 
             auto json = jsonRes.unwrap();
+            rl::setCachedLevelRating(layerRef->m_level ? layerRef->m_level->m_levelID : 0, json);
             bool isSuggested = json["isSuggested"].asBool().unwrapOrDefault();
-            bool isLegacy = json["legacy"].asBool().unwrapOrDefault();
 
-            // Process the response immediately
             if (layerRef) {
                 layerRef->processLevelRating(json, layerRef);
                 if (!isSuggested) {
-                    layerRef->repositionRubyUI();
+                    if (!layerRef->m_fields->m_hasAppliedRubiesOffset) {
+                        layerRef->repositionRubyUI();
+                    }
                     layerRef->addOrUpdateRubyUI(
                         layerRef, json["difficulty"].asInt().unwrapOrDefault());
                     layerRef->m_fields->m_orbsShiftApplied = true;
@@ -191,34 +224,23 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                 }
             }
 
-            // if level is rated, check via checkRated endpoint
             if (layerRef->m_level && layerRef->m_level->m_stars > 0) {
                 layerRef->checkRated(layerRef->m_level->m_levelID);
             }
         });
     }
     void processLevelRating(const matjson::Value& json,
-        Ref<RLLevelInfoLayer> layerRef,
-        bool grayRing = false) {
+        Ref<RLLevelInfoLayer> layerRef) {
         if (!layerRef)
             return;
         int difficulty = json["difficulty"].asInt().unwrapOrDefault();
         int featured = json["featured"].asInt().unwrapOrDefault();
-        bool isLegacy = json["legacy"].asBool().unwrapOrDefault();
         bool isRated = json["rated"].asBool().unwrapOrDefault();
 
-        if (!grayRing)  // this is just a fallback lol
-            grayRing = (isLegacy && !isRated);
+        layerRef->m_fields->m_difficulty = difficulty;
         CCNode* difficultySprite = nullptr;
         if (layerRef) {
             difficultySprite = layerRef->getChildByID("difficulty-sprite");
-            if (difficultySprite) {
-                auto existingLegacy =
-                    difficultySprite->getChildByID("rl-legacy-info-menu");
-                if (existingLegacy) {
-                    existingLegacy->setPosition({0, 0});
-                }
-            }
         }
 
         // helper to remove existing button
@@ -250,8 +272,9 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                 normalPct = layerRef->m_level->m_normalPercent;
                 practicePct = layerRef->m_level->m_practicePercent;
             }
+            bool isDemon = this->isDemonDifficulty(layerRef->m_fields->m_difficulty);
 
-            bool shouldDisable = shouldDisableCommunityVote(layerRef, hasPctFields, normalPct, practicePct);
+            bool shouldDisable = shouldDisableCommunityVote(layerRef, hasPctFields, normalPct, practicePct, isDemon);
 
             if (!exists) {
                 createCommunityVoteButton(layerRef, shouldDisable);
@@ -260,31 +283,6 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             }
         } else {
             removeExistingCommunityBtn();
-        }
-
-        // if this rating came from the legacy system, add a small info button
-        if (isLegacy && !Mod::get()->getSettingValue<bool>("disableLegacyInfo")) {
-            // don't recreate if already present
-            if (difficultySprite &&
-                !difficultySprite->getChildByID("rl-legacy-info-menu")) {
-                auto infoSpr = CCSprite::createWithSpriteFrameName("RL_info01.png"_spr);
-                infoSpr->setScale(0.3f);
-
-                auto infoBtn = CCMenuItemSpriteExtra::create(
-                    infoSpr, layerRef, menu_selector(RLLevelInfoLayer::onLegacyInfo));
-                infoBtn->setID("rl-legacy-info-btn");
-                // shift button further down for non-demon difficulties (1–9)
-                float yPos = difficultySprite->getContentSize().height - 20;
-                infoBtn->setPosition(
-                    {difficultySprite->getContentSize().width - 20, yPos});
-
-                auto infoMenu = CCMenu::createWithItem(infoBtn);
-                infoMenu->setID("rl-legacy-info-menu");
-                infoMenu->setPosition({0, 0});
-                infoMenu->setContentSize({difficultySprite->getContentSize().width,
-                    difficultySprite->getContentSize().height});
-                difficultySprite->addChild(infoMenu, 100);
-            }
         }
 
         // If no difficulty rating, nothing to apply
@@ -640,7 +638,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                         }
                     }
 
-                    if (!animationEnabled) {
+                    if (!animationEnabled && rewardValue > 0) {
                         log::info("Reward animation disabled");
                         Notification::create(
                             "Received " + numToString(difficulty) + " " + reward + "!",
@@ -656,14 +654,6 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                         int newTotal = rubies + remainingRubies;
                         Mod::get()->setSavedValue<int>("rubies", newTotal);
 
-                        if (!animationEnabled) {
-                            Notification::create(
-                                std::string("Received ") + numToString(remainingRubies) +
-                                    " rubies!",
-                                CCSprite::createWithSpriteFrameName("RL_bigRuby.png"_spr))
-                                ->show();
-                        }
-
                         int oldCollected = rubyInfo.collected;
                         int newCollected = oldCollected + remainingRubies;
                         if (newCollected > rubyInfo.total)
@@ -678,6 +668,14 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                                 levelId,
                                 newCollected);
                         }
+                    }
+
+                    if (!animationEnabled && hasAnyReward) {
+                        Notification::create(
+                            std::string("Received ") + numToString(remainingRubies) +
+                                " rubies!",
+                            CCSprite::createWithSpriteFrameName("RL_bigRuby.png"_spr))
+                            ->show();
                     }
 
                     if (animationEnabled && hasAnyReward) {
@@ -763,29 +761,17 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
 
             CCSprite* starIcon = nullptr;
             // Choose icon based on platformer flag: planets for platformer levels;
-            // grayscale if the rating is legacy but unrated (grayRing)
             if (layerRef && layerRef->m_level && layerRef->m_level->isPlatformer()) {
-                if (grayRing) {
-                    starIcon = CCSpriteGrayscale::createWithSpriteFrameName(
-                        "RL_planetSmall.png"_spr);
-                    if (!starIcon)
-                        starIcon = CCSpriteGrayscale::create("RL_planetMed.png"_spr);
-                } else {
+                starIcon =
+                    CCSprite::createWithSpriteFrameName("RL_planetSmall.png"_spr);
+                if (!starIcon)
                     starIcon =
-                        CCSprite::createWithSpriteFrameName("RL_planetSmall.png"_spr);
-                    if (!starIcon)
-                        starIcon =
-                            CCSprite::createWithSpriteFrameName("RL_planetMed.png"_spr);
-                }
+                        CCSprite::createWithSpriteFrameName("RL_planetMed.png"_spr);
             }
+
             if (!starIcon) {
-                if (grayRing) {
-                    starIcon = CCSpriteGrayscale::createWithSpriteFrameName(
-                        "RL_starSmall.png"_spr);
-                } else {
-                    starIcon =
-                        CCSprite::createWithSpriteFrameName("RL_starSmall.png"_spr);
-                }
+                starIcon =
+                    CCSprite::createWithSpriteFrameName("RL_starSmall.png"_spr);
             }
             if (starIcon) {
                 starIcon->setPosition(
@@ -919,11 +905,8 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                 if (legendaryFeaturedCoin)
                     legendaryFeaturedCoin->removeFromParent();
                 if (!featuredCoin) {
-                    auto newFeaturedCoin =
-                        grayRing ? CCSpriteGrayscale::createWithSpriteFrameName(
-                                       "RL_featuredCoin.png"_spr)
-                                 : CCSprite::createWithSpriteFrameName(
-                                       "RL_featuredCoin.png"_spr);
+                    auto newFeaturedCoin = CCSprite::createWithSpriteFrameName(
+                        "RL_featuredCoin.png"_spr);
                     newFeaturedCoin->setPosition(
                         {difficultySprite2->getContentSize().width / 2,
                             difficultySprite2->getContentSize().height / 2});
@@ -937,11 +920,8 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                 if (legendaryFeaturedCoin)
                     legendaryFeaturedCoin->removeFromParent();
                 if (!epicFeaturedCoin) {
-                    auto newEpicCoin = grayRing
-                                           ? CCSpriteGrayscale::createWithSpriteFrameName(
-                                                 "RL_epicFeaturedCoin.png"_spr)
-                                           : CCSprite::createWithSpriteFrameName(
-                                                 "RL_epicFeaturedCoin.png"_spr);
+                    auto newEpicCoin = CCSprite::createWithSpriteFrameName(
+                        "RL_epicFeaturedCoin.png"_spr);
                     newEpicCoin->setPosition(
                         {difficultySprite2->getContentSize().width / 2,
                             difficultySprite2->getContentSize().height / 2});
@@ -976,11 +956,8 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                 if (epicFeaturedCoin)
                     epicFeaturedCoin->removeFromParent();
                 if (!legendaryFeaturedCoin) {
-                    auto newLegendaryCoin =
-                        grayRing ? CCSpriteGrayscale::createWithSpriteFrameName(
-                                       "RL_legendaryFeaturedCoin.png"_spr)
-                                 : CCSprite::createWithSpriteFrameName(
-                                       "RL_legendaryFeaturedCoin.png"_spr);
+                    auto newLegendaryCoin = CCSprite::createWithSpriteFrameName(
+                        "RL_legendaryFeaturedCoin.png"_spr);
                     newLegendaryCoin->setPosition(
                         {difficultySprite2->getContentSize().width / 2,
                             difficultySprite2->getContentSize().height / 2});
@@ -1043,27 +1020,37 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                                 if (auto existing = layerRef->getChildByID("title-particles")) {
                                     existing->removeFromParent();
                                 }
-                                const std::string& legendaryTitlePString =
-                                    fmt::format(
-                                        "15,2065,2,345,3,75,155,1,156,2,145,40a-1a1a0.3a-"
-                                        "1a90a180a8a0a{}a10a0a0a0a0a0a0a20a10a0a0a0.313726a0a0."
-                                        "615686a0a1a0a1a0a10a5a0a0a0.882353a0a0.878431a0a1a0a1a0a0.3a0a0."
-                                        "2a0a0a0a0a0a0a0a0a2a1a0a0a1a25a0a0a0a0a0a0a0a0a0a0a0a0a0a0,211,1",
-                                        titleLabel->getContentSize().width / 2);
-                                if (!legendaryTitlePString.empty()) {
-                                    ParticleStruct pStruct;
-                                    GameToolbox::particleStringToStruct(legendaryTitlePString, pStruct);
-                                    CCParticleSystemQuad* particle =
-                                        GameToolbox::particleFromStruct(pStruct, nullptr, false);
-                                    if (particle) {
-                                        particle->setID("title-particles"_spr);
-                                        particle->setPosition(titleLabel->getPosition());
-                                        layerRef->addChild(particle, 10);
-                                        particle->resetSystem();
-                                        particle->update(0.15f);
-                                        particle->update(0.15f);
-                                        particle->update(0.15f);
-                                    }
+                            }
+                            if (difficultySprite2) {
+                                if (auto existing = difficultySprite2->getChildByID("title-particles")) {
+                                    existing->removeFromParent();
+                                }
+                            }
+                            if (titleLabel) {
+                                if (auto existing = titleLabel->getChildByID("title-particles")) {
+                                    existing->removeFromParent();
+                                }
+                            }
+                            const std::string& legendaryTitlePString =
+                                fmt::format(
+                                    "15,2065,2,345,3,75,155,1,156,2,145,40a-1a1a0.3a-"
+                                    "1a90a180a8a0a{}a10a0a0a0a0a0a0a20a10a0a0a0.313726a0a0."
+                                    "615686a0a1a0a1a0a10a5a0a0a0.882353a0a0.878431a0a1a0a1a0a0.3a0a0."
+                                    "2a0a0a0a0a0a0a0a0a2a1a0a0a1a25a0a0a0a0a0a0a0a0a0a0a0a0a0a0,211,1",
+                                    titleLabel->getContentSize().width / 2);
+                            if (!legendaryTitlePString.empty()) {
+                                ParticleStruct pStruct;
+                                GameToolbox::particleStringToStruct(legendaryTitlePString, pStruct);
+                                CCParticleSystemQuad* particle =
+                                    GameToolbox::particleFromStruct(pStruct, nullptr, false);
+                                if (particle) {
+                                    particle->setID("title-particles"_spr);
+                                    particle->setPosition(titleLabel->getPosition());
+                                    layerRef->addChild(particle, 10);
+                                    particle->resetSystem();
+                                    particle->update(0.15f);
+                                    particle->update(0.15f);
+                                    particle->update(0.15f);
                                 }
                             }
                         }
@@ -1201,10 +1188,15 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
     bool shouldDisableCommunityVote(Ref<RLLevelInfoLayer> layerRef,
         bool hasPctFields,
         int normalPct,
-        int practicePct) {
+        int practicePct,
+        bool isDemon) {
         bool shouldDisable = true;
         if (hasPctFields) {
-            shouldDisable = !(normalPct >= 20 || practicePct >= 80);
+            if (isDemon) {
+                shouldDisable = !(normalPct >= 20 || practicePct >= 80);
+            } else {
+                shouldDisable = !(normalPct >= 50 || practicePct >= 100);
+            }
         }
 
         if (rl::isUserHasPerms() || rl::isUserOwner()) {
@@ -1213,8 +1205,18 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
         }
 
         if (layerRef && layerRef->m_level && layerRef->m_level->isPlatformer()) {
-            shouldDisable = false;
-            log::debug("Community vote enabled due to platformer level");
+            if (!GameStatsManager::sharedState()->hasCompletedOnlineLevel(
+                    layerRef->m_level->m_levelID)) {
+                shouldDisable = true;
+                log::debug(
+                    "Community vote disabled for platformer level because it is not completed");
+            } else if (!shouldDisable) {
+                log::debug(
+                    "Community vote enabled for completed platformer level");
+            } else {
+                log::debug(
+                    "Community vote remains disabled for completed platformer level due to percentage requirements");
+            }
         }
 
         return shouldDisable;
@@ -1325,9 +1327,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
         bool forceShow = false) {
         int difficulty = json["difficulty"].asInt().unwrapOrDefault();
         int featured = json["featured"].asInt().unwrapOrDefault();
-        bool isLegacy = json["legacy"].asBool().unwrapOrDefault();
         bool isRated = json["rated"].asBool().unwrapOrDefault();
-        bool grayRing = (isLegacy && !isRated);
 
         // handle community vote button visibility when level updates are fetched
         bool showCommunity = forceShow;
@@ -1366,7 +1366,12 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
 
                 bool shouldDisable = true;
                 if (hasPctFields) {
-                    shouldDisable = !(normalPct >= 20 || practicePct >= 80);
+                    bool isDemon = this->isDemonDifficulty(layerRef->m_fields->m_difficulty);
+                    if (isDemon) {
+                        shouldDisable = !(normalPct >= 20 || practicePct >= 80);
+                    } else {
+                        shouldDisable = !(normalPct >= 50 || practicePct >= 100);
+                    }
                 }
 
                 // Mods/Admins can always vote regardless of percentages
@@ -1420,7 +1425,12 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
 
                 bool shouldDisable = true;
                 if (hasPctFields) {
-                    shouldDisable = !(normalPct >= 20 || practicePct >= 80);
+                    bool isDemon = this->isDemonDifficulty(layerRef->m_fields->m_difficulty);
+                    if (isDemon) {
+                        shouldDisable = !(normalPct >= 20 || practicePct >= 80);
+                    } else {
+                        shouldDisable = !(normalPct >= 50 || practicePct >= 100);
+                    }
                 }
 
                 if (rl::isUserClassicRole() || rl::isUserPlatformerRole()) {
@@ -1433,10 +1443,6 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                                         ->getChildByID("rl-community-vote");
                     if (existing) {
                         auto menuItem = static_cast<CCMenuItemSpriteExtra*>(existing);
-                        if (menuItem) {
-                            menuItem->setEnabled(!shouldDisable);
-                            menuItem->setOpacity(shouldDisable ? 100 : 255);
-                        }
                     }
                 }
             }
@@ -1523,27 +1529,16 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             // Choose icon based on platformer flag: planets for platformer levels
             CCSprite* starIcon = nullptr;
             if (layerRef && layerRef->m_level && layerRef->m_level->isPlatformer()) {
-                if (grayRing) {
-                    starIcon = CCSpriteGrayscale::createWithSpriteFrameName(
-                        "RL_planetSmall.png"_spr);
-                    if (!starIcon)
-                        starIcon = CCSpriteGrayscale::create("RL_planetMed.png"_spr);
-                } else {
+                starIcon =
+                    CCSprite::createWithSpriteFrameName("RL_planetSmall.png"_spr);
+                if (!starIcon)
                     starIcon =
-                        CCSprite::createWithSpriteFrameName("RL_planetSmall.png"_spr);
-                    if (!starIcon)
-                        starIcon =
-                            CCSprite::createWithSpriteFrameName("RL_planetMed.png"_spr);
-                }
+                        CCSprite::createWithSpriteFrameName("RL_planetMed.png"_spr);
             }
+
             if (!starIcon) {
-                if (grayRing) {
-                    starIcon = CCSpriteGrayscale::createWithSpriteFrameName(
-                        "RL_starSmall.png"_spr);
-                } else {
-                    starIcon =
-                        CCSprite::createWithSpriteFrameName("RL_starSmall.png"_spr);
-                }
+                starIcon =
+                    CCSprite::createWithSpriteFrameName("RL_starSmall.png"_spr);
             }
             if (starIcon) {
                 starIcon->setScale(0.75f);
@@ -1608,33 +1603,41 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                         titleLabel->runAction(repeat);
 
                         if (!Mod::get()->getSettingValue<bool>("disableParticles")) {
-                            // particle effect to the title label position
                             if (layerRef) {
                                 if (auto existing = layerRef->getChildByID("title-particles")) {
                                     existing->removeFromParent();
                                 }
-
-                                const std::string& legendaryTitlePString =
-                                    fmt::format(
-                                        "15,2065,2,345,3,75,155,1,156,2,145,40a-1a1a0.3a-"
-                                        "1a90a180a8a0a{}a10a0a0a0a0a0a0a20a10a0a0a0.313726a0a0."
-                                        "615686a0a1a0a1a0a10a5a0a0a0.882353a0a0.878431a0a1a0a1a0a0.3a0a0."
-                                        "2a0a0a0a0a0a0a0a0a2a1a0a0a1a25a0a0a0a0a0a0a0a0a0a0a0a0a0a0,211,1",
-                                        titleLabel->getContentSize().width / 2);
-                                if (!legendaryTitlePString.empty()) {
-                                    ParticleStruct pStruct;
-                                    GameToolbox::particleStringToStruct(legendaryTitlePString, pStruct);
-                                    CCParticleSystemQuad* particle =
-                                        GameToolbox::particleFromStruct(pStruct, nullptr, false);
-                                    if (particle) {
-                                        particle->setID("title-particles"_spr);
-                                        particle->setPosition(titleLabel->getPosition());
-                                        layerRef->addChild(particle, 10);
-                                        particle->resetSystem();
-                                        particle->update(0.15f);
-                                        particle->update(0.15f);
-                                        particle->update(0.15f);
-                                    }
+                            }
+                            if (difficultySprite) {
+                                if (auto existing = difficultySprite->getChildByID("title-particles")) {
+                                    existing->removeFromParent();
+                                }
+                            }
+                            if (titleLabel) {
+                                if (auto existing = titleLabel->getChildByID("title-particles")) {
+                                    existing->removeFromParent();
+                                }
+                            }
+                            const std::string& legendaryTitlePString =
+                                fmt::format(
+                                    "15,2065,2,345,3,75,155,1,156,2,145,40a-1a1a0.3a-"
+                                    "1a90a180a8a0a{}a10a0a0a0a0a0a0a20a10a0a0a0.313726a0a0."
+                                    "615686a0a1a0a1a0a10a5a0a0a0.882353a0a0.878431a0a1a0a1a0a0.3a0a0."
+                                    "2a0a0a0a0a0a0a0a0a2a1a0a0a1a25a0a0a0a0a0a0a0a0a0a0a0a0a0a0,211,1",
+                                    titleLabel->getContentSize().width / 2);
+                            if (!legendaryTitlePString.empty()) {
+                                ParticleStruct pStruct;
+                                GameToolbox::particleStringToStruct(legendaryTitlePString, pStruct);
+                                CCParticleSystemQuad* particle =
+                                    GameToolbox::particleFromStruct(pStruct, nullptr, false);
+                                if (particle) {
+                                    particle->setID("title-particles"_spr);
+                                    particle->setPosition(titleLabel->getPosition());
+                                    layerRef->addChild(particle, 10);
+                                    particle->resetSystem();
+                                    particle->update(0.15f);
+                                    particle->update(0.15f);
+                                    particle->update(0.15f);
                                 }
                             }
                         }
@@ -1744,18 +1747,16 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
         }
     }
 
-    void onLegacyInfo(CCObject* sender) {
-        auto popup = RLLegacyPopup::create(this->m_level);
-        if (popup) {
-            popup->show();
-        }
-    }
-
     void onCommunityVote(CCObject* sender) {
         int normalPct = this->m_level->m_normalPercent;
         int practicePct = this->m_level->m_practicePercent;
         bool shouldDisable = true;
-        shouldDisable = !(normalPct >= 20 || practicePct >= 80);
+        bool isDemon = this->m_level && this->isDemonDifficulty(this->m_fields->m_difficulty);
+        if (isDemon) {
+            shouldDisable = !(normalPct >= 20 || practicePct >= 80);
+        } else {
+            shouldDisable = !(normalPct >= 50 || practicePct >= 100);
+        }
 
         if (rl::isUserClassicRole() || rl::isUserPlatformerRole() || rl::isUserOwner()) {
             shouldDisable = false;
@@ -1763,19 +1764,33 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
         }
 
         if (this->m_level->isPlatformer()) {
-            shouldDisable = false;
-            log::debug("Community vote enabled due to level being a Platformer");
+            if (!GameStatsManager::sharedState()->hasCompletedOnlineLevel(
+                    this->m_level->m_levelID)) {
+                shouldDisable = true;
+                FLAlertLayer::create(
+                    "Insufficient Completion",
+                    "You need to <cy>complete</c> this <co>platformer level</c> to access the <cb>Community Vote.</c>",
+                    "OK")
+                    ->show();
+                return;
+            }
         }
 
         if (shouldDisable) {
-            log::info("Community vote button clicked!");
-            FLAlertLayer::create(
-                "Insufficient Completion",
-                "You need to have <co>completed</c> at least <cg>20% in </c>"
-                "<cg>normal mode</c> or <cf>80% in practice mode</c> to access "
-                "the <cb>Community Vote.</c>",
-                "OK")
-                ->show();
+            // log::info("Community vote button clicked!");
+            if (isDemon) {
+                FLAlertLayer::create(
+                    "Insufficient Completion",
+                    "You need to have <cy>completed</c> at least <cg>20% in normal mode</c> or <cf>80% in practice mode</c> to access the <cb>Community Vote.</c>",
+                    "OK")
+                    ->show();
+            } else {
+                FLAlertLayer::create(
+                    "Insufficient Completion",
+                    "You need to have <cy>completed</c> at least <cg>50% in normal mode</c> or <cf>100% in practice mode</c> to access the <cb>Community Vote.</c>",
+                    "OK")
+                    ->show();
+            }
             return;
         }
         int levelId = 0;
@@ -2022,7 +2037,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                         }
 
                         auto json = jsonRes.unwrap();
-                        // parse server role booleans instead of legacy integer
+                        // parse server role booleans instead of older integer encoding
                         bool isClassicMod =
                             json["isClassicMod"].asBool().unwrapOrDefault();
                         bool isClassicAdmin =
@@ -2056,7 +2071,27 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
         this->updateRLLevelInfo();
     }
 
+    void confirmDelete(CCObject* sender) {
+        m_fields->m_isDeletingLevel = true;
+        log::debug("is deleting level??? {}", m_fields->m_isDeletingLevel);
+        LevelInfoLayer::confirmDelete(sender);
+    }
+
+    void levelDeleteFinished(int levelId) override {
+        LevelInfoLayer::levelDeleteFinished(levelId);
+        rl::removeCachedLevelRating(levelId);
+        m_fields->m_isDeletingLevel = false;
+    }
+
+    void levelDeleteFailed(int errorCode) override {
+        LevelInfoLayer::levelDeleteFailed(errorCode);
+        m_fields->m_isDeletingLevel = false;
+    }
+
     void updateRLLevelInfo() {
+        if (auto existingParticles = this->getChildByID("title-particles")) {
+            existingParticles->removeFromParent();
+        }
         auto difficultySpriteNode = this->getChildByID("difficulty-sprite");
         if (difficultySpriteNode) {
             // remove star icon and label if present
@@ -2139,6 +2174,12 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
     }
 
     void fetchRLLevelInfo() {
+        if (m_fields->m_isDeletingLevel) {
+            log::info("Skipping level info refresh while delete is pending for level ID: {}",
+                this->m_level ? this->m_level->m_levelID : 0);
+            return;
+        }
+
         if (this->m_level && this->m_level->m_levelID != 0) {
             log::debug("Refreshing level info for level ID: {}",
                 this->m_level->m_levelID);
@@ -2148,6 +2189,43 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
 
             auto getReq = web::WebRequest();
             Ref<RLLevelInfoLayer> layerRef = this;
+
+            auto cachedJson = rl::getCachedLevelRating(levelId);
+            if (cachedJson) {
+                bool isSuggested = (*cachedJson)["isSuggested"].asBool().unwrapOrDefault();
+                int difficulty = (*cachedJson)["difficulty"].asInt().unwrapOrDefault();
+                if (isSuggested || difficulty == 0) {
+                    log::info(
+                        "Level ID {} is not a Rated Layout according to cache (suggested={} difficulty={}); clearing stale cache entry",
+                        levelId,
+                        isSuggested,
+                        difficulty);
+                    rl::removeCachedLevelRating(levelId);
+                    cachedJson = std::nullopt;
+                }
+            }
+
+            if (cachedJson) {
+                log::info("Using cached rating data for level ID: {}", levelId);
+                auto json = *cachedJson;
+                bool isSuggested = json["isSuggested"].asBool().unwrapOrDefault();
+                int difficulty = json["difficulty"].asInt().unwrapOrDefault();
+                if (!isSuggested && difficulty > 0) {
+                    layerRef->addOrUpdateRubyUI(layerRef, difficulty);
+                    layerRef->m_fields->m_hasAppliedRubiesOffset = true;
+                }
+                layerRef->processLevelRating(json, layerRef);
+            } else if (auto staleJson = rl::getStaleLevelRating(levelId)) {
+                log::info("Using stale cached rating data for level ID: {} while refreshing", levelId);
+                auto json = *staleJson;
+                bool isSuggested = json["isSuggested"].asBool().unwrapOrDefault();
+                int difficulty = json["difficulty"].asInt().unwrapOrDefault();
+                if (!isSuggested && difficulty > 0) {
+                    layerRef->addOrUpdateRubyUI(layerRef, difficulty);
+                    layerRef->m_fields->m_hasAppliedRubiesOffset = true;
+                }
+                layerRef->processLevelRating(json, layerRef);
+            }
 
             async::spawn(
                 getReq.get(fmt::format(
@@ -2162,9 +2240,9 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                         return;
                     }
 
-                    // If server returned non-ok, its okay, just remove existing
-                    // data... sob
+                    // If server returned non-ok, remove stale cached rating and clear UI if needed
                     if (!response.ok()) {
+                        log::debug("Server returned non-ok status for level {}: {}", levelId, response.code());
                         if (response.code() == 404) {
                             auto difficultySprite =
                                 layerRef->getChildByID("difficulty-sprite");
@@ -2179,6 +2257,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                                     starLabel->removeFromParent();
                             }
                         }
+                        rl::removeCachedLevelRating(levelId);
                         return;
                     }
 
@@ -2189,11 +2268,23 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                     auto json = response.json().unwrap();
 
                     bool isSuggested = json["isSuggested"].asBool().unwrapOrDefault();
-                    bool isLegacy = json["legacy"].asBool().unwrapOrDefault();
                     int difficulty = json["difficulty"].asInt().unwrapOrDefault();
+
+                    if (isSuggested || difficulty == 0) {
+                        log::info(
+                            "Server reports level {} is no longer rated (suggested={} difficulty={}); clearing cache",
+                            levelId,
+                            isSuggested,
+                            difficulty);
+                        rl::removeCachedLevelRating(levelId);
+                    } else {
+                        rl::setCachedLevelRating(levelId, json);
+                    }
 
                     if (!isSuggested && difficulty > 0) {
                         layerRef->addOrUpdateRubyUI(layerRef, difficulty);
+                        layerRef->m_fields->m_orbsShiftApplied = true;
+                        layerRef->m_fields->m_hasAppliedRubiesOffset = true;
                     }
 
                     if (difficulty == 0) {
@@ -2208,11 +2299,6 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                                 difficultySprite->getChildByID("rl-star-label");
                             if (starLabel)
                                 starLabel->removeFromParent();
-                            // remove legacy info button if it was added
-                            auto legacyMenu =
-                                difficultySprite->getChildByID("rl-legacy-info-menu");
-                            if (legacyMenu)
-                                legacyMenu->removeFromParent();
 
                             // revert any applied difficulty Y offset and coin shifts
                             if (layerRef->m_fields->m_originalYSaved) {
@@ -2298,7 +2384,17 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                 m_orbsIcon->setPositionY(m_orbsIcon->getPositionY() + 10);
                 m_orbsLabel->setPositionY(m_orbsIcon->getPositionY());
             }
+            m_fields->m_orbsShiftApplied = true;
             m_fields->m_hasAppliedRubiesOffset = true;
+        }
+    }
+
+    void onUpdate(CCObject* sender) {
+        LevelInfoLayer::onUpdate(sender);
+        if (this->m_level && this->m_level->m_levelID != 0) {
+            int levelId = this->m_level->m_levelID;
+            log::debug("refreshing level info for level ID: {}", levelId);
+            this->fetchRLLevelInfo();
         }
     }
 

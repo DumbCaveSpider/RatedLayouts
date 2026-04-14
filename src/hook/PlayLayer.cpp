@@ -4,6 +4,7 @@
 #include <Geode/modify/PlayLayer.hpp>
 #include <Geode/utils/async.hpp>
 #include "../include/RLConstants.hpp"
+#include "../include/RLNetworkUtils.hpp"
 
 using namespace geode::prelude;
 using namespace rl;
@@ -24,34 +25,15 @@ class $modify(RLPlayLayer, PlayLayer) {
             useReplay,
             dontCreateObjects);
 
-        // asynchronously check rated status via /fetch endpoint
+        // check cached rating data first, then fall back to /fetch if needed
         if (level && level->m_levelID != 0) {
-            Ref<RLPlayLayer> self = this;
-            auto req = web::WebRequest();
-            std::string url =
-                fmt::format("{}/fetch?levelId={}", std::string(rl::BASE_API_URL), static_cast<int>(level->m_levelID));
-            async::spawn(req.get(url), [self, lvlId = static_cast<int>(level->m_levelID)](web::WebResponse resp) {
-                if (!self)
-                    return;
-                if (!resp.ok()) {
-                    log::debug("fetch (play) returned non-ok for level {}: {}", lvlId, resp.code());
-                    self->m_fields->m_isRatedLayout = false;
-                    return;
-                }
-                // server returned 200 -> rated layout data exists
-                auto jsonRes = resp.json();
-                if (jsonRes) {
-                    log::info("Level {} identified as a rated layout (fetch OK)", lvlId);
-                }
-                auto json = jsonRes.unwrap();
-                auto difficulty = json["difficulty"].asInt().unwrapOr(0);
-                auto isSuggested = json["isSuggested"].asBool().unwrapOr(false);
-                self->m_fields->m_levelDifficulty = difficulty;
-
-                if (!isSuggested) {
-                    log::debug("Level {} is a rated layout", lvlId);
-                    self->m_fields->m_isRatedLayout = true;
-                }
+            int lvlId = static_cast<int>(level->m_levelID);
+            if (auto cachedJson = rl::getCachedLevelRating(lvlId)) {
+                log::info("Using cached rating for PlayLayer init level {}", lvlId);
+                auto difficulty = (*cachedJson)["difficulty"].asInt().unwrapOr(0);
+                auto isSuggested = (*cachedJson)["isSuggested"].asBool().unwrapOr(false);
+                m_fields->m_levelDifficulty = difficulty;
+                m_fields->m_isRatedLayout = !isSuggested;
 
                 auto savePath = dirs::getModsSaveDir() / Mod::get()->getID() /
                                 "rubies_collected.json";
@@ -86,7 +68,71 @@ class $modify(RLPlayLayer, PlayLayer) {
                             totalRuby);
                     }
                 }
-            });
+            } else {
+                Ref<RLPlayLayer> self = this;
+                auto req = web::WebRequest();
+                std::string url =
+                    fmt::format("{}/fetch?levelId={}", std::string(rl::BASE_API_URL), lvlId);
+                async::spawn(req.get(url), [self, lvlId](web::WebResponse resp) {
+                    if (!self)
+                        return;
+                    if (!resp.ok()) {
+                        log::debug("fetch (play) returned non-ok for level {}: {}", lvlId, resp.code());
+                        self->m_fields->m_isRatedLayout = false;
+                        return;
+                    }
+                    auto jsonRes = resp.json();
+                    if (!jsonRes) {
+                        log::warn("Failed to parse fetch (play) JSON response for level {}", lvlId);
+                        self->m_fields->m_isRatedLayout = false;
+                        return;
+                    }
+                    auto json = jsonRes.unwrap();
+                    rl::setCachedLevelRating(lvlId, json);
+                    auto difficulty = json["difficulty"].asInt().unwrapOr(0);
+                    auto isSuggested = json["isSuggested"].asBool().unwrapOr(false);
+                    self->m_fields->m_levelDifficulty = difficulty;
+
+                    if (!isSuggested) {
+                        log::debug("Level {} is a rated layout", lvlId);
+                        self->m_fields->m_isRatedLayout = true;
+                    }
+
+                    auto savePath = dirs::getModsSaveDir() / Mod::get()->getID() /
+                                    "rubies_collected.json";
+                    auto existing =
+                        utils::file::readString(utils::string::pathToString(savePath));
+                    matjson::Value root = matjson::Value::object();
+                    if (existing) {
+                        auto parsed = matjson::parse(existing.unwrap());
+                        if (parsed && parsed.unwrap().isObject()) {
+                            root = parsed.unwrap();
+                        }
+                    }
+
+                    std::string levelKey = fmt::format("{}", lvlId);
+                    if (!root[levelKey].isObject()) {
+                        int totalRuby = getTotalRubiesForDifficulty(difficulty);
+                        root[levelKey] = matjson::Value::object();
+                        root[levelKey]["totalRubies"] = totalRuby;
+                        root[levelKey]["collectedRubies"] = 0;
+
+                        auto writeRes = utils::file::writeString(
+                            utils::string::pathToString(savePath), root.dump());
+                        if (!writeRes) {
+                            log::warn(
+                                "Failed to create rubies_collected.json entry for "
+                                "level {}: {}",
+                                lvlId,
+                                writeRes.unwrapErr());
+                        } else {
+                            log::debug("Created rubies_collected.json entry for level {} -> {}",
+                                lvlId,
+                                totalRuby);
+                        }
+                    }
+                });
+            }
         } else {
             m_fields->m_isRatedLayout = false;
         }

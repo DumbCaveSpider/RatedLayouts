@@ -1,9 +1,3 @@
-#include "Geode/cocos/menu_nodes/CCMenu.h"
-#include "Geode/loader/Log.hpp"
-#include "Geode/loader/Mod.hpp"
-#include "Geode/ui/Popup.hpp"
-#include "Geode/utils/general.hpp"
-#include "include/RLAchievements.hpp"
 #include "include/RLConstants.hpp"
 #include "include/RLNetworkUtils.hpp"
 #include <Geode/DefaultInclude.hpp>
@@ -12,6 +6,7 @@
 #include <Geode/binding/GJAccountManager.hpp>
 #include <Geode/binding/UploadActionPopup.hpp>
 #include <Geode/modify/SupportLayer.hpp>
+#include <Geode/utils/file.hpp>
 #include <argon/argon.hpp>
 
 using namespace geode::prelude;
@@ -28,15 +23,21 @@ class $modify(RLSupportLayer, SupportLayer) {
     };
 
     void customSetup() {
+        m_fields->m_argonMenu = CCMenu::create();
+        m_fields->m_argonMenu->setPosition({0, 0});
+        m_listLayer->addChild(m_fields->m_argonMenu, 10);
         // show the argon button for user with a role
+        auto keyBtnSpr = ButtonSprite::create("Key", 25, true, "bigFont.fnt", "GJ_button_04.png", 25.f, 1.f);
+        auto keyBtn = CCMenuItemSpriteExtra::create(
+            keyBtnSpr, this, menu_selector(RLSupportLayer::onImportKey));
+        keyBtn->setPosition({328, 55});
+        m_fields->m_argonMenu->addChild(keyBtn);
+
         if (rl::isUserHasPerms() || rl::isUserOwner()) {
-            m_fields->m_argonMenu = CCMenu::create();
-            m_fields->m_argonMenu->setPosition({0, 0});
-            m_listLayer->addChild(m_fields->m_argonMenu, 10);
             auto argonBtnSpr = ButtonSprite::create("Argon", 25, true, "bigFont.fnt", "GJ_button_04.png", 25.f, 1.f);
             auto argonBtn = CCMenuItemSpriteExtra::create(
                 argonBtnSpr, this, menu_selector(RLSupportLayer::onGetArgon));
-            argonBtn->setPosition({328, 55});
+            argonBtn->setPosition({328, 85});
             m_fields->m_argonMenu->addChild(argonBtn);
         }
 
@@ -64,8 +65,132 @@ class $modify(RLSupportLayer, SupportLayer) {
             });
     }
 
-    void onRequestAccess(
-        CCObject* sender) {  // i assume that no one will ever get gd mod xddd
+    void onImportKey(CCObject* sender) {
+        m_uploadPopup = UploadActionPopup::create(nullptr, "Importing key...");
+        m_uploadPopup->show();
+
+        Ref<RLSupportLayer> self = this;
+        async::spawn([self]() -> arc::Future<void> {
+            if (!self) {
+                co_return;
+            }
+
+            geode::utils::file::FilePickOptions options;
+            options.filters.push_back({"Private Key", {"*.ppk", "*.pem"}});
+
+            auto result = co_await geode::utils::file::pick(
+                geode::utils::file::PickMode::OpenFile,
+                options);
+
+            if (!self)
+                co_return;
+            if (!result) {
+                Loader::get()->queueInMainThread([self]() {
+                    if (self && self->m_uploadPopup) {
+                        self->m_uploadPopup->showFailMessage("Failed to open file picker");
+                    }
+                });
+                co_return;
+            }
+
+            auto maybePath = result.unwrap();
+            if (!maybePath) {
+                Loader::get()->queueInMainThread([self]() {
+                    if (self && self->m_uploadPopup) {
+                        self->m_uploadPopup->showFailMessage("No file selected");
+                    }
+                });
+                co_return;
+            }
+
+            auto path = *maybePath;
+            auto textRes = utils::file::readString(utils::string::pathToString(path));
+            if (!textRes) {
+                Loader::get()->queueInMainThread([self]() {
+                    if (self && self->m_uploadPopup) {
+                        self->m_uploadPopup->showFailMessage("Failed to read key file");
+                    }
+                });
+                co_return;
+            }
+
+            auto key = textRes.unwrap();
+            if (key.empty()) {
+                Loader::get()->queueInMainThread([self]() {
+                    if (self && self->m_uploadPopup) {
+                        self->m_uploadPopup->showFailMessage("Selected key file is empty");
+                    }
+                });
+                co_return;
+            }
+
+            std::vector<uint8_t> keyBytes(key.begin(), key.end());
+            web::MultipartForm form;
+            form.file("privateKey", keyBytes, path.filename().string(), "application/octet-stream");
+
+            auto postReq = web::WebRequest();
+            postReq.bodyMultipart(form);
+
+            auto response = co_await postReq.post(std::string(rl::BASE_API_URL) + "/masterKey");
+            if (!self)
+                co_return;
+
+            if (!response.ok()) {
+                std::string errorMsg = rl::getResponseFailMessage(response, "Failed to upload private key.");
+                Loader::get()->queueInMainThread([self, errorMsg]() {
+                    if (self && self->m_uploadPopup) {
+                        self->m_uploadPopup->showFailMessage(errorMsg);
+                    }
+                });
+                co_return;
+            }
+
+            auto jsonRes = response.json();
+            if (!jsonRes) {
+                Loader::get()->queueInMainThread([self]() {
+                    if (self && self->m_uploadPopup) {
+                        self->m_uploadPopup->showFailMessage("Invalid server response.");
+                    }
+                });
+                co_return;
+            }
+
+            auto json = jsonRes.unwrap();
+            bool success = !json["masterKey"].asString().unwrapOr("").empty();
+            if (!success) {
+                std::string message = json["message"].asString().unwrapOr("Private key rejected");
+                Loader::get()->queueInMainThread([self, message]() {
+                    if (self && self->m_uploadPopup) {
+                        self->m_uploadPopup->showFailMessage(message);
+                    }
+                });
+                co_return;
+            }
+
+            std::string returnedKey = json["masterKey"].asString().unwrapOr("");
+            if (returnedKey.empty()) {
+                Loader::get()->queueInMainThread([self]() {
+                    if (self && self->m_uploadPopup) {
+                        self->m_uploadPopup->showFailMessage("Missing master key.");
+                    }
+                });
+                co_return;
+            }
+
+            Loader::get()->queueInMainThread([self, returnedKey = std::move(returnedKey)]() {
+                if (!self)
+                    return;
+                Mod::get()->setSavedValue("masterKey", returnedKey);
+                if (self->m_uploadPopup) {
+                    self->m_uploadPopup->showSuccessMessage("Private key accepted.");
+                    clipboard::write(returnedKey);
+                }
+            });
+            co_return;
+        });
+    }
+
+    void onRequestAccess(CCObject* sender) {  // i assume that no one will ever get gd mod xddd
         m_uploadPopup = UploadActionPopup::create(nullptr, "Requesting Access...");
         m_uploadPopup->show();
         // argon my beloved <3
@@ -88,6 +213,10 @@ class $modify(RLSupportLayer, SupportLayer) {
                     matjson::Value jsonBody = matjson::Value::object();
                     jsonBody["argonToken"] = token;
                     jsonBody["accountId"] = GJAccountManager::get()->m_accountID;
+                    auto masterKey = Mod::get()->getSavedValue<std::string>("masterKey");
+                    if (!masterKey.empty()) {
+                        jsonBody["masterKey"] = masterKey;
+                    }
 
                     // verify the user's role
                     auto postReq = web::WebRequest();
@@ -176,10 +305,6 @@ class $modify(RLSupportLayer, SupportLayer) {
                                     "Granted Platformer Layout Admin.");
                             } else {
                                 m_uploadPopup->showFailMessage("Nothing Happened.");
-                            }
-
-                            if (isClassicAdmin || isClassicMod || isPlatAdmin || isPlatMod || isLeaderboardAdmin || isLeaderboardMod) {
-                                RLAchievements::onReward("misc_moderator");
                             }
                         });
                 } else {

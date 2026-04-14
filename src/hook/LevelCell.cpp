@@ -1,6 +1,6 @@
 #include "../layer/RLLevelBrowserLayer.hpp"
-#include "../level/RLLegacyPopup.hpp"
 #include "../include/RLConstants.hpp"
+#include "../include/RLNetworkUtils.hpp"
 #include <Geode/Geode.hpp>
 #include <Geode/modify/LevelCell.hpp>
 #include <Geode/utils/async.hpp>
@@ -17,6 +17,8 @@ class $modify(RLLevelCell, LevelCell) {
         int m_pendingLevelId = 0;
         async::TaskHolder<web::WebResponse> m_fetchTask;
         int m_waitRetries = 0;  // used for waiting for level data to arrive
+        bool m_coinOffsetApplied = false;
+        bool m_iconOffsetApplied = false;
         ~Fields() { m_fetchTask.cancel(); }
     };
 
@@ -31,9 +33,7 @@ class $modify(RLLevelCell, LevelCell) {
         int difficulty = json["difficulty"].asInt().unwrapOrDefault();
         int featured = json["featured"].asInt().unwrapOrDefault();
         int score = json["featuredScore"].asInt().unwrapOrDefault();
-        bool isLegacy = json["legacy"].asBool().unwrapOrDefault();
         bool isRated = json["rated"].asBool().unwrapOrDefault();
-        bool grayRing = (isLegacy && !isRated);
 
         log::debug("difficulty: {}, featured: {}, score: {}", difficulty, featured, score);
 
@@ -151,14 +151,6 @@ class $modify(RLLevelCell, LevelCell) {
             return;
         }
 
-        if (auto existingLegacy =
-                difficultySprite->getChildByID("rl-legacy-info-menu")) {
-            existingLegacy->setPosition({0, 0});
-            existingLegacy->setContentSize(
-                {difficultyContainer->getContentSize().width,
-                    difficultyContainer->getContentSize().height});
-        }
-
         difficultySprite->setPositionY(5);
         auto sprite = static_cast<GJDifficultySprite*>(difficultySprite);
         sprite->updateDifficultyFrame(difficultyLevel, GJDifficultyName::Short);
@@ -169,22 +161,32 @@ class $modify(RLLevelCell, LevelCell) {
             sprite->setOpacity(255);
         }
 
-        // move the download, likes icon and label
+        // move the download, likes icon and label once
         auto downloadIcon = m_mainLayer->getChildByID("downloads-icon");
         auto downloadLabel = m_mainLayer->getChildByID("downloads-label");
         auto likesIcon = m_mainLayer->getChildByID("likes-icon");
         auto likesLabel = m_mainLayer->getChildByID("likes-label");
-        if (downloadIcon) {
-            downloadIcon->setPositionX(downloadIcon->getPositionX() - 7.f);
-        }
-        if (downloadLabel) {
-            downloadLabel->setPositionX(downloadLabel->getPositionX() - 7.f);
-        }
-        if (likesIcon) {
-            likesIcon->setPositionX(likesIcon->getPositionX() - 14.f);
-        }
-        if (likesLabel) {
-            likesLabel->setPositionX(likesLabel->getPositionX() - 14.f);
+        if (!m_fields->m_iconOffsetApplied) {
+            bool didOffset = false;
+            if (downloadIcon) {
+                downloadIcon->setPositionX(downloadIcon->getPositionX() - 7.f);
+                didOffset = true;
+            }
+            if (downloadLabel) {
+                downloadLabel->setPositionX(downloadLabel->getPositionX() - 7.f);
+                didOffset = true;
+            }
+            if (likesIcon) {
+                likesIcon->setPositionX(likesIcon->getPositionX() - 14.f);
+                didOffset = true;
+            }
+            if (likesLabel) {
+                likesLabel->setPositionX(likesLabel->getPositionX() - 14.f);
+                didOffset = true;
+            }
+            if (didOffset) {
+                m_fields->m_iconOffsetApplied = true;
+            }
         }
 
         // remove any existing ruby nodes to avoid duplicates
@@ -316,26 +318,15 @@ class $modify(RLLevelCell, LevelCell) {
             existingRewardLabel->removeFromParent();
         }
         CCSprite* newStarIcon = nullptr;
-        // choose appropriate icon and grayscale if legacy but unrated
+        // choose appropriate icon and grayscale when the rating uses greyed-out visuals
         if (this->m_level && this->m_level->isPlatformer()) {
-            if (grayRing) {
-                newStarIcon =
-                    CCSpriteGrayscale::createWithSpriteFrameName("RL_planetSmall.png"_spr);
-                if (!newStarIcon)
-                    newStarIcon = CCSpriteGrayscale::create("RL_planetMed.png"_spr);
-            } else {
-                newStarIcon =
-                    CCSprite::createWithSpriteFrameName("RL_planetSmall.png"_spr);
-                if (!newStarIcon)
-                    newStarIcon = CCSprite::create("RL_planetMed.png"_spr);
-            }
+            newStarIcon =
+                CCSprite::createWithSpriteFrameName("RL_planetSmall.png"_spr);
+            if (!newStarIcon)
+                newStarIcon = CCSprite::create("RL_planetMed.png"_spr);
         }
         if (!newStarIcon) {
-            if (grayRing) {
-                newStarIcon = CCSpriteGrayscale::createWithSpriteFrameName("RL_starSmall.png"_spr);
-            } else {
-                newStarIcon = CCSprite::createWithSpriteFrameName("RL_starSmall.png"_spr);
-            }
+            newStarIcon = CCSprite::createWithSpriteFrameName("RL_starSmall.png"_spr);
         }
         if (newStarIcon) {
             newStarIcon->setPosition(
@@ -387,11 +378,8 @@ class $modify(RLLevelCell, LevelCell) {
                     if (mythicFeaturedCoin)
                         mythicFeaturedCoin->removeFromParent();
                     if (!featuredCoin) {
-                        auto newFeaturedCoin =
-                            grayRing ? CCSpriteGrayscale::createWithSpriteFrameName(
-                                           "RL_featuredCoin.png"_spr)
-                                     : CCSprite::createWithSpriteFrameName(
-                                           "RL_featuredCoin.png"_spr);
+                        auto newFeaturedCoin = CCSprite::createWithSpriteFrameName(
+                            "RL_featuredCoin.png"_spr);
                         if (newFeaturedCoin) {
                             newFeaturedCoin->setPosition(
                                 {difficultySprite->getContentSize().width / 2,
@@ -409,11 +397,8 @@ class $modify(RLLevelCell, LevelCell) {
                     if (mythicFeaturedCoin)
                         mythicFeaturedCoin->removeFromParent();
                     if (!epicFeaturedCoin) {
-                        auto newEpicCoin =
-                            grayRing ? CCSpriteGrayscale::createWithSpriteFrameName(
-                                           "RL_epicFeaturedCoin.png"_spr)
-                                     : CCSprite::createWithSpriteFrameName(
-                                           "RL_epicFeaturedCoin.png"_spr);
+                        auto newEpicCoin = CCSprite::createWithSpriteFrameName(
+                            "RL_epicFeaturedCoin.png"_spr);
                         if (newEpicCoin) {
                             newEpicCoin->setPosition(
                                 {difficultySprite->getContentSize().width / 2,
@@ -450,11 +435,8 @@ class $modify(RLLevelCell, LevelCell) {
                     if (mythicFeaturedCoin)
                         mythicFeaturedCoin->removeFromParent();
                     if (!legendaryFeaturedCoin) {
-                        auto newLegendaryCoin =
-                            grayRing ? CCSpriteGrayscale::createWithSpriteFrameName(
-                                           "RL_legendaryFeaturedCoin.png"_spr)
-                                     : CCSprite::createWithSpriteFrameName(
-                                           "RL_legendaryFeaturedCoin.png"_spr);
+                        auto newLegendaryCoin = CCSprite::createWithSpriteFrameName(
+                            "RL_legendaryFeaturedCoin.png"_spr);
                         if (newLegendaryCoin) {
                             newLegendaryCoin->setPosition(
                                 {difficultySprite->getContentSize().width / 2,
@@ -650,7 +632,7 @@ class $modify(RLLevelCell, LevelCell) {
                     }
 
                     // doing the dumb coin move
-                    if (!m_compactView) {
+                    if (!m_compactView && !m_fields->m_coinOffsetApplied) {
                         if (coinIcon1) {
                             coinIcon1->setPositionY(coinIcon1->getPositionY() - 5);
                         }
@@ -660,6 +642,7 @@ class $modify(RLLevelCell, LevelCell) {
                         if (coinIcon3) {
                             coinIcon3->setPositionY(coinIcon3->getPositionY() - 5);
                         }
+                        m_fields->m_coinOffsetApplied = true;
                     }
 
                     // Handle pulsing level name for legendary/mythic featured
@@ -733,6 +716,18 @@ class $modify(RLLevelCell, LevelCell) {
 
         int levelId = static_cast<int>(level->m_levelID);
 
+        // try to reuse cached rating data first
+        if (auto cachedJson = rl::getCachedLevelRating(levelId)) {
+            log::debug("Using cached rating for level cell ID: {}", levelId);
+            this->applyRatingToCell(cachedJson.value(), levelId);
+            return;
+        }
+
+        if (auto staleJson = rl::getStaleLevelRating(levelId)) {
+            log::debug("Using stale cached rating while refreshing level cell ID: {}", levelId);
+            this->applyRatingToCell(staleJson.value(), levelId);
+        }
+
         // fetch directly here and apply or store on callback
         Ref<LevelCell> cellRef = this;
         auto req = web::WebRequest();
@@ -744,9 +739,6 @@ class $modify(RLLevelCell, LevelCell) {
                     levelId);
 
                 if (!response.ok()) {
-                    log::warn("Server returned non-ok status: {} for level ID: {}",
-                        response.code(),
-                        levelId);
                     return;
                 }
 
@@ -758,52 +750,16 @@ class $modify(RLLevelCell, LevelCell) {
 
                 auto json = jsonRes.unwrap();
                 int difficulty = json["difficulty"].asInt().unwrapOr(0);
-                bool isLegacy = json["legacy"].asBool().unwrapOr(false);
 
                 if (!cellRef)
                     return;
+
+                rl::setCachedLevelRating(levelId, json);
 
                 // if level is rated, check via checkRated endpoint
                 if (this->m_level->m_stars > 0 && difficulty > 0) {
                     checkRated(this->m_level->m_levelID);
                     return;
-                }
-
-                // if this rating came from the legacy system, add a small info button
-                if (isLegacy && !Mod::get()->getSettingValue<bool>("disableLegacyInfo")) {
-                    auto difficultyContainer =
-                        this->m_mainLayer->getChildByID("difficulty-container");
-                    auto difficultySprite =
-                        difficultyContainer
-                            ? difficultyContainer->getChildByID("difficulty-sprite")
-                            : nullptr;
-
-                    if (difficultySprite) {
-                        if (auto existing =
-                                difficultySprite->getChildByID("rl-legacy-info-menu")) {
-                            existing->setPosition({0, 0});
-                            existing->removeFromParent();
-                        }
-
-                        auto infoSpr =
-                            CCSprite::createWithSpriteFrameName("RL_info01.png"_spr);
-                        infoSpr->setScale(0.3f);
-
-                        auto infoBtn = CCMenuItemSpriteExtra::create(
-                            infoSpr, this, menu_selector(RLLevelCell::onLegacyInfo));
-                        infoBtn->setID("rl-legacy-info-btn");
-                        infoBtn->setPosition(
-                            {difficultySprite->getContentSize().width - 20,
-                                difficultySprite->getContentSize().height - 20});
-
-                        auto infoMenu = CCMenu::createWithItem(infoBtn);
-                        infoMenu->setID("rl-legacy-info-menu");
-                        infoMenu->setPosition({0, 0});
-                        infoMenu->setContentSize(
-                            {difficultySprite->getContentSize().width,
-                                difficultySprite->getContentSize().height});
-                        difficultySprite->addChild(infoMenu, 100);
-                    }
                 }
 
                 if (this->m_mainLayer && this->m_level &&
@@ -820,15 +776,6 @@ class $modify(RLLevelCell, LevelCell) {
             });
 
         return;
-    }
-
-    void onLegacyInfo(CCObject* sender) {
-        if (!this->m_level)
-            return;
-        auto popup = RLLegacyPopup::create(this->m_level);
-        if (popup) {
-            popup->show();
-        }
     }
 
     void onEnter() {
@@ -876,5 +823,3 @@ class $modify(RLLevelCell, LevelCell) {
             });
     }
 };
-
-

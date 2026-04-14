@@ -381,36 +381,24 @@ void RLCreditsPopup::onAccountClicked(CCObject* sender) {
 
 void RLCreditsPopup::onInfo(CCObject* sender) {
     MDPopup::create(
-        "Becoming a Layout Moderator",
-        "To become a **<cl>Classic</c>/<co>Platformer</c>/<cb>Leaderboard</c> "
-        "Layout "
-        "Moderator</c>**, you are required to join the <cl>Rated Layouts Discord "
-        "Server</c> and be <cg>active in the community</c>.\n"
-        "There's an <cl>application form</c> in the server that you can fill out "
-        "and the Admins usually review these applications.\n"
-        "### <cr>Begging for Layout Mod to ArcticWoof or any of the Layout "
-        "Admins will be ignored and lower your chances of becoming a mod.</c>\n"
-        "If you have any questions about the application process or the role, "
-        "feel free to ask in the <cl>Rated Layouts Discord Server</c>.\n"
-        "All promotion will be decided by <cf>ArcticWoof</c> and is usually "
-        "announced in the server."
-        "\r\n\r\n---\r\n\r\n"
-        "### Moderator Responsibilities\n"
-        "- Moderators are expected to be <cg>active in the community</c> and "
-        "help maintain the quality of the <cl>Rated Layouts</c>.\n"
-        "- This includes <co>suggesting levels, rating levels</c> and "
-        "<cy>providing "
-        "feedback</c> to level creators.\n"
-        "- Moderators may also be asked to help with <cg>managing the "
-        "community</c>, such as moderating the leaderboard section or assisting "
-        "with events.\n"
-        "\r\n\r\n---\r\n\r\n"
-        "If you are <cg>interested in becoming a layout moderator</c>, make sure "
-        "to "
-        "join the <cl>Rated Layouts Discord Server</c> and apply in the "
-        "application form!",
-        "OK")
-        ->show();
+            "Becoming a Layout Moderator",
+            "To become a **<cl>Classic</c>/<co>Platformer</c>/<cb>Leaderboard</c> "
+            "Layout "
+            "Moderator</c>**, you are required to join the <cl>Rated Layouts Discord Server</c> and be <cg>active in the community</c>.\n"
+            "There's an <cl>application form</c> in the server that you can fill out and the Admins usually review these applications.\n"
+            "### <cr>Begging for Layout Mod to ArcticWoof or any of the Layout "
+            "Admins will be ignored and lower your chances of becoming a mod.</c>\n"
+            "If you have any questions about the application process or the role, feel free to ask in the <cl>Rated Layouts Discord Server</c>.\n"
+            "All promotion will be decided by <cf>ArcticWoof</c> and usually announced in the server."
+            "\r\n\r\n---\r\n\r\n"
+            "### Moderator Responsibilities\n"
+            "- Moderators are expected to be <cg>active in the community</c> and help maintain the quality of the <cl>Rated Layouts</c>.\n"
+            "- This includes <co>suggesting levels, rating levels</c> and <cy>providing feedback</c> to level creators.\n"
+            "- Moderators may also be asked to help with <cg>managing the community</c>, such as moderating the leaderboard section or assisting with events.\n"
+            "\r\n\r\n---\r\n\r\n"
+            "If you are <cg>interested in becoming a layout moderator</c>, make sure to join the <cl>Rated Layouts Discord Server</c> and apply in the <cl>application form</c>!",
+            "OK")
+            ->show();
 }
 
 void RLCreditsPopup::onHeaderInfo(CCObject* sender) {

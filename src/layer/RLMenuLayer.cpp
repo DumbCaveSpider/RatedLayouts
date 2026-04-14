@@ -17,9 +17,10 @@
 #include "../include/RLAchievements.hpp"
 #include "../include/RLConstants.hpp"
 #include "../include/RLLayerBackground.hpp"
+#include "Geode/ui/Popup.hpp"
 #include "RLAchievementsPopup.hpp"
 #include "RLAddDialogue.hpp"
-#include "RLAnnouncementPopup.hpp"
+#include "RLNewsAnnouncementPopup.hpp"
 #include "RLCreditsPopup.hpp"
 #include "RLDonationPopup.hpp"
 #include "RLGauntletSelectLayer.hpp"
@@ -28,6 +29,7 @@
 #include "RLSearchLayer.hpp"
 #include "RLShopLayer.hpp"
 #include "RLSpireLayer.hpp"
+#include "RLGuideInfoPopup.hpp"
 #include "../include/RLDialogIcons.hpp"
 
 struct ModInfo {
@@ -392,6 +394,7 @@ bool RLMenuLayer::init() {
 
     this->scheduleUpdate();
     this->setKeypadEnabled(true);
+
     return true;
 }
 
@@ -427,7 +430,7 @@ void RLMenuLayer::onDemonListButton(CCObject* sender) {
     switch (m_indexDia) {
         case 0: {
             DialogObject* dialogObj = DialogObject::create(
-                "ArcticWoof", "The <co>Rated Layouts Demonlist</c> isn't done yet...", 28, 1.f, false, ccWHITE);
+                "ArcticWoof", "The <co>Rated Layouts Demon List</c> isn't done yet...", 28, 1.f, false, ccWHITE);
             if (dialogObj) {
                 auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 2);
                 dialog->addToMainScene();
@@ -479,7 +482,7 @@ void RLMenuLayer::onDemonListButton(CCObject* sender) {
         }
         case 4: {
             DialogObject* dialogObj = DialogObject::create(
-                "The Oracle", "...<d050> <cc>what is the reason of my presence?</c>", 28, 1.f, false, ccWHITE);
+                "The Oracle", "...<d050> <cc>what is the reason for my presence?</c>", 28, 1.f, false, ccWHITE);
             if (dialogObj) {
                 auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 4);
                 dialog->addToMainScene();
@@ -492,7 +495,7 @@ void RLMenuLayer::onDemonListButton(CCObject* sender) {
         }
         case 5: {
             DialogObject* dialogObj = DialogObject::create(
-                "ArcticWoof", "The <co>Demonlist...?</c>", 28, 1.f, false, ccWHITE);
+                "ArcticWoof", "The <co>Demon List...?</c>", 28, 1.f, false, ccWHITE);
             if (dialogObj) {
                 auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 2);
                 dialog->addToMainScene();
@@ -505,7 +508,7 @@ void RLMenuLayer::onDemonListButton(CCObject* sender) {
         }
         case 6: {
             DialogObject* dialogObj = DialogObject::create(
-                "The Oracle", "Ah... <d050> <cc>the Demonlist...</c> <d050> <cr>I do not know what that is...</c>", 28, 1.f, false, ccWHITE);
+                "The Oracle", "Ah... <d050> <cc>the Demon List...</c> <d050> <cr>I do not know what that is...</c>", 28, 1.f, false, ccWHITE);
             if (dialogObj) {
                 auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 4);
                 dialog->addToMainScene();
@@ -544,7 +547,7 @@ void RLMenuLayer::onDemonListButton(CCObject* sender) {
         }
         case 9: {
             DialogObject* dialogObj = DialogObject::create(
-                "ArcticWoof", "Yeah... probably... <d050>You such a <cr>useless vault-looking thing</c>", 28, 1.f, false, ccWHITE);
+                "ArcticWoof", "Yeah... probably... <d050>You're such a <cr>useless vault-looking thing</c>", 28, 1.f, false, ccWHITE);
             if (dialogObj) {
                 auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 2);
                 dialog->addToMainScene();
@@ -597,7 +600,7 @@ void RLMenuLayer::onDemonListButton(CCObject* sender) {
         }
         case 13: {
             DialogObject* dialogObj = DialogObject::create(
-                "ArcticWoof", "okay I seriously need to <cr>stop</c> making these random stuff... <d500><cy>jk NOT!</c>", 28, 1.f, false, ccWHITE);
+                "ArcticWoof", "Okay, I seriously need to <cr>stop</c> making this random stuff... <d500><cy>jk NOT!</c>", 28, 1.f, false, ccWHITE);
             if (dialogObj) {
                 auto dialog = DialogLayer::createDialogLayer(dialogObj, nullptr, 2);
                 dialog->addToMainScene();
@@ -641,71 +644,8 @@ void RLMenuLayer::onShopButton(CCObject* sender) {
 }
 
 void RLMenuLayer::onAnnoucementButton(CCObject* sender) {
-    // disable the button if provided to avoid spamming
-    auto menuItem = static_cast<CCMenuItemSpriteExtra*>(sender);
-    if (menuItem)
-        menuItem->setEnabled(false);
-
-    Ref<RLMenuLayer> self = this;
-    m_announcementTask.spawn(
-        web::WebRequest().get(std::string(rl::BASE_API_URL) + "/getAnnoucement"),
-        [self, menuItem](web::WebResponse const& res) {
-            if (!self)
-                return;
-            if (!res.ok()) {
-                Notification::create("Failed to fetch announcement",
-                    NotificationIcon::Error)
-                    ->show();
-                if (menuItem)
-                    menuItem->setEnabled(true);
-                return;
-            }
-
-            auto jsonRes = res.json();
-            if (!jsonRes) {
-                Notification::create("Invalid announcement response",
-                    NotificationIcon::Error)
-                    ->show();
-                if (menuItem)
-                    menuItem->setEnabled(true);
-                return;
-            }
-
-            auto json = jsonRes.unwrap();
-            std::string body = "";
-            int id = 0;
-            if (json.contains("body")) {
-                if (auto s = json["body"].asString(); s)
-                    body = s.unwrap();
-            }
-            if (json.contains("id")) {
-                if (auto i = json["id"].as<int>(); i)
-                    id = i.unwrap();
-            }
-
-            if (!body.empty()) {
-                MDPopup::create("Rated Layouts Annoucement", body.c_str(), "OK")
-                    ->show();
-                RLAchievements::onReward("misc_news");
-                if (id) {
-                    Mod::get()->setSavedValue<int>("annoucementId", id);
-                    // hide badge since the user just viewed the announcement
-                    if (self->m_newsBadge)
-                        self->m_newsBadge->setVisible(false);
-                }
-            } else {
-                Notification::create("No announcement available",
-                    NotificationIcon::Warning)
-                    ->show();
-            }
-
-            if (self->m_newsBadge) {
-                self->m_newsBadge->setVisible(false);
-            }
-
-            if (menuItem)
-                menuItem->setEnabled(true);
-        });
+    auto popup = RLNewsAnnouncementPopup::create();
+    popup->show();
 }
 
 void RLMenuLayer::onUnknownButton(CCObject* sender) {
@@ -775,38 +715,8 @@ void RLMenuLayer::onUnknownButton(CCObject* sender) {
 }
 
 void RLMenuLayer::onInfoButton(CCObject* sender) {
-    MDPopup::create(
-        "About Rated Layouts",
-        "## <cl>Rated Layouts</cl> is a community-run rating system focusing "
-        "on "
-        "gameplay in layout levels.\n\n"
-        "### Each of the buttons on this screen lets you browse different "
-        "categories of rated layouts:\n\n"
-        "<cg>**Featured Layouts**</c>: Featured layouts that showcase fun "
-        "gameplay and visuals. Each featured levels are ranked based of their "
-        "featured score.\n\n"
-        "<cg>**Leaderboard**</c>: The top-rated players ranked by blueprint "
-        "stars and creator points.\n\n"
-        "<cg>**Layout Gauntlets**</c>: Special themed layouts hosted by the "
-        "Rated Layouts Team. This holds the <cl>Layout Creator "
-        "Contests</c>!\n\n"
-        "<cg>**The Spire**</c>: A tower-themed <co>Platformer-focus</c> user created <cl>Rated Layouts</c> levels. "
-        "Explore the Spire and find forsaken lore beyond the <cp>Cosmos</c>\n\n"
-        "<cg>**Sent Layouts**</c>: Suggested or sent layouts by the Layout "
-        "Moderators. The community can vote on these layouts based of their "
-        "Design, Difficulty and Gameplay. <co>(Only enabled if you have at "
-        "least "
-        "20% in Normal Mode or 80% in Practice Mode)</c>\n\n"
-        "<cg>**Search Layouts**</c>: Search for rated layouts by their level "
-        "name/ID.\n\n"
-        "<cg>**Event Layouts**</c>: Showcases time-limited Daily, Weekly and "
-        "Monthly layouts picked by the <cr>Layout Admins</c>.\n\n"
-        "### Join the <cb>[Rated Layouts "
-        "Discord](https://discord.gg/jBf2wfBgVT)</c> server for more "
-        "information "
-        "and to submit your layouts for rating.\n\n",
-        "OK")
-        ->show();
+    auto guidePopup = RLGuideInfoPopup::create();
+    guidePopup->show();
 }
 
 void RLMenuLayer::onLayoutSpire(CCObject* sender) {
@@ -887,6 +797,7 @@ void RLMenuLayer::onSearchLayouts(CCObject* sender) {
 
 void RLMenuLayer::onEnter() {
     CCLayer::onEnter();
+
     m_indexDia = 0;
     // refresh mod info every time the layer is entered
     if (m_modStatusLabel) {
@@ -938,6 +849,37 @@ void RLMenuLayer::onEnter() {
     });
 }
 
+void RLMenuLayer::onEnterTransitionDidFinish() {
+    CCLayer::onEnterTransitionDidFinish();
+
+    if (!Mod::get()->getSavedValue<bool>("hasReadGuide")) {
+        this->runAction(CCSequence::create(
+            CCDelayTime::create(0.05f),
+            CCCallFunc::create(this, callfunc_selector(RLMenuLayer::showReadGuidePopup)),
+            nullptr));
+    }
+}
+
+void RLMenuLayer::showReadGuidePopup() {
+    if (Mod::get()->getSavedValue<bool>("hasReadGuide")) {
+        return;
+    }
+
+    Mod::get()->setSavedValue<bool>("hasReadGuide", true);
+    createQuickPopup(
+        "New to Rated Layouts?",
+        "Do you want to read the <cg>guide</c> to learn more about <cl>Rated Layouts</c> and how it works?\n"
+        "<cy>You can read this via the Info Button at the Bottom Left corner later if you want.</c>",
+        "No",
+        "Yes",
+        [](auto, bool yes) {
+            if (!yes)
+                return;
+            auto popup = RLGuideInfoPopup::create();
+            if (popup)
+                popup->show();
+        });
+}
 
 RLMenuLayer* RLMenuLayer::create() {
     auto ret = new RLMenuLayer();

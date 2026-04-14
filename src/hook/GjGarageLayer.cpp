@@ -57,7 +57,7 @@ class $modify(GJGarageLayer) {
                 log::info("Received response from server");
 
                 if (!response.ok()) {
-                    log::warn("Server returned non-ok status: {}", response.code());
+                    // log::warn("Server returned non-ok status: {}", response.code());
                     return;
                 }
 

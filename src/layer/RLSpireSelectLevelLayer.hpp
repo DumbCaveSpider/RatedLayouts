@@ -20,6 +20,7 @@ private:
     void onNavArrowDownClick(CCObject* sender);
     bool isLevelCompleted(int levelId);
     void rewardRoomTransition();
+    void onEnter() override;
     void update(float dt) override;
 
     cue::RepeatingBackground* m_bg = nullptr;

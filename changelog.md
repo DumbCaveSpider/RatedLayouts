@@ -1,3 +1,50 @@
+## v1.0.7
+
+- Remove Top Creator toggler.
+- Fixed the cache clearing not working correctly when the server returns non-ok status.
+- Fixed the Rubies position offset incorrectly when fetching a level that is cached.
+- Tweaked the **Event Layouts** animation to be similar to Vanilla Daily Level animation.
+- Improved the **News Annoucements** to include past announcements and a better layout.
+
+## v1.0.6
+
+- Added Caching on Levels and Comments, this reduces the amount of server requests and improves performance.
+- Changed the Community Votes requirements to the following:
+  - <cr>Demon Layouts</c>: 20% Normal Mode and 80% Practice Mode
+  - <cg>Non-Demon Layouts</cg>: 50% Normal Mode and 100% Practice Mode
+  - <co>Platformer Layouts</co>: Must have completed the level (regardless of the completion percentage)
+- Fixed Typos... again
+- Fixed crash when entering The Spire after completing a level
+- Added new Gauntlet Sprite
+- The Blue Spark Button on the Vanilla Search Layer will now go directly to the Rated Layouts Search Layer
+- Updated Mod About Page
+- Removed **Vigilant Citizen** achievement.
+- Added back **Get Gem To Win Experience** achievement.
+
+## v1.0.5
+
+- Removed **Legacy Rate** feature entirely.
+- Added GDPS check, it will give a warning when trying to access Rated Layouts features on GDPS.
+- Added a toggle for "Top Creators" in the leaderboard layer to show creators who interacted with the mod
+- Fixed more typos
+- Fixed a small bug with the leaderboard tab not deselecting properly
+- _A mod developer was annoyed with the amount of warn logs filling up the console and got really annoyed at me for it, so yea I just commented out the warn logs for non-ok status on the web requests._
+
+## v1.0.4
+
+- Updated the about mod page
+- Fixed issue where **Laying Out!** achievement isn't unlocking after completing a rated layout.
+- Fixed issue where user with **Disabled Reward Animation** enabled still getting the reward notification even when it's already completed.
+- Fixed the Author's name in the Shop Item list not showing. _(Due to the backend changes)_
+- Fixed issue where Spire levels not updating after completing a Spire level.
+- Fixed typos in the information texts
+- Notification are off on levels by default. _(You can enable it in the mod settings)_
+- Added **Rated Layouts Menu Button** in the Main Menu. _(Can be disabled in the mod settings)_
+- Added **Guidebook** as a replacement to the info button in the main menu. _(It will ask you when opening the layer first)_
+- Added **Key** button, mainly used for internal uses.
+- Moved the **Votes Leaderboard** to the main Leaderboard Tabs.
+- Nav buttons on the Ruby Shop now wraps around when reaching the end of the list.
+
 ## v1.0.3
 
 - Reverted April Fools related changes
@@ -10,7 +57,6 @@
 
 - Fixed a crash when deleting a comment with a nameplate crashes your game.
 - Added Back button for mods/admins when clicking the Sent Tab
-- Tweaked the **Legacy Rated Layouts** text
 - Rubies redeemed from the **Observatory** are now localy stored
 - Reset Rubies will also reset the redeemed codes
 - Added **goog** cat dialogue and achievement
@@ -48,8 +94,6 @@
 ## v0.4.3-beta.1
 
 - Added **Community Vote Leaderboard** to show the top voters in the community vote. (Found in the Community Vote popup)
-- Added info button on the difficulty sprite for levels marked as legacy (clickable for more information)
-- Added **Legacy Rated Layout** popup that displays extra details and the difficulty sprite when the info button is clicked
 - Added **Disable Stats Menu Animation** option in the mod settings
 - Added **Moderators Notes** section in the level info layer to show any notes from moderators about the level
 - Added **Vote Count** in the Profile Page.

@@ -77,6 +77,10 @@ class $modify(EndLevelLayer) {
         int levelId = level->m_levelID;
         log::info("Fetching difficulty value for completed level ID: {}", levelId);
 
+        if (levelId == 103853867) {
+            RLAchievements::onReward("misc_gem");  // get gem to win experience
+        }
+
         auto getReq = web::WebRequest();
 
         // capture EndLevelLayer as Ref
@@ -343,6 +347,8 @@ class $modify(EndLevelLayer) {
                             RLAchievements::checkAll(RLAchievements::Collectable::Planets,
                                 responsePlanets);
 
+                            RLAchievements::onReward("misc_finish");
+
                             if (responseStars == 0 && responsePlanets == 0) {
                                 log::warn(
                                     "No stars or planets rewarded, possibly already "
@@ -477,7 +483,7 @@ class $modify(EndLevelLayer) {
                             // some devices crashes from this, idk why soggify
                             bool animationEnabled = !Mod::get()->getSettingValue<bool>(
                                 "disableRewardAnimation");
-                            if (animationEnabled) {
+                            if (animationEnabled && (responseStars > 0 || responsePlanets > 0)) {
                                 if (auto rewardLayer = CurrencyRewardLayer::create(
                                         0, isPlat ? starReward : 0, isPlat ? 0 : starReward, remainingRubies, CurrencySpriteType::Star, 0, CurrencySpriteType::Star, 0, bigStarSprite->getPosition(), CurrencyRewardType::Default, 0.0, 1.0)) {
                                     // display the calculated stars
@@ -661,7 +667,8 @@ class $modify(EndLevelLayer) {
 
                                     // only show notification when animation disabled
                                     if (Mod::get()->getSettingValue<bool>(
-                                            "disableRewardAnimation")) {
+                                            "disableRewardAnimation") &&
+                                        remainingRubies > 0) {
                                         Notification::create(
                                             std::string("Received ") +
                                                 numToString(remainingRubies) + " rubies!",

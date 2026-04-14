@@ -37,8 +37,10 @@ bool RLEventLayouts::init() {
         return false;
     // register instance
     addSideArt(m_mainLayer, SideArt::All, SideArtStyle::PopupGold, false);
+    m_noElasticity = true;
 
     auto contentSize = m_mainLayer->getContentSize();
+    auto winSize = CCDirector::sharedDirector()->getWinSize();
 
     m_eventMenu = CCLayer::create();
     m_eventMenu->setPosition({contentSize.width / 2, contentSize.height / 2});
@@ -454,6 +456,15 @@ bool RLEventLayouts::init() {
                                 .c_str());
                 };
             });
+
+        // funny animation
+        m_mainLayer->setPositionX(winSize.width * -0.15f);
+        auto sequence = CCSequence::create(
+            CCEaseElasticOut::create(CCMoveTo::create(0.4f, {winSize.width * 0.5f, winSize.height / 2}), 0.85),
+            nullptr);
+
+        m_mainLayer->runAction(sequence);
+
         return true;
     }
 }
@@ -461,30 +472,16 @@ bool RLEventLayouts::init() {
 void RLEventLayouts::onInfo(CCObject* sender) {
     MDPopup::create(
         "Event Layouts",
-        "Play <cg>daily</c>, <cy>weekly</c>, and <cp>monthly</c> rated layouts "
-        "curated by the <cr>Layout Admins.</c>\n\n"
-        "Each layout features a <cb>unique selection</c> of levels handpicked "
-        "for their <co>gameplay and layout design!</c>\n\n"
-        "If you want to play <cg>Past Event Layouts</c>, click the "
-        "<co>Safe</c> "
-        "button at the bottom-left of the popup to view previously event "
-        "layouts.\n\n"
-        "### <co>Daily Layouts</c> refresh every 24 hours, <cy>Weekly "
-        "Layouts</c> every 7 days, and <cp>Monthly Layouts</c> every 30 "
-        "days.\n\n"
-        "*<cy>All event layouts are set manually so sometimes layouts might be "
-        "there for long than expected</c>*\n\n"
+        "Play <cg>daily</c>, <cy>weekly</c>, and <cp>monthly</c> rated layouts curated by the <cr>Layout Admins.</c>\n\n"
+        "Each layout features a <cb>unique selection</c> of levels handpicked for their <co>gameplay and layout design!</c>\n\n"
+        "If you want to play <cg>Past Event Layouts</c>, click the <co>Safe</c> button at the bottom-left of the popup to view previous event layouts.\n\n"
+        "### <co>Daily Layouts</c> refresh every 24 hours, <cy>Weekly Layouts</c> every 7 days, and <cp>Monthly Layouts</c> every 30 days.\n\n"
+        "*<cy>All event layouts are set manually, so sometimes layouts might be there longer than expected</c>*\n\n"
         "\r\n\r\n---\r\n\r\n"
-        "- <cg>**Daily Layout**</c> showcase <cl>Easy Layouts</c> *(Easy to "
-        "Insane Difficulty)* for you to grind and play various layouts\n"
-        "- <cy>**Weekly Layout**</c> showcase a more <cr>challenging "
-        "layouts</c> "
-        "to play *(Easy to Hard Demons Difficulty)*\n"
-        "- <cp>**Monthly Layout**</c> showcase themed <cp>Layouts</c> that "
-        "relates to the current month or showcase well-made/hyped layouts. "
-        "Often "
-        "usually showcase <cr>Very hard layouts</c> or <cl>Easy Layouts</c> "
-        "depending on the monthly layout has to offer.\n",
+        "- <cg>**Daily Layout**</c> showcase <cl>Easy Layouts</c> *(Easy to Insane Difficulty)* for you to grind and play various layouts.\n"
+        "- <cy>**Weekly Layout**</c> showcase more <cr>challenging layouts</c> to play *(Easy to Hard Demons Difficulty)*.\n"
+        "- <cp>**Monthly Layout**</c> showcase themed <cp>Layouts</c> that relate to the current month or showcase well-made/hyped layouts. "
+        "Monthly layouts often showcase <cr>Very hard layouts</c> or <cl>Easy Layouts</c> depending on what the monthly layouts have to offer.\n",
         "OK")
         ->show();
 }
@@ -648,5 +645,3 @@ void RLEventLayouts::onSafeButton(CCObject* sender) {
     auto transitionFade = CCTransitionFade::create(0.5f, scene);
     CCDirector::sharedDirector()->pushScene(transitionFade);
 }
-
-

@@ -15,11 +15,15 @@ protected:
     TabButton* m_planetsTab;
     TabButton* m_creatorTab;
     TabButton* m_coinsTab;
+    TabButton* m_votesTab;
+    CCMenuItemSpriteExtra* m_creatorTypeToggleBtn = nullptr;
+    bool m_creatorType6 = false;
     CCMenuItemSpriteExtra* m_refreshBtn;
 
     bool init() override;
     void keyBackClicked() override;
     void onLeaderboardTypeButton(CCObject* sender);
+    void onCreatorTypeToggle(CCObject* sender);
     void onAccountClicked(CCObject* sender);
     void fetchLeaderboard(int type, int amount);
     void populateLeaderboard(const std::vector<matjson::Value>& users);

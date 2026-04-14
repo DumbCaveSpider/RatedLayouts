@@ -1,6 +1,7 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/CreatorLayer.hpp>
 
+#include "../include/RLNetworkUtils.hpp"
 #include "../layer/RLMenuLayer.hpp"
 
 using namespace geode::prelude;
@@ -31,6 +32,16 @@ class $modify(RLHCreatorLayer, CreatorLayer) {
                 ->show();
             return;
         }
+
+        if (rl::isGDPS()) {
+            FLAlertLayer::create(
+                "Rated Layouts",
+                "This feature is not available on <cy>GDPS servers.</c>",
+                "OK")
+                ->show();
+            return;
+        }
+
         auto layer = RLMenuLayer::create();
         auto scene = CCScene::create();
         scene->addChild(layer);
@@ -38,5 +49,3 @@ class $modify(RLHCreatorLayer, CreatorLayer) {
         CCDirector::sharedDirector()->pushScene(transitionFade);
     }
 };
-
-

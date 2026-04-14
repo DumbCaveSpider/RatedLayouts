@@ -262,12 +262,12 @@ void RLNotificationAlert::onNotificationClicked(CCObject* sender) {
         return;
     }
 
-    if (PlayLayer::get()) {
+    if (PlayLayer::get() || LevelEditorLayer::get()) {
         FLAlertLayer::create(
             "Warning",
-            "You are already inside of a level, attempt to play another level "
+            "You are already inside of a level/editor, attempt to play another level "
             "before closing the current level may <cr>crash your "
-            "game</c>\n<cy>Please exit the current level before trying to view "
+            "game</c>\n<cy>Please exit the current level/editor before trying to view "
             "this level</c>",
             "OK")
             ->show();
