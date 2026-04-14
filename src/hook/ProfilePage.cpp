@@ -799,6 +799,9 @@ class $modify(RLProfilePage, ProfilePage) {
             case 11:  // Leaderboard Admins
                 rl::showLeaderboardAdminInfo();
                 break;
+            case 12:  // Developer
+                rl::showDevInfo();
+                break;
             default:
                 break;
         }
