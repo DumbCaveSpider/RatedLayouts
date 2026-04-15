@@ -256,6 +256,7 @@ class $modify(RLSupportLayer, SupportLayer) {
                             bool isPlatMod = json["isPlatMod"].asBool().unwrapOrDefault();
                             bool isPlatAdmin =
                                 json["isPlatAdmin"].asBool().unwrapOrDefault();
+                            bool isOwner = json["isOwner"].asBool().unwrapOrDefault();
 
                             Mod::get()->setSavedValue<bool>("isClassicMod", isClassicMod);
                             Mod::get()->setSavedValue<bool>("isClassicAdmin",
@@ -266,6 +267,7 @@ class $modify(RLSupportLayer, SupportLayer) {
                                 isLeaderboardAdmin);
                             Mod::get()->setSavedValue<bool>("isPlatMod", isPlatMod);
                             Mod::get()->setSavedValue<bool>("isPlatAdmin", isPlatAdmin);
+                            Mod::get()->setSavedValue<bool>("isOwner", isOwner);
 
                             int roleCount = 0;
                             roleCount += isClassicMod ? 1 : 0;
@@ -274,6 +276,7 @@ class $modify(RLSupportLayer, SupportLayer) {
                             roleCount += isLeaderboardAdmin ? 1 : 0;
                             roleCount += isPlatMod ? 1 : 0;
                             roleCount += isPlatAdmin ? 1 : 0;
+                            roleCount += isOwner ? 1 : 0;
 
                             if (roleCount > 1) {
                                 log::info("Granted Multiple roles");
@@ -303,6 +306,10 @@ class $modify(RLSupportLayer, SupportLayer) {
                                 log::info("Granted Platformer Admin role");
                                 m_uploadPopup->showSuccessMessage(
                                     "Granted Platformer Layout Admin.");
+                            } else if (isOwner) {
+                                log::info("Granted Owner role");
+                                m_uploadPopup->showSuccessMessage(
+                                    "Granted Owner role.");
                             } else {
                                 m_uploadPopup->showFailMessage("Nothing Happened.");
                             }

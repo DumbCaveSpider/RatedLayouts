@@ -1,9 +1,10 @@
 ## v1.0.8
 
 - Fixed bug where the announcement didn't show the alert at all.
-- Added New Rated Layouts Owner
+- Removed hardcoded Owner role
 - Added Developer Badge and Role
 - Added New Gauntlet Sprites
+- Added **Disable Garage Stats** in the Mod Settings
 - Fixed Typos
 
 ## v1.0.7

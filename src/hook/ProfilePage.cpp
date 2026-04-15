@@ -37,6 +37,8 @@ class $modify(RLProfilePage, ProfilePage) {
         bool isLeaderboardAdmin = false;
         bool isPlatMod = false;
         bool isPlatAdmin = false;
+        bool isDeveloper = false;
+        bool isOwner = false;
 
         async::TaskHolder<web::WebResponse> m_profileTask;
         async::TaskHolder<Result<std::string>> m_authTask;
@@ -575,6 +577,8 @@ class $modify(RLProfilePage, ProfilePage) {
                     json["isLeaderboardAdmin"].asBool().unwrapOrDefault();
                 bool isPlatMod = json["isPlatMod"].asBool().unwrapOrDefault();
                 bool isPlatAdmin = json["isPlatAdmin"].asBool().unwrapOrDefault();
+                bool isDeveloper = json["isDeveloper"].asBool().unwrapOrDefault();
+                bool isOwner = json["isOwner"].asBool().unwrapOrDefault();
 
                 pageRef->m_fields->m_stars = stars;
                 pageRef->m_fields->m_planets = planets;
@@ -591,6 +595,8 @@ class $modify(RLProfilePage, ProfilePage) {
                 pageRef->m_fields->isLeaderboardAdmin = isLeaderboardAdmin;
                 pageRef->m_fields->isPlatMod = isPlatMod;
                 pageRef->m_fields->isPlatAdmin = isPlatAdmin;
+                pageRef->m_fields->isDeveloper = isDeveloper;
+                pageRef->m_fields->isOwner = isOwner;
 
                 // create the user buttons manage
                 if (!Mod::get()->getSettingValue<bool>("disableRLMenu")) {
@@ -692,7 +698,7 @@ class $modify(RLProfilePage, ProfilePage) {
                     }
 
                     // if user is developer
-                    if (pageRef->m_accountID == rl::NOVA_ACCOUNT_ID) {
+                    if (pageRef->m_fields->isDeveloper) {
                         if (!usernameMenu->getChildByID("rl-profile-developer-badge:2")) {
                             auto developerBadgeSprite = CCSprite::createWithSpriteFrameName(
                                 "RL_badgeDeveloper.png"_spr);
@@ -701,7 +707,7 @@ class $modify(RLProfilePage, ProfilePage) {
                     }
 
                     // if user is owner
-                    if (pageRef->m_accountID == rl::DEV_ACCOUNT_ID || pageRef->m_accountID == rl::NOVA_ACCOUNT_ID) {
+                    if (pageRef->m_fields->isOwner) {
                         if (!usernameMenu->getChildByID("rl-profile-owner-badge:1")) {
                             auto ownerBadgeSprite = CCSprite::createWithSpriteFrameName(
                                 "RL_badgeOwner.png"_spr);

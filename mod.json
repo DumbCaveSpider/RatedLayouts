@@ -266,7 +266,7 @@
 			"name": "Disable Garage Stats",
 			"type": "bool",
 			"default": false,
-			"description": "Disables the garage stats shown in the Rated Layouts Creator Layer."
+			"description": "Disables the garage stats shown in the Rated Layouts Creator Layer. <cy>Enable this if you kept crashing when entering in the garage layer.</cy>"
 		},
 		"titleCache": {
 			"type": "title",

@@ -25,6 +25,8 @@ class $modify(RLCommentCell, CommentCell) {
         bool isLeaderboardAdmin = false;
         bool isPlatMod = false;
         bool isPlatAdmin = false;
+        bool isDeveloper = false;
+        bool isOwner = false;
 
         std::optional<matjson::Value> m_pendingRoleJson;
         int m_pendingRoleAccountId = 0;
@@ -96,7 +98,8 @@ class $modify(RLCommentCell, CommentCell) {
         // nothing to do if user has no special state
         if (!m_fields->supporter && !m_fields->isClassicMod &&
             !m_fields->isClassicAdmin && !m_fields->isLeaderboardMod &&
-            !m_fields->isPlatMod && !m_fields->isPlatAdmin && !m_fields->booster) {
+            !m_fields->isPlatMod && !m_fields->isPlatAdmin && !m_fields->booster &&
+            !m_fields->isDeveloper && !m_fields->isOwner) {
             return false;
         }
 
@@ -107,9 +110,9 @@ class $modify(RLCommentCell, CommentCell) {
 
         ccColor3B color = ccWHITE;  // default white
         // choose highest-priority role for color
-        if (accountId == rl::DEV_ACCOUNT_ID || accountId == rl::NOVA_ACCOUNT_ID) {
+        if (m_fields->isOwner) {
             color = {150, 255, 255};  // ArcticWoof cyan
-        } else if (accountId == rl::NOVA_ACCOUNT_ID) {
+        } else if (m_fields->isDeveloper) {
             color = {17, 153, 238};  // developer blue
         } else if (m_fields->isClassicAdmin) {
             color = {255, 170, 170};  // bright red
@@ -198,9 +201,12 @@ class $modify(RLCommentCell, CommentCell) {
         bool isLeaderboardMod = json["isLeaderboardMod"].asBool().unwrapOrDefault();
         bool isPlatMod = json["isPlatMod"].asBool().unwrapOrDefault();
         bool isPlatAdmin = json["isPlatAdmin"].asBool().unwrapOrDefault();
+        bool isDeveloper = json["isDeveloper"].asBool().unwrapOrDefault();
+        bool isOwner = json["isOwner"].asBool().unwrapOrDefault();
 
-        if (stars == 0 && planets == 0 && !isClassicMod && !isClassicAdmin &&
-            !isLeaderboardMod && !isPlatMod && !isPlatAdmin) {
+        if (stars == 0 && planets == 0 && !isSupporter && !isBooster &&
+            !isClassicMod && !isClassicAdmin && !isLeaderboardMod &&
+            !isPlatMod && !isPlatAdmin && !isDeveloper && !isOwner) {
             m_fields->stars = 0;
             m_fields->isClassicMod = false;
             m_fields->isClassicAdmin = false;
@@ -306,6 +312,8 @@ class $modify(RLCommentCell, CommentCell) {
         m_fields->isLeaderboardMod = isLeaderboardMod;
         m_fields->isPlatMod = isPlatMod;
         m_fields->isPlatAdmin = isPlatAdmin;
+        m_fields->isDeveloper = isDeveloper;
+        m_fields->isOwner = isOwner;
         m_fields->nameplate = nameplate;
 
         loadBadgeForComment(accountId);
@@ -431,9 +439,12 @@ class $modify(RLCommentCell, CommentCell) {
                 json["isLeaderboardMod"].asBool().unwrapOrDefault();
             bool isPlatMod = json["isPlatMod"].asBool().unwrapOrDefault();
             bool isPlatAdmin = json["isPlatAdmin"].asBool().unwrapOrDefault();
+            bool isDeveloper = json["isDeveloper"].asBool().unwrapOrDefault();
+            bool isOwner = json["isOwner"].asBool().unwrapOrDefault();
 
-            if (stars == 0 && planets == 0 && !isClassicMod && !isClassicAdmin &&
-                !isLeaderboardMod && !isPlatMod && !isPlatAdmin) {
+            if (stars == 0 && planets == 0 && !isSupporter && !isBooster &&
+                !isClassicMod && !isClassicAdmin && !isLeaderboardMod &&
+                !isPlatMod && !isPlatAdmin && !isDeveloper && !isOwner) {
                 log::debug("User {} has no role/stars/planets", accountId);
                 if (!cellRef)
                     return;
@@ -443,6 +454,8 @@ class $modify(RLCommentCell, CommentCell) {
                 cellRef->m_fields->isLeaderboardMod = false;
                 cellRef->m_fields->isPlatMod = false;
                 cellRef->m_fields->isPlatAdmin = false;
+                cellRef->m_fields->isDeveloper = false;
+                cellRef->m_fields->isOwner = false;
                 // remove any role badges and glow only if UI exists
                 if (cellRef->m_mainLayer) {
                     if (auto userNameMenu = typeinfo_cast<CCMenu*>(
@@ -538,6 +551,8 @@ class $modify(RLCommentCell, CommentCell) {
             cellRef->m_fields->isLeaderboardMod = isLeaderboardMod;
             cellRef->m_fields->isPlatMod = isPlatMod;
             cellRef->m_fields->isPlatAdmin = isPlatAdmin;
+            cellRef->m_fields->isDeveloper = isDeveloper;
+            cellRef->m_fields->isOwner = isOwner;
             cellRef->m_fields->nameplate = nameplate;
             if (!cellRef->m_mainLayer) {
                 cellRef->m_fields->m_pendingRoleJson = json;
@@ -635,12 +650,12 @@ class $modify(RLCommentCell, CommentCell) {
                 CCSprite::createWithSpriteFrameName("RL_badgeBooster.png"_spr), 4, "rl-comment-booster-badge:4");
         }
 
-        if (accountId == rl::DEV_ACCOUNT_ID || accountId == rl::NOVA_ACCOUNT_ID) {  // ArcticWoof or bonneville1
+        if (m_fields->isOwner) {
             addBadgeItem(CCSprite::createWithSpriteFrameName("RL_badgeOwner.png"_spr),
                 10,
                 "rl-comment-owner-badge:1");
         }
-        if (accountId == rl::NOVA_ACCOUNT_ID) {
+        if (m_fields->isDeveloper) {
             addBadgeItem(CCSprite::createWithSpriteFrameName("RL_badgeDeveloper.png"_spr),
                 12,
                 "rl-comment-developer-badge:1");

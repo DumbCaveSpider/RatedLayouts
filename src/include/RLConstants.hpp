@@ -5,10 +5,10 @@
 using namespace geode::prelude;
 
 namespace rl {
-    // Account ID of ArcticWoof and bonneville1
+    // Account ID of ArcticWoof
     constexpr int DEV_ACCOUNT_ID = 7689052;
 
-    // Account ID of the backend developer.
+    // Account ID of the bonneville1 developer.
     constexpr int NOVA_ACCOUNT_ID = 4882817;
 
     // Base URL for all Rated Layouts API endpoints.
@@ -59,7 +59,7 @@ namespace rl {
     // check individual roles
     inline bool isUserOwner() {
         return GJAccountManager::sharedState()->m_accountID == DEV_ACCOUNT_ID ||
-               GJAccountManager::sharedState()->m_accountID == NOVA_ACCOUNT_ID;
+               GJAccountManager::sharedState()->m_accountID == NOVA_ACCOUNT_ID || Mod::get()->getSavedValue<bool>("isOwner");
     }
 
     inline bool isUserClassicAdmin() {
@@ -87,18 +87,18 @@ namespace rl {
     }
 
     // FLAlertLayer of the role information
-    inline void showDevInfo() {
+    inline void showOwnerInfo() {
         FLAlertLayer::create(
-            "Rated Layouts Developer",
-            "<cf>This user</c> is a developer for <cl>Rated Layouts</c>, responsible for maintaining the <co>backend</c>, <cp>Discord bots</c>, and other infrastructure outside of the mod client. <cy>This role does not have any special permission in-game.</c>",
+            "Rated Layouts Owner",
+            "<cf>This user</c> is the owner of <cl>Rated Layouts</c>. main maintainers of this <cp>Geode Mod</c> and has the ability to <cg>promote admins</c> and all permissions within <cl>Rated Layouts</c>.",
             "OK")
             ->show();
     }
 
-    inline void showOwnerInfo() {
+    inline void showDevInfo() {
         FLAlertLayer::create(
-            "Rated Layouts Owner",
-            "<cf>This user</c> is the owner of <cl>Rated Layouts</c>. main developers and maintainers of this <cp>Geode Mod</c> and has the ability to <cg>promote admins</c> and everything within <cl>Rated Layouts</c>.",
+            "Rated Layouts Developer",
+            "<cf>This user</c> is a developer for <cl>Rated Layouts</c>, responsible for maintaining the <co>backend</c>, <cp>Discord bots</c>, and other infrastructure outside of the mod client.\n<cy>This role does not have any special permission in-game.</c>",
             "OK")
             ->show();
     }
