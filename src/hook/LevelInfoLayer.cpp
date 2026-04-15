@@ -1665,7 +1665,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
     }
 
     void onDevButton(CCObject* sender) {
-        if (rl::isUserOwner()) {
+        if (!rl::isUserOwner()) {
             log::warn("nope");
             return;
         } else {
