@@ -90,7 +90,7 @@ namespace rl {
     inline void showDevInfo() {
         FLAlertLayer::create(
             "Rated Layouts Developer",
-            "<cf>This user</c> is a <cl>developer</c> of <cl>Rated Layouts</c>, responsible for maintaining the <co>backend</c>, <cp>Discord bots</c>, and other infrastructure outside of the mod client.",
+            "<cf>This user</c> is a developer for <cl>Rated Layouts</c>, responsible for maintaining the <co>backend</c>, <cp>Discord bots</c>, and other infrastructure outside of the mod client. <cy>This role does not have any special permission in-game.</c>",
             "OK")
             ->show();
     }
@@ -98,7 +98,7 @@ namespace rl {
     inline void showOwnerInfo() {
         FLAlertLayer::create(
             "Rated Layouts Owner",
-            "<cf>ArcticWoof</c> is the creator and owner of <cl>Rated Layouts</c>. He is the main developer and maintainer of this <cp>Geode Mod</c> and has the ability to <cg>promote admins</c>.",
+            "<cf>This user</c> is the owner of <cl>Rated Layouts</c>. main developers and maintainers of this <cp>Geode Mod</c> and has the ability to <cg>promote admins</c> and everything within <cl>Rated Layouts</c>.",
             "OK")
             ->show();
     }
