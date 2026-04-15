@@ -107,7 +107,7 @@ class $modify(RLCommentCell, CommentCell) {
 
         ccColor3B color = ccWHITE;  // default white
         // choose highest-priority role for color
-        if (accountId == rl::DEV_ACCOUNT_ID) {
+        if (accountId == rl::DEV_ACCOUNT_ID || accountId == rl::NOVA_ACCOUNT_ID) {
             color = {150, 255, 255};  // ArcticWoof cyan
         } else if (accountId == rl::BACKEND_DEV_ACCOUNT_ID) {
             color = {0x11, 0x99, 0xee};  // developer blue
@@ -635,7 +635,7 @@ class $modify(RLCommentCell, CommentCell) {
                 CCSprite::createWithSpriteFrameName("RL_badgeBooster.png"_spr), 4, "rl-comment-booster-badge:4");
         }
 
-        if (accountId == rl::DEV_ACCOUNT_ID) {  // ArcticWoof
+        if (accountId == rl::DEV_ACCOUNT_ID || accountId == rl::NOVA_ACCOUNT_ID) {  // ArcticWoof or bonneville1
             addBadgeItem(CCSprite::createWithSpriteFrameName("RL_badgeOwner.png"_spr),
                 10,
                 "rl-comment-owner-badge:1");

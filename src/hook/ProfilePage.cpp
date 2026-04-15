@@ -453,416 +453,407 @@ class $modify(RLProfilePage, ProfilePage) {
     void fetchProfileData(int accountId) {
         log::info("Fetching profile data for account ID: {}", accountId);
         m_fields->accountId = accountId;
-        if (m_fields->accountId == rl::DEV_ACCOUNT_ID)
+        if (m_fields->accountId == rl::DEV_ACCOUNT_ID || m_fields->accountId == rl::NOVA_ACCOUNT_ID) {
             RLAchievements::onReward("misc_arcticwoof");
 
-        auto accountData = argon::getGameAccountData();
+            auto accountData = argon::getGameAccountData();
 
-        m_fields->m_authTask.spawn(
-            argon::startAuth(std::move(accountData)),
-            [this, accountId](Result<std::string> res) {
-                if (res.isOk()) {
-                    auto token = std::move(res).unwrap();
-                    log::debug("token obtained: {}", token);
-                    Mod::get()->setSavedValue("argon_token", token);
-                    this->continueProfileFetch(accountId);
-                    return;
-                }
-
-                auto err = res.unwrapErr();
-                log::warn("Auth failed: {}", err);
-
-                // If account data invalid, interactive auth fallback
-                if (err.find("Invalid account data") != std::string::npos) {
-                    log::info(
-                        "Falling back to interactive auth due to invalid account data");
-                    argon::AuthOptions options;
-                    options.progress = [](argon::AuthProgress progress) {
-                        log::debug("auth progress: {}",
-                            argon::authProgressToString(progress));
-                    };
-
-                    m_fields->m_authTask.spawn(
-                        argon::startAuth(std::move(options)),
-                        [this, accountId](Result<std::string> res2) {
-                            if (res2.isOk()) {
-                                auto token = std::move(res2).unwrap();
-                                log::debug("token obtained (fallback): {}", token);
-                                Mod::get()->setSavedValue("argon_token", token);
-                                this->continueProfileFetch(accountId);
-                            } else {
-                                log::warn("Interactive auth also failed: {}",
-                                    res2.unwrapErr());
-                                Notification::create(res2.unwrapErr(),
-                                    NotificationIcon::Error)
-                                    ->show();
-                                argon::clearToken();
-                            }
-                        });
-                } else {
-                    Notification::create(err, NotificationIcon::Error)->show();
-                    argon::clearToken();
-                }
-            });
-    }
-
-    void continueProfileFetch(int accountId) {
-        std::string token = Mod::get()->getSavedValue<std::string>("argon_token");
-
-        matjson::Value jsonBody = matjson::Value::object();
-        jsonBody["argonToken"] = token;
-        jsonBody["accountId"] = accountId;
-
-        auto postReq = web::WebRequest();
-        postReq.bodyJSON(jsonBody);
-
-        if (m_fields->m_profileInFlight &&
-            m_fields->m_profileForAccount == accountId) {
-            log::debug("Profile request already in-flight for account {}", accountId);
-            return;
-        }
-
-        m_fields->m_profileTask.cancel();
-        m_fields->m_profileInFlight = true;
-        m_fields->m_profileForAccount = accountId;
-
-        Ref<RLProfilePage> pageRef = this;
-        m_fields->m_profileTask.spawn(
-            postReq.post(std::string(rl::BASE_API_URL) + "/profile"),
-            [pageRef, accountId](web::WebResponse response) {
-                if (pageRef) {
-                    pageRef->m_fields->m_profileInFlight = false;
-                } else {
-                    return;
-                }
-
-                log::info("Received response from server");
-
-                if (!response.ok()) {
-                    log::warn("{}: user doesn't exists in rated layouts",
-                        response.code());
-
-                    if (pageRef->m_fields->m_rlToggleArrow) {
-                        pageRef->m_fields->m_rlToggleArrow->setEnabled(false);
-                        pageRef->m_fields->m_rlToggleArrow->setOpacity(100);
+            m_fields->m_authTask.spawn(
+                argon::startAuth(std::move(accountData)),
+                [this, accountId](Result<std::string> res) {
+                    if (res.isOk()) {
+                        auto token = std::move(res).unwrap();
+                        log::debug("token obtained: {}", token);
+                        Mod::get()->setSavedValue("argon_token", token);
+                        this->continueProfileFetch(accountId);
+                        return;
                     }
 
-                    return;
-                }
+                    auto err = res.unwrapErr();
+                    log::warn("Auth failed: {}", err);
 
-                auto jsonRes = response.json();
-                if (!jsonRes) {
-                    log::warn("Failed to parse JSON response");
-                    return;
-                }
+                    // If account data invalid, interactive auth fallback
+                    if (err.find("Invalid account data") != std::string::npos) {
+                        log::info(
+                            "Falling back to interactive auth due to invalid account data");
+                        argon::AuthOptions options;
+                        options.progress = [](argon::AuthProgress progress) {
+                            log::debug("auth progress: {}",
+                                argon::authProgressToString(progress));
+                        };
 
-                auto json = jsonRes.unwrap();
-                int points = json["points"].asInt().unwrapOrDefault();
-                int stars = json["stars"].asInt().unwrapOrDefault();
-                int coins = json["coins"].asInt().unwrapOrDefault();
-                int planets = json["planets"].asInt().unwrapOrDefault();
-                int votes = json["votes"].asInt().unwrapOrDefault();
-                bool isSupporter = json["isSupporter"].asBool().unwrapOrDefault();
-                bool isBooster = json["isBooster"].asBool().unwrapOrDefault();
-                // new flags
-                bool isClassicMod = json["isClassicMod"].asBool().unwrapOrDefault();
-                bool isClassicAdmin =
-                    json["isClassicAdmin"].asBool().unwrapOrDefault();
-                bool isLeaderboardMod =
-                    json["isLeaderboardMod"].asBool().unwrapOrDefault();
-                bool isLeaderboardAdmin =
-                    json["isLeaderboardAdmin"].asBool().unwrapOrDefault();
-                bool isPlatMod = json["isPlatMod"].asBool().unwrapOrDefault();
-                bool isPlatAdmin = json["isPlatAdmin"].asBool().unwrapOrDefault();
+                        m_fields->m_authTask.spawn(
+                            argon::startAuth(std::move(options)),
+                            [this, accountId](Result<std::string> res2) {
+                                if (res2.isOk()) {
+                                    auto token = std::move(res2).unwrap();
+                                    log::debug("token obtained (fallback): {}", token);
+                                    Mod::get()->setSavedValue("argon_token", token);
+                                    this->continueProfileFetch(accountId);
+                                } else {
+                                    log::warn("Interactive auth also failed: {}",
+                                        res2.unwrapErr());
+                                    Notification::create(res2.unwrapErr(),
+                                        NotificationIcon::Error)
+                                        ->show();
+                                    argon::clearToken();
+                                }
+                            });
+                    } else {
+                        Notification::create(err, NotificationIcon::Error)->show();
+                        argon::clearToken();
+                    }
+                });
+            }
+        }
 
-                pageRef->m_fields->m_stars = stars;
-                pageRef->m_fields->m_planets = planets;
-                pageRef->m_fields->m_points = points;
-                pageRef->m_fields->m_coins = coins;
-                pageRef->m_fields->m_votes = votes;
+        void continueProfileFetch(int accountId) {
+            std::string token = Mod::get()->getSavedValue<std::string>("argon_token");
 
-                pageRef->m_fields->isSupporter = isSupporter;
-                pageRef->m_fields->isBooster = isBooster;
+            matjson::Value jsonBody = matjson::Value::object();
+            jsonBody["argonToken"] = token;
+            jsonBody["accountId"] = accountId;
 
-                pageRef->m_fields->isClassicMod = isClassicMod;
-                pageRef->m_fields->isClassicAdmin = isClassicAdmin;
-                pageRef->m_fields->isLeaderboardMod = isLeaderboardMod;
-                pageRef->m_fields->isLeaderboardAdmin = isLeaderboardAdmin;
-                pageRef->m_fields->isPlatMod = isPlatMod;
-                pageRef->m_fields->isPlatAdmin = isPlatAdmin;
+            auto postReq = web::WebRequest();
+            postReq.bodyJSON(jsonBody);
 
-                // create the user buttons manage
-                if (!Mod::get()->getSettingValue<bool>("disableRLMenu")) {
-                    auto rlButtonsMenu = pageRef->getChildByIDRecursive("rl-buttons-menu");
-                    if (rlButtonsMenu && (rl::isUserAdmin() || rl::isUserLeaderboardMod() || rl::isUserOwner())) {
-                        if (!rlButtonsMenu->getChildByID("rl-manage-btn")) {
-                            auto modUserSpr = CCSprite::createWithSpriteFrameName(
-                                "RL_userPanel.png"_spr);
-                            auto modUserButton = EditorButtonSprite::create(
-                                modUserSpr, EditorBaseColor::LightBlue, EditorBaseSize::Normal);
-                            auto modUserBtnItem = CCMenuItemSpriteExtra::create(
-                                modUserButton, pageRef, menu_selector(RLProfilePage::onUserManage));
-                            modUserBtnItem->setID("rl-manage-btn");
-                            rlButtonsMenu->addChild(modUserBtnItem);
-                            rlButtonsMenu->updateLayout();
+            if (m_fields->m_profileInFlight &&
+                m_fields->m_profileForAccount == accountId) {
+                log::debug("Profile request already in-flight for account {}", accountId);
+                return;
+            }
+
+            m_fields->m_profileTask.cancel();
+            m_fields->m_profileInFlight = true;
+            m_fields->m_profileForAccount = accountId;
+
+            Ref<RLProfilePage> pageRef = this;
+            m_fields->m_profileTask.spawn(
+                postReq.post(std::string(rl::BASE_API_URL) + "/profile"),
+                [pageRef, accountId](web::WebResponse response) {
+                    if (pageRef) {
+                        pageRef->m_fields->m_profileInFlight = false;
+                    } else {
+                        return;
+                    }
+
+                    log::info("Received response from server");
+
+                    if (!response.ok()) {
+                        log::warn("{}: user doesn't exists in rated layouts",
+                            response.code());
+
+                        if (pageRef->m_fields->m_rlToggleArrow) {
+                            pageRef->m_fields->m_rlToggleArrow->setEnabled(false);
+                            pageRef->m_fields->m_rlToggleArrow->setOpacity(100);
                         }
 
-                        if (rlButtonsMenu && (rl::isUserLeaderboardAdmin() || rl::isUserLeaderboardMod() || rl::isUserOwner())) {
-                            if (!rlButtonsMenu->getChildByID("rl-manage-level-btn")) {
-                                auto manageLevelSpr = CCSprite::createWithSpriteFrameName(
-                                    "RL_userHammer.png"_spr);
-                                auto manageLevelButton = EditorButtonSprite::create(
-                                    manageLevelSpr, EditorBaseColor::LightBlue, EditorBaseSize::Normal);
-                                auto manageLevelBtnItem = CCMenuItemSpriteExtra::create(
-                                    manageLevelButton, pageRef, menu_selector(RLProfilePage::onUserManageLevel));
-                                manageLevelBtnItem->setID("rl-manage-level-btn");
-                                rlButtonsMenu->addChild(manageLevelBtnItem);
+                        return;
+                    }
+
+                    auto jsonRes = response.json();
+                    if (!jsonRes) {
+                        log::warn("Failed to parse JSON response");
+                        return;
+                    }
+
+                    auto json = jsonRes.unwrap();
+                    int points = json["points"].asInt().unwrapOrDefault();
+                    int stars = json["stars"].asInt().unwrapOrDefault();
+                    int coins = json["coins"].asInt().unwrapOrDefault();
+                    int planets = json["planets"].asInt().unwrapOrDefault();
+                    int votes = json["votes"].asInt().unwrapOrDefault();
+                    bool isSupporter = json["isSupporter"].asBool().unwrapOrDefault();
+                    bool isBooster = json["isBooster"].asBool().unwrapOrDefault();
+                    // new flags
+                    bool isClassicMod = json["isClassicMod"].asBool().unwrapOrDefault();
+                    bool isClassicAdmin =
+                        json["isClassicAdmin"].asBool().unwrapOrDefault();
+                    bool isLeaderboardMod =
+                        json["isLeaderboardMod"].asBool().unwrapOrDefault();
+                    bool isLeaderboardAdmin =
+                        json["isLeaderboardAdmin"].asBool().unwrapOrDefault();
+                    bool isPlatMod = json["isPlatMod"].asBool().unwrapOrDefault();
+                    bool isPlatAdmin = json["isPlatAdmin"].asBool().unwrapOrDefault();
+
+                    pageRef->m_fields->m_stars = stars;
+                    pageRef->m_fields->m_planets = planets;
+                    pageRef->m_fields->m_points = points;
+                    pageRef->m_fields->m_coins = coins;
+                    pageRef->m_fields->m_votes = votes;
+
+                    pageRef->m_fields->isSupporter = isSupporter;
+                    pageRef->m_fields->isBooster = isBooster;
+
+                    pageRef->m_fields->isClassicMod = isClassicMod;
+                    pageRef->m_fields->isClassicAdmin = isClassicAdmin;
+                    pageRef->m_fields->isLeaderboardMod = isLeaderboardMod;
+                    pageRef->m_fields->isLeaderboardAdmin = isLeaderboardAdmin;
+                    pageRef->m_fields->isPlatMod = isPlatMod;
+                    pageRef->m_fields->isPlatAdmin = isPlatAdmin;
+
+                    // create the user buttons manage
+                    if (!Mod::get()->getSettingValue<bool>("disableRLMenu")) {
+                        auto rlButtonsMenu = pageRef->getChildByIDRecursive("rl-buttons-menu");
+                        if (rlButtonsMenu && (rl::isUserAdmin() || rl::isUserLeaderboardMod() || rl::isUserOwner())) {
+                            if (!rlButtonsMenu->getChildByID("rl-manage-btn")) {
+                                auto modUserSpr = CCSprite::createWithSpriteFrameName(
+                                    "RL_userPanel.png"_spr);
+                                auto modUserButton = EditorButtonSprite::create(
+                                    modUserSpr, EditorBaseColor::LightBlue, EditorBaseSize::Normal);
+                                auto modUserBtnItem = CCMenuItemSpriteExtra::create(
+                                    modUserButton, pageRef, menu_selector(RLProfilePage::onUserManage));
+                                modUserBtnItem->setID("rl-manage-btn");
+                                rlButtonsMenu->addChild(modUserBtnItem);
                                 rlButtonsMenu->updateLayout();
                             }
+
+                            if (rlButtonsMenu && (rl::isUserLeaderboardAdmin() || rl::isUserLeaderboardMod() || rl::isUserOwner())) {
+                                if (!rlButtonsMenu->getChildByID("rl-manage-level-btn")) {
+                                    auto manageLevelSpr = CCSprite::createWithSpriteFrameName(
+                                        "RL_userHammer.png"_spr);
+                                    auto manageLevelButton = EditorButtonSprite::create(
+                                        manageLevelSpr, EditorBaseColor::LightBlue, EditorBaseSize::Normal);
+                                    auto manageLevelBtnItem = CCMenuItemSpriteExtra::create(
+                                        manageLevelButton, pageRef, menu_selector(RLProfilePage::onUserManageLevel));
+                                    manageLevelBtnItem->setID("rl-manage-level-btn");
+                                    rlButtonsMenu->addChild(manageLevelBtnItem);
+                                    rlButtonsMenu->updateLayout();
+                                }
+                            }
                         }
                     }
-                }
 
-                // add badge to the username-menu
-                CCMenu* usernameMenu = static_cast<CCMenu*>(
-                    pageRef->m_mainLayer->getChildByIDRecursive("username-menu"));
-                if (usernameMenu) {
-                    auto addBadgeItem = [&](CCSprite* sprite, int tag, const char* id) {
-                        if (!sprite)
-                            return;
-                        auto btn = CCMenuItemSpriteExtra::create(
-                            sprite, pageRef, menu_selector(RLProfilePage::onBadgeClicked));
-                        btn->setTag(tag);
-                        btn->setID(id);
-                        usernameMenu->addChild(btn);
-                    };
+                    // add badge to the username-menu
+                    CCMenu* usernameMenu = static_cast<CCMenu*>(
+                        pageRef->m_mainLayer->getChildByIDRecursive("username-menu"));
+                    if (usernameMenu) {
+                        auto addBadgeItem = [&](CCSprite* sprite, int tag, const char* id) {
+                            if (!sprite)
+                                return;
+                            auto btn = CCMenuItemSpriteExtra::create(
+                                sprite, pageRef, menu_selector(RLProfilePage::onBadgeClicked));
+                            btn->setTag(tag);
+                            btn->setID(id);
+                            usernameMenu->addChild(btn);
+                        };
 
-                    if (!usernameMenu->getChildByID(
-                            "rl-profile-classic-admin-badge:2") &&
-                        pageRef->m_fields->isClassicAdmin) {
-                        auto adminBadgeSprite = CCSprite::createWithSpriteFrameName(
-                            "RL_badgeAdmin01.png"_spr);
-                        addBadgeItem(adminBadgeSprite, 5, "rl-profile-classic-admin-badge:2");
-                    }
-                    if (!usernameMenu->getChildByID("rl-profile-classic-mod-badge:3") &&
-                        pageRef->m_fields->isClassicMod) {
-                        auto modBadgeSprite =
-                            CCSprite::createWithSpriteFrameName("RL_badgeMod01.png"_spr);
-                        addBadgeItem(modBadgeSprite, 6, "rl-profile-classic-mod-badge:3");
-                    }
-                    if (!usernameMenu->getChildByID("rl-profile-lb-mod-badge:3") &&
-                        pageRef->m_fields->isLeaderboardMod) {
-                        auto modBadgeSprite = CCSprite::createWithSpriteFrameName(
-                            "RL_badgelbMod01.png"_spr);
-                        addBadgeItem(modBadgeSprite, 9, "rl-profile-lb-mod-badge:3");
-                    }
-                    if (!usernameMenu->getChildByID("rl-profile-lb-admin-badge:2") &&
-                        pageRef->m_fields->isLeaderboardAdmin) {
-                        auto adminBadgeSprite = CCSprite::createWithSpriteFrameName(
-                            "RL_badgelbAdmin01.png"_spr);
-                        addBadgeItem(adminBadgeSprite, 11, "rl-profile-lb-admin-badge:2");
-                    }
-                    if (!usernameMenu->getChildByID("rl-profile-plat-admin-badge:2") &&
-                        pageRef->m_fields->isPlatAdmin) {
-                        auto adminBadgeSprite = CCSprite::createWithSpriteFrameName(
-                            "RL_badgePlatAdmin01.png"_spr);
-                        addBadgeItem(adminBadgeSprite, 7, "rl-profile-plat-admin-badge:2");
-                    }
-                    if (!usernameMenu->getChildByID("rl-profile-plat-mod-badge:3") &&
-                        pageRef->m_fields->isPlatMod) {
-                        auto modBadgeSprite = CCSprite::createWithSpriteFrameName(
-                            "RL_badgePlatMod01.png"_spr);
-                        addBadgeItem(modBadgeSprite, 8, "rl-profile-plat-mod-badge:3");
-                    }
-                    // if user is supporter
-                    if (pageRef->m_fields->isSupporter &&
-                        !usernameMenu->getChildByID("rl-profile-supporter-badge:4")) {
-                        auto supporterSprite = CCSprite::createWithSpriteFrameName(
-                            "RL_badgeSupporter.png"_spr);
-                        addBadgeItem(supporterSprite, 3, "rl-profile-supporter-badge:4");
-                    }
-
-                    // if user is booster
-                    if (pageRef->m_fields->isBooster &&
-                        !usernameMenu->getChildByID("rl-profile-booster-badge:4")) {
-                        auto boosterSprite = CCSprite::createWithSpriteFrameName(
-                            "RL_badgeBooster.png"_spr);
-                        addBadgeItem(boosterSprite, 4, "rl-profile-booster-badge:4");
-                    }
-
-                    // if user is arcticwoof
-                    if (pageRef->m_accountID == rl::DEV_ACCOUNT_ID) {
-                        if (!usernameMenu->getChildByID("rl-profile-owner-badge:1")) {
-                            auto ownerBadgeSprite = CCSprite::createWithSpriteFrameName(
-                                "RL_badgeOwner.png"_spr);
-                            addBadgeItem(ownerBadgeSprite, 10, "rl-profile-owner-badge:1");
+                        if (!usernameMenu->getChildByID(
+                                "rl-profile-classic-admin-badge:2") &&
+                            pageRef->m_fields->isClassicAdmin) {
+                            auto adminBadgeSprite = CCSprite::createWithSpriteFrameName(
+                                "RL_badgeAdmin01.png"_spr);
+                            addBadgeItem(adminBadgeSprite, 5, "rl-profile-classic-admin-badge:2");
                         }
-                    }
-                    if (pageRef->m_accountID == rl::BACKEND_DEV_ACCOUNT_ID) {
-                        if (!usernameMenu->getChildByID("rl-profile-developer-badge:1")) {
-                            auto devBadgeSprite = CCSprite::createWithSpriteFrameName(
-                                "RL_badgeDeveloper.png"_spr);
-                            addBadgeItem(devBadgeSprite, 12, "rl-profile-developer-badge:1");
+                        if (!usernameMenu->getChildByID("rl-profile-classic-mod-badge:3") &&
+                            pageRef->m_fields->isClassicMod) {
+                            auto modBadgeSprite =
+                                CCSprite::createWithSpriteFrameName("RL_badgeMod01.png"_spr);
+                            addBadgeItem(modBadgeSprite, 6, "rl-profile-classic-mod-badge:3");
                         }
+                        if (!usernameMenu->getChildByID("rl-profile-lb-mod-badge:3") &&
+                            pageRef->m_fields->isLeaderboardMod) {
+                            auto modBadgeSprite = CCSprite::createWithSpriteFrameName(
+                                "RL_badgelbMod01.png"_spr);
+                            addBadgeItem(modBadgeSprite, 9, "rl-profile-lb-mod-badge:3");
+                        }
+                        if (!usernameMenu->getChildByID("rl-profile-lb-admin-badge:2") &&
+                            pageRef->m_fields->isLeaderboardAdmin) {
+                            auto adminBadgeSprite = CCSprite::createWithSpriteFrameName(
+                                "RL_badgelbAdmin01.png"_spr);
+                            addBadgeItem(adminBadgeSprite, 11, "rl-profile-lb-admin-badge:2");
+                        }
+                        if (!usernameMenu->getChildByID("rl-profile-plat-admin-badge:2") &&
+                            pageRef->m_fields->isPlatAdmin) {
+                            auto adminBadgeSprite = CCSprite::createWithSpriteFrameName(
+                                "RL_badgePlatAdmin01.png"_spr);
+                            addBadgeItem(adminBadgeSprite, 7, "rl-profile-plat-admin-badge:2");
+                        }
+                        if (!usernameMenu->getChildByID("rl-profile-plat-mod-badge:3") &&
+                            pageRef->m_fields->isPlatMod) {
+                            auto modBadgeSprite = CCSprite::createWithSpriteFrameName(
+                                "RL_badgePlatMod01.png"_spr);
+                            addBadgeItem(modBadgeSprite, 8, "rl-profile-plat-mod-badge:3");
+                        }
+                        // if user is supporter
+                        if (pageRef->m_fields->isSupporter &&
+                            !usernameMenu->getChildByID("rl-profile-supporter-badge:4")) {
+                            auto supporterSprite = CCSprite::createWithSpriteFrameName(
+                                "RL_badgeSupporter.png"_spr);
+                            addBadgeItem(supporterSprite, 3, "rl-profile-supporter-badge:4");
+                        }
+
+                        // if user is booster
+                        if (pageRef->m_fields->isBooster &&
+                            !usernameMenu->getChildByID("rl-profile-booster-badge:4")) {
+                            auto boosterSprite = CCSprite::createWithSpriteFrameName(
+                                "RL_badgeBooster.png"_spr);
+                            addBadgeItem(boosterSprite, 4, "rl-profile-booster-badge:4");
+                        }
+
+                        // if user is arcticwoof
+                        if (pageRef->m_accountID == rl::DEV_ACCOUNT_ID || pageRef->m_accountID == rl::NOVA_ACCOUNT_ID) {
+                            if (!usernameMenu->getChildByID("rl-profile-owner-badge:1")) {
+                                auto ownerBadgeSprite = CCSprite::createWithSpriteFrameName(
+                                    "RL_badgeOwner.png"_spr);
+                                addBadgeItem(ownerBadgeSprite, 10, "rl-profile-owner-badge:1");
+                            }
+                        }
+                        usernameMenu->updateLayout();
                     }
-                    usernameMenu->updateLayout();
-                }
 
-                pageRef->updateStatLabel(
-                    "rl-stars-label",
-                    GameToolbox::pointsToString(pageRef->m_fields->m_stars));
-                pageRef->updateStatLabel(
-                    "rl-planets-label",
-                    GameToolbox::pointsToString(pageRef->m_fields->m_planets));
-                pageRef->updateStatLabel(
-                    "rl-coins-label",
-                    GameToolbox::pointsToString(pageRef->m_fields->m_coins));
-                pageRef->updateStatLabel(
-                    "rl-votes-label",
-                    GameToolbox::pointsToString(pageRef->m_fields->m_votes));
+                    pageRef->updateStatLabel(
+                        "rl-stars-label",
+                        GameToolbox::pointsToString(pageRef->m_fields->m_stars));
+                    pageRef->updateStatLabel(
+                        "rl-planets-label",
+                        GameToolbox::pointsToString(pageRef->m_fields->m_planets));
+                    pageRef->updateStatLabel(
+                        "rl-coins-label",
+                        GameToolbox::pointsToString(pageRef->m_fields->m_coins));
+                    pageRef->updateStatLabel(
+                        "rl-votes-label",
+                        GameToolbox::pointsToString(pageRef->m_fields->m_votes));
 
-                // If this is the player's own profile, check achievements for Sparks
-                // and Planets
-                if (pageRef->m_ownProfile) {
-                    log::debug(
-                        "checking Sparks/Planets achievements (stars={}, planets={})",
-                        pageRef->m_fields->m_stars,
-                        pageRef->m_fields->m_planets);
-                    RLAchievements::checkAll(RLAchievements::Collectable::Sparks,
-                        pageRef->m_fields->m_stars);
-                    RLAchievements::checkAll(RLAchievements::Collectable::Planets,
-                        pageRef->m_fields->m_planets);
-                    RLAchievements::checkAll(RLAchievements::Collectable::Points,
-                        pageRef->m_fields->m_points);
-                    RLAchievements::checkAll(RLAchievements::Collectable::Coins,
-                        pageRef->m_fields->m_coins);
-                    RLAchievements::checkAll(RLAchievements::Collectable::Votes,
-                        pageRef->m_fields->m_votes);
-                }
+                    // If this is the player's own profile, check achievements for Sparks
+                    // and Planets
+                    if (pageRef->m_ownProfile) {
+                        log::debug(
+                            "checking Sparks/Planets achievements (stars={}, planets={})",
+                            pageRef->m_fields->m_stars,
+                            pageRef->m_fields->m_planets);
+                        RLAchievements::checkAll(RLAchievements::Collectable::Sparks,
+                            pageRef->m_fields->m_stars);
+                        RLAchievements::checkAll(RLAchievements::Collectable::Planets,
+                            pageRef->m_fields->m_planets);
+                        RLAchievements::checkAll(RLAchievements::Collectable::Points,
+                            pageRef->m_fields->m_points);
+                        RLAchievements::checkAll(RLAchievements::Collectable::Coins,
+                            pageRef->m_fields->m_coins);
+                        RLAchievements::checkAll(RLAchievements::Collectable::Votes,
+                            pageRef->m_fields->m_votes);
+                    }
 
-                // Handle creator points
-                if (auto rlStatsMenu =
-                        pageRef->getChildByIDRecursive("rl-stats-menu")) {
-                    if (pageRef->m_fields->m_points > 0 &&
-                        !Mod::get()->getSettingValue<bool>("disableCreatorPoints")) {
-                        if (!rlStatsMenu->getChildByIDRecursive("rl-points-entry")) {
-                            auto pointsEntry = pageRef->createStatEntry(
-                                "rl-points-entry", "rl-points-label", GameToolbox::pointsToString(pageRef->m_fields->m_points), "RL_blueprintPoint01.png"_spr, menu_selector(RLProfilePage::onLayoutPointsClicked));
-                            rlStatsMenu->addChild(pointsEntry);
+                    // Handle creator points
+                    if (auto rlStatsMenu =
+                            pageRef->getChildByIDRecursive("rl-stats-menu")) {
+                        if (pageRef->m_fields->m_points > 0 &&
+                            !Mod::get()->getSettingValue<bool>("disableCreatorPoints")) {
+                            if (!rlStatsMenu->getChildByIDRecursive("rl-points-entry")) {
+                                auto pointsEntry = pageRef->createStatEntry(
+                                    "rl-points-entry", "rl-points-label", GameToolbox::pointsToString(pageRef->m_fields->m_points), "RL_blueprintPoint01.png"_spr, menu_selector(RLProfilePage::onLayoutPointsClicked));
+                                rlStatsMenu->addChild(pointsEntry);
+                            } else {
+                                pageRef->updateStatLabel(
+                                    "rl-points-label",
+                                    GameToolbox::pointsToString(pageRef->m_fields->m_points));
+                            }
                         } else {
-                            pageRef->updateStatLabel(
-                                "rl-points-label",
-                                GameToolbox::pointsToString(pageRef->m_fields->m_points));
+                            if (auto creatorPoint =
+                                    rlStatsMenu->getChildByIDRecursive("rl-points-entry")) {
+                                creatorPoint->removeFromParent();
+                            }
                         }
-                    } else {
-                        if (auto creatorPoint =
-                                rlStatsMenu->getChildByIDRecursive("rl-points-entry")) {
-                            creatorPoint->removeFromParent();
-                        }
+
+                        rlStatsMenu->updateLayout();
                     }
-
-                    rlStatsMenu->updateLayout();
-                }
-            });
-    }
-
-    void onBadgeClicked(CCObject* sender) {
-        auto btn = static_cast<CCMenuItemSpriteExtra*>(sender);
-        if (!btn)
-            return;
-        int tag = btn->getTag();
-        switch (tag) {
-            case 3:  // Supporters
-                rl::showSupporterInfo();
-                break;
-            case 4:  // Boosters
-                rl::showBoosterInfo();
-                break;
-            case 5:  // Classic Admins
-                rl::showClassicAdminInfo();
-                break;
-            case 6:  // Classic Mods
-                rl::showClassicModInfo();
-                break;
-            case 7:  // Plat Admins
-                rl::showPlatAdminInfo();
-                break;
-            case 8:  // Plat Mods
-                rl::showPlatModInfo();
-                break;
-            case 9:  // Leaderboard Mods
-                rl::showLeaderboardModInfo();
-                break;
-            case 10:  // Owner
-                rl::showOwnerInfo();
-                break;
-            case 11:  // Leaderboard Admins
-                rl::showLeaderboardAdminInfo();
-                break;
-            case 12:  // Developer
-                rl::showDevInfo();
-                break;
-            default:
-                break;
+                });
         }
-    }
 
-    void onUserManage(CCObject* sender) {
-        // only leaderboard moderators may manage users
-        if (!(rl::isUserHasPerms() || rl::isUserOwner())) {
-            Notification::create("You don't have permission to manage users.",
-                NotificationIcon::Error)
-                ->show();
-            return;
+        void onBadgeClicked(CCObject * sender) {
+            auto btn = static_cast<CCMenuItemSpriteExtra*>(sender);
+            if (!btn)
+                return;
+            int tag = btn->getTag();
+            switch (tag) {
+                case 3:  // Supporters
+                    rl::showSupporterInfo();
+                    break;
+                case 4:  // Boosters
+                    rl::showBoosterInfo();
+                    break;
+                case 5:  // Classic Admins
+                    rl::showClassicAdminInfo();
+                    break;
+                case 6:  // Classic Mods
+                    rl::showClassicModInfo();
+                    break;
+                case 7:  // Plat Admins
+                    rl::showPlatAdminInfo();
+                    break;
+                case 8:  // Plat Mods
+                    rl::showPlatModInfo();
+                    break;
+                case 9:  // Leaderboard Mods
+                    rl::showLeaderboardModInfo();
+                    break;
+                case 10:  // Owner
+                    rl::showOwnerInfo();
+                    break;
+                case 11:  // Leaderboard Admins
+                    rl::showLeaderboardAdminInfo();
+                    break;
+                default:
+                    break;
+            }
         }
-        int accountId = m_fields->accountId;
-        auto userControl = RLUserControl::create(accountId);
-        userControl->show();
-    }
 
-    void onUserManageLevel(CCObject* sender) {
-        // only leaderboard moderators may manage levels
-        if (!(rl::isUserLeaderboardMod() || rl::isUserLeaderboardAdmin() || rl::isUserOwner())) {
-            Notification::create("You don't have permission to manage levels.",
-                NotificationIcon::Error)
-                ->show();
-            return;
+        void onUserManage(CCObject * sender) {
+            // only leaderboard moderators may manage users
+            if (!(rl::isUserHasPerms() || rl::isUserOwner())) {
+                Notification::create("You don't have permission to manage users.",
+                    NotificationIcon::Error)
+                    ->show();
+                return;
+            }
+            int accountId = m_fields->accountId;
+            auto userControl = RLUserControl::create(accountId);
+            userControl->show();
         }
-        int accountId = m_fields->accountId;
-        auto levelControl = RLUserLevelControl::create(accountId);
-        levelControl->show();
-    }
 
-    void onPlanetsClicked(CCObject* sender) {
-        int accountId = m_fields->accountId;
-        auto popup = RLDifficultyTotalPopup::create(
-            accountId, RLDifficultyTotalPopup::Mode::Planets);
-        if (popup)
-            popup->show();
-    }
+        void onUserManageLevel(CCObject * sender) {
+            // only leaderboard moderators may manage levels
+            if (!(rl::isUserLeaderboardMod() || rl::isUserLeaderboardAdmin() || rl::isUserOwner())) {
+                Notification::create("You don't have permission to manage levels.",
+                    NotificationIcon::Error)
+                    ->show();
+                return;
+            }
+            int accountId = m_fields->accountId;
+            auto levelControl = RLUserLevelControl::create(accountId);
+            levelControl->show();
+        }
 
-    void onLayoutPointsClicked(CCObject* sender) {
-        int accountId = m_fields->accountId;
-        auto username = GameLevelManager::sharedState()->tryGetUsername(accountId);
-        if (username.empty())
-            username = "User";
-        std::string title = fmt::format("{}'s Layouts", username);
+        void onPlanetsClicked(CCObject * sender) {
+            int accountId = m_fields->accountId;
+            auto popup = RLDifficultyTotalPopup::create(
+                accountId, RLDifficultyTotalPopup::Mode::Planets);
+            if (popup)
+                popup->show();
+        }
 
-        RLLevelBrowserLayer::ParamList params;
-        params.emplace_back("accountId", numToString(accountId));
-        auto browserLayer = RLLevelBrowserLayer::create(
-            RLLevelBrowserLayer::Mode::Account, params, title);
-        auto scene = CCScene::create();
-        scene->addChild(browserLayer);
-        auto transitionFade = CCTransitionFade::create(0.5f, scene);
-        CCDirector::sharedDirector()->pushScene(transitionFade);
-    }
+        void onLayoutPointsClicked(CCObject * sender) {
+            int accountId = m_fields->accountId;
+            auto username = GameLevelManager::sharedState()->tryGetUsername(accountId);
+            if (username.empty())
+                username = "User";
+            std::string title = fmt::format("{}'s Layouts", username);
 
-    void onBlueprintStars(CCObject* sender) {
-        int accountId = m_fields->accountId;
-        auto popup = RLDifficultyTotalPopup::create(
-            accountId, RLDifficultyTotalPopup::Mode::Stars);
-        if (popup)
-            popup->show();
-    }
-};
+            RLLevelBrowserLayer::ParamList params;
+            params.emplace_back("accountId", numToString(accountId));
+            auto browserLayer = RLLevelBrowserLayer::create(
+                RLLevelBrowserLayer::Mode::Account, params, title);
+            auto scene = CCScene::create();
+            scene->addChild(browserLayer);
+            auto transitionFade = CCTransitionFade::create(0.5f, scene);
+            CCDirector::sharedDirector()->pushScene(transitionFade);
+        }
+
+        void onBlueprintStars(CCObject * sender) {
+            int accountId = m_fields->accountId;
+            auto popup = RLDifficultyTotalPopup::create(
+                accountId, RLDifficultyTotalPopup::Mode::Stars);
+            if (popup)
+                popup->show();
+        }
+    };

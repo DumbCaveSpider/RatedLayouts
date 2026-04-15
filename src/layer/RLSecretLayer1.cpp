@@ -160,7 +160,7 @@ bool RLSecretLayer1::init() {
         m_crystalParticle->setVisible(false);
     }
 
-    if (GJAccountManager::sharedState()->m_accountID == rl::DEV_ACCOUNT_ID) {
+    if (GJAccountManager::sharedState()->m_accountID == rl::DEV_ACCOUNT_ID || GJAccountManager::sharedState()->m_accountID == rl::NOVA_ACCOUNT_ID) {
         // secret button for adding new codes
         auto secretSpr = CCSprite::createWithSpriteFrameName("RL_bigRuby.png"_spr);
         secretSpr->setScale(0.7f);
