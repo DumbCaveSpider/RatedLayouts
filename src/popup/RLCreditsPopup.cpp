@@ -222,7 +222,7 @@ bool RLCreditsPopup::init() {
                 }
             };
 
-            auto addPlayer = [&](const matjson::Value& userVal, bool isAdmin, bool isMod, bool isBooster, bool isSupporter, bool isPlat, bool isLeaderboard, bool isOwner) {
+            auto addPlayer = [&](const matjson::Value& userVal, bool isAdmin, bool isMod, bool isBooster, bool isSupporter, bool isPlat, bool isLeaderboard, bool isDeveloper, bool isOwner) {
                 if (!userVal.isObject())
                     return;
 
@@ -244,6 +244,8 @@ bool RLCreditsPopup::init() {
                 bgSprite->setOpacity(120);
                 if (isOwner) {
                     bgSprite->setColor({150, 255, 255});  // cyan(boi) for owner
+                } else if (isDeveloper) {
+                    bgSprite->setColor({17, 153, 238});  // deep blue for developer
                 } else if (isAdmin) {
                     if (isPlat) {
                         bgSprite->setColor({255, 160, 0});  // orange for plat admin
@@ -298,60 +300,60 @@ bool RLCreditsPopup::init() {
                 addHeader("Rated Layouts Owner");
                 auto arr = json["owner"].asArray().unwrap();
                 for (auto& val : arr) {
-                    addPlayer(val, true, false, false, false, false, false, true);
+                    addPlayer(val, true, false, false, false, false, false, false, true);
                 }
             }
             if (json.contains("developer") && json["developer"].isArray()) {
                 addHeader("Rated Layouts Developer");
                 auto arr = json["developer"].asArray().unwrap();
                 for (auto& val : arr) {
-                    addPlayer(val, false, false, false, false, false, false, false);
+                    addPlayer(val, false, false, false, false, false, false, true, false);
                 }
             }
             if (json.contains("classicAdmins") && json["classicAdmins"].isArray()) {
                 addHeader("Classic Layout Admins");
                 auto arr = json["classicAdmins"].asArray().unwrap();
                 for (auto& val : arr)
-                    addPlayer(val, true, false, false, false, false, false, false);
+                    addPlayer(val, true, false, false, false, false, false, false, false);
             }
             if (json.contains("platAdmins") && json["platAdmins"].isArray()) {
                 addHeader("Platformer Layout Admins");
                 auto arr = json["platAdmins"].asArray().unwrap();
                 for (auto& val : arr)
-                    addPlayer(val, true, false, false, false, true, false, false);
+                    addPlayer(val, true, false, false, false, true, false, false, false);
             }
             if (json.contains("classicModerators") &&
                 json["classicModerators"].isArray()) {
                 addHeader("Classic Layout Moderators");
                 auto arr = json["classicModerators"].asArray().unwrap();
                 for (auto& val : arr)
-                    addPlayer(val, false, true, false, false, false, false, false);
+                    addPlayer(val, false, true, false, false, false, false, false, false);
             }
             if (json.contains("platModerators") &&
                 json["platModerators"].isArray()) {
                 addHeader("Platformer Layout Moderators");
                 auto arr = json["platModerators"].asArray().unwrap();
                 for (auto& val : arr)
-                    addPlayer(val, false, true, false, false, true, false, false);
+                    addPlayer(val, false, true, false, false, true, false, false, false);
             }
             if (json.contains("leaderboardAdmins") && json["leaderboardAdmins"].isArray()) {
                 addHeader("Leaderboard Layout Admins");
                 auto arr = json["leaderboardAdmins"].asArray().unwrap();
                 for (auto& val : arr)
-                    addPlayer(val, true, false, false, false, false, true, false);
+                    addPlayer(val, true, false, false, false, false, true, false, false);
             }
             if (json.contains("leaderboardModerators") &&
                 json["leaderboardModerators"].isArray()) {
                 addHeader("Leaderboard Layout Moderators");
                 auto arr = json["leaderboardModerators"].asArray().unwrap();
                 for (auto& val : arr)
-                    addPlayer(val, false, true, false, false, false, true, false);
+                    addPlayer(val, false, true, false, false, false, true, false, false);
             }
             if (json.contains("supporters") && json["supporters"].isArray()) {
                 addHeader("Layout Supporters");
                 auto sup = json["supporters"].asArray().unwrap();
                 for (auto& val : sup) {
-                    addPlayer(val, false, false, false, true, false, false, false);
+                    addPlayer(val, false, false, false, true, false, false, false, false);
                 }
             }
 
@@ -359,7 +361,7 @@ bool RLCreditsPopup::init() {
                 addHeader("Layout Boosters");
                 auto boosters = json["boosters"].asArray().unwrap();
                 for (auto& val : boosters) {
-                    addPlayer(val, false, false, true, false, false, false, false);
+                    addPlayer(val, false, false, true, false, false, false, false, false);
                 }
             }
             if (self->m_listNode) {
@@ -381,24 +383,24 @@ void RLCreditsPopup::onAccountClicked(CCObject* sender) {
 
 void RLCreditsPopup::onInfo(CCObject* sender) {
     MDPopup::create(
-            "Becoming a Layout Moderator",
-            "To become a **<cl>Classic</c>/<co>Platformer</c>/<cb>Leaderboard</c> "
-            "Layout "
-            "Moderator</c>**, you are required to join the <cl>Rated Layouts Discord Server</c> and be <cg>active in the community</c>.\n"
-            "There's an <cl>application form</c> in the server that you can fill out and the Admins usually review these applications.\n"
-            "### <cr>Begging for Layout Mod to ArcticWoof or any of the Layout "
-            "Admins will be ignored and lower your chances of becoming a mod.</c>\n"
-            "If you have any questions about the application process or the role, feel free to ask in the <cl>Rated Layouts Discord Server</c>.\n"
-            "All promotion will be decided by <cf>ArcticWoof</c> and usually announced in the server."
-            "\r\n\r\n---\r\n\r\n"
-            "### Moderator Responsibilities\n"
-            "- Moderators are expected to be <cg>active in the community</c> and help maintain the quality of the <cl>Rated Layouts</c>.\n"
-            "- This includes <co>suggesting levels, rating levels</c> and <cy>providing feedback</c> to level creators.\n"
-            "- Moderators may also be asked to help with <cg>managing the community</c>, such as moderating the leaderboard section or assisting with events.\n"
-            "\r\n\r\n---\r\n\r\n"
-            "If you are <cg>interested in becoming a layout moderator</c>, make sure to join the <cl>Rated Layouts Discord Server</c> and apply in the <cl>application form</c>!",
-            "OK")
-            ->show();
+        "Becoming a Layout Moderator",
+        "To become a **<cl>Classic</c>/<co>Platformer</c>/<cb>Leaderboard</c> "
+        "Layout "
+        "Moderator</c>**, you are required to join the <cl>Rated Layouts Discord Server</c> and be <cg>active in the community</c>.\n"
+        "There's an <cl>application form</c> in the server that you can fill out and the Admins usually review these applications.\n"
+        "### <cr>Begging for Layout Mod to ArcticWoof or any of the Layout "
+        "Admins will be ignored and lower your chances of becoming a mod.</c>\n"
+        "If you have any questions about the application process or the role, feel free to ask in the <cl>Rated Layouts Discord Server</c>.\n"
+        "All promotion will be decided by <cf>ArcticWoof</c> and usually announced in the server."
+        "\r\n\r\n---\r\n\r\n"
+        "### Moderator Responsibilities\n"
+        "- Moderators are expected to be <cg>active in the community</c> and help maintain the quality of the <cl>Rated Layouts</c>.\n"
+        "- This includes <co>suggesting levels, rating levels</c> and <cy>providing feedback</c> to level creators.\n"
+        "- Moderators may also be asked to help with <cg>managing the community</c>, such as moderating the leaderboard section or assisting with events.\n"
+        "\r\n\r\n---\r\n\r\n"
+        "If you are <cg>interested in becoming a layout moderator</c>, make sure to join the <cl>Rated Layouts Discord Server</c> and apply in the <cl>application form</c>!",
+        "OK")
+        ->show();
 }
 
 void RLCreditsPopup::onHeaderInfo(CCObject* sender) {

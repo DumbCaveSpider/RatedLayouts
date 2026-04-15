@@ -2,7 +2,9 @@
 
 - Fixed bug where the announcement didn't show the alert at all.
 - Added New Rated Layouts Owner
+- Added Developer Badge and Role
 - Added New Gauntlet Sprites
+- Fixed Typos
 
 ## v1.0.7
 
