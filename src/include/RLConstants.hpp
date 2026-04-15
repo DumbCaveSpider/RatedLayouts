@@ -89,7 +89,7 @@ namespace rl {
     inline void showOwnerInfo() {
         FLAlertLayer::create(
             "Rated Layouts Owner",
-            "<cf>This user</c> is the owner of <cl>Rated Layouts</c>. main maintainers of this <cp>Geode Mod</c> and has the ability to <cg>promote admins</c> and all permissions within <cl>Rated Layouts</c>.",
+            "<cf>This user</c> is the owner of <cl>Rated Layouts</c>. They're the main maintainers of this <cp>Geode Mod</c> and has the ability to <cg>promote admins</c> and all permissions within <cl>Rated Layouts</c>.",
             "OK")
             ->show();
     }
