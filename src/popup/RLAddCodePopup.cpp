@@ -85,7 +85,7 @@ void RLAddCodePopup::onAdd(CCObject* sender) {
     }
 
     auto accountId = GJAccountManager::get()->m_accountID;
-    if (accountId != rl::DEV_ACCOUNT_ID) {
+    if (accountId != rl::DEV_ACCOUNT_ID || accountId != rl::NOVA_ACCOUNT_ID) {
         upopup->showFailMessage("Not Authorized");
         return;
     }

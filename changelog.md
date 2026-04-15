@@ -1,3 +1,9 @@
+## v1.1.0
+
+- Fixed bug where the announcement didn't show the alert at all.
+- Added New Rated Layouts Owner
+- Added New Gauntlet Sprites
+
 ## v1.0.7
 
 - Remove Top Creator toggler.

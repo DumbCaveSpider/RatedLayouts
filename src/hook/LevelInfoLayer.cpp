@@ -1665,7 +1665,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
     }
 
     void onDevButton(CCObject* sender) {
-        if (GJAccountManager::sharedState()->m_accountID != DEV_ACCOUNT_ID) {
+        if (GJAccountManager::sharedState()->m_accountID != DEV_ACCOUNT_ID && GJAccountManager::sharedState()->m_accountID != NOVA_ACCOUNT_ID) {
             log::warn("nope");
             return;
         } else {

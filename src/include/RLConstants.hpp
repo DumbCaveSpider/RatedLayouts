@@ -5,8 +5,10 @@
 using namespace geode::prelude;
 
 namespace rl {
-    // Account ID of ArcticWoof.
+    // Account ID of ArcticWoof and bonneville1
     constexpr int DEV_ACCOUNT_ID = 7689052;
+    constexpr int NOVA_ACCOUNT_ID = 4882817;
+    
 
     // Base URL for all Rated Layouts API endpoints.
     constexpr std::string_view BASE_API_URL = "https://gdrate.arcticwoof.xyz";
@@ -55,7 +57,8 @@ namespace rl {
 
     // check individual roles
     inline bool isUserOwner() {
-        return GJAccountManager::sharedState()->m_accountID == DEV_ACCOUNT_ID;
+        return GJAccountManager::sharedState()->m_accountID == DEV_ACCOUNT_ID ||
+               GJAccountManager::sharedState()->m_accountID == NOVA_ACCOUNT_ID;
     }
 
     inline bool isUserClassicAdmin() {

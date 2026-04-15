@@ -286,7 +286,7 @@ bool RLMenuLayer::init() {
     // check server announcement id and set badge visibility
     Ref<RLMenuLayer> self = this;
     m_announcementTask.spawn(
-        web::WebRequest().get(std::string(rl::BASE_API_URL) + "/getAnnoucement"),
+        web::WebRequest().get(std::string(rl::BASE_API_URL) + "/getAnnouncement"),
         [self](web::WebResponse const& res) {
             if (!self)
                 return;
