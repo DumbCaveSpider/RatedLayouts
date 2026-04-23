@@ -268,6 +268,11 @@
 			"default": false,
 			"description": "Disables the garage stats shown in the Rated Layouts Creator Layer. <cy>Enable this if you kept crashing when entering in the garage layer.</cy>"
 		},
+		"updateAccount": {
+            "type": "custom:rl-update-account-button",
+            "name": "Update Account",
+            "description": "Updates your Rated Layouts account information."
+        },
 		"titleCache": {
 			"type": "title",
 			"name": "Cache Settings"

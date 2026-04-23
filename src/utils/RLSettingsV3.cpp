@@ -1,7 +1,5 @@
 #include "RLSettingsV3.hpp"
 #include "../include/RLNetworkUtils.hpp"
-#include <Geode/binding/ButtonSprite.hpp>
-#include <Geode/binding/CCMenuItemSpriteExtra.hpp>
 #include "Geode/ui/Popup.hpp"
 
 using namespace geode::prelude;

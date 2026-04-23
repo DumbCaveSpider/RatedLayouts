@@ -1,6 +1,9 @@
 # v1.0.9
 
-- Fix the issue with the Gauntlet Level Selection background not moving correctly when dragging.
+- Fixed the issue with the Gauntlet Level Selection background not moving correctly when dragging.
+- Fixed the issue where the third coin is showing the brozen coin texture instead of the blue coin texture.
+- Added **Update Account Info** button in the mod settings to update your account information within Rated Layouts.
+- Fixed the issue where the news announcement badge doesn't disappear after viewing the announcement.
 
 ## v1.0.8
 

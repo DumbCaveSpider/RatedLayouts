@@ -14,15 +14,18 @@ bool g_verifiedCoins = false;
 
 // callback receives `true` only if request succeeded and coinVerified was true
 static void fetchCoinVerified(int levelId, std::function<void(bool)> cb) {
+    g_verifiedCoins = false;
     if (auto cachedJson = rl::getCachedLevelRating(levelId)) {
         bool coinVerified = (*cachedJson)["coinVerified"].asBool().unwrapOr(false);
-        cb(coinVerified);
+        auto cbCopy = std::move(cb);
+        Loader::get()->queueInMainThread([cbCopy = std::move(cbCopy), coinVerified]() mutable {
+            cbCopy(coinVerified);
+        });
         return;
     }
 
     static async::TaskHolder<web::WebResponse> s_task;
     // cancel any previous request for freshness
-    g_verifiedCoins = false;
     s_task.cancel();
     auto url =
         fmt::format("{}/fetch?levelId={}", std::string(rl::BASE_API_URL), levelId);

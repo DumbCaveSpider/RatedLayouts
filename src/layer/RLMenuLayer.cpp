@@ -251,14 +251,14 @@ bool RLMenuLayer::init() {
 
     // news button above discord
     // @geode-ignore(unknown-resource)
-    auto annouceSpr = CCSprite::createWithSpriteFrameName("RL_news01.png"_spr);
-    annouceSpr->setScale(0.7f);
-    auto annouceBtn = CCMenuItemSpriteExtra::create(
-        annouceSpr, this, menu_selector(RLMenuLayer::onAnnoucementButton));
-    annouceBtn->setPosition(
+    auto announceSpr = CCSprite::createWithSpriteFrameName("RL_news01.png"_spr);
+    announceSpr->setScale(0.7f);
+    auto announceBtn = CCMenuItemSpriteExtra::create(
+        announceSpr, this, menu_selector(RLMenuLayer::onAnnouncementButton));
+    announceBtn->setPosition(
         {infoButton->getPositionX(), infoButton->getPositionY() + 80});
-    infoMenu->addChild(annouceBtn);
-    m_newsIconBtn = annouceBtn;
+    infoMenu->addChild(announceBtn);
+    m_newsIconBtn = announceBtn;
 
     auto achievementSpr =
         CCSprite::createWithSpriteFrameName("RL_achievements01.png"_spr);
@@ -286,11 +286,11 @@ bool RLMenuLayer::init() {
         CCSprite::createWithSpriteFrameName("geode.loader/updates-failed.png");
     if (badgeSpr) {
         // position top-right of the icon
-        auto size = annouceSpr->getContentSize();
+        auto size = announceSpr->getContentSize();
         badgeSpr->setScale(0.5f);
         badgeSpr->setPosition({30, 30});
         badgeSpr->setVisible(false);
-        annouceBtn->addChild(badgeSpr, 10);
+        announceBtn->addChild(badgeSpr, 10);
         m_newsBadge = badgeSpr;
     }
 
@@ -312,10 +312,11 @@ bool RLMenuLayer::init() {
                 if (auto i = json["id"].as<int>(); i)
                     id = i.unwrap();
             }
-            int saved = Mod::get()->getSavedValue<int>("annoucementId");
+            int saved = Mod::get()->getSavedValue<int>("announcementId");
             if (id && id != saved) {
                 if (self->m_newsBadge)
                     self->m_newsBadge->setVisible(true);
+                Mod::get()->setSavedValue<int>("announcementId", id);
             } else {
                 if (self->m_newsBadge)
                     self->m_newsBadge->setVisible(false);
@@ -654,9 +655,10 @@ void RLMenuLayer::onShopButton(CCObject* sender) {
     CCDirector::sharedDirector()->pushScene(transitionFade);
 }
 
-void RLMenuLayer::onAnnoucementButton(CCObject* sender) {
+void RLMenuLayer::onAnnouncementButton(CCObject* sender) {
     auto popup = RLNewsAnnouncementPopup::create();
     popup->show();
+    m_newsBadge->setVisible(false);
 }
 
 void RLMenuLayer::onUnknownButton(CCObject* sender) {

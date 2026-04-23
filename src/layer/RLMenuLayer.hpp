@@ -22,7 +22,7 @@ protected:
     void onUnknownButton(CCObject* sender);
     void onLayoutGauntlets(CCObject* sender);
     void onLayoutSpire(CCObject* sender);
-    void onAnnoucementButton(CCObject* sender);
+    void onAnnouncementButton(CCObject* sender);
     void onSearchLayouts(CCObject* sender);
     void onAchievementsButton(CCObject* sender);
     void onCreditsButton(CCObject* sender);
