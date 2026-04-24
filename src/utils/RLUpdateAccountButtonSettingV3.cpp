@@ -64,7 +64,7 @@ namespace rl {
             menu_selector(RLUpdateAccountButtonSettingNodeV3::onUpdateAccount));
 
         this->getButtonMenu()->addChildAtPosition(m_button, Anchor::Center);
-        this->getButtonMenu()->setContentWidth(180);
+        this->getButtonMenu()->setContentWidth(150);
         this->getButtonMenu()->updateLayout();
 
         this->updateState(nullptr);

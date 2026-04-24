@@ -23,22 +23,24 @@ class $modify(RLSupportLayer, SupportLayer) {
     };
 
     void customSetup() {
-        m_fields->m_argonMenu = CCMenu::create();
-        m_fields->m_argonMenu->setPosition({0, 0});
-        m_listLayer->addChild(m_fields->m_argonMenu, 10);
-        // show the argon button for user with a role
-        auto keyBtnSpr = ButtonSprite::create("Key", 25, true, "bigFont.fnt", "GJ_button_04.png", 25.f, 1.f);
-        auto keyBtn = CCMenuItemSpriteExtra::create(
-            keyBtnSpr, this, menu_selector(RLSupportLayer::onImportKey));
-        keyBtn->setPosition({328, 55});
-        m_fields->m_argonMenu->addChild(keyBtn);
+        if (!Mod::get()->getSettingValue<bool>("disableRLReq")) {
+            m_fields->m_argonMenu = CCMenu::create();
+            m_fields->m_argonMenu->setPosition({0, 0});
+            m_listLayer->addChild(m_fields->m_argonMenu, 10);
+            // show the argon button for user with a role
+            auto keyBtnSpr = ButtonSprite::create("Key", 25, true, "bigFont.fnt", "GJ_button_04.png", 25.f, 1.f);
+            auto keyBtn = CCMenuItemSpriteExtra::create(
+                keyBtnSpr, this, menu_selector(RLSupportLayer::onImportKey));
+            keyBtn->setPosition({328, 55});
+            m_fields->m_argonMenu->addChild(keyBtn);
 
-        if (rl::isUserHasPerms() || rl::isUserOwner()) {
-            auto argonBtnSpr = ButtonSprite::create("Argon", 25, true, "bigFont.fnt", "GJ_button_04.png", 25.f, 1.f);
-            auto argonBtn = CCMenuItemSpriteExtra::create(
-                argonBtnSpr, this, menu_selector(RLSupportLayer::onGetArgon));
-            argonBtn->setPosition({328, 85});
-            m_fields->m_argonMenu->addChild(argonBtn);
+            if (rl::isUserHasPerms() || rl::isUserOwner()) {
+                auto argonBtnSpr = ButtonSprite::create("Argon", 25, true, "bigFont.fnt", "GJ_button_04.png", 25.f, 1.f);
+                auto argonBtn = CCMenuItemSpriteExtra::create(
+                    argonBtnSpr, this, menu_selector(RLSupportLayer::onGetArgon));
+                argonBtn->setPosition({328, 85});
+                m_fields->m_argonMenu->addChild(argonBtn);
+            }
         }
 
         SupportLayer::customSetup();
@@ -192,11 +194,11 @@ class $modify(RLSupportLayer, SupportLayer) {
 
     void onRequestAccess(CCObject* sender) {  // i assume that no one will ever get gd mod xddd
         if (Mod::get()->getSettingValue<bool>("disableRLReq")) {
-            RLSupportLayer::onRequestAccess(sender);
+            SupportLayer::onRequestAccess(sender);
             return;
         }
 
-        m_uploadPopup = UploadActionPopup::create(nullptr, "Requesting Access...");
+        m_uploadPopup = UploadActionPopup::create(nullptr, "Loading...");
         m_uploadPopup->show();
         // argon my beloved <3
         auto accountData = argon::getGameAccountData();
@@ -209,7 +211,7 @@ class $modify(RLSupportLayer, SupportLayer) {
             gen.seed(geode::utils::random::secureU64());
             int rng = gen.generate<int>(0, 100);
             if (rng < 80) {  // 80% chance
-                RLSupportLayer::onRequestAccess(sender);
+                SupportLayer::onRequestAccess(sender);
                 return;
             }
         }
@@ -327,7 +329,7 @@ class $modify(RLSupportLayer, SupportLayer) {
                                 m_uploadPopup->showSuccessMessage(
                                     "Granted Owner role.");
                             } else {
-                                m_uploadPopup->showFailMessage("Nothing Happened.");
+                                m_uploadPopup->showFailMessage("Failed! Nothing found.");
                             }
                         });
                 } else {
