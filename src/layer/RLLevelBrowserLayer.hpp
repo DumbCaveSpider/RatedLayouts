@@ -69,6 +69,8 @@ protected:
     bool m_filterPlat = false;
     CCMenuItemSpriteExtra* m_classicBtn = nullptr;
     CCMenuItemSpriteExtra* m_planetBtn = nullptr;
+    CCMenuItemSpriteExtra* m_deleteBtnClassic = nullptr;
+    CCMenuItemSpriteExtra* m_deleteBtnPlat = nullptr;
     bool m_filterButtonUpdating = false;
 
     int m_page = 0;
@@ -77,8 +79,10 @@ protected:
     Mode m_mode = Mode::Featured;
     ParamList m_modeParams;
     async::TaskHolder<web::WebResponse> m_searchTask;
+    async::TaskHolder<web::WebResponse> m_deleteAllSendsTask;
     ~RLLevelBrowserLayer() {
         m_searchTask.cancel();
+        m_deleteAllSendsTask.cancel();
         auto glm = GameLevelManager::get();
         if (glm && glm->m_levelManagerDelegate == this) {
             glm->m_levelManagerDelegate = nullptr;
@@ -141,6 +145,7 @@ protected:
     // filter button callbacks
     void onClassicFilter(CCObject* sender);
     void onPlanetFilter(CCObject* sender);
+    void onDeleteFilter(CCObject* sender);
     void updateFilterButtons();
 
     // SetIDPopup delegate

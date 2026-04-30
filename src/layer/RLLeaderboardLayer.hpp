@@ -20,6 +20,7 @@ protected:
     bool m_creatorType6 = false;
     CCMenuItemSpriteExtra* m_refreshBtn;
     CCMenuItemSpriteExtra* m_accountRefreshBtn;
+    
 
     bool init() override;
     void keyBackClicked() override;

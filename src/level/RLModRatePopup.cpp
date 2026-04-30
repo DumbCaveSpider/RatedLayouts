@@ -675,6 +675,13 @@ void RLModRatePopup::setupModActionMenu() {
             suggestSpr, this, menu_selector(RLModRatePopup::onSuggestButton));
         suggestButtonItem->setID("send-button");
         modActionMenu->addChild(suggestButtonItem);
+
+        auto deleteSendSpr =
+            ButtonSprite::create("Delete Sends", 80, true, "goldFont.fnt", "GJ_button_06.png", 30.f, 1.f);
+        auto deleteSendBtn = CCMenuItemSpriteExtra::create(
+            deleteSendSpr, this, menu_selector(RLModRatePopup::onDeleteSendsButton));
+        deleteSendBtn->setID("delete-sends-button");
+        modActionMenu->addChild(deleteSendBtn);
     }
 
     m_mainLayer->addChild(modActionMenu);
@@ -748,16 +755,16 @@ void RLModRatePopup::setupDevControls() {
             m_verifiedToggleItem->toggle(true);
         }
 
-        auto deleteSendSpr =
-            ButtonSprite::create("Delete Sends", 80, true, "goldFont.fnt", "GJ_button_06.png", 30.f, 1.f);
-        auto deleteSendBtn = CCMenuItemSpriteExtra::create(
-            deleteSendSpr, this, menu_selector(RLModRatePopup::onDeleteSendsButton));
-        if (deleteSendBtn) {
-            deleteSendBtn->setPosition(
-                {m_mainLayer->getContentSize().width - 80.f, 40});
-            deleteSendBtn->setID("delete-sends-button");
-            m_buttonMenu->addChild(deleteSendBtn);
-        }
+        // auto deleteSendSpr =
+        //     ButtonSprite::create("Delete Sends", 80, true, "goldFont.fnt", "GJ_button_06.png", 30.f, 1.f);
+        // auto deleteSendBtn = CCMenuItemSpriteExtra::create(
+        //     deleteSendSpr, this, menu_selector(RLModRatePopup::onDeleteSendsButton));
+        // if (deleteSendBtn) {
+        //     deleteSendBtn->setPosition(
+        //         {m_mainLayer->getContentSize().width - 80.f, 40});
+        //     deleteSendBtn->setID("delete-sends-button");
+        //     m_buttonMenu->addChild(deleteSendBtn);
+        // }
 
         auto rejectSpr = ButtonSprite::create("Reject", 80, true, "goldFont.fnt", "GJ_button_04.png", 30.f, 1.f);
         auto rejectBtn = CCMenuItemSpriteExtra::create(
@@ -935,8 +942,7 @@ void RLModRatePopup::onDeleteSendsButton(CCObject* sender) {
     std::string title = std::string("Delete Sends?");
     geode::createQuickPopup(
         "Delete Sends?",
-        "Are you sure you want to <cr>delete sends</c> this layout?\n<cy>This "
-        "action cannot be undone.</c>",
+        "Are you sure you want to <cr>delete sends and reject</c> this layout?\n<cy>This action cannot be undone.</c>",
         "No",
         "Delete",
         [this](auto, bool yes) {
@@ -1866,7 +1872,7 @@ void RLModRatePopup::onSetEventButton(CCObject* sender) {
                 return;
             auto popup = UploadActionPopup::create(nullptr, "Setting event...");
             popup->show();
-            
+
             matjson::Value jsonBody = matjson::Value::object();
             jsonBody["accountId"] = GJAccountManager::get()->m_accountID;
             jsonBody["argonToken"] = token;

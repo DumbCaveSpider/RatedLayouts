@@ -46,6 +46,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
         float m_originalCoin2Y = 0.0f;
         float m_originalCoin3Y = 0.0f;
         int m_difficulty = 0;
+        bool m_isRejected = false;
         bool m_orbsShiftApplied =
             false;  // true when orbs-icon/label were shifted for ruby UI
         bool m_isDeletingLevel = false;
@@ -168,6 +169,9 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             if (layerRef->m_level && layerRef->m_level->m_stars > 0) {
                 layerRef->checkRated(layerRef->m_level->m_levelID);
             }
+            if (rl::isUserClassicRole() || rl::isUserPlatformerRole() || rl::isUserOwner()) {
+                layerRef->requestRejectedStatus(levelId, layerRef);
+            }
             return;
         }
 
@@ -182,6 +186,10 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                 layerRef->m_fields->m_orbsShiftApplied = true;
                 layerRef->m_fields->m_hasAppliedRubiesOffset = true;
             }
+        }
+
+        if (rl::isUserClassicRole() || rl::isUserPlatformerRole() || rl::isUserOwner()) {
+            layerRef->requestRejectedStatus(levelId, layerRef);
         }
 
         auto url =
@@ -229,6 +237,101 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             }
         });
     }
+
+    void requestRejectedStatus(int levelId, Ref<RLLevelInfoLayer> layerRef) {
+        if (!layerRef || levelId <= 0 || !(rl::isUserClassicRole() || rl::isUserPlatformerRole() || rl::isUserOwner())) {
+            log::debug("Not requesting rejected status - insufficient permissions or invalid level ID");
+            return;
+        }
+
+        auto req = web::WebRequest();
+        req.param("levelId", numToString(levelId));
+        async::spawn(
+            req.get(std::string(rl::BASE_API_URL) + "/getRejected"),
+            [layerRef](web::WebResponse response) {
+                if (!layerRef || !response.ok()) {
+                    return;
+                }
+
+                auto jsonRes = response.json();
+                if (!jsonRes) {
+                    return;
+                }
+
+                bool isRejected = jsonRes.unwrap()["isRejected"].asBool().unwrapOrDefault();
+                layerRef->m_fields->m_isRejected = isRejected;
+                layerRef->updateRejectedLabel(isRejected);
+            });
+    }
+
+    void updateRejectedLabel(bool rejected) {
+        CCNode* titleNode = this->getChildByID("title-label");
+        if (!titleNode) {
+            if (auto difficultySprite = this->getChildByID("difficulty-sprite")) {
+                titleNode = difficultySprite->getChildByID("title-label");
+            }
+        }
+
+        auto titleLabel = typeinfo_cast<CCLabelBMFont*>(titleNode);
+        CCNode* titleParent = titleNode ? titleNode->getParent() : nullptr;
+        auto existingLabel = titleParent ? titleParent->getChildByID("rl-rejected-label") : nullptr;
+        auto existingIcon = titleParent ? titleParent->getChildByID("rl-rejected-icon") : nullptr;
+        if (!titleLabel) {
+            if (existingIcon) {
+                existingIcon->removeFromParent();
+            }
+            if (existingLabel) {
+                existingLabel->removeFromParent();
+            }
+            return;
+        }
+
+        if (rejected && (rl::isUserClassicRole() || rl::isUserPlatformerRole() || rl::isUserOwner())) {
+            auto label = existingLabel
+                             ? static_cast<CCLabelBMFont*>(existingLabel)
+                             : CCLabelBMFont::create("Layout Rejected", "bigFont.fnt");
+            if (!label) {
+                return;
+            }
+            label->setID("rl-rejected-label");
+            label->setScale(0.3f);
+            label->setOpacity(200);
+            label->setColor({255, 64, 64});
+
+            auto icon = existingIcon
+                            ? static_cast<CCSprite*>(existingIcon)
+                            : CCSprite::createWithSpriteFrameName("RL_cross_no_box.png"_spr);
+            if (!icon) {
+                if (!existingLabel && !existingIcon && titleParent) {
+                    titleParent->removeChild(label);
+                }
+                return;
+            }
+            icon->setID("rl-rejected-icon");
+            icon->setScale(0.35f);
+            icon->setOpacity(200);
+
+            if (!existingIcon && titleParent) {
+                titleParent->addChild(icon);
+            }
+            if (!existingLabel && titleParent) {
+                titleParent->addChild(label);
+            }
+
+            auto titlePos = titleLabel->getPosition();
+            float yPos = titlePos.y - 45;
+            label->setPosition({titlePos.x, yPos});
+            icon->setPosition({label->getPositionX() - 50, label->getPositionY()});
+        } else {
+            if (existingIcon) {
+                existingIcon->removeFromParent();
+            }
+            if (existingLabel) {
+                existingLabel->removeFromParent();
+            }
+        }
+    }
+
     void processLevelRating(const matjson::Value& json,
         Ref<RLLevelInfoLayer> layerRef) {
         if (!layerRef)
@@ -1004,6 +1107,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                 if (!titleNode && difficultySprite2)
                     titleNode = difficultySprite2->getChildByID("title-label");
                 auto titleLabel = typeinfo_cast<CCLabelBMFont*>(titleNode);
+                this->updateRejectedLabel(m_fields->m_isRejected);
                 if (featured == 3) {
                     if (titleLabel) {
                         // stop any existing pulse action
@@ -2182,6 +2286,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             GJGameLevel* level = this->m_level;
 
             auto getReq = web::WebRequest();
+            getReq.param("levelId", numToString(levelId));
             Ref<RLLevelInfoLayer> layerRef = this;
 
             auto cachedJson = rl::getCachedLevelRating(levelId);
@@ -2221,9 +2326,12 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                 layerRef->processLevelRating(json, layerRef);
             }
 
+            if (rl::isUserClassicRole() || rl::isUserPlatformerRole() || rl::isUserOwner()) {
+                this->requestRejectedStatus(levelId, layerRef);
+            }
+
             async::spawn(
-                getReq.get(fmt::format(
-                    "{}/fetch?levelId={}", std::string(rl::BASE_API_URL), levelId)),
+                getReq.get(std::string(rl::BASE_API_URL) + "/fetch"),
                 [layerRef, levelId, level](web::WebResponse response) {
                     log::info(
                         "Received updated rating data from server for level ID: {}",

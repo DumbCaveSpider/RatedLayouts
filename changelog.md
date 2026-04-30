@@ -1,3 +1,13 @@
+# v1.0.10
+
+- Removed unnecessary code that affects only a specific user
+- Gauntlet Levels shows horizontally instead of vertically
+- Added Delete Sends for Layout Admins
+- Added Delete All Sends for Layout Admins
+- Added Rejected Indicator for Layout Admins and Moderators in the Level Info Layer
+- Current User on Leaderboard will now show a green glow instead of green text color
+- Added GD Server Status in the RL Menu Layer
+
 # v1.0.9
 
 - Fixed the issue with the Gauntlet Level Selection background not moving correctly when dragging.

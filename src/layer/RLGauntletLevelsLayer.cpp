@@ -177,14 +177,12 @@ void RLGauntletLevelsLayer::createLevelButtons(matjson::Value const& levelsData,
     auto winSize = CCDirector::sharedDirector()->getWinSize();
 
     m_levelsMenu = CCMenu::create();
-    m_levelsMenu->setContentSize({winSize.width + 100, 800});
+    m_levelsMenu->setContentSize({winSize.width + 100, winSize.height});
     m_levelsMenu->setID("rl-levels-menu");
-    float menuStartX = (winSize.width - m_levelsMenu->getContentSize().width) / 2;
-    const float menuStartY = 0.0f;
-    m_levelsMenu->setPosition(ccp(menuStartX, menuStartY));
+    m_levelsMenu->setPosition(ccp(0, 0));
     this->addChild(m_levelsMenu);
 
-    m_menuOriginPos = ccp(menuStartX, menuStartY);
+    m_menuOriginPos = ccp(0, 0);
     this->updateBackgroundParallax(m_menuOriginPos);
 
     m_occupiedRects.clear();
@@ -240,8 +238,6 @@ void RLGauntletLevelsLayer::createLevelButtons(matjson::Value const& levelsData,
             ++validCount;
     if (validCount == 0)
         return;
-
-    float totalWidth = validCount * buttonWidth + (validCount - 1) * spacingX;
 
     // prepare gauntlet completion override set to show completed state immediately
     auto gauntletData = loadGauntletCompletedJson();
@@ -397,23 +393,20 @@ void RLGauntletLevelsLayer::createLevelButtons(matjson::Value const& levelsData,
 
     const float gap = 100.0f;
     if (!m_pendingButtons.empty()) {
-        float y = m_padding + m_pendingButtons[0].h / 2.0f;
+        float x = m_padding + m_pendingButtons[0].w / 2.0f;
+        float centerY = m_levelsMenu->getContentSize().height / 2.0f;
+        const float yOffsetRange = 60.0f;
         for (size_t i = 0; i < m_pendingButtons.size(); ++i) {
             auto& pb = m_pendingButtons[i];
-            if (i == 0) {
-                // first stays at base y
-            } else {
-                float prevH = m_pendingButtons[i - 1].h;
-                y += prevH / 2.0f + gap + pb.h / 2.0f;
+            if (i != 0) {
+                float prevW = m_pendingButtons[i - 1].w;
+                x += prevW / 2.0f + gap + pb.w / 2.0f;
             }
-            // randomize X within +/-50px from center, clamp inside menu with padding
-            float centerX = m_levelsMenu->getContentSize().width / 2.0f;
-            float randOffset = (CCRANDOM_0_1() * 200.0f) - 100.0f;  // -100..+100
-            float x = centerX + randOffset;
-            float minX = pb.w / 2.0f + m_padding;
-            float maxX =
-                m_levelsMenu->getContentSize().width - pb.w / 2.0f - m_padding;
-            x = std::max(minX, std::min(maxX, x));
+
+            float y = centerY + ((CCRANDOM_0_1() * 2.0f - 1.0f) * yOffsetRange);
+            float minY = pb.h / 2.0f + m_padding;
+            float maxY = m_levelsMenu->getContentSize().height - pb.h / 2.0f - m_padding;
+            y = std::max(minY, std::min(maxY, y));
 
             pb.button->setPosition(ccp(x, y));
             // record occupied rect to prevent future overlap if needed
@@ -424,51 +417,40 @@ void RLGauntletLevelsLayer::createLevelButtons(matjson::Value const& levelsData,
             m_levelsMenu->addChild(pb.button);
         }
 
-        float lastH = m_pendingButtons.back().h;
-        float requiredHeight = y + lastH / 2.0f + m_padding + m_topPadding;
-        if (requiredHeight > m_levelsMenu->getContentSize().height) {
-            float oldH = m_levelsMenu->getContentSize().height;
+        float lastW = m_pendingButtons.back().w;
+        float requiredWidth = x + lastW / 2.0f + m_padding;
+        if (requiredWidth > m_levelsMenu->getContentSize().width) {
             m_levelsMenu->setContentSize(
-                CCSizeMake(m_levelsMenu->getContentSize().width, requiredHeight));
-            const float newMenuStartY = 0.0f;
-            m_levelsMenu->setPositionY(newMenuStartY);
-            float menuStartX = (CCDirector::sharedDirector()->getWinSize().width -
-                                   m_levelsMenu->getContentSize().width) /
-                               2.0f;
-            m_levelsMenu->setPositionX(menuStartX);
-
-            m_menuOriginPos = ccp(menuStartX, newMenuStartY);
+                CCSizeMake(requiredWidth, m_levelsMenu->getContentSize().height));
+            m_levelsMenu->setPosition(ccp(0, 0));
+            m_menuOriginPos = ccp(0, 0);
         }
 
-        // draw dot path between consecutive centers (y spacing consistent, x
+        // draw dot path between consecutive centers (x spacing consistent, y
         // randomized)
         if (m_buttonCenters.size() >= 2) {
             for (size_t i = 0; i + 1 < m_buttonCenters.size(); ++i) {
                 auto a = m_buttonCenters[i];
                 auto b = m_buttonCenters[i + 1];
-                if (b.y <= a.y)
-                    continue;  // ensure increasing Y
+                if (b.x <= a.x)
+                    continue;  // ensure increasing X
 
-                // compute number of dots to place and make spacing consistent
-                float dy = b.y - a.y;
+                float dx = b.x - a.x;
                 int count = 8;
-                float actualSpacing = dy / (count + 1);  // even spacing between a and b
+                float actualSpacing = dx / (count + 1);  // even spacing between a and b
                 for (int k = 1; k <= count; ++k) {
-                    float yPos = a.y + k * actualSpacing;
-                    float t = (yPos - a.y) / dy;
-                    float baseX = a.x + (b.x - a.x) * t;
+                    float xPos = a.x + k * actualSpacing;
+                    float t = (xPos - a.x) / dx;
+                    float baseY = a.y + (b.y - a.y) * t;
 
-                    // compute a smooth lateral offset using a sine curve for a coherent
-                    // path
                     float phase = (static_cast<float>(k) / (count + 1)) *
                                   static_cast<float>(M_PI);  // 0..PI
-                    float dir = (b.x >= a.x) ? 1.0f : -1.0f;
+                    float dir = (b.y >= a.y) ? 1.0f : -1.0f;
                     float smoothAmp =
-                        std::min(30.0f, std::fabs(b.x - a.x) * 0.15f + 8.0f);
-                    float offsetX = std::sin(phase) * smoothAmp * dir;
-                    float dotXBase = baseX + offsetX;
+                        std::min(30.0f, std::fabs(b.y - a.y) * 0.15f + 8.0f);
+                    float offsetY = std::sin(phase) * smoothAmp * dir;
+                    float dotYBase = baseY + offsetY;
 
-                    // get dot frame size without creating a temporary sprite
                     auto dotFrame =
                         CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(
                             m_dotSprite.c_str());
@@ -479,8 +461,6 @@ void RLGauntletLevelsLayer::createLevelButtons(matjson::Value const& levelsData,
                         dotH = dotFrame->getRect().size.height;
                     }
 
-                    // try placements starting from dotXBase, nudging left/right if
-                    // overlapping
                     bool placed = false;
                     const int maxNudgeAttempts = 6;
                     const float nudgeStep = 6.0f;
@@ -489,15 +469,15 @@ void RLGauntletLevelsLayer::createLevelButtons(matjson::Value const& levelsData,
                         if (n > 0) {
                             int mult = (n + 1) / 2;
                             float sign = (n % 2 == 1) ? 1.0f : -1.0f;
-                            nudge = sign * mult * nudgeStep;  // +6, -6, +12, -12 ...
+                            nudge = sign * mult * nudgeStep;
                         }
-                        float dotX = dotXBase + nudge;
-                        float minX = m_padding + dotW / 2.0f + 2.0f;
-                        float maxX = m_levelsMenu->getContentSize().width - m_padding -
-                                     dotW / 2.0f - 2.0f;
-                        dotX = std::max(minX, std::min(maxX, dotX));
+                        float dotY = dotYBase + nudge;
+                        float minY = m_padding + dotH / 2.0f + 2.0f;
+                        float maxY = m_levelsMenu->getContentSize().height - m_padding -
+                                     dotH / 2.0f - 2.0f;
+                        dotY = std::max(minY, std::min(maxY, dotY));
 
-                        CCRect dotRect = {dotX - dotW / 2.0f, yPos - dotH / 2.0f, dotW, dotH};
+                        CCRect dotRect = {xPos - dotW / 2.0f, dotY - dotH / 2.0f, dotW, dotH};
                         bool overlap = false;
                         for (auto& orct : m_occupiedRects) {
                             if (dotRect.intersectsRect(orct)) {
@@ -510,11 +490,9 @@ void RLGauntletLevelsLayer::createLevelButtons(matjson::Value const& levelsData,
                             auto dot =
                                 CCSprite::createWithSpriteFrameName(m_dotSprite.c_str());
                             if (dot) {
-                                dot->setPosition(ccp(dotX, yPos));
+                                dot->setPosition(ccp(xPos, dotY));
                                 m_levelsMenu->addChild(dot, -1);
                             }
-                            // reserve dot rect to prevent dots overlapping sprites or each
-                            // other
                             m_occupiedRects.push_back(dotRect);
                             placed = true;
                         }
@@ -704,13 +682,13 @@ void RLGauntletLevelsLayer::update(float dt) {
                 auto children = m_levelsMenu->getChildren();
                 for (unsigned int i = 0; i < children->count(); ++i) {
                     auto child = static_cast<CCNode*>(children->objectAtIndex(i));
-                        auto btn = typeinfo_cast<CCMenuItemSpriteExtra*>(child);
+                    auto btn = typeinfo_cast<CCMenuItemSpriteExtra*>(child);
                     if (btn && btn->getTag() == m_pendingLevelId) {
                         btn->setEnabled(true);
                         break;
                     }
                 }
-                }
+            }
             Notification::create("Level not found", NotificationIcon::Warning)
                 ->show();
             m_pendingKey.clear();
@@ -773,7 +751,7 @@ void RLGauntletLevelsLayer::update(float dt) {
 
     m_levelsMenu->setPosition(newPos);
     this->updateBackgroundParallax(newPos);
-    
+
     if (std::hypotf(m_velocity.x, m_velocity.y) < 5.0f) {
         // stop if velocities are nearly zero
         m_velocity = ccp(0, 0);
@@ -785,7 +763,7 @@ void RLGauntletLevelsLayer::updateBackgroundParallax(CCPoint const& menuPos) {
     if (!m_bgSprite)
         return;
     CCPoint menuDelta = ccpSub(menuPos, m_menuOriginPos);
-    CCPoint bgOffset = ccpMult(menuDelta,   m_bgParallax);
+    CCPoint bgOffset = ccpMult(menuDelta, m_bgParallax);
     CCPoint target = ccpAdd(m_bgOriginPos, bgOffset);
     m_bgSprite->setPosition(target);
     if (m_bgSprite2) {

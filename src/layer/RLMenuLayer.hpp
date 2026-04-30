@@ -34,6 +34,8 @@ protected:
     void onSecretDialogueButton(CCObject* sender);
     void onSupporterButton(CCObject* sender);
     void showReadGuidePopup();
+    bool isGDServerOnline();
+    void refreshGDServerStatus();
 
     // news / announcement UI
     CCMenuItemSpriteExtra* m_newsIconBtn = nullptr;
@@ -41,6 +43,7 @@ protected:
 
     // labels for mod info
     CCLabelBMFont* m_modStatusLabel = nullptr;
+    CCLabelBMFont* m_gdServerLabel = nullptr;
     CCLabelBMFont* m_modVersionLabel = nullptr;
 
     int m_indexDia = 0;

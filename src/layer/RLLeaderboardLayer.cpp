@@ -414,8 +414,6 @@ void RLLeaderboardLayer::fetchLeaderboard(int type, int amount) {
                 return;
             }
 
-
-
             auto jsonRes = response.json();
             if (!jsonRes) {
                 log::warn("Failed to parse JSON response");
@@ -529,6 +527,14 @@ void RLLeaderboardLayer::populateLeaderboard(
             glow->setScale(5.f);
             glow->setColor({205, 127, 50});
             rowContainer->addChild(glow, 1);
+        } else if (accountId == currentAccountID) {
+            auto glow = CCSprite::createWithSpriteFrameName("chest_glow_bg_001.png");
+            glow->setPosition({100.f, 40.5f});
+            glow->setRotation(90);
+            glow->setAnchorPoint({0.f, 0.5f});
+            glow->setScale(5.f);
+            glow->setColor({0, 255, 0});
+            rowContainer->addChild(glow, 1);
         }
 
         // Rank label
@@ -602,8 +608,8 @@ void RLLeaderboardLayer::populateLeaderboard(
         }
 
         if (accountId == currentAccountID) {
-            accountLabel->setColor({0, 255, 255});
-            rankLabel->setColor({0, 255, 255});
+            // accountLabel->setColor({0, 255, 255});
+            // rankLabel->setColor({0, 255, 255});
             RLAchievements::onReward("misc_leaderboard");  // gg
         }
 

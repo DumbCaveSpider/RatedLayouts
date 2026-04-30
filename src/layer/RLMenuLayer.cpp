@@ -2,6 +2,7 @@
 #include <Geode/Geode.hpp>
 #include <Geode/binding/FLAlertLayer.hpp>
 #include <Geode/binding/GJAccountManager.hpp>
+#include <Geode/modify/GameLevelManager.hpp>
 #include <Geode/ui/NineSlice.hpp>
 
 #include <Geode/binding/GameManager.hpp>
@@ -16,7 +17,6 @@
 #include "Geode/cocos/sprite_nodes/CCSprite.h"
 #include "../include/RLAchievements.hpp"
 #include "../include/RLConstants.hpp"
-#include "../include/RLNetworkUtils.hpp"
 #include "../include/RLLayerBackground.hpp"
 #include "Geode/ui/Popup.hpp"
 #include "RLAchievementsPopup.hpp"
@@ -368,7 +368,7 @@ bool RLMenuLayer::init() {
     if (!Mod::get()->getSettingValue<bool>("disableModInfo")) {
         // mod info stuff
         auto modInfoBg = NineSlice::create("square02_small.png");
-        modInfoBg->setPosition({winSize.width / 2, 0});
+        modInfoBg->setPosition({winSize.width / 2, 15});
         modInfoBg->setContentSize({160.f, 70.f});
         modInfoBg->setOpacity(100);
 
@@ -378,12 +378,18 @@ bool RLMenuLayer::init() {
         m_modStatusLabel->setPosition({80.f, 60.f});
         modInfoBg->addChild(m_modStatusLabel);
 
+        m_gdServerLabel = CCLabelBMFont::create("GD Server: Checking...", "bigFont.fnt");
+        m_gdServerLabel->setColor({255, 150, 0});
+        m_gdServerLabel->setScale(0.3f);
+        m_gdServerLabel->setPosition({80.f, 45.f});
+        modInfoBg->addChild(m_gdServerLabel);
+
         std::string modVersionStr = Mod::get()->getVersion().toVString();
         m_modVersionLabel =
             CCLabelBMFont::create(modVersionStr.c_str(), "bigFont.fnt");
         m_modVersionLabel->setColor({255, 150, 0});
         m_modVersionLabel->setScale(0.3f);
-        m_modVersionLabel->setPosition({80.f, 45.f});
+        m_modVersionLabel->setPosition({80.f, 30.f});
         modInfoBg->addChild(m_modVersionLabel);
 
         if (m_modStatusLabel) {
@@ -398,6 +404,47 @@ bool RLMenuLayer::init() {
     this->setKeypadEnabled(true);
 
     return true;
+}
+
+bool RLMenuLayer::isGDServerOnline() {
+    auto glm = GameLevelManager::sharedState();
+    if (!glm) {
+        if (m_gdServerLabel) {
+            m_gdServerLabel->setString("GD Server: Offline");
+            m_gdServerLabel->setColor({255, 64, 64});
+        }
+        glm->m_levelManagerDelegate = nullptr;
+        return false;
+    }
+
+    auto searchObj = GJSearchObject::create(SearchType::MostLiked, "");
+    glm->getOnlineLevels(searchObj);
+    auto stored = glm->getStoredOnlineLevels(searchObj->getKey());
+    bool online = stored && stored->count() > 0;
+
+    if (m_gdServerLabel) {
+        if (online) {
+            m_gdServerLabel->setString("GD Server: Online");
+            m_gdServerLabel->setColor({64, 255, 128});
+        } else {
+            m_gdServerLabel->setString("GD Server: Checking...");
+            m_gdServerLabel->setColor({255, 150, 0});
+        }
+    }
+
+    glm->m_levelManagerDelegate = nullptr;  // very important to set level manager delegate to null cuz otherwise, funny bugs when going to any of the rl level browsers
+    return online;
+}
+
+void RLMenuLayer::refreshGDServerStatus() {
+    if (isGDServerOnline()) {
+        return;
+    }
+
+    this->runAction(CCSequence::create(
+        CCDelayTime::create(0.35f),
+        CCCallFunc::create(this, callfunc_selector(RLMenuLayer::refreshGDServerStatus)),
+        nullptr));
 }
 
 void RLMenuLayer::onSettingsButton(CCObject* sender) {
@@ -817,7 +864,7 @@ void RLMenuLayer::onEnter() {
     m_indexDia = 0;
     // refresh mod info every time the layer is entered
     if (m_modStatusLabel) {
-        m_modStatusLabel->setString("Checking...");
+        m_modStatusLabel->setString("RL Server: Checking...");
         m_modStatusLabel->setColor({255, 150, 0});
     }
     if (m_modVersionLabel) {
@@ -826,6 +873,17 @@ void RLMenuLayer::onEnter() {
         m_modVersionLabel->setColor({255, 150, 0});
     }
 
+    if (m_gdServerLabel) {
+        m_gdServerLabel->setString("GD Server: Checking...");
+        m_gdServerLabel->setColor({255, 150, 0});
+    }
+
+    isGDServerOnline();
+    this->runAction(CCSequence::create(
+        CCDelayTime::create(0.35f),
+        CCCallFunc::create(this, callfunc_selector(RLMenuLayer::refreshGDServerStatus)),
+        nullptr));
+
     Ref<RLMenuLayer> selfRef = this;
     async::spawn(fetchModInfoAsync(), [selfRef](std::optional<ModInfo> infoOpt) {
         if (!selfRef)
@@ -833,7 +891,7 @@ void RLMenuLayer::onEnter() {
 
         if (!infoOpt) {
             if (selfRef->m_modStatusLabel) {
-                selfRef->m_modStatusLabel->setString("Offline");
+                selfRef->m_modStatusLabel->setString("RL Server: Offline");
                 selfRef->m_modStatusLabel->setColor({255, 64, 64});
             }
             return;
@@ -841,7 +899,7 @@ void RLMenuLayer::onEnter() {
 
         auto info = *infoOpt;
         std::string statusText =
-            info.status + std::string(" - ") + info.serverVersion;
+            "RL Server: " + info.status + std::string(" - ") + info.serverVersion;
         if (selfRef->m_modStatusLabel) {
             selfRef->m_modStatusLabel->setString(statusText.c_str());
             if (info.status == "Online") {

@@ -1,5 +1,6 @@
 #include "RLLevelBrowserLayer.hpp"
 
+#include <Geode/binding/UploadActionPopup.hpp>
 #include <Geode/modify/GameLevelManager.hpp>
 #include <Geode/modify/LevelInfoLayer.hpp>
 #include <algorithm>
@@ -8,6 +9,7 @@
 #include "../include/RLLayerBackground.hpp"
 #include "../include/RLConstants.hpp"
 #include <cue/RepeatingBackground.hpp>
+#include <string>
 
 using namespace geode::prelude;
 
@@ -383,6 +385,36 @@ bool RLLevelBrowserLayer::init(GJSearchObject* object) {
                     m_planetBtn = platBtn;
                     pageMenu->addChild(platBtn);
                     pageMenu->updateLayout();
+                }
+
+                if (rl::isUserClassicAdmin() || rl::isUserOwner()) {
+                    auto deleteLevelsIcon =
+                        // @geode-ignore(unknown-resource)
+                        CCSprite::createWithSpriteFrameName("RL_cross_no_box.png"_spr);
+                    auto deleteClassicSpr = EditorButtonSprite::create(
+                        deleteLevelsIcon, EditorBaseColor::LightBlue, EditorBaseSize::Normal);
+                    auto deleteBtnClassic = CCMenuItemSpriteExtra::create(
+                        deleteClassicSpr, this, menu_selector(RLLevelBrowserLayer::onDeleteFilter));
+                    if (deleteBtnClassic) {
+                        m_deleteBtnClassic = deleteBtnClassic;
+                        pageMenu->addChild(deleteBtnClassic);
+                        pageMenu->updateLayout();
+                    }
+                }
+
+                if (rl::isUserPlatformerAdmin() || rl::isUserOwner()) {
+                    auto deleteLevelsIcon =
+                        // @geode-ignore(unknown-resource)
+                        CCSprite::createWithSpriteFrameName("RL_cross_no_box.png"_spr);
+                    auto deletePlatSpr = EditorButtonSprite::create(
+                        deleteLevelsIcon, EditorBaseColor::Salmon, EditorBaseSize::Normal);
+                    auto deleteBtnPlat = CCMenuItemSpriteExtra::create(
+                        deletePlatSpr, this, menu_selector(RLLevelBrowserLayer::onDeleteFilter));
+                    if (deleteBtnPlat) {
+                        m_deleteBtnPlat = deleteBtnPlat;
+                        pageMenu->addChild(deleteBtnPlat);
+                        pageMenu->updateLayout();
+                    }
                 }
 
                 this->updateFilterButtons();
@@ -958,6 +990,82 @@ void RLLevelBrowserLayer::onPlanetFilter(CCObject* sender) {
 
     updateFilterButtons();
     this->refreshLevels(true);
+}
+
+void RLLevelBrowserLayer::onDeleteFilter(CCObject* sender) {
+    if (!sender)
+        return;
+
+    int type = 0;
+    std::string typeStr;
+    if (sender == m_deleteBtnClassic) {
+        type = 1;
+        typeStr = "Classic";
+    } else if (sender == m_deleteBtnPlat) {
+        type = 2;
+        typeStr = "Platformer";
+    } else {
+        return;
+    }
+
+    createQuickPopup(
+        "Delete All Sent Levels?",
+        fmt::format("Are you sure you want to <cr>delete all</c> <cg>sent levels</c> for <co>{}</c> levels?\n<cy>This action cannot be undone.</c>", typeStr),
+        "Cancel",
+        "Delete",
+        [this, type](auto, bool yes) {
+            if (!yes)
+                return;
+
+            auto popup = UploadActionPopup::create(nullptr, "Deleting all sends...");
+            popup->show();
+
+            auto token = Mod::get()->getSavedValue<std::string>("argon_token");
+            if (token.empty()) {
+                log::error("Failed to get user token");
+                popup->showFailMessage("Token not found!");
+                return;
+            }
+
+            matjson::Value jsonBody = matjson::Value::object();
+            jsonBody["accountId"] = GJAccountManager::get()->m_accountID;
+            jsonBody["argonToken"] = token;
+            jsonBody["type"] = type;
+
+            auto postReq = web::WebRequest();
+            postReq.bodyJSON(jsonBody);
+
+            Ref<RLLevelBrowserLayer> self = this;
+            Ref<UploadActionPopup> upopup = popup;
+            self->m_deleteAllSendsTask.spawn(
+                postReq.post(std::string(rl::BASE_API_URL) + "/deleteAllSends"),
+                [self, upopup](web::WebResponse response) {
+                    if (!self || !upopup)
+                        return;
+
+                    if (!response.ok()) {
+                        log::warn("Server returned non-ok status: {}", response.code());
+                        upopup->showFailMessage("Failed to delete sends.");
+                        return;
+                    }
+
+                    auto jsonRes = response.json();
+                    if (!jsonRes) {
+                        log::warn("Failed to parse JSON response");
+                        upopup->showFailMessage("Invalid server response.");
+                        return;
+                    }
+
+                    auto json = jsonRes.unwrap();
+                    bool success = json["success"].asBool().unwrapOrDefault();
+                    if (success) {
+                        upopup->showSuccessMessage("All sends deleted!");
+                        self->refreshLevels(true);
+                    } else {
+                        upopup->showFailMessage("Failed to delete sends.");
+                    }
+                });
+        });
 }
 
 void RLLevelBrowserLayer::onInfoButton(CCObject* sender) {

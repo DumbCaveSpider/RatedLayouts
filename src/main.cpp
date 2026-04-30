@@ -11,6 +11,22 @@
 
 using namespace geode::prelude;
 
+$on_mod(Loaded) {
+    GJUserScore* userScore = GJUserScore::create();
+    userScore->m_accountID = GJAccountManager::get()->m_accountID;
+    if (userScore->m_modBadge != 0) {
+        log::debug("User has mod badge: {}", userScore->m_modBadge);
+        Mod::get()->setSettingValue<bool>("disableRLReq", true);
+    } else {
+        log::debug("User does not have a mod badge");
+    }
+
+    // disable rl req if is a gdps
+    if (rl::isGDPS()) {
+        log::debug("Running on GDPS, disabling Rated Layouts requests");
+        Mod::get()->setSettingValue<bool>("disableRLReq", true);
+    }
+};
 class $modify(RLSupportLayer, SupportLayer) {
     struct Fields {
         async::TaskHolder<web::WebResponse> m_getAccessTask;
