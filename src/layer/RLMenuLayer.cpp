@@ -426,9 +426,11 @@ bool RLMenuLayer::isGDServerOnline() {
         if (online) {
             m_gdServerLabel->setString("GD Server: Online");
             m_gdServerLabel->setColor({64, 255, 128});
+            glm->m_levelManagerDelegate = nullptr;
         } else {
             m_gdServerLabel->setString("GD Server: Checking...");
             m_gdServerLabel->setColor({255, 150, 0});
+            glm->m_levelManagerDelegate = nullptr;
         }
     }
 

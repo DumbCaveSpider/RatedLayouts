@@ -1,5 +1,6 @@
 #include "RLLevelBrowserLayer.hpp"
 
+#include <Geode/binding/GameLevelManager.hpp>
 #include <Geode/binding/UploadActionPopup.hpp>
 #include <Geode/modify/GameLevelManager.hpp>
 #include <Geode/modify/LevelInfoLayer.hpp>
@@ -239,6 +240,8 @@ bool RLLevelBrowserLayer::init(GJSearchObject* object) {
         return false;
 
     m_searchObject = object;
+    if (GameLevelManager::get()->m_levelManagerDelegate)
+        GameLevelManager::get()->m_levelManagerDelegate = nullptr;  // clear any existing delegate to avoid callbacks to deleted layers
 
     setupBackground();
 
