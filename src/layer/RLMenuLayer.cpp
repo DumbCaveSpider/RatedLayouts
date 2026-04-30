@@ -367,10 +367,16 @@ bool RLMenuLayer::init() {
 
     if (!Mod::get()->getSettingValue<bool>("disableModInfo")) {
         // mod info stuff
+        bool isCollapsed = Mod::get()->getSavedValue<bool>("mod_info_collapsed", false);
+        m_modInfoCollapsed = isCollapsed;
         auto modInfoBg = NineSlice::create("square02_small.png");
-        modInfoBg->setPosition({winSize.width / 2, 15});
+        modInfoBg->setPosition({winSize.width / 2, static_cast<float>(isCollapsed ? -15 : 15)});
         modInfoBg->setContentSize({160.f, 70.f});
         modInfoBg->setOpacity(100);
+
+        auto modInfoMenu = CCMenu::create();
+        modInfoMenu->setPosition({0, 0});
+        modInfoBg->addChild(modInfoMenu);
 
         m_modStatusLabel = CCLabelBMFont::create("-", "bigFont.fnt");
         m_modStatusLabel->setColor({255, 150, 0});
@@ -397,7 +403,20 @@ bool RLMenuLayer::init() {
             m_modStatusLabel->setColor({255, 150, 0});
         }
 
+        m_modInfoBg = modInfoBg;
         this->addChild(modInfoBg, 10);
+
+        // button to collapse the mod info
+        auto collapseBtnSpr = CCSprite::createWithSpriteFrameName(
+            "PBtn_Arrow_001.png");
+        if (isCollapsed) {
+            collapseBtnSpr->setRotation(180.f);
+        }
+        auto collapseBtn = CCMenuItemSpriteExtra::create(
+            collapseBtnSpr, this, menu_selector(RLMenuLayer::onCollapseInfoButton));
+        collapseBtn->setPosition({modInfoBg->getContentSize().width / 2, modInfoBg->getContentSize().height});
+        collapseBtn->setAnchorPoint({0.5f, 0.f});
+        modInfoMenu->addChild(collapseBtn);
     }
 
     this->scheduleUpdate();
@@ -407,46 +426,65 @@ bool RLMenuLayer::init() {
 }
 
 bool RLMenuLayer::isGDServerOnline() {
-    auto glm = GameLevelManager::sharedState();
-    if (!glm) {
-        if (m_gdServerLabel) {
-            m_gdServerLabel->setString("GD Server: Offline");
-            m_gdServerLabel->setColor({255, 64, 64});
-        }
-        glm->m_levelManagerDelegate = nullptr;
-        return false;
-    }
-
-    auto searchObj = GJSearchObject::create(SearchType::MostLiked, "");
-    glm->getOnlineLevels(searchObj);
-    auto stored = glm->getStoredOnlineLevels(searchObj->getKey());
-    bool online = stored && stored->count() > 0;
-
     if (m_gdServerLabel) {
-        if (online) {
-            m_gdServerLabel->setString("GD Server: Online");
-            m_gdServerLabel->setColor({64, 255, 128});
-            glm->m_levelManagerDelegate = nullptr;
-        } else {
-            m_gdServerLabel->setString("GD Server: Checking...");
-            m_gdServerLabel->setColor({255, 150, 0});
-            glm->m_levelManagerDelegate = nullptr;
-        }
+        m_gdServerLabel->setString("GD Server: Checking...");
+        m_gdServerLabel->setColor({255, 150, 0});
     }
 
-    glm->m_levelManagerDelegate = nullptr;  // very important to set level manager delegate to null cuz otherwise, funny bugs when going to any of the rl level browsers
-    return online;
+    m_gdServerTask.cancel();
+    matjson::Value jsonBody;
+    jsonBody["type"] = 2;
+    jsonBody["secret"] = "Wmfd2893gb7";
+    m_gdServerTask.spawn(
+        web::WebRequest()
+            .bodyJSON(jsonBody)
+            .post("http://www.boomlings.com/database/getGJLevels21.php"),
+        [this](web::WebResponse response) {
+            if (!response.ok() || response.code() != 200) {
+                log::debug("Boomlings server offline or unreachable");
+                if (m_gdServerLabel) {
+                    m_gdServerLabel->setString("GD Server: Offline");
+                    m_gdServerLabel->setColor({255, 0, 0});
+                }
+                return;
+            }
+
+            log::debug("Boomlings server online");
+            if (m_gdServerLabel) {
+                m_gdServerLabel->setString("GD Server: Online");
+                m_gdServerLabel->setColor({64, 255, 128});
+            }
+        });
+
+    return false;
 }
 
-void RLMenuLayer::refreshGDServerStatus() {
-    if (isGDServerOnline()) {
+void RLMenuLayer::onCollapseInfoButton(CCObject* sender) {
+    if (!m_modInfoBg)
+        return;
+
+    m_modInfoCollapsed = !m_modInfoCollapsed;
+    Mod::get()->setSavedValue<bool>("mod_info_collapsed", m_modInfoCollapsed);
+    auto currentPos = m_modInfoBg->getPosition();
+    auto targetY = m_modInfoCollapsed ? -15.f : 15.f;
+
+    auto btn = static_cast<CCMenuItemSpriteExtra*>(sender);
+    auto icon = static_cast<CCNode*>(btn->getNormalImage());
+    
+    if (Mod::get()->getSettingValue<bool>("disableMenuAnimation")) {
+        // if animation is disabled, just move it without animation
+        m_modInfoBg->setPosition({currentPos.x, targetY});
+        icon->setRotation(m_modInfoCollapsed ? 180.f : 0.f);
         return;
     }
+    auto moveAction = CCMoveTo::create(0.25f, CCPoint(currentPos.x, targetY));
+    auto easeAction = CCEaseSineOut::create(moveAction);
+    m_modInfoBg->runAction(easeAction);
 
-    this->runAction(CCSequence::create(
-        CCDelayTime::create(0.35f),
-        CCCallFunc::create(this, callfunc_selector(RLMenuLayer::refreshGDServerStatus)),
-        nullptr));
+    if (icon && btn) {
+        auto rotateAction = CCRotateTo::create(0.25f, m_modInfoCollapsed ? 180.f : 0.f);
+        icon->runAction(CCEaseSineOut::create(rotateAction));
+    }
 }
 
 void RLMenuLayer::onSettingsButton(CCObject* sender) {
@@ -881,10 +919,6 @@ void RLMenuLayer::onEnter() {
     }
 
     isGDServerOnline();
-    this->runAction(CCSequence::create(
-        CCDelayTime::create(0.35f),
-        CCCallFunc::create(this, callfunc_selector(RLMenuLayer::refreshGDServerStatus)),
-        nullptr));
 
     Ref<RLMenuLayer> selfRef = this;
     async::spawn(fetchModInfoAsync(), [selfRef](std::optional<ModInfo> infoOpt) {

@@ -7,6 +7,7 @@
 - Added Rejected Indicator for Layout Admins and Moderators in the Level Info Layer
 - Current User on Leaderboard will now show a green glow instead of green text color
 - Added GD Server Status in the RL Menu Layer
+- Added a collapsable mod info in the RL Menu Layer
 
 # v1.0.9
 

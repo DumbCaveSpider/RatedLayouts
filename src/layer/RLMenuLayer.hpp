@@ -16,6 +16,7 @@ protected:
     void onNewRated(CCObject* sender);
     void onSentLayouts(CCObject* sender);
     void onInfoButton(CCObject* sender);
+    void onCollapseInfoButton(CCObject* sender);
     void onDailyLayouts(CCObject* sender);
     void onWeeklyLayouts(CCObject* sender);
     void onMonthlyLayouts(CCObject* sender);
@@ -35,7 +36,6 @@ protected:
     void onSupporterButton(CCObject* sender);
     void showReadGuidePopup();
     bool isGDServerOnline();
-    void refreshGDServerStatus();
 
     // news / announcement UI
     CCMenuItemSpriteExtra* m_newsIconBtn = nullptr;
@@ -45,11 +45,14 @@ protected:
     CCLabelBMFont* m_modStatusLabel = nullptr;
     CCLabelBMFont* m_gdServerLabel = nullptr;
     CCLabelBMFont* m_modVersionLabel = nullptr;
+    CCNode* m_modInfoBg = nullptr;
+    bool m_modInfoCollapsed = false;
 
     int m_indexDia = 0;
 
     geode::async::TaskHolder<geode::utils::web::WebResponse> m_announcementTask;
     geode::async::TaskHolder<geode::utils::web::WebResponse> m_dialogueTask;
+    geode::async::TaskHolder<geode::utils::web::WebResponse> m_gdServerTask;
 
 public:
     void onEnter() override;

@@ -315,6 +315,27 @@
             "type": "custom:rl-clear-cache-button",
             "name": "Clear Request Cache",
             "description": "Clears the comment role and level rating cache stored by Rated Layouts."
-        }
+        },
+		"titleModSettings": {
+			"type": "title",
+			"name": "Moderator-Specific Settings",
+			"description": "Layout Moderator/Admin specific settings."
+		},
+		"disableRejectedLayouts": {
+			"name": "Disable Fetching Rejected Layouts",
+			"type": "bool",
+			"default": false,
+			"description": "Disable the fetch and show of rejected layouts set by the Layout Admins. <co>It reduces the amount of web requests and only enable if you are experiencing lag</c>. <cy>This only applies to Layout Moderators/Admins.</c>",
+			"enable-if": "saved:isClassicAdmin || saved:isClassicMod || saved:isPlatAdmin || saved:isPlatMod || saved:isOwner",
+			"enable-if-description": "Layout Mod or Admin only"
+		},
+		"disableRejectedLayoutsGlow": {
+			"name": "Disable Rejected Layouts Glow",
+			"type": "bool",
+			"default": false,
+			"description": "Disable the red glow effect on rejected layouts level cell.",
+			"enable-if": "!disableRejectedLayouts && (saved:isClassicAdmin || saved:isClassicMod || saved:isPlatAdmin || saved:isPlatMod || saved:isOwner)",
+			"enable-if-description": "Layout Mod or Admin only and enable 'Fetching Rejected Layouts'"
+		}
 	}
 }

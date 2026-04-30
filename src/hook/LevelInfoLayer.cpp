@@ -286,14 +286,15 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
             return;
         }
 
-        if (rejected && (rl::isUserClassicRole() || rl::isUserPlatformerRole() || rl::isUserOwner())) {
+        if (rejected && (rl::isUserClassicRole() || rl::isUserPlatformerRole() || rl::isUserOwner()) && !Mod::get()->getSettingValue<bool>("disableRejectedLayouts")) {
             auto label = existingLabel
                              ? static_cast<CCLabelBMFont*>(existingLabel)
-                             : CCLabelBMFont::create("Layout Rejected", "bigFont.fnt");
+                             : CCLabelBMFont::create("RL Rejected", "bigFont.fnt");
             if (!label) {
                 return;
             }
             label->setID("rl-rejected-label");
+            label->setAnchorPoint({0.5f, 0.5f});
             label->setScale(0.3f);
             label->setOpacity(200);
             label->setColor({255, 64, 64});
@@ -308,6 +309,7 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
                 return;
             }
             icon->setID("rl-rejected-icon");
+            icon->setAnchorPoint({1.f, 0.5f});
             icon->setScale(0.35f);
             icon->setOpacity(200);
 
@@ -320,8 +322,10 @@ class $modify(RLLevelInfoLayer, LevelInfoLayer) {
 
             auto titlePos = titleLabel->getPosition();
             float yPos = titlePos.y - 45;
-            label->setPosition({titlePos.x, yPos});
-            icon->setPosition({label->getPositionX() - 50, label->getPositionY()});
+            float labelWidth = label->getContentSize().width * label->getScale();
+            label->setPosition({titlePos.x + 10, yPos});
+            icon->setPosition({titlePos.x + 10 - (labelWidth / 2.f) - 5.f,
+                yPos});
         } else {
             if (existingIcon) {
                 existingIcon->removeFromParent();

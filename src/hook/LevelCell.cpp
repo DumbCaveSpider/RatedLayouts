@@ -15,11 +15,79 @@ class $modify(RLLevelCell, LevelCell) {
     struct Fields {
         std::optional<matjson::Value> m_pendingJson;
         int m_pendingLevelId = 0;
+        bool m_isRejected = false;
         async::TaskHolder<web::WebResponse> m_fetchTask;
         int m_waitRetries = 0;  // used for waiting for level data to arrive
         bool m_coinOffsetApplied = false;
         bool m_iconOffsetApplied = false;
         ~Fields() { m_fetchTask.cancel(); }
+    };
+
+    void updateRejectedCellLabel() {
+        if (!m_backgroundLayer) {
+            return;
+        }
+
+        if (this->m_fields->m_isRejected) {
+            if (auto existingRejectedLabel = m_backgroundLayer->getChildByID("rl-rejected-label")) {
+                existingRejectedLabel->removeFromParent();
+            }
+            auto rejectedLabel = CCLabelBMFont::create("RL Rejected", "bigFont.fnt");
+            auto icon = CCSprite::createWithSpriteFrameName("RL_cross_no_box.png"_spr);
+            auto glow = CCSprite::createWithSpriteFrameName("chest_glow_bg_001.png");
+            if (!Mod::get()->getSettingValue<bool>("disableRejectedLayoutsGlow") && glow) {
+                glow->setPosition({100.f, 90.f});
+                glow->setRotation(90);
+                glow->setAnchorPoint({0.f, 0.5f});
+                glow->setScaleX(1.775f);
+                glow->setScaleY(5.f);
+                glow->setID("rl-rejected-glow");
+                glow->setColor({255, 0, 0});
+                m_backgroundLayer->addChild(glow, 1);
+            }
+            if (rejectedLabel) {
+                rejectedLabel->setPosition(
+                    {m_backgroundLayer->getContentSize().width - 7.f, 5.f});
+                rejectedLabel->setColor({255, 0, 0});
+                rejectedLabel->setScale(0.25f);
+                rejectedLabel->setOpacity(152);
+                rejectedLabel->setAnchorPoint({1.0f, 0.f});
+                rejectedLabel->setID("rl-rejected-label");
+
+                // icon to the left of the label
+                if (icon) {
+                    icon->setID("rl-rejected-icon");
+                    icon->setScale(0.35f);
+                    icon->setOpacity(152);
+                    icon->setAnchorPoint({1.f, 0.5f});
+                    icon->setPosition({rejectedLabel->getPositionX() - rejectedLabel->getContentSize().width * rejectedLabel->getScale() - 3.f,
+                        rejectedLabel->getPositionY() + rejectedLabel->getContentSize().height * rejectedLabel->getScale() / 2.f});
+                    m_backgroundLayer->addChild(icon);
+                }
+                m_backgroundLayer->addChild(rejectedLabel);
+
+                if (m_compactView) {
+                    rejectedLabel->setPosition(
+                        {m_backgroundLayer->getContentSize().width - 5.f, 2.f});
+
+                    icon->setPosition({rejectedLabel->getPositionX() - rejectedLabel->getContentSize().width * rejectedLabel->getScale() - 3.f,
+                        rejectedLabel->getPositionY() + rejectedLabel->getContentSize().height * rejectedLabel->getScale() / 2.f});
+                    glow->setPosition({100.f, 50.f});
+                    glow->setScaleX(1.f);
+                    glow->setScaleY(5.f);
+                }
+            } else {
+                if (auto existingRejectedLabel = m_backgroundLayer->getChildByID("rl-rejected-label")) {
+                    existingRejectedLabel->removeFromParent();
+                }
+                if (auto existingRejectedIcon = m_backgroundLayer->getChildByID("rl-rejected-icon")) {
+                    existingRejectedIcon->removeFromParent();
+                }
+                if (auto existingRejectedGlow = m_backgroundLayer->getChildByID("rl-rejected-glow")) {
+                    existingRejectedGlow->removeFromParent();
+                }
+            }
+        }
     };
 
     void applyRatingToCell(const matjson::Value& json, int levelId) {
@@ -37,8 +105,9 @@ class $modify(RLLevelCell, LevelCell) {
 
         log::debug("difficulty: {}, featured: {}, score: {}", difficulty, featured, score);
 
-        // If no difficulty rating, nothing to apply
+        // If no difficulty rating, still show rejected state when applicable
         if (difficulty == 0) {
+            this->updateRejectedCellLabel();
             return;
         }
 
@@ -269,6 +338,9 @@ class $modify(RLLevelCell, LevelCell) {
             m_mainLayer->addChild(rubyLabel);
         }
 
+        // is layout rejected?
+        this->updateRejectedCellLabel();
+
         // featured score label
         if (score > 0 && featured > 0) {
             auto existingScoreLabel =
@@ -277,13 +349,14 @@ class $modify(RLLevelCell, LevelCell) {
                 existingScoreLabel->removeFromParent();
             }
             auto scoreLabel = CCLabelBMFont::create(
-                std::string("RL Featured Score: " + numToString(score)).c_str(),
-                "chatFont.fnt");
+                std::string("RL Score: " + numToString(score)).c_str(),
+                "bigFont.fnt");
             if (scoreLabel) {
                 scoreLabel->setPosition(
                     {m_backgroundLayer->getContentSize().width - 7.f, 5.f});
                 scoreLabel->setColor({150, 200, 255});
-                scoreLabel->setScale(0.5f);
+                scoreLabel->setOpacity(152);
+                scoreLabel->setScale(0.25f);
                 scoreLabel->setAnchorPoint({1.0f, 0.f});
                 scoreLabel->setID("featured-score-label");
                 m_backgroundLayer->addChild(scoreLabel);
@@ -292,7 +365,6 @@ class $modify(RLLevelCell, LevelCell) {
             if (m_compactView) {
                 scoreLabel->setPosition(
                     {m_backgroundLayer->getContentSize().width - 5.f, 2.f});
-                scoreLabel->setScale(0.4f);
             }
         }
 
@@ -716,6 +788,53 @@ class $modify(RLLevelCell, LevelCell) {
 
         int levelId = static_cast<int>(level->m_levelID);
 
+        // request rejection status before returning cached data so rejected UI can still update
+        if ((rl::isUserClassicRole() || rl::isUserPlatformerRole() || rl::isUserOwner()) && !Mod::get()->getSettingValue<bool>("disableRejectedLayouts")) {
+            Ref<LevelCell> cellRef = this;
+            auto checkRejectReq = web::WebRequest();
+            checkRejectReq.param("levelId", numToString(levelId));
+            async::spawn(
+                checkRejectReq.get(std::string(rl::BASE_API_URL) + "/getRejected"),
+                [cellRef, levelId, this](web::WebResponse const& response) {
+                    log::debug("Received rejection status response from server for level ID: {}",
+                        levelId);
+
+                    if (!response.ok()) {
+                        log::warn("Failed to fetch rejection status for level ID: {} (server returned {})",
+                            levelId,
+                            response.code());
+                        return;
+                    }
+
+                    auto jsonRes = response.json();
+                    if (!jsonRes) {
+                        log::warn("Failed to parse JSON response for rejection status of level ID: {}",
+                            levelId);
+                        return;
+                    }
+
+                    if (!cellRef) {
+                        return;
+                    }
+
+                    auto json = jsonRes.unwrap();
+                    bool isRejected = json["isRejected"].asBool().unwrapOr(false);
+                    this->m_fields->m_isRejected = isRejected;
+                    if (isRejected) {
+                        log::debug("Level ID {} is rejected", levelId);
+                    }
+
+                    if (this->m_level && this->m_level->m_levelID == levelId) {
+                        this->updateRejectedCellLabel();
+                        if (this->m_fields->m_pendingJson) {
+                            this->applyRatingToCell(this->m_fields->m_pendingJson.value(), levelId);
+                        } else if (auto cachedJson = rl::getCachedLevelRating(levelId)) {
+                            this->applyRatingToCell(*cachedJson, levelId);
+                        }
+                    }
+                });
+        }
+
         // try to reuse cached rating data first
         if (auto cachedJson = rl::getCachedLevelRating(levelId)) {
             log::debug("Using cached rating for level cell ID: {}", levelId);
@@ -731,12 +850,12 @@ class $modify(RLLevelCell, LevelCell) {
         // fetch directly here and apply or store on callback
         Ref<LevelCell> cellRef = this;
         auto req = web::WebRequest();
+        req.param("levelId", numToString(levelId));
         log::debug("Fetching rating data for level cell ID: {}", levelId);
         async::spawn(
-            req.get(fmt::format("{}/fetch?levelId={}", std::string(rl::BASE_API_URL), levelId)),
+            req.get(std::string(rl::BASE_API_URL) + "/fetch"),
             [cellRef, levelId, this](web::WebResponse const& response) {
-                log::debug("Received rating response from server for level ID: {}",
-                    levelId);
+                //log::debug("Received rating response from server for level ID: {}", levelId);
 
                 if (!response.ok()) {
                     return;
