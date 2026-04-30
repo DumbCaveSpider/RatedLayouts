@@ -788,7 +788,7 @@ void RLGauntletLevelsLayer::refreshCompletionCache() {
     if (data.isObject()) {
         auto gauntletLevels = data["gauntlet_levels"];
         if (gauntletLevels.isObject()) {
-            auto levelArr = gauntletLevels[std::to_string(m_gauntletId)];
+            auto levelArr = gauntletLevels[numToString(m_gauntletId)];
             if (levelArr.isArray()) {
                 for (auto& v : levelArr.asArray().unwrap()) {
                     int lid = v.asInt().unwrapOr(-1);
@@ -898,7 +898,7 @@ void RLGauntletLevelsLayer::refreshCompletionCache() {
             thisGauntletArray.asArray().unwrap().push_back(matjson::Value(completedId));
         }
 
-        levelsObj[std::to_string(m_gauntletId)] = thisGauntletArray;
+        levelsObj[numToString(m_gauntletId)] = thisGauntletArray;
         data["gauntlet_levels"] = levelsObj;
 
         // maintain the list of fully completed gauntlets

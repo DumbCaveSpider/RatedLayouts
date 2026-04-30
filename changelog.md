@@ -8,6 +8,9 @@
 - Current User on Leaderboard will now show a green glow instead of green text color
 - Added GD Server Status in the RL Menu Layer
 - Added a collapsable mod info in the RL Menu Layer
+- Replaced the old Gauntlet Selection to use BoomScrollLayer
+- Added Total Levels on the Gauntlet Selection
+- Fix more typos
 
 # v1.0.9
 

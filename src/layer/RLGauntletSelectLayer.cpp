@@ -2,6 +2,8 @@
 #include "../include/RLConstants.hpp"
 
 #include <Geode/Geode.hpp>
+#include <Geode/binding/BoomScrollLayer.hpp>
+#include <Geode/ui/Layout.hpp>
 #include <Geode/ui/NineSlice.hpp>
 #include <filesystem>
 #include <unordered_set>
@@ -40,6 +42,79 @@ static std::unordered_set<int> getCompletedGauntletsSet() {
         }
     }
     return out;
+}
+
+static matjson::Value loadGauntletCompletedJson() {
+    auto path = gauntletCompletedPath();
+    if (!std::filesystem::exists(path)) {
+        return matjson::Value::object();
+    }
+
+    auto existing = utils::file::readString(utils::string::pathToString(path));
+    if (!existing) {
+        return matjson::Value::object();
+    }
+
+    auto parsed = matjson::parse(existing.unwrap());
+    if (!parsed || !parsed.unwrap().isObject()) {
+        return matjson::Value::object();
+    }
+
+    return parsed.unwrap();
+}
+
+static std::unordered_set<int> getCompletedLevelsForGauntlet(int gauntletId) {
+    std::unordered_set<int> out;
+    auto data = loadGauntletCompletedJson();
+    if (!data.isObject()) {
+        return out;
+    }
+
+    auto gauntletLevels = data["gauntlet_levels"];
+    if (!gauntletLevels.isObject()) {
+        return out;
+    }
+
+    auto levelArr = gauntletLevels[std::to_string(gauntletId)];
+    if (!levelArr.isArray()) {
+        return out;
+    }
+
+    for (auto& v : levelArr.asArray().unwrap()) {
+        int lid = v.asInt().unwrapOr(-1);
+        if (lid > 0) {
+            out.insert(lid);
+        }
+    }
+    return out;
+}
+
+static bool isGauntletLevelCompleted(int levelId) {
+    if (levelId <= 0) {
+        return false;
+    }
+
+    auto glm = GameLevelManager::sharedState();
+    auto gsm = GameStatsManager::sharedState();
+    if (!glm || !gsm) {
+        return false;
+    }
+
+    auto searchObj = GJSearchObject::create(SearchType::Search, fmt::format("{}", levelId));
+    auto stored = glm->getStoredOnlineLevels(searchObj->getKey());
+    if (!stored || stored->count() == 0) {
+        return false;
+    }
+
+    for (unsigned int si = 0; si < stored->count(); ++si) {
+        auto g = static_cast<GJGameLevel*>(stored->objectAtIndex(si));
+        if (!g || static_cast<int>(g->m_levelID) != levelId) {
+            continue;
+        }
+        return gsm->hasCompletedLevel(g);
+    }
+
+    return false;
 }
 
 #include "RLAnnouncementPopup.hpp"
@@ -156,9 +231,10 @@ void RLGauntletSelectLayer::createGauntletButtons(
     matjson::Value const& gauntlets) {
     auto winSize = CCDirector::sharedDirector()->getWinSize();
 
-    m_gauntletsMenu = CCMenu::create();
-    m_gauntletsMenu->setPosition({0, 0});
-    this->addChild(m_gauntletsMenu);
+    if (m_scrollLayer) {
+        m_scrollLayer->removeFromParent();
+        m_scrollLayer = nullptr;
+    }
 
     if (!gauntlets.isArray()) {
         log::error("Expected gauntlets to be an array");
@@ -175,17 +251,24 @@ void RLGauntletSelectLayer::createGauntletButtons(
         m_gauntletsArray.push_back(g);
     }
 
-    const int maxButtonsPerRow = 3;  // kept for consistency
-    const float buttonWidth = 110.0f;
-    const float buttonHeight = 240.0f;
-    const float spacingX = 30.0f;
-    const float spacingY = 80.0f;
+    auto pages = CCArray::create();
+    pages->retain();
 
-    float centerY = winSize.height / 2 - 20;
+    CCLayer* page = nullptr;
+    CCMenu* pageMenu = nullptr;
 
     for (size_t i = 0; i < gauntletsArray.size(); i++) {
-        auto gauntlet = gauntletsArray[i];
+        if (i % m_pageSize == 0) {
+            page = CCLayer::create();
+            page->setContentSize(winSize);
+            pageMenu = CCMenu::create();
+            pageMenu->setLayout(RowLayout::create()->setGap(3.f)->setAxisAlignment(AxisAlignment::Center));
+            pageMenu->setPosition({page->getContentSize().width / 2, winSize.height / 2 + 35});
+            page->addChild(pageMenu);
+            pages->addObject(page);
+        }
 
+        auto gauntlet = gauntletsArray[i];
         if (!gauntlet.isObject())
             continue;
 
@@ -225,7 +308,6 @@ void RLGauntletSelectLayer::createGauntletButtons(
         bool gauntletComplete = completedGauntlets.count(gauntletId) > 0;
 
         if (gauntletComplete) {
-            // show completed icon instead of diff label
             auto completeIconShadow = CCSprite::createWithSpriteFrameName("GJ_completesIcon_001.png");
             if (completeIconShadow) {
                 completeIconShadow->setColor({0, 0, 0});
@@ -257,7 +339,6 @@ void RLGauntletSelectLayer::createGauntletButtons(
                 diffLabel->setPosition(
                     {gauntletBg->getContentSize().width / 2 + 10, 50});
                 diffLabel->setAnchorPoint({1.f, 0.5f});
-                // shadow
                 diffLabelShadow->setAlignment(kCCTextAlignmentCenter);
                 diffLabelShadow->setAnchorPoint({1.f, 0.5f});
                 diffLabelShadow->setScale(0.45f);
@@ -267,7 +348,6 @@ void RLGauntletSelectLayer::createGauntletButtons(
                 gauntletBg->addChild(diffLabel, 3);
                 gauntletBg->addChild(diffLabelShadow, 2);
 
-                // star icon to the right of the difficulty label
                 auto diffStar =
                     CCSprite::createWithSpriteFrameName("RL_starSmall.png"_spr);
                 auto diffStarShadow =
@@ -303,42 +383,95 @@ void RLGauntletSelectLayer::createGauntletButtons(
         gauntletBg->setColor({static_cast<GLubyte>(r), static_cast<GLubyte>(g), static_cast<GLubyte>(b)});
         gauntletBg->addChild(gauntletSprite, 3);
         gauntletBg->addChild(gauntletSpriteShadow, 2);
-        gauntletSprite->setPosition(gauntletBg->getContentSize() / 2);
+        gauntletSprite->setPosition({gauntletBg->getContentSize().width / 2, gauntletBg->getContentSize().height / 2 + 10});
         gauntletSpriteShadow->setPosition(
             {gauntletSprite->getPositionX(), gauntletSprite->getPositionY() - 6});
 
+        int totalLevels = 0;
+        int completedLevels = 0;
+        std::vector<int> levelIdsList;
+        auto levelIds = gauntlet["levelids"];
+        if (!levelIds.isString()) {
+            levelIds = gauntlet["levelIds"];
+        }
+
+        if (levelIds.isString()) {
+            auto levelIdsStr = levelIds.asString().unwrapOr("");
+            size_t start = 0;
+            while (start < levelIdsStr.size()) {
+                auto comma = levelIdsStr.find(',', start);
+                auto token = levelIdsStr.substr(start, comma == std::string::npos ? std::string::npos : comma - start);
+                auto first = token.find_first_not_of(" \t\n\r");
+                auto last = token.find_last_not_of(" \t\n\r");
+                if (first != std::string::npos && last != std::string::npos) {
+                    token = token.substr(first, last - first + 1);
+                }
+                if (!token.empty()) {
+                    int levelId = std::atoi(token.c_str());
+                    if (levelId > 0) {
+                        levelIdsList.push_back(levelId);
+                    }
+                }
+                if (comma == std::string::npos) {
+                    break;
+                }
+                start = comma + 1;
+            }
+        } else if (levelIds.isArray()) {
+            for (auto& levelValue : levelIds.asArray().unwrap()) {
+                int levelId = levelValue.asInt().unwrapOr(0);
+                if (levelId > 0) {
+                    levelIdsList.push_back(levelId);
+                }
+            }
+        }
+
+        totalLevels = static_cast<int>(levelIdsList.size());
+        auto completedLevelsSet = getCompletedLevelsForGauntlet(gauntletId);
+        for (auto levelId : levelIdsList) {
+            if (completedLevelsSet.count(levelId) > 0 || isGauntletLevelCompleted(levelId)) {
+                completedLevels++;
+            }
+        }
+
+        auto progressText = fmt::format("{}/{}", completedLevels, totalLevels);
+        auto progressLabel = CCLabelBMFont::create(progressText.c_str(), "bigFont.fnt");
+        auto progressShadow = CCLabelBMFont::create(progressText.c_str(), "bigFont.fnt");
+        progressLabel->setAlignment(kCCTextAlignmentCenter);
+        progressLabel->setAnchorPoint({0.5f, 0.5f});
+        progressLabel->setScale(0.4f);
+        progressLabel->setPosition({gauntletSprite->getPosition().x, gauntletSprite->getPosition().y - 40});
+
+        progressShadow->setAlignment(kCCTextAlignmentCenter);
+        progressShadow->setAnchorPoint({0.5f, 0.5f});
+        progressShadow->setScale(0.4f);
+        progressShadow->setPosition({progressLabel->getPositionX() + 2, progressLabel->getPositionY() - 2});
+        progressShadow->setColor({0, 0, 0});
+        progressShadow->setOpacity(100);
+
+        gauntletBg->addChild(progressShadow, 2);
+        gauntletBg->addChild(progressLabel, 3);
+
         auto button = CCMenuItemSpriteExtra::create(
             gauntletBg, this, menu_selector(RLGauntletSelectLayer::onGauntletButtonClick));
-
-        // tag button with the gauntlet index for reliable lookup
         button->setTag(static_cast<int>(i));
-
-        // add to menu but default hide
-        m_gauntletButtons.push_back(button);
-        m_gauntletsMenu->addChild(button);
         button->m_scaleMultiplier = 1.05f;
-        button->setVisible(false);
+
+        m_gauntletButtons.push_back(button);
+        if (pageMenu) {
+            pageMenu->addChild(button);
+            pageMenu->updateLayout();
+        }
     }
 
-    // setup pagination if needed
-    int total = static_cast<int>(m_gauntletButtons.size());
-    int totalPages = (total + m_pageSize - 1) / m_pageSize;
-    // cleanup any existing page controls
-    if (m_prevPageBtn) {
-        m_prevPageBtn->removeFromParent();
-        m_prevPageBtn = nullptr;
-    }
-    if (m_nextPageBtn) {
-        m_nextPageBtn->removeFromParent();
-        m_nextPageBtn = nullptr;
-    }
-    if (m_pageLabel) {
-        m_pageLabel->removeFromParent();
-        m_pageLabel = nullptr;
+    m_scrollLayer = BoomScrollLayer::create(pages, 0, false);
+    if (m_scrollLayer) {
+        m_scrollLayer->setPosition({0, -45});
+        this->addChild(m_scrollLayer);
     }
 
-    if (totalPages > 1) {
-        // create prev/next buttons and page label
+    int pageCount = pages->count();
+    if (pageCount > 1) {
         auto prevSpr = CCSprite::createWithSpriteFrameName("navArrowBtn_001.png");
         auto nextSpr = CCSprite::createWithSpriteFrameName("navArrowBtn_001.png");
         if (prevSpr)
@@ -349,104 +482,71 @@ void RLGauntletSelectLayer::createGauntletButtons(
         m_nextPageBtn = CCMenuItemSpriteExtra::create(
             nextSpr, this, menu_selector(RLGauntletSelectLayer::onNextPage));
 
-        // position below buttons
-        m_prevPageBtn->setPosition({25, winSize.height / 2});
-        m_nextPageBtn->setPosition({winSize.width - 25, winSize.height / 2});
+        m_prevPageBtn->setPosition({25, winSize.height / 2.f});
+        m_nextPageBtn->setPosition({winSize.width - 25, winSize.height / 2.f});
 
         auto navMenu = CCMenu::create();
         navMenu->setPosition({0, 0});
         navMenu->addChild(m_prevPageBtn);
         navMenu->addChild(m_nextPageBtn);
-        this->addChild(navMenu);
+        this->addChild(navMenu, 2);
 
-        m_pageLabel = CCLabelBMFont::create(
-            fmt::format("{}/{}", m_currentPage + 1, totalPages).c_str(),
-            "bigFont.fnt");
-        m_pageLabel->setPosition({winSize.width / 2, 12});
-        m_pageLabel->setScale(0.5f);
-        this->addChild(m_pageLabel, 5);
+        updatePage();
     }
 
-    // show first page
-    m_currentPage = 0;
-    updatePage();
+    pages->release();
 }
 
 void RLGauntletSelectLayer::onPrevPage(CCObject* sender) {
-    int total = static_cast<int>(m_gauntletButtons.size());
-    int totalPages = (total + m_pageSize - 1) / m_pageSize;
+    if (!m_scrollLayer)
+        return;
+
+    int totalPages = m_scrollLayer->getTotalPages();
     if (totalPages <= 1)
         return;
-    if (m_currentPage > 0) {
-        m_currentPage--;
+
+    int page = m_scrollLayer->m_page;
+    if (page > 0) {
+        page--;
+        m_scrollLayer->moveToPage(page);
         updatePage();
     }
 }
 
 void RLGauntletSelectLayer::onNextPage(CCObject* sender) {
-    int total = static_cast<int>(m_gauntletButtons.size());
-    int totalPages = (total + m_pageSize - 1) / m_pageSize;
+    if (!m_scrollLayer)
+        return;
+
+    int totalPages = m_scrollLayer->getTotalPages();
     if (totalPages <= 1)
         return;
-    if (m_currentPage < totalPages - 1) {
-        m_currentPage++;
+
+    int page = m_scrollLayer->m_page;
+    if (page < totalPages - 1) {
+        page++;
+        m_scrollLayer->moveToPage(page);
         updatePage();
     }
 }
 
 void RLGauntletSelectLayer::updatePage() {
-    auto winSize = CCDirector::sharedDirector()->getWinSize();
-    const float buttonWidth = 110.0f;
-    const float spacingX = 30.0f;
-    float centerY = winSize.height / 2 - 20;
-
-    int total = static_cast<int>(m_gauntletButtons.size());
-    int totalPages = (total + m_pageSize - 1) / m_pageSize;
-
-    // hide all by default
-    for (size_t i = 0; i < m_gauntletButtons.size(); ++i) {
-        if (m_gauntletButtons[i])
-            m_gauntletButtons[i]->setVisible(false);
-    }
-
-    if (total == 0)
+    if (!m_scrollLayer)
         return;
 
-    int start = m_currentPage * m_pageSize;
-    int count = std::min(m_pageSize, total - start);
+    int totalPages = m_scrollLayer->getTotalPages();
+    int page = m_scrollLayer->m_page;
+    if (page < 0)
+        page = 0;
+    if (page >= totalPages)
+        page = std::max(0, totalPages - 1);
 
-    float totalButtonsWidth = count * (buttonWidth + spacingX);
-    float startX =
-        (winSize.width - totalButtonsWidth) / 2 + buttonWidth / 2 + spacingX / 2;
-
-    for (int p = 0; p < count; ++p) {
-        int idx = start + p;
-        if (idx < 0 || idx >= total)
-            continue;
-        auto btn = m_gauntletButtons[idx];
-        if (!btn)
-            continue;
-
-        int col = p % m_pageSize;
-        float buttonX = startX + col * (buttonWidth + spacingX);
-        float buttonY = centerY;
-        btn->setPosition({buttonX, buttonY});
-        btn->setVisible(true);
-    }
-
-    // update nav controls
-    if (m_pageLabel) {
-        m_pageLabel->setString(
-            fmt::format("{}/{}", m_currentPage + 1, std::max(1, totalPages))
-                .c_str());
-    }
     if (m_prevPageBtn) {
-        m_prevPageBtn->setEnabled(m_currentPage > 0);
-        m_prevPageBtn->setOpacity(m_currentPage > 0 ? 255 : 120);
+        m_prevPageBtn->setEnabled(page > 0);
+        m_prevPageBtn->setOpacity(page > 0 ? 255 : 120);
     }
     if (m_nextPageBtn) {
-        m_nextPageBtn->setEnabled(m_currentPage < totalPages - 1);
-        m_nextPageBtn->setOpacity(m_currentPage < totalPages - 1 ? 255 : 120);
+        m_nextPageBtn->setEnabled(page < totalPages - 1);
+        m_nextPageBtn->setOpacity(page < totalPages - 1 ? 255 : 120);
     }
 }
 void RLGauntletSelectLayer::keyBackClicked() {

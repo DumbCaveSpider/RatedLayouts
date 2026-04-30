@@ -23,7 +23,7 @@ private:
     void updatePage();
 
     LoadingSpinner* m_loadingCircle = nullptr;
-    CCMenu* m_gauntletsMenu = nullptr;
+    BoomScrollLayer* m_scrollLayer = nullptr;
     matjson::Value m_selectedGauntlet = matjson::Value();
     std::vector<matjson::Value> m_gauntletsArray;
     std::vector<CCMenuItemSpriteExtra*> m_gauntletButtons;
@@ -31,7 +31,6 @@ private:
     int m_pageSize = 3;
     CCMenuItemSpriteExtra* m_prevPageBtn = nullptr;
     CCMenuItemSpriteExtra* m_nextPageBtn = nullptr;
-    CCLabelBMFont* m_pageLabel = nullptr;
     async::TaskHolder<web::WebResponse> m_gauntletsTask;
     ~RLGauntletSelectLayer() { m_gauntletsTask.cancel(); }
 };
