@@ -550,6 +550,10 @@ void RLLeaderboardLayer::populateLeaderboard(
         rankLabel->setAnchorPoint({0.f, 0.5f});
         rowContainer->addChild(rankLabel, 2);
 
+        if (accountId == currentAccountID) {
+            rankLabel->setColor({0, 255, 255});
+        }
+
         auto username = userValue["username"].asString().unwrapOrDefault();
         auto accountLabel = CCLabelBMFont::create(username.c_str(), "goldFont.fnt");
         accountLabel->setAnchorPoint({0.f, 0.5f});
