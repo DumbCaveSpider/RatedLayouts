@@ -2,6 +2,7 @@
 #include <Geode/modify/LevelSearchLayer.hpp>
 
 #include "../layer/RLSearchLayer.hpp"
+#include "../layer/RLMenuLayer.hpp"
 #include "../include/RLNetworkUtils.hpp"
 
 using namespace geode::prelude;
@@ -41,17 +42,20 @@ class $modify(RLLevelSearchLayer, LevelSearchLayer) {
                 ->show();
             return;
         }
-        bool disableSearch = Mod::get()->getSettingValue<bool>("disableRlSearchLayer"); // i hope this works :3
-        CCNode* layer; 
-        if (disableSearch) {
-            layer = RLMenuLayer::create();
-        } else {
-            layer = RLSearchLayer::create();
-        }
-        if (layer) {
-            auto scene = CCScene::create();
-            scene->addChild(layer);
-            auto transitionFade = CCTransitionFade::create(0.5f, scene);
-            CCDirector::sharedDirector()->pushScene(transitionFade);
-        }
+        bool disableSearch = Mod::get()->getSettingValue<bool>("disableRlSearchLayer"); // please work no. 2
+                CCNode* layer = nullptr; 
+        
+                if (disableSearch) {
+                    layer = RLMenuLayer::create();
+                } else {
+                    layer = RLSearchLayer::create();
+                }
+        
+                if (layer) {
+                    auto scene = CCScene::create();
+                    scene->addChild(layer);
+                    auto transitionFade = CCTransitionFade::create(0.5f, scene);
+                    CCDirector::sharedDirector()->pushScene(transitionFade);
+                }
+            }
         };
