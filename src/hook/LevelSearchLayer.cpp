@@ -55,7 +55,7 @@ class $modify(RLLevelSearchLayer, LevelSearchLayer) {
                     auto scene = CCScene::create();
                     scene->addChild(layer);
                     auto transitionFade = CCTransitionFade::create(0.5f, scene);
-                    CCDirector::sharedDirector()->replaceScene(transitionFade);
+                    CCDirector::sharedDirector()->pushScene(transitionFade);
                 }
             }
         };
