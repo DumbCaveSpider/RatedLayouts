@@ -245,23 +245,23 @@ bool RLCreditsPopup::init() {
                 if (isOwner) {
                     bgSprite->setColor({150, 255, 255});  // cyan(boi) for owner
                 } else if (isDeveloper) {
-                    bgSprite->setColor({17, 153, 238});  // deep blue for developer
+                    bgSprite->setColor({63, 92, 34});  // deep blue for developer (why not green like the badge)
                 } else if (isAdmin) {
                     if (isPlat) {
-                        bgSprite->setColor({255, 160, 0});  // orange for plat admin
+                        bgSprite->setColor({245, 150, 0});  // orange for plat admin (little lighter like the image)
                     } else {
-                        bgSprite->setColor({245, 107, 107});  // red for classic admin
+                        bgSprite->setColor({75, 42, 96});  // red for classic admin (why red not purple like the badge)
                     }
                 } else if (isMod) {
                     if (isLeaderboard) {
-                        bgSprite->setColor({120, 220, 120});  // green for leaderboard mod
+                        bgSprite->setColor({3, 79, 88});  // green for leaderboard mod (no, blue)
                     } else if (isPlat) {
-                        bgSprite->setColor({0, 200, 200});  // cyan for plat mod
+                        bgSprite->setColor({96, 75, 38});  // cyan(orange) for plat mod (plat mod and leaderboard look alike)
                     } else {
-                        bgSprite->setColor({81, 147, 248});  // blue for classic mod
+                        bgSprite->setColor({90, 157, 255});  // blue for classic mod (cool but a little brighter :3)
                     }
                 } else if (isBooster) {
-                    bgSprite->setColor({148, 93, 255});
+                    bgSprite->setColor({148, 93, 255}); // (supporter and booster are fine)
                 } else if (isSupporter) {
                     bgSprite->setColor({248, 86, 187});
                 }
@@ -295,7 +295,7 @@ bool RLCreditsPopup::init() {
                 if (self->m_listNode) {
                     self->m_listNode->addCell(cell);
                 }
-            };
+            }; // (made it mod->admin)
             if (json.contains("owner") && json["owner"].isArray()) {
                 addHeader("Rated Layouts Owner");
                 auto arr = json["owner"].asArray().unwrap();
@@ -310,24 +310,18 @@ bool RLCreditsPopup::init() {
                     addPlayer(val, false, false, false, false, false, false, true, false);
                 }
             }
-            if (json.contains("classicAdmins") && json["classicAdmins"].isArray()) {
-                addHeader("Classic Layout Admins");
-                auto arr = json["classicAdmins"].asArray().unwrap();
-                for (auto& val : arr)
-                    addPlayer(val, true, false, false, false, false, false, false, false);
-            }
-            if (json.contains("platAdmins") && json["platAdmins"].isArray()) {
-                addHeader("Platformer Layout Admins");
-                auto arr = json["platAdmins"].asArray().unwrap();
-                for (auto& val : arr)
-                    addPlayer(val, true, false, false, false, true, false, false, false);
-            }
             if (json.contains("classicModerators") &&
                 json["classicModerators"].isArray()) {
                 addHeader("Classic Layout Moderators");
                 auto arr = json["classicModerators"].asArray().unwrap();
                 for (auto& val : arr)
                     addPlayer(val, false, true, false, false, false, false, false, false);
+            }
+            if (json.contains("classicAdmins") && json["classicAdmins"].isArray()) {
+                addHeader("Classic Layout Admins");
+                auto arr = json["classicAdmins"].asArray().unwrap();
+                for (auto& val : arr)
+                    addPlayer(val, true, false, false, false, false, false, false, false);
             }
             if (json.contains("platModerators") &&
                 json["platModerators"].isArray()) {
@@ -336,11 +330,11 @@ bool RLCreditsPopup::init() {
                 for (auto& val : arr)
                     addPlayer(val, false, true, false, false, true, false, false, false);
             }
-            if (json.contains("leaderboardAdmins") && json["leaderboardAdmins"].isArray()) {
-                addHeader("Leaderboard Layout Admins");
-                auto arr = json["leaderboardAdmins"].asArray().unwrap();
+            if (json.contains("platAdmins") && json["platAdmins"].isArray()) {
+                addHeader("Platformer Layout Admins");
+                auto arr = json["platAdmins"].asArray().unwrap();
                 for (auto& val : arr)
-                    addPlayer(val, true, false, false, false, false, true, false, false);
+                    addPlayer(val, true, false, false, false, true, false, false, false);
             }
             if (json.contains("leaderboardModerators") &&
                 json["leaderboardModerators"].isArray()) {
@@ -348,6 +342,12 @@ bool RLCreditsPopup::init() {
                 auto arr = json["leaderboardModerators"].asArray().unwrap();
                 for (auto& val : arr)
                     addPlayer(val, false, true, false, false, false, true, false, false);
+            }
+            if (json.contains("leaderboardAdmins") && json["leaderboardAdmins"].isArray()) {
+                addHeader("Leaderboard Layout Admins");
+                auto arr = json["leaderboardAdmins"].asArray().unwrap();
+                for (auto& val : arr)
+                    addPlayer(val, true, false, false, false, false, true, false, false);
             }
             if (json.contains("supporters") && json["supporters"].isArray()) {
                 addHeader("Layout Supporters");
@@ -389,7 +389,7 @@ void RLCreditsPopup::onInfo(CCObject* sender) {
         "Moderator</c>**, you are required to join the <cl>Rated Layouts Discord Server</c> and be <cg>active in the community</c>.\n"
         "There's an <cl>application form</c> in the server that you can fill out and the Admins usually review these applications.\n"
         "### <cr>Begging for Layout Mod to ArcticWoof or any of the Layout "
-        "Admins will be ignored and lower your chances of becoming a mod.</c>\n"
+        "Admins will be ignored and lower your chances of becoming a mod. (And might get you banned)</c>\n" // (is this true will they get banned)
         "If you have any questions about the application process or the role, feel free to ask in the <cl>Rated Layouts Discord Server</c>.\n"
         "\r\n\r\n---\r\n\r\n"
         "### Moderator Responsibilities\n"
