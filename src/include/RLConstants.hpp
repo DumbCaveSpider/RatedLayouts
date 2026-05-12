@@ -90,7 +90,7 @@ namespace rl {
     inline void showOwnerInfo() {
         FLAlertLayer::create(
             "Rated Layouts Owner",
-            "<cf>This user</c> is the owner of <cl>Rated Layouts</c>. They're the main maintainers of this <cp>Geode Mod</c> and has the ability to <cg>promote admins</c> and all permissions within <cl>Rated Layouts</c>.",
+            "<cf>These users</c> are the owners of <cl>Rated Layouts</c>. They're the main maintainers of this <cp>Geode Mod</c> and have the ability to <cg>promote admins</c> and all permissions within <cl>Rated Layouts</c>.",
             "OK")
             ->show();
     }
@@ -106,7 +106,7 @@ namespace rl {
     inline void showClassicAdminInfo() {
         FLAlertLayer::create(
             "Classic Layout Admin",
-            "<cr>Classic Layout Admin</c> has the ability to <cy>rate classic levels</c>, <cb>suggest classic levels</c>, <cc>manage Featured Layouts</c> and <cg>promote users into Classic Layout Mod</c> for <cl>Rated Layouts</c>.",
+            "<cr>A classic Layout Admin</c> has the ability to <cy>rate classic levels</c>, <cb>suggest classic levels</c>, <cc>manage Featured Layouts</c> and <cg>promote users into Classic Layout Mod</c> for <cl>Rated Layouts</c>.",
             "OK")
             ->show();
     }
@@ -114,7 +114,7 @@ namespace rl {
     inline void showClassicModInfo() {
         FLAlertLayer::create(
             "Classic Layout Mod",
-            "<cb>Classic Layout Moderator</c> can suggest levels for classic layouts to <cr>Classic Layout Admins</c>.",
+            "<cb>A classic Layout Moderator</c> can suggest classic layouts to <cr>Classic Layout Admins</c>.",
             "OK")
             ->show();
     }
@@ -122,7 +122,7 @@ namespace rl {
     inline void showLeaderboardAdminInfo() {
         FLAlertLayer::create(
             "LB Layout Admin",
-            "<cr>Leaderboard Layout Admin</c> has the same abilities as <cc>Leaderboard Layout Moderator</c>, but can also <cf>whitelist</c> users and <cg>promote users into Leaderboard Layout Mod</c>.",
+            "<cr>A leaderboard Layout Admin</c> has the same abilities as <cc>Leaderboard Layout Moderator</c>, but can also <cf>whitelist</c> users and <cg>promote users into Leaderboard Layout Mod</c>.",
             "OK")
             ->show();
     }
@@ -130,7 +130,7 @@ namespace rl {
     inline void showLeaderboardModInfo() {
         FLAlertLayer::create(
             "LB Layout Mod",
-            "<cb>Leaderboard Layout Moderator</c> is responsible for <co>managing and moderating the leaderboard</c> section of <cl>Rated Layouts</c>.",
+            "<cb>A leaderboard Layout Moderator</c> is responsible for <co>managing and moderating the leaderboard</c> section of <cl>Rated Layouts</c>.",
             "OK")
             ->show();
     }
@@ -138,7 +138,7 @@ namespace rl {
     inline void showPlatAdminInfo() {
         FLAlertLayer::create(
             "Platformer Layout Admin",
-            "<cr>Platformer Layout Admin</c> has the ability to <cy>rate platformer levels</c>, <cb>suggest platformer levels</c>, <cc>manage Featured Layouts</c> and <cg>promote users into Platformer Layout Mod</c> for <cl>Rated Layouts</c>.",
+            "<cr>A platformer Layout Admin</c> has the ability to <cy>rate platformer levels</c>, <cb>suggest platformer levels</c>, <cc>manage Featured Layouts</c> and <cg>promote users into Platformer Layout Mod</c> for <cl>Rated Layouts</c>.",
             "OK")
             ->show();
     }
@@ -146,7 +146,7 @@ namespace rl {
     inline void showPlatModInfo() {
         FLAlertLayer::create(
             "Platformer Layout Mod",
-            "<cb>Platformer Layout Moderator</c> can suggest levels for platformer layouts to <cr>Platformer Layout Admins</c>.",
+            "<cb>A platformer Layout Moderator</c> can suggest platformer layouts to <cr>Platformer Layout Admins</c>.",
             "OK")
             ->show();
     }
