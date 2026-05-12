@@ -146,7 +146,7 @@ namespace rl {
     inline void showPlatModInfo() {
         FLAlertLayer::create(
             "Platformer Layout Mod",
-            "<cb>A platformer Layout Moderator</c> can suggest levels for platformer layouts to <cr>Platformer Layout Admins</c>.",
+            "<cb>A platformer Layout Moderator</c> can suggest platformer layouts to <cr>Platformer Layout Admins</c>.",
             "OK")
             ->show();
     }
