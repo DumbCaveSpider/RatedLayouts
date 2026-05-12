@@ -215,6 +215,12 @@
 			"default": false,
 			"description": "Disables particle effects in the Legendary+ Rated Layouts level name title. <cy>Enable this setting if you experience performance issues.</cy>"
 		},
+		"disableRlSearchLayer": {
+			"name": "Disable RL button search layer",
+			"type": "bool",
+			"default": false,
+			"description": "Disables the rated layouts spark button from bringing you to the search layer if you're in the normal search layer."
+		},
 		"titleComment": {
 			"type": "title",
 			"name": "Comment-Specific Settings"

@@ -521,7 +521,7 @@ void RLMenuLayer::onDiscordButton(CCObject* sender) {
             if (!yes)
                 return;
             createQuickPopup("Confirm?",
-                "Are you sure you want to join the discord server?\n<cf>Developer of Rated Layouts isn't associated with the server.</c>\n<cy>Continue?</c>",
+                "Are you sure you want to join the discord server?\n<cf>The developer of Rated Layouts isn't associated with the server.</c>\n<cy>Continue?</c>",
                 "No",
                 "Yes",
                 [](auto, bool yes) {
