@@ -370,7 +370,7 @@ void RLShopLayer::onShopkeeper(CCObject* sender) {
             break;
         case 7:
             response =
-                "Everyone <cr>hates me</c>,<d100> but I'm their <cf>God</c>...<d050> I mean...<d100> just a <cg>normal shopkeeper</c>.";
+                "Everyone <cr>hates me</c>,<d100> but I'm their <cf>Lord</c>...<d050> I mean...<d100> just a <cg>normal shopkeeper</c>."; // (god is a little much)
             break;
         case 8:
             response =
